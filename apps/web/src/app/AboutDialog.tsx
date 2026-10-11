@@ -44,6 +44,7 @@ export function AboutDialog({
           <p className="mt-2">{strings.about.font}</p>
         </div>
         <p className="text-[13px]">{strings.about.trademark}</p>
+        <p className="text-[13px] font-medium text-ink">{strings.about.maker}</p>
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
           <li>
             <a
