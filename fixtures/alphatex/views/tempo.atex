@@ -1,0 +1,11 @@
+// Tempo views — original music written for OpenTabz (AGPL-3.0-or-later).
+// Tempo marks with decimals: 92.5 at the start, 120.25 from the third bar.
+\title "Tempo Views"
+\subtitle "OpenTabz test score"
+\tempo 92.5
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+:4 0.6 2.6 3.6 2.6 | 0.5 2.5 3.5 2.5 | \tempo 120.25 0.4 2.4 3.4 2.4 | 0.3 2.3 0.3 2.3 |

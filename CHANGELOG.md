@@ -161,7 +161,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   their own.
 - **Concert pitch, tempo marks and lyrics.** The Staves menu's Concert pitch writes transposing
   instruments (B♭ clarinet, F horn, saxophones…) as they sound, keeping the octave a guitar or a
-  tenor saxophone reads in; the stylesheet shows or hides tempo marks and lyrics. Bracketed
+  tenor saxophone reads in; the stylesheet shows or hides tempo marks (with their decimals, 92.5,
+  or rounded) and lyrics. Bracketed
   comments in lyrics stay out of the score.
 - **Chord names in a style.** Chord names in the score and the chords panel as written, or
   spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
@@ -231,7 +232,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
   first voice (0023), 256th flags on down stems (0024), tempo marks that keep their beat unit
   (0025), staccatissimo (0026), lyrics kept as written (0027), the percussion mapper exported
-  (0028) and "let ring throughout" (0029). See [docs/upstream/](docs/upstream/).
+  (0028), "let ring throughout" (0029) and tempo marks rounded on request (0030). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

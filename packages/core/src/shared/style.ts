@@ -40,6 +40,8 @@ export interface ScoreStyle {
   readonly hideDynamics: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
+  /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
+  readonly tempoDecimals: boolean;
   /** Lyrics under the staves. */
   readonly lyrics: boolean;
   readonly brackets: BracketMode;
@@ -90,6 +92,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   spacing: 1,
   hideDynamics: false,
   tempoMarks: true,
+  tempoDecimals: true,
   lyrics: true,
   brackets: 'staves',
   singleStaffBrackets: false,

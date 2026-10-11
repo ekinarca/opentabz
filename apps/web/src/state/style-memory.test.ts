@@ -45,6 +45,18 @@ describe('styles remembered per song', () => {
     expect(parseStyle({ ...stored, pages: { laterFooter: { template: 1 } } })).toBeNull();
   });
 
+  it('reads tempo decimals shown or not (REND-240), older styles taking the file’s', () => {
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, tempoDecimals: false })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)?.tempoDecimals).toBe(false);
+    expect(parseStyle({ ...stored, tempoDecimals: 'no' })).toBeNull();
+    const { tempoDecimals: _tempoDecimals, ...older } = stored;
+    expect(parseStyle(older, { ...DEFAULT_SCORE_STYLE, tempoDecimals: false })?.tempoDecimals).toBe(false);
+    expect(parseStyle(older)?.tempoDecimals).toBe(true);
+  });
+
   it('reads the fonts, and nothing broken', () => {
     const fonts = {
       ...DEFAULT_SCORE_STYLE.fonts,

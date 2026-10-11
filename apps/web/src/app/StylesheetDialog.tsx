@@ -260,6 +260,14 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.tempoDecimals}
+            checked={style.tempoDecimals}
+            disabled={!style.tempoMarks}
+            onCheckedChange={tempoDecimals => {
+              set({ tempoDecimals });
+            }}
+          />
+          <Switch
             label={s.lyrics}
             checked={style.lyrics}
             onCheckedChange={lyrics => {

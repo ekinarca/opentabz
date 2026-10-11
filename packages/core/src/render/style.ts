@@ -59,6 +59,7 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     spacing: 1,
     hideDynamics: sheet.hideDynamics,
     tempoMarks: true,
+    tempoDecimals: true,
     lyrics: true,
     brackets: keyOf(BRACKETS, sheet.bracketExtendMode, 'staves'),
     singleStaffBrackets: sheet.showSingleStaffBrackets,
@@ -192,6 +193,7 @@ export function applyScoreStyle(
       case 'pages':
       case 'chordSpelling':
       case 'tempoMarks':
+      case 'tempoDecimals':
       case 'lyrics':
       case 'fonts':
         break;
@@ -231,6 +233,7 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   const { elements } = settings.notation;
   elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);
+  settings.notation.showTempoDecimals = style.tempoDecimals;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

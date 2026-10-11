@@ -1,6 +1,6 @@
 /**
  * Transposing instruments at concert pitch (REND-032), and tempo marks shown or hidden
- * (REND-210), in the score on screen.
+ * (REND-210), with their decimals or rounded (REND-240), in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -48,4 +48,19 @@ test('tempo marks are shown or hidden', async ({ page }) => {
   await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
   await page.getByRole('dialog', { name: 'Stylesheet' }).getByRole('switch', { name: 'Tempo marks' }).click();
   await expect.poll(tempo).toBe(false);
+});
+
+test('tempo marks with their decimals, or rounded', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/tempo.atex')]);
+  await expectScore(page);
+  const tempos = async () => (await scoreTexts(page)).filter(text => text.includes('= '));
+  await expect.poll(tempos).toEqual([' = 92.5', ' = 120.25']);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'Tempo decimals (120.5)' }).click();
+  await expect.poll(tempos).toEqual([' = 93', ' = 120']);
+  // Without tempo marks, their decimals cannot be chosen.
+  await dialog.getByRole('switch', { name: 'Tempo marks' }).click();
+  await expect(dialog.getByRole('switch', { name: 'Tempo decimals (120.5)' })).toBeDisabled();
 });

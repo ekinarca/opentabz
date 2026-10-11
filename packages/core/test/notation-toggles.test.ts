@@ -25,6 +25,16 @@ describe('notation shown or left out', () => {
     expect(texts(hidden.marks).some(text => text.includes('= 90'))).toBe(false);
   });
 
+  it('writes tempo marks with their decimals, or rounded (REND-240)', () => {
+    const tex = `\\tempo 92.5\n${GUITAR}\n:4 0.6 0.6 0.6 0.6 | \\tempo 120.25 0.6 0.6 0.6 0.6 |`;
+    const tempos = (view: Engraving) => texts(view.marks).filter(text => text.startsWith('= '));
+    expect(tempos(engraveTex(tex))).toEqual(['= 92.5', '= 120.25']);
+    const rounded = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, tempoDecimals: false } });
+    expect(tempos(rounded)).toEqual(['= 93', '= 120']);
+    // The music plays at the tempo written all the same.
+    expect(rounded.score.masterBars[0]?.tempoAutomations[0]?.value).toBe(92.5);
+  });
+
   it('shows or hides lyrics', () => {
     const hidden = engraveFixture('alphatex/views/lyrics.atex', {
       style: { ...DEFAULT_SCORE_STYLE, lyrics: false },

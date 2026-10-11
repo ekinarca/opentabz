@@ -7,15 +7,19 @@ export interface SwitchProps {
   readonly hint?: ReactNode;
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
+  /** Shown but not to be changed, while something else makes it meaningless. */
+  readonly disabled?: boolean;
   readonly className?: string;
 }
 
 /** An on/off switch with its label (and optional hint) as one row; the label is clickable. */
-export function Switch({ label, hint, checked, onCheckedChange, className }: SwitchProps) {
+export function Switch({ label, hint, checked, onCheckedChange, disabled = false, className }: SwitchProps) {
   const id = useId();
   const hintId = useId();
   return (
-    <div className={`flex items-start justify-between gap-4 ${className ?? ''}`}>
+    <div
+      className={`flex items-start justify-between gap-4 ${disabled ? 'opacity-50' : ''} ${className ?? ''}`}
+    >
       <div className="min-w-0">
         <label htmlFor={id} className="text-[14px] font-medium text-ink">
           {label}
@@ -29,6 +33,7 @@ export function Switch({ label, hint, checked, onCheckedChange, className }: Swi
       <RadixSwitch.Root
         id={id}
         checked={checked}
+        disabled={disabled}
         onCheckedChange={onCheckedChange}
         {...(hint === undefined ? {} : { 'aria-describedby': hintId })}
         className="relative mt-0.5 inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-line-strong bg-sunken transition-colors data-[state=checked]:border-accent data-[state=checked]:bg-accent"

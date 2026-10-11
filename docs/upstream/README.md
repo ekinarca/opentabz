@@ -38,6 +38,7 @@ available as source: the patch file is that source.
 | [0027](0027-lyrics-as-written.md)           | A track keeps the lyrics it was given, as written                                  | Line breaks and comments of typed lyrics were lost after import            | not yet  |
 | [0028](0028-percussion-mapper.md)           | `PercussionMapper` exported                                                        | A drum view could not list the kit's sounds or name a note's               | not yet  |
 | [0029](0029-let-ring-throughout.md)         | "let ring throughout" over the first bar of a track whose notes all ring on        | A score played let ring throughout did not say so                          | not yet  |
+| [0030](0030-tempo-decimals.md)              | Tempo marks with their decimals, or rounded                                        | Guitar Pro 8's decimal tempos could not be printed whole                   | not yet  |
 
 ## Working on a patch
 

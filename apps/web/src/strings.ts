@@ -616,6 +616,7 @@ export const strings = {
     orientations: { horizontal: 'Across', vertical: 'Upright' } satisfies Record<TextOrientation, string>,
     dynamics: 'Dynamics',
     tempoMarks: 'Tempo marks',
+    tempoDecimals: 'Tempo decimals (120.5)',
     lyrics: 'Lyrics',
     tuning: 'Tuning legend',
     chordDiagramsOnTop: 'Chord diagrams above the music',
