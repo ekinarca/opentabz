@@ -62,6 +62,22 @@ describe('practice settings', () => {
     });
   });
 
+  it('keep the tuner settings: reference pitch in range, target and display', () => {
+    expect([DEFAULT_PRACTICE.tunerA4, DEFAULT_PRACTICE.tunerTarget, DEFAULT_PRACTICE.tunerDisplay]).toEqual([
+      440,
+      'strings',
+      'needle',
+    ]);
+    const kept = parsePractice(
+      JSON.stringify({ tunerA4: 415, tunerTarget: 'chromatic', tunerDisplay: 'strobe' }),
+    );
+    expect([kept.tunerA4, kept.tunerTarget, kept.tunerDisplay]).toEqual([415, 'chromatic', 'strobe']);
+    const refused = parsePractice(
+      JSON.stringify({ tunerA4: 1000, tunerTarget: 'bass', tunerDisplay: 'dial' }),
+    );
+    expect([refused.tunerA4, refused.tunerTarget, refused.tunerDisplay]).toEqual([440, 'strings', 'needle']);
+  });
+
   it('reject tempos, meters and click settings outside their ranges', () => {
     const parsed = parsePractice(
       JSON.stringify({ toolBpm: MAX_BPM + 1, toolNumerator: 0, toolDenominator: 3 }),

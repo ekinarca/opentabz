@@ -54,15 +54,6 @@ export function clearPrint(): void {
   document.getElementById(STYLE_ID)?.remove();
 }
 
-/**
- * Whether the print dialog may open now: browsers open it only while a click or key press still
- * counts as the user's (those without the API are taken to allow it).
- */
-export function userJustActed(): boolean {
-  const activation = (navigator as Partial<Navigator>).userActivation;
-  return activation === undefined || activation.isActive;
-}
-
 /** Opens the browser's print dialog for the prepared pages. */
 export function openPrintDialog(): void {
   window.addEventListener('afterprint', clearPrint, { once: true });

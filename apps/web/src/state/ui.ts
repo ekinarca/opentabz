@@ -3,7 +3,8 @@
  */
 import { create } from 'zustand';
 
-export type Panel = 'speed' | 'goto' | 'shortcuts' | 'practice' | 'metronome' | 'settings' | 'export';
+export type Panel =
+  'speed' | 'goto' | 'shortcuts' | 'practice' | 'metronome' | 'settings' | 'export' | 'tuner';
 
 interface UiState {
   readonly panel: Panel | null;

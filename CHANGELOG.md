@@ -109,6 +109,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   Files are named from a template with Guitar Pro's tokens (title, track name, number and
   count, date, time), previewed as it is typed and remembered.
 
+- **Tuner.** The tuning-fork button listens through the microphone, on this device only (nothing
+  is recorded or sent). It shows the note and how many cents off it is, on a needle or on a
+  strobe that stands still in tune. It aims at the strings of the active track's tuning (drop,
+  open or custom: each string is ticked once in tune, and any string can be held to tune it
+  alone) or at the nearest note. The reference pitch of A4 can be set from 400 to 480 Hz; the
+  settings are remembered.
 - **Printing.** The printer button or ⌘/Ctrl+P draws every page and opens the browser's print
   dialog: one page of the score per sheet of A4 or US Letter, vector, with the running header
   and page numbers, ready for a printer or for saving as PDF.

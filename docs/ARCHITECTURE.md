@@ -375,7 +375,9 @@ supply (its underrun counter, in shared memory).
 
 Strict CSP via Netlify headers (`default-src 'self'`; workers and blobs from self only; no
 third-party origins), no cookies, no storage of file contents outside the device. Open-from-URL
-fetches only the URL the user typed. `vite preview` serves the same `_headers`, so the
+fetches only the URL the user typed. The tuner asks for the microphone only when it opens and
+releases it when it closes; the sound is analysed in memory (`audio/microphone.ts`, YIN pitch
+detection in `@opentabz/audio/pitch`) and never recorded, kept or sent. `vite preview` serves the same `_headers`, so the
 end-to-end tests run under the production CSP, and the build never inlines assets as `data:`
 URLs (the CSP would block them). **(planned, M8)** User scripts run in a sandboxed iframe /
 worker with a capability-based API.

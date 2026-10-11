@@ -16,7 +16,7 @@ import {
 } from '../export/page-files.ts';
 import { expandFileName, fileNameContext } from '../export/file-names.ts';
 import { layoutPages, scoreTitle, type PagedScore } from '../export/pages.ts';
-import { clearPrint, openPrintDialog, preparePrint, userJustActed } from '../export/print.ts';
+import { clearPrint, openPrintDialog, preparePrint } from '../export/print.ts';
 import { rangeBars } from '../score-view/timeline-lookup.ts';
 import { silencedTracks } from '../state/audible.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
@@ -27,6 +27,7 @@ import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { download, fileBase } from './download.ts';
 import { Field, NumberField, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
+import { userJustActed } from './platform.ts';
 
 const s = strings.exportDialog;
 const CHANNELS = ['two', 'one'] as const;

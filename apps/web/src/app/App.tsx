@@ -6,6 +6,7 @@ import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { MetronomeTool } from './MetronomeTool.tsx';
+import { TunerTool } from './TunerTool.tsx';
 import { SettingsDialog } from './SettingsDialog.tsx';
 import { ExportDialog } from './ExportDialog.tsx';
 import { ShortcutSheet } from './ShortcutSheet.tsx';
@@ -77,6 +78,7 @@ export function App() {
         <SettingsDialog />
         <ExportDialog />
         <MetronomeTool />
+        <TunerTool />
         <Notices />
       </ToastProvider>
     </TooltipProvider>

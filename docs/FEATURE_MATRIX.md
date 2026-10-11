@@ -443,9 +443,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-091 | Audio track: beat-sync to the score                             | GP  | M6  | alphatab/audio/syncpoints-testfile.gp | —    | planned |
 | PRAC-092 | Audio track: time-stretch and pitch-shift with tempo/transpose  | GP+ | M6  | —                                     | —    | planned |
 | PRAC-093 | Audio track: A/B between synth and recording                    | OT  | M6  | —                                     | —    | planned |
-| PRAC-100 | Tuner: microphone pitch detection (YIN / MPM)                   | GP  | M2  | —                                     | —    | planned |
-| PRAC-101 | Tuner: cents readout                                            | GP  | M2  | —                                     | —    | planned |
-| PRAC-102 | Tuner follows the track's tuning (drop / open / custom)         | GP+ | M2  | —                                     | —    | planned |
+| PRAC-100 | Tuner: microphone pitch detection (YIN / MPM)                   | GP  | M2  | —                                     | packages/audio/test/pitch.test.ts, apps/web/e2e/tuner.spec.ts | done |
+| PRAC-101 | Tuner: cents readout                                            | GP  | M2  | —                                     | packages/audio/test/pitch.test.ts, apps/web/e2e/tuner.spec.ts | done |
+| PRAC-102 | Tuner follows the track's tuning (drop / open / custom)         | GP+ | M2  | —                                     | packages/audio/test/pitch.test.ts, apps/web/e2e/tuner.spec.ts | done |
 | PRAC-103 | Fixed-tempo practice: one BPM ignoring tempo changes (presets, 10–300 BPM) | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/practice.spec.ts | done |
 | PRAC-104 | Speed presets (25–100 %) with one-tap half speed                | GP+ | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PRAC-105 | Speed trainer: number of passes at each step                    | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/trainer.test.ts, apps/web/e2e/metronome.spec.ts | done |
@@ -456,8 +456,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-110 | Separate count-in and click volumes; click at half or double the beat | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/metronome.test.ts | done |
 | PRAC-111 | Count-in fitted to the start point: a full bar of the meter, extra beats mid-bar or on a pickup | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/metronome.test.ts | done |
 | PRAC-112 | Polyphonic tuner: every string from one strum, per-string cents, click a string for single mode | GP  | M6  | —                                     | —    | planned |
-| PRAC-113 | Tuner reference pitch (A4 calibration)                          | OT  | M2  | —                                     | —    | planned |
-| PRAC-114 | Tuner chromatic and strobe modes                                | OT  | M2  | —                                     | —    | planned |
+| PRAC-113 | Tuner reference pitch (A4 calibration)                          | OT  | M2  | —                                     | packages/audio/test/pitch.test.ts, apps/web/src/state/practice.test.ts, apps/web/e2e/tuner.spec.ts | done |
+| PRAC-114 | Tuner chromatic and strobe modes                                | OT  | M2  | —                                     | packages/audio/test/pitch.test.ts, apps/web/src/state/practice.test.ts, apps/web/e2e/tuner.spec.ts | done |
 | PRAC-115 | Tuner alternative temperaments                                  | OT  | S   | —                                     | —    | planned |
 | PRAC-116 | Foot-pedal command mapping (USB HID, MIDI pedals, Bluetooth page turners) | GP+ | M6  | —                                     | —    | planned |
 | PRAC-117 | Audio-track formats: MP3, M4A/AAC, WAV, FLAC, AIFF, OGG         | GP  | M6  | —                                     | —    | planned |

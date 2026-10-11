@@ -39,6 +39,15 @@ export const TRAINER_MIN = 0.1;
 export const TRAINER_MAX = 3;
 export const MAX_TRAINER_STEP = 0.5;
 export const MAX_TRAINER_PASSES = 20;
+/** What the tuner aims at: the strings of the track's tuning, or the nearest note. */
+export const TUNER_TARGETS = ['strings', 'chromatic'] as const;
+export type TunerTarget = (typeof TUNER_TARGETS)[number];
+/** How the tuner shows how far off a note is: a needle, or a strobe that stands still in tune. */
+export const TUNER_DISPLAYS = ['needle', 'strobe'] as const;
+export type TunerDisplay = (typeof TUNER_DISPLAYS)[number];
+/** Reference pitches of A4 the tuner takes, in hertz (baroque 415 to modern orchestras' 446 and beyond). */
+export const MIN_A4 = 400;
+export const MAX_A4 = 480;
 
 export interface PracticeSettings {
   readonly metronome: boolean;
@@ -59,6 +68,10 @@ export interface PracticeSettings {
   readonly loopRest: LoopRest;
   /** The speed trainer; it always starts off (only its numbers are kept). */
   readonly trainer: TrainerSettings;
+  /** The tuner's reference pitch of A4, in hertz. */
+  readonly tunerA4: number;
+  readonly tunerTarget: TunerTarget;
+  readonly tunerDisplay: TunerDisplay;
 }
 
 export const DEFAULT_PRACTICE: PracticeSettings = {
@@ -75,6 +88,9 @@ export const DEFAULT_PRACTICE: PracticeSettings = {
   loopPasses: null,
   loopRest: 0,
   trainer: DEFAULT_TRAINER,
+  tunerA4: 440,
+  tunerTarget: 'strings',
+  tunerDisplay: 'needle',
 };
 
 const LEVELS: readonly MetronomeLevel[] = ['accent', 'normal', 'soft', 'off'];
@@ -153,6 +169,9 @@ export function parsePractice(raw: string | null): PracticeSettings {
       loopPasses: oneOf(value.loopPasses, LOOP_PASSES, fallback.loopPasses),
       loopRest: oneOf(value.loopRest, LOOP_RESTS, fallback.loopRest),
       trainer: parseTrainer(value.trainer),
+      tunerA4: integer(value.tunerA4, fallback.tunerA4, MIN_A4, MAX_A4),
+      tunerTarget: oneOf(value.tunerTarget, TUNER_TARGETS, fallback.tunerTarget),
+      tunerDisplay: oneOf(value.tunerDisplay, TUNER_DISPLAYS, fallback.tunerDisplay),
     };
   } catch {
     return fallback;
@@ -215,6 +234,9 @@ function settingsOf(state: PracticeSettings): PracticeSettings {
     loopPasses: state.loopPasses,
     loopRest: state.loopRest,
     trainer: state.trainer,
+    tunerA4: state.tunerA4,
+    tunerTarget: state.tunerTarget,
+    tunerDisplay: state.tunerDisplay,
   };
 }
 

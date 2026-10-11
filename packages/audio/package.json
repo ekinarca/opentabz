@@ -11,7 +11,8 @@
     "./ring": "./src/ring.ts",
     "./protocol": "./src/protocol.ts",
     "./metronome": "./src/metronome.ts",
-    "./trainer": "./src/trainer.ts"
+    "./trainer": "./src/trainer.ts",
+    "./pitch": "./src/pitch.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

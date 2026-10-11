@@ -18,3 +18,23 @@ export function MetronomeIcon({ size = 18 }: { readonly size?: number }) {
     </svg>
   );
 }
+
+/** A tuning fork (Lucide has none): two tines on a stem. */
+export function TuningForkIcon({ size = 18 }: { readonly size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 3v7a4 4 0 0 0 8 0V3" />
+      <path d="M12 14v7" />
+    </svg>
+  );
+}
