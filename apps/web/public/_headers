@@ -1,0 +1,13 @@
+# Security and caching headers for opentabz.com (ADR-0008). Netlify applies this file for Git
+# builds and for manual (drag-and-drop) deploys alike.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https: blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: camera=(), geolocation=(), payment=(), usb=(), microphone=(self), midi=(self), fullscreen=(self)
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
