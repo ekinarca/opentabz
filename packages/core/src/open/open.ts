@@ -13,6 +13,7 @@ import {
   type FormatId,
 } from '../shared/formats.ts';
 import type { OpenError, OpenErrorCode } from '../shared/open-error.ts';
+import { fillBeatTimers } from '../playback/timers.ts';
 import { StrictReader } from './reader.ts';
 
 /** Largest file OpenTabz accepts (Guitar Pro 8 files with embedded audio can be large). */
@@ -144,6 +145,7 @@ export function openScore(
       detail: `The ${sniff.evidence} contains ${score.tracks.length} tracks and ${score.masterBars.length} bars.`,
     });
   }
+  fillBeatTimers(score);
 
   return {
     score,

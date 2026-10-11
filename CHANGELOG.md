@@ -97,7 +97,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   rasgueado, strokes and arpeggios, fingering, dynamics, hairpins and fades; and so is the
   notation of rhythm, meter and form: octave lines, tuplets of any ratio, ties, dots, rests,
   fermatas, time and key signatures, tempo marks, triplet feel, free time, repeats, endings,
-  segno and coda with every D.C. and D.S., sections and texts.
+  segno and coda with every D.C. and D.S., sections and texts; and chord names and diagrams,
+  lyrics on several lines, drum noteheads, clefs, multi-bar rests, simile marks, golpe, wah,
+  sustain pedal, barré, ornaments, slurs, bar numbers and beat timers.
 
 ### Changed
 
@@ -124,6 +126,9 @@ All notable changes to OpenTabz are recorded here. The format follows
 - 8vb and 15mb passages show their sign and line below the staff (they were not drawn at all).
 - In bars with two voices, a rest of the second voice moves below the first voice instead of
   above the staff, and no longer sits on a rest of the first voice of another length.
+- Beat timers are worked out when a score opens, as the player reaches each beat: alphaTex
+  timers no longer all read 0:00, and Guitar Pro timers no longer change once playback is
+  prepared (Guitar Pro's own stored times agree, to its rounding).
 
 - A mixer remembered for a file no longer makes playback unavailable when it is restored while
   the sound engine is still starting.

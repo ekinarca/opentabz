@@ -160,23 +160,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-166 | Markers / sections                                                                | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
 | REND-167 | Barline types (single, double, final, dashed, dotted, heavy, tick, short…)        | GP  | M2  | alphatab/guitarpro8/extended-barlines.gp                    | —    | planned |
 | REND-168 | Text annotations on beats                                                         | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
-| REND-169 | Chord names above the staff                                                       | GP  | M2  | alphatab/guitarpro7/chords.gp                               | —    | planned |
-| REND-170 | Chord diagrams in the staff                                                       | GP  | M2  | alphatab/guitarpro8/show-diagrams-in-score.gp               | —    | planned |
-| REND-171 | Chord diagram block at the top of the score                                       | GP  | M2  | alphatab/guitarpro8/hide-diagrams.gp                        | —    | planned |
-| REND-172 | Multi-line lyrics with syllable alignment                                         | GP  | M2  | alphatab/guitarpro7/lyrics-template.gp                      | —    | planned |
-| REND-173 | Drum notation with correct noteheads and positions                                | GP  | M2  | alphatab/guitarpro5/percussion-all.gp5                      | —    | planned |
-| REND-174 | Clefs (treble, bass, alto, tenor, neutral; octave clefs)                          | GP  | M2  | —                                                           | —    | planned |
+| REND-169 | Chord names above the staff                                                       | GP  | M2  | alphatab/guitarpro7/chords.gp                               | packages/core/test/render-symbols.test.ts | done |
+| REND-170 | Chord diagrams in the staff                                                       | GP  | M2  | alphatab/guitarpro8/show-diagrams-in-score.gp               | packages/core/test/render-symbols.test.ts | done |
+| REND-171 | Chord diagram block at the top of the score                                       | GP  | M2  | alphatab/guitarpro8/hide-diagrams.gp                        | packages/core/test/render-symbols.test.ts | done |
+| REND-172 | Multi-line lyrics with syllable alignment                                         | GP  | M2  | alphatab/guitarpro7/beat-lyrics.gp | packages/core/test/render-symbols.test.ts | done |
+| REND-173 | Drum notation with correct noteheads and positions                                | GP  | M2  | alphatab/guitarpro5/percussion-all.gp5                      | packages/core/test/render-symbols.test.ts | done |
+| REND-174 | Clefs (treble, bass, alto, tenor, neutral; octave clefs)                          | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
 | REND-175 | Beaming modes and custom beaming                                                  | GP  | M2  | alphatab/guitarpro8/custom-beaming.gp                       | —    | planned |
-| REND-176 | Multibar rests                                                                    | GP  | M2  | alphatab/guitarpro8/multibar-rest.gp                        | —    | planned |
-| REND-177 | Simile marks (one and two bars)                                                   | GP  | M2  | alphatab/guitarpro7/simile-mark.gp                          | —    | planned |
-| REND-178 | Golpe                                                                             | GP  | M2  | —                                                           | —    | planned |
-| REND-179 | Wah pedal open / closed                                                           | GP  | M2  | alphatab/guitarpro5/wah-wah.gp5                             | —    | planned |
-| REND-180 | Sustain pedal                                                                     | GP  | M2  | —                                                           | —    | planned |
-| REND-181 | Barré indication                                                                  | GP  | M2  | —                                                           | —    | planned |
-| REND-182 | Ornaments (turns, mordents)                                                       | GP  | M2  | —                                                           | —    | planned |
-| REND-183 | Slurs                                                                             | GP  | M2  | —                                                           | —    | planned |
-| REND-184 | Bar numbers (every bar / first of system / hidden)                                | GP  | M2  | alphatab/guitarpro8/barnumbers-all.gp                       | —    | planned |
-| REND-185 | Beat timer (absolute time above beats)                                            | GP  | M2  | alphatab/guitarpro8/timer.gp                                | —    | planned |
+| REND-176 | Multibar rests                                                                    | GP  | M2  | — | packages/core/test/render-symbols.test.ts | done |
+| REND-177 | Simile marks (one and two bars)                                                   | GP  | M2  | alphatab/guitarpro7/simile-mark.gp                          | packages/core/test/render-symbols.test.ts | done |
+| REND-178 | Golpe                                                                             | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
+| REND-179 | Wah pedal open / closed                                                           | GP  | M2  | alphatab/guitarpro5/wah-wah.gp5                             | packages/core/test/render-symbols.test.ts | done |
+| REND-180 | Sustain pedal                                                                     | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
+| REND-181 | Barré indication                                                                  | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
+| REND-182 | Ornaments (turns, mordents)                                                       | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
+| REND-183 | Slurs                                                                             | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
+| REND-184 | Bar numbers (every bar / first of system / hidden)                                | GP  | M2  | alphatab/guitarpro8/barnumbers-all.gp                       | packages/core/test/render-symbols.test.ts | done |
+| REND-185 | Beat timer (absolute time above beats)                                            | GP  | M2  | alphatab/guitarpro8/timer.gp                                | packages/core/test/render-symbols.test.ts | done |
 | REND-300 | Note colouring by string                                                          | OT  | M2  | —                                                           | —    | planned |
 | REND-301 | Note colouring by interval                                                        | OT  | M2  | —                                                           | —    | planned |
 | REND-302 | Note colouring by scale degree                                                    | OT  | M2  | —                                                           | —    | planned |

@@ -14,7 +14,7 @@ import {
   BOUNDS_BEAT_RECT_STRIDE,
   BOUNDS_SYSTEM_STRIDE,
 } from '../src/shared/playback.ts';
-import type { ViewOptions } from '../src/shared/view.ts';
+import type { PartialKind, ViewOptions } from '../src/shared/view.ts';
 import { readFixture } from './helpers.ts';
 
 export type MarkKind = 'glyph' | 'text' | 'path' | 'rect';
@@ -31,6 +31,8 @@ export interface Mark {
   readonly height: number;
   /** Id of the beat whose group drew the mark, or -1. */
   readonly beat: number;
+  /** What the partial it was painted in holds: the header, a system, the footer. */
+  readonly partial: PartialKind;
   /** A path's commands (`M`, `L`, `Q`, `C`, `A`, `z`) and its points on the page (arcs left out). */
   readonly commands?: string;
   readonly points?: readonly { readonly x: number; readonly y: number }[];
@@ -145,7 +147,7 @@ function readPath(d: string, dx: number, dy: number) {
 }
 
 /** Marks of one painted partial, offset by the partial's place on the page. */
-export function readMarks(svg: string, offsetX: number, offsetY: number): Mark[] {
+export function readMarks(svg: string, offsetX: number, offsetY: number, partial: PartialKind): Mark[] {
   const marks: Mark[] = [];
   const groups: { beat: number; dx: number; dy: number }[] = [];
   for (const match of svg.matchAll(TOKENS)) {
@@ -192,6 +194,7 @@ export function readMarks(svg: string, offsetX: number, offsetY: number): Mark[]
           width: size.width * scale,
           height: size.height * scale,
           beat,
+          partial,
         });
         x += size.width * scale;
       });
@@ -207,6 +210,7 @@ export function readMarks(svg: string, offsetX: number, offsetY: number): Mark[]
         width,
         height: size,
         beat,
+        partial,
       });
     } else if (rectX !== undefined) {
       marks.push({
@@ -217,10 +221,11 @@ export function readMarks(svg: string, offsetX: number, offsetY: number): Mark[]
         width: Number(rectW),
         height: Number(rectH),
         beat,
+        partial,
       });
     } else if (pathD !== undefined) {
       const name = pathAttributes.includes('style="stroke: none"') ? 'fill' : 'stroke';
-      marks.push({ kind: 'path', name, ...readPath(pathD, dx, dy), beat });
+      marks.push({ kind: 'path', name, ...readPath(pathD, dx, dy), beat, partial });
     } else {
       groups.pop();
     }
@@ -249,7 +254,7 @@ export class Engraving {
       const partials = new Map(layout.partials.map(partial => [partial.id, partial]));
       this.marks = session.paint(layout.partials.map(partial => partial.id)).flatMap(painted => {
         const partial = partials.get(painted.id);
-        return partial === undefined ? [] : readMarks(painted.svg, 0, partial.y);
+        return partial === undefined ? [] : readMarks(painted.svg, 0, partial.y, partial.kind);
       });
       const { beatIndex, beatRect, barIndex, barRect, systems } = layout.bounds;
       for (let i = 0; i * BOUNDS_SYSTEM_STRIDE < systems.length; i++) {
