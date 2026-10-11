@@ -196,11 +196,16 @@ export const strings = {
     title === null ? 'OpenTabz — open any tab, instantly' : `${title} · OpenTabz`,
 
   home: {
-    headline: 'Drop a tab.',
-    release: 'Let it go.',
-    lede: 'Guitar Pro, MusicXML and alphaTex files render instantly — right here, never uploaded.',
+    eyebrow: 'Free and open source',
+    /** Two lines on wide screens; read as one sentence. */
+    headline: ['Guitar tabs,', 'beautifully engraved.'],
+    lede: 'Open Guitar Pro, MusicXML, Capella and alphaTex files right in your browser — nothing to install, nothing uploaded.',
     openFile: 'Open a file',
     openUrl: 'Open from a link',
+    dropHint: 'or drop files anywhere on this page',
+    /** Shown while files are dragged over the window ("let ring" is the tab marking for sustain). */
+    release: 'Let it ring.',
+    releaseDetail: 'Release to open — Guitar Pro, MusicXML, Capella or alphaTex',
     demosHeading: 'Or try',
     privacy: 'Free and open source. No account, no tracking — your files never leave this device.',
   },
@@ -370,6 +375,7 @@ export const strings = {
     trademark:
       'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with or endorsed by Arobas Music; it opens Guitar Pro files for compatibility.',
     notices: 'Third-party notices',
+    maker: 'OpenTabz is a Whale Development Studios product.',
     close: 'Close',
   },
 
@@ -378,6 +384,10 @@ export const strings = {
     engine: 'Notation engine: alphaTab',
     trademark:
       'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with Arobas Music.',
+    /** Signature: "A Whale Development Studios product", with the studio name emphasised. */
+    makerBefore: 'A',
+    maker: 'Whale Development Studios',
+    makerAfter: 'product',
   },
 
   loading: {

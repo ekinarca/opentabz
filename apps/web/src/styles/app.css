@@ -4,6 +4,7 @@
 @import '@fontsource/instrument-serif/400.css';
 @import '@fontsource-variable/jetbrains-mono/wght.css';
 @import '../score-view/score-view.css';
+@import './landing.css';
 
 @source '../../../../packages/ui/src';
 
@@ -30,85 +31,6 @@
     opacity: 0;
     transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) scale(0.97);
   }
-}
-
-/* Landing page ---------------------------------------------------------------------------- */
-
-.ot-home {
-  background: var(--ot-bg);
-}
-
-.ot-home-glow {
-  background:
-    radial-gradient(
-      55% 45% at 50% 52%,
-      color-mix(in oklab, var(--ot-accent) 9%, transparent),
-      transparent 72%
-    ),
-    radial-gradient(
-      120% 90% at 50% 120%,
-      color-mix(in oklab, var(--ot-text) 5%, transparent),
-      transparent 60%
-    );
-}
-
-.ot-strings {
-  /* Centred on the headline; the letters sit on the strings like notes on a staff. */
-  height: 74%;
-}
-
-.ot-string {
-  display: block;
-  width: 100%;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in oklab, var(--ot-text) 30%, transparent) 12%,
-    color-mix(in oklab, var(--ot-text) 17%, transparent) 50%,
-    color-mix(in oklab, var(--ot-text) 30%, transparent) 88%,
-    transparent 100%
-  );
-  transform-origin: left center;
-  transform: scaleX(0);
-  animation: ot-string-draw 1100ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-}
-
-.ot-strings[data-active] .ot-string {
-  background: linear-gradient(90deg, transparent, var(--ot-accent) 10%, var(--ot-accent) 90%, transparent);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--ot-accent) 55%, transparent);
-  animation: ot-string-shake var(--ot-string-speed, 140ms) linear infinite;
-}
-
-@keyframes ot-string-draw {
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes ot-string-shake {
-  0%,
-  100% {
-    transform: scaleX(1) translateY(0);
-  }
-  25% {
-    transform: scaleX(1) translateY(-1.2px);
-  }
-  75% {
-    transform: scaleX(1) translateY(1.2px);
-  }
-}
-
-/* The headline sits on the strings; a halo in the page colour keeps the letters clean. */
-.ot-home-title {
-  -webkit-text-stroke: 0.09em var(--ot-bg);
-  paint-order: stroke fill;
-}
-
-.ot-home-cta {
-  box-shadow:
-    0 1px 0 color-mix(in oklab, var(--ot-text) 25%, transparent) inset,
-    0 10px 30px -10px color-mix(in oklab, var(--ot-text) 45%, transparent);
 }
 
 @utility ot-fade-in {

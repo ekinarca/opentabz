@@ -1,0 +1,579 @@
+/*
+ * Landing page (src/app/Home.tsx). Every colour comes from the theme tokens, so the page follows
+ * light, dark, sepia and stage. Motion is opt-in: the intro only animates with
+ * `prefers-reduced-motion: no-preference`, and the stage script never moves the strings under
+ * `reduce`.
+ */
+
+/*
+ * Metric-matched fallbacks: until Instrument Sans has loaded, Arial (or a metric-compatible clone) is
+ * scaled to the same advance widths and vertical metrics, so the swap neither re-wraps nor shifts.
+ */
+@font-face {
+  font-family: 'OT Sans Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans');
+  font-weight: 400 549;
+  size-adjust: 101.5%;
+  ascent-override: 95.57%;
+  descent-override: 24.63%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'OT Sans Fallback';
+  src:
+    local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold');
+  font-weight: 550 700;
+  size-adjust: 98.7%;
+  ascent-override: 98.28%;
+  descent-override: 25.33%;
+  line-gap-override: 0%;
+}
+
+/*
+ * Start downloading Instrument Sans while the app script is still loading: an invisible character in
+ * the not-yet-rendered root makes the browser fetch the font during the first style pass, so the
+ * landing usually paints in its own typeface instead of swapping fonts (and nudging text) later.
+ */
+#root:empty::before {
+  position: absolute;
+  visibility: hidden;
+  font-family: 'Instrument Sans Variable';
+  font-weight: 600;
+  content: 'O';
+}
+
+.ot-landing {
+  --ot-landing-gutter: clamp(16px, 4vw, 40px);
+  --ot-landing-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --stage-string: color-mix(in oklab, var(--ot-text) 34%, var(--ot-bg));
+  --stage-bar: color-mix(in oklab, var(--ot-text) 40%, var(--ot-bg));
+  --stage-rhythm: color-mix(in oklab, var(--ot-text) 52%, var(--ot-bg));
+  --stage-note: var(--ot-text);
+  --stage-hot: var(--ot-accent);
+
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ot-bg);
+  color: var(--ot-text);
+  font-family: 'Instrument Sans Variable', 'OT Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The landing scrolls itself when a short window can't fit it (the app shell never scrolls). */
+.ot-landing-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  /* Content scrolled under the floating top bar fades out instead of colliding with it. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
+}
+
+.ot-landing-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.ot-landing-main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: clamp(68px, 10vh, 112px) clamp(16px, 3vh, 32px);
+}
+
+/* Hero ---------------------------------------------------------------------------------------- */
+
+.ot-hero {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding-inline: var(--ot-landing-gutter);
+  text-align: center;
+}
+
+/* A soft warm light above the headline; it fades out well before the stage. */
+.ot-hero::before {
+  position: absolute;
+  inset: -45% -10% 0;
+  z-index: -1;
+  background: radial-gradient(
+    46% 44% at 50% 42%,
+    color-mix(in oklab, var(--ot-accent) 9%, transparent),
+    transparent
+  );
+  content: '';
+  pointer-events: none;
+}
+
+/* The copy and the drop message share one grid cell, so swapping them never moves anything. */
+.ot-hero-copy,
+.ot-drop-message {
+  grid-area: 1 / 1;
+  justify-self: stretch;
+}
+
+.ot-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition:
+    opacity 200ms var(--ot-landing-ease),
+    transform 320ms var(--ot-landing-ease);
+}
+
+.ot-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 14px 0 12px;
+  border: 1px solid color-mix(in oklab, var(--ot-text) 13%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ot-surface) 55%, transparent);
+  color: var(--ot-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ot-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ot-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ot-accent) 18%, transparent);
+}
+
+.ot-title {
+  margin-top: clamp(14px, 2.6vh, 28px);
+  color: var(--ot-text);
+  font-size: clamp(38px, min(6.2vw, 8.8vh), 92px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+
+@media (min-width: 640px) {
+  .ot-title-line {
+    display: block;
+    white-space: nowrap;
+  }
+}
+
+.ot-lede {
+  max-width: 34em;
+  margin-top: clamp(14px, 2.4vh, 26px);
+  color: var(--ot-text-muted);
+  font-size: clamp(16px, 0.55vw + 11px, 19px);
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.ot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 12px;
+  margin-top: clamp(20px, 3.6vh, 40px);
+}
+
+.ot-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 54px;
+  padding: 0 9px 0 26px;
+  border-radius: 999px;
+  background: var(--ot-text);
+  color: var(--ot-bg);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--ot-bg) 22%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.12),
+    0 14px 30px -14px rgb(0 0 0 / 0.42);
+  transition:
+    transform 200ms var(--ot-landing-ease),
+    box-shadow 200ms var(--ot-landing-ease),
+    opacity 200ms var(--ot-landing-ease);
+}
+
+.ot-cta:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--ot-bg) 22%, transparent),
+    0 2px 4px rgb(0 0 0 / 0.12),
+    0 20px 36px -14px rgb(0 0 0 / 0.5);
+}
+
+.ot-cta:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.ot-cta:disabled {
+  cursor: progress;
+  opacity: 0.6;
+  transform: none;
+}
+
+.ot-cta:focus-visible,
+.ot-secondary:focus-visible {
+  outline-offset: 3px;
+}
+
+.ot-cta-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 52px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ot-bg) 16%, transparent);
+  color: color-mix(in oklab, var(--ot-bg) 84%, var(--ot-text));
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.ot-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 54px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: var(--ot-text-muted);
+  font-size: 15.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 160ms var(--ot-landing-ease),
+    background-color 160ms var(--ot-landing-ease);
+}
+
+.ot-secondary:hover {
+  background: color-mix(in oklab, var(--ot-text) 6%, transparent);
+  color: var(--ot-text);
+}
+
+.ot-drop-hint {
+  margin-top: 14px;
+  color: var(--ot-text-muted);
+  font-size: 13.5px;
+}
+
+@media (max-height: 780px) {
+  .ot-drop-hint {
+    display: none;
+  }
+}
+
+/* Phones and tablets without a pointer: no shortcut hint, nothing to drag. */
+@media (hover: none) and (pointer: coarse) {
+  .ot-cta-kbd,
+  .ot-drop-hint {
+    display: none;
+  }
+
+  .ot-cta {
+    padding-right: 26px;
+  }
+}
+
+/* Drag over: the copy steps back and the stage takes the message. */
+.ot-drop-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px) scale(0.98);
+  transition:
+    opacity 200ms var(--ot-landing-ease),
+    transform 360ms var(--ot-landing-ease);
+}
+
+.ot-drop-title {
+  color: var(--ot-text);
+  font-size: clamp(46px, min(8vw, 12vh), 120px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.ot-drop-detail {
+  margin-top: clamp(14px, 2.4vh, 22px);
+  padding-inline: var(--ot-landing-gutter);
+  color: var(--ot-text-muted);
+  font-size: clamp(15px, 0.5vw + 11px, 18px);
+  text-wrap: balance;
+}
+
+/* Stage --------------------------------------------------------------------------------------- */
+
+.ot-stage {
+  position: relative;
+  height: clamp(112px, 17vh, 180px);
+  margin-top: clamp(20px, 4vh, 48px);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+
+.ot-stage-svg {
+  display: block;
+  overflow: visible;
+}
+
+.ot-stage-string {
+  fill: none;
+  stroke: var(--stage-string);
+  transition: stroke 260ms var(--ot-landing-ease);
+}
+
+.ot-stage-glow {
+  fill: none;
+}
+
+.ot-stage-glow-stop {
+  stop-color: var(--stage-hot);
+}
+
+.ot-stage-bar {
+  fill: none;
+  stroke: var(--stage-bar);
+  stroke-width: 1;
+}
+
+.ot-stage-stem {
+  fill: none;
+  stroke: var(--stage-rhythm);
+  stroke-width: 1;
+}
+
+.ot-stage-beam {
+  fill: var(--stage-rhythm);
+}
+
+.ot-stage-knockout {
+  fill: var(--ot-bg);
+}
+
+.ot-stage-fret {
+  fill: var(--stage-note);
+  font-variant-numeric: tabular-nums;
+  font-weight: 560;
+}
+
+.ot-stage-bars,
+.ot-stage-notes,
+.ot-stage-rhythm {
+  transition: opacity 240ms var(--ot-landing-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ot-stage[data-intro] :is(.ot-stage-string, .ot-stage-bar, .ot-stage-stem) {
+    stroke-dasharray: 1 1;
+    animation: ot-stage-rule var(--ot-rule-ms, 1000ms) var(--ot-rule-ease, cubic-bezier(0.65, 0, 0.35, 1))
+      var(--d, 0ms) both;
+  }
+
+  .ot-stage[data-intro] :is(.ot-stage-bar, .ot-stage-stem) {
+    --ot-rule-ms: 280ms;
+    --ot-rule-ease: var(--ot-landing-ease);
+  }
+
+  .ot-stage[data-intro] .ot-stage-note {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ot-stage-note 460ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0ms) both;
+  }
+
+  .ot-stage[data-intro] .ot-stage-fret {
+    animation: ot-stage-struck 1500ms var(--ot-landing-ease) var(--d, 0ms) both;
+  }
+
+  .ot-stage[data-intro] .ot-stage-beam {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: ot-stage-beam var(--span, 300ms) linear var(--d, 0ms) both;
+  }
+}
+
+@keyframes ot-stage-rule {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ot-stage-note {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* A note lights up in the accent colour as it is engraved, then settles into ink. */
+@keyframes ot-stage-struck {
+  from,
+  12% {
+    fill: var(--stage-hot);
+  }
+}
+
+@keyframes ot-stage-beam {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Demos and footer ---------------------------------------------------------------------------- */
+
+.ot-demos {
+  margin-top: clamp(14px, 2.6vh, 28px);
+  padding-inline: var(--ot-landing-gutter);
+  color: var(--ot-text-muted);
+  font-size: 14.5px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ot-demo {
+  border-radius: 4px;
+  color: var(--ot-text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--ot-text) 28%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: text-decoration-color 160ms var(--ot-landing-ease);
+}
+
+.ot-demo-item {
+  white-space: nowrap;
+}
+
+.ot-demo:hover {
+  text-decoration-color: var(--ot-accent);
+}
+
+.ot-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 32px;
+  margin-inline: var(--ot-landing-gutter);
+  padding: 18px 0 22px;
+  border-top: 1px solid color-mix(in oklab, var(--ot-text) 10%, transparent);
+  color: var(--ot-text-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.ot-signature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ot-text-muted);
+  font-size: 13px;
+}
+
+.ot-signature strong {
+  color: var(--ot-text);
+  font-weight: 600;
+}
+
+.ot-footer-meta {
+  display: flex;
+  justify-self: stretch;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 10px;
+}
+
+.ot-footer-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ot-footer-legal {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .ot-footer {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .ot-footer-meta {
+    justify-content: center;
+  }
+}
+
+/* Drag over ----------------------------------------------------------------------------------- */
+
+/* Above the app's generic drop overlay: on the landing page the page itself is the drop target. */
+.ot-landing[data-dragging] {
+  z-index: 100;
+}
+
+.ot-drop-frame {
+  position: absolute;
+  inset: 10px;
+  border: 1.5px solid var(--ot-accent);
+  border-radius: 22px;
+  box-shadow: inset 0 0 48px -12px color-mix(in oklab, var(--ot-accent) 40%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.012);
+  transition:
+    opacity 200ms var(--ot-landing-ease),
+    transform 360ms var(--ot-landing-ease);
+}
+
+.ot-demos,
+.ot-footer {
+  transition: opacity 200ms var(--ot-landing-ease);
+}
+
+.ot-landing[data-dragging] .ot-hero-copy {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.985);
+}
+
+.ot-landing[data-dragging] .ot-drop-message,
+.ot-landing[data-dragging] .ot-drop-frame {
+  opacity: 1;
+  transform: none;
+}
+
+.ot-landing[data-dragging] .ot-stage-string {
+  stroke: var(--stage-hot);
+}
+
+.ot-landing[data-dragging] :is(.ot-stage-bars, .ot-stage-notes, .ot-stage-rhythm, .ot-demos, .ot-footer) {
+  opacity: 0.22;
+}
