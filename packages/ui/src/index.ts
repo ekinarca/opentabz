@@ -23,3 +23,5 @@ export {
 } from './components/SegmentedControl.tsx';
 export { LogoMark, Wordmark } from './components/Logo.tsx';
 export { Toast, ToastProvider, ToastViewport, type ToastProps, type ToastTone } from './components/Toast.tsx';
+export { Popover, PopoverTrigger, PopoverContent, type PopoverContentProps } from './components/Popover.tsx';
+export { Slider, type SliderProps } from './components/Slider.tsx';

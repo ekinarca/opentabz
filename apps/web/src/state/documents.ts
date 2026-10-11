@@ -23,6 +23,14 @@ export interface DocViewState {
   readonly autoFit: boolean;
 }
 
+/** Mixer state of one track (applied to every MIDI channel the track uses). */
+export interface TrackMix {
+  readonly mute: boolean;
+  readonly solo: boolean;
+  /** Mix level, 0–1, on top of the volume stored in the file. */
+  readonly volume: number;
+}
+
 export interface OpenDocument {
   /** Stable key for the UI; also the engine view id. */
   readonly key: string;
@@ -30,6 +38,7 @@ export interface OpenDocument {
   readonly engineId: string;
   readonly summary: DocSummary;
   readonly view: DocViewState;
+  readonly mix: readonly TrackMix[];
   readonly source: { readonly name: string; readonly bytes: ArrayBuffer };
   /** Performance mark set when the file arrived (drop, pick, paste or download). */
   readonly intakeMark: string;
@@ -65,6 +74,7 @@ interface DocumentsState {
   /** Shows a document, or the home page when `key` is null. */
   readonly activate: (key: string | null) => void;
   readonly updateView: (key: string, patch: Partial<DocViewState>) => void;
+  readonly updateMix: (key: string, trackIndex: number, patch: Partial<TrackMix>) => void;
   readonly reportFailure: (error: OpenError) => void;
   readonly dismissFailures: () => void;
   readonly notify: (notice: Omit<Notice, 'id'>) => void;
@@ -158,6 +168,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           engineId: summary.id,
           summary,
           view: initialView(summary),
+          mix: summary.tracks.map(track => ({ mute: track.mix.mute, solo: track.mix.solo, volume: 1 })),
           source: { name: loaded.name, bytes },
           intakeMark,
         };
@@ -202,6 +213,16 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
   updateView: (key, patch) => {
     set(state => ({
       docs: state.docs.map(doc => (doc.key === key ? { ...doc, view: { ...doc.view, ...patch } } : doc)),
+    }));
+  },
+
+  updateMix: (key, trackIndex, patch) => {
+    set(state => ({
+      docs: state.docs.map(doc =>
+        doc.key === key
+          ? { ...doc, mix: doc.mix.map((mix, index) => (index === trackIndex ? { ...mix, ...patch } : mix)) }
+          : doc,
+      ),
     }));
   },
 

@@ -40,6 +40,15 @@ export interface TrackSummary {
   readonly isPercussion: boolean;
   /** General MIDI program (0–127). */
   readonly program: number;
+  /** MIDI channels the track plays on (primary first; the second is used for effects). */
+  readonly channels: readonly number[];
+  /** Initial mixer state stored in the file. */
+  readonly mix: {
+    readonly volume: number;
+    readonly balance: number;
+    readonly mute: boolean;
+    readonly solo: boolean;
+  };
   readonly staves: readonly StaffSummary[];
 }
 

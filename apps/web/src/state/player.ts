@@ -14,7 +14,7 @@ import {
   type TransportState,
 } from '../audio/transport-machine.ts';
 import { getEngine } from '../engine/instance.ts';
-import type { OpenDocument } from './documents.ts';
+import { useDocuments, type OpenDocument } from './documents.ts';
 
 export const SPEED_PRESETS = [0.25, 0.5, 0.75, 0.9, 1, 1.25, 1.5, 2] as const;
 export const MIN_SPEED = 0.25;
@@ -50,6 +50,29 @@ export interface PlayerState {
 }
 
 let loadSeq = 0;
+
+/** Sends a document's mixer state to the synthesizer, channel by channel. */
+function applyMix(doc: OpenDocument): void {
+  const engine = getAudioEngine();
+  doc.summary.tracks.forEach((track, index) => {
+    const mix = doc.mix[index];
+    if (mix === undefined) return;
+    for (const channel of track.channels) {
+      engine.send({ type: 'setChannelMute', channel, value: mix.mute });
+      engine.send({ type: 'setChannelSolo', channel, value: mix.solo });
+      engine.send({ type: 'setChannelVolume', channel, value: mix.volume });
+    }
+  });
+}
+
+// Keep the synthesizer in step with mixer changes of the loaded document.
+useDocuments.subscribe((state, previous) => {
+  const key = usePlayer.getState().docKey;
+  if (key === null) return;
+  const doc = state.docs.find(candidate => candidate.key === key);
+  const before = previous.docs.find(candidate => candidate.key === key);
+  if (doc !== undefined && before !== undefined && doc.mix !== before.mix) applyMix(doc);
+});
 
 export function clampSpeed(speed: number): number {
   return Math.min(MAX_SPEED, Math.max(MIN_SPEED, Math.round(speed * 100) / 100));
@@ -131,6 +154,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         engine.send({ type: 'setCountInVolume', value: countIn ? 1 : 0 });
         engine.send({ type: 'setLoop', enabled: loop, range: null });
         engine.send({ type: 'setMasterVolume', value: volume });
+        applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc);
         set({ timeline, endTime: result.type === 'midiLoaded' ? result.endTime : 0 });
         dispatch({ type: 'loaded' });
       } catch (error) {

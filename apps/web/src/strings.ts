@@ -319,6 +319,15 @@ export const strings = {
     unmute: 'Unmute',
   },
 
+  mixer: {
+    open: 'Mixer',
+    title: 'Mixer',
+    mute: (track: string) => `Mute ${track}`,
+    solo: (track: string) => `Solo ${track}`,
+    volume: (track: string) => `${track} level`,
+    practice: 'Practice mode: mute the tracks you are reading',
+  },
+
   songInfo: {
     title: 'Song info',
     fields: {

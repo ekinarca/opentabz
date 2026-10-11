@@ -20,7 +20,9 @@ import {
 } from 'lucide-react';
 import { canToggle } from '../audio/transport-machine.ts';
 import { findBarOccurrence, occurrence } from '../score-view/timeline-lookup.ts';
+import { useDocuments } from '../state/documents.ts';
 import { SPEED_PRESETS, usePlayer } from '../state/player.ts';
+import { Mixer } from './Mixer.tsx';
 import { strings } from '../strings.ts';
 
 function formatTime(milliseconds: number): string {
@@ -68,6 +70,7 @@ export function Transport() {
   const setLoop = usePlayer(state => state.setLoop);
   const setVolume = usePlayer(state => state.setVolume);
 
+  const activeDoc = useDocuments(state => state.docs.find(doc => doc.key === state.activeKey) ?? null);
   const playing = transport.status === 'playing';
   const loading = transport.status === 'loading' || transport.status === 'unloaded';
   const bar = timeline === null ? null : occurrence(timeline, findBarOccurrence(timeline, tick));
@@ -157,6 +160,7 @@ export function Transport() {
             </MenuRadioGroup>
           </MenuContent>
         </Menu>
+        {activeDoc !== null && <Mixer doc={activeDoc} />}
         <IconButton
           label={strings.transport.loop}
           icon={<Repeat size={17} aria-hidden />}

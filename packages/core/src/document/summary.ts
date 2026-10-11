@@ -44,6 +44,13 @@ function summarizeTrack(track: alphaTab.model.Track): TrackSummary {
     color: cssColor(track.color),
     isPercussion: track.isPercussion,
     program: track.playbackInfo.program,
+    channels: [...new Set([track.playbackInfo.primaryChannel, track.playbackInfo.secondaryChannel])],
+    mix: {
+      volume: track.playbackInfo.volume,
+      balance: track.playbackInfo.balance,
+      mute: track.playbackInfo.isMute,
+      solo: track.playbackInfo.isSolo,
+    },
     staves: track.staves.map(summarizeStaff),
   };
 }
