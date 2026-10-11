@@ -392,6 +392,7 @@ export const strings = {
   trackStaves: {
     open: 'Each track…',
     value: 'Each track',
+    concertPitch: 'Concert pitch',
     title: 'Staves of each track',
     description:
       'Which staves each track shows: standard notation, tablature, rhythm slashes and numbered notation.',
@@ -485,6 +486,8 @@ export const strings = {
     texts: { full: 'Full name', short: 'Short name' } satisfies Record<TrackNameText, string>,
     orientations: { horizontal: 'Across', vertical: 'Upright' } satisfies Record<TextOrientation, string>,
     dynamics: 'Dynamics',
+    tempoMarks: 'Tempo marks',
+    lyrics: 'Lyrics',
     tuning: 'Tuning legend',
     chordDiagramsOnTop: 'Chord diagrams above the music',
     chordDiagramsInScore: 'Chord diagrams above their beats',

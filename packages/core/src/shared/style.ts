@@ -34,6 +34,10 @@ export interface ScoreStyle {
   /** How much room the durations take across the page (rhythmic spacing), 1 = as usual. */
   readonly spacing: number;
   readonly hideDynamics: boolean;
+  /** Tempo marks where the tempo is set or changes (REND-210). */
+  readonly tempoMarks: boolean;
+  /** Lyrics under the staves. */
+  readonly lyrics: boolean;
   readonly brackets: BracketMode;
   /** Brackets and braces even around a single staff. */
   readonly singleStaffBrackets: boolean;
@@ -77,6 +81,8 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   keepTextSize: false,
   spacing: 1,
   hideDynamics: false,
+  tempoMarks: true,
+  lyrics: true,
   brackets: 'staves',
   singleStaffBrackets: false,
   extendBarLines: false,

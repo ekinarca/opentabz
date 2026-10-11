@@ -215,6 +215,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       systemsLayout: doc.view.systemsLayout,
       staffDisplay: doc.view.staffDisplay,
       staves: doc.view.staves,
+      concertPitch: doc.view.concertPitch,
       trackIndexes: doc.view.trackIndexes,
       zoom: doc.view.zoom,
       fields,

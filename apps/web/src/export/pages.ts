@@ -41,6 +41,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       systemsLayout: doc.view.systemsLayout,
       staffDisplay: doc.view.staffDisplay,
       staves: doc.view.staves,
+      concertPitch: doc.view.concertPitch,
       width: contentWidth(geometry),
       notationScale: 1,
       // The pages' header and footer are drawn on the sheets, not by the engine.

@@ -241,6 +241,20 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.tempoMarks}
+            checked={style.tempoMarks}
+            onCheckedChange={tempoMarks => {
+              set({ tempoMarks });
+            }}
+          />
+          <Switch
+            label={s.lyrics}
+            checked={style.lyrics}
+            onCheckedChange={lyrics => {
+              set({ lyrics });
+            }}
+          />
+          <Switch
             label={s.tuning}
             checked={style.tuning}
             onCheckedChange={tuning => {

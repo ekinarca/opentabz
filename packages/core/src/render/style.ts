@@ -56,6 +56,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     keepTextSize: false,
     spacing: 1,
     hideDynamics: sheet.hideDynamics,
+    tempoMarks: true,
+    lyrics: true,
     brackets: keyOf(BRACKETS, sheet.bracketExtendMode, 'staves'),
     singleStaffBrackets: sheet.showSingleStaffBrackets,
     extendBarLines: sheet.extendBarLines,
@@ -181,6 +183,8 @@ export function applyScoreStyle(
       case 'titleBlock':
       case 'pages':
       case 'chordSpelling':
+      case 'tempoMarks':
+      case 'lyrics':
         break;
     }
   }
@@ -215,7 +219,10 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   const display = settings.display;
   display.scale *= style.scale;
   display.stretchForce = style.spacing;
-  settings.notation.elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
+  const { elements } = settings.notation;
+  elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
+  elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);
+  elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   if (style.keepTextSize && style.scale !== 1) {
     // The renderer scales text with the score: text drawn at its size divided by the scale stays put.

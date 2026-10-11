@@ -56,6 +56,8 @@ export interface ViewOptions {
   readonly staffDisplay: StaffDisplay;
   /** Tracks whose staves are chosen one by one, overriding `staffDisplay`. */
   readonly staves?: readonly TrackStaves[];
+  /** Transposing instruments written at concert pitch rather than as their parts read (REND-032). */
+  readonly concertPitch?: boolean;
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

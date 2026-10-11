@@ -86,6 +86,9 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'hideEmptyStavesInFirstSystem',
   ] as const;
   if (flags.some(flag => typeof raw[flag] !== 'boolean')) return null;
+  // Switches added later: what an older version did not keep comes from the file's style.
+  const laterFlags = ['tempoMarks', 'lyrics'] as const;
+  if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   const style = {
     scale: within(raw.scale, STYLE_SCALE),
     spacing: within(raw.spacing, STYLE_SPACING),
@@ -107,6 +110,9 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   return {
     ...DEFAULT_SCORE_STYLE,
     ...Object.fromEntries(flags.map(flag => [flag, raw[flag] === true])),
+    ...Object.fromEntries(
+      laterFlags.map(flag => [flag, typeof raw[flag] === 'boolean' ? raw[flag] : fallback[flag]]),
+    ),
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
     titleBlock,
     pages,

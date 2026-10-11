@@ -37,6 +37,8 @@ export interface DocViewState {
   readonly staffDisplay: StaffDisplay;
   /** Tracks whose kinds of staff were chosen one by one (REND-031). */
   readonly staves: readonly TrackStaves[];
+  /** Transposing instruments written at concert pitch (REND-032). */
+  readonly concertPitch: boolean;
   readonly zoom: number;
   /** True until the view has fitted the zoom to the window once. */
   readonly autoFit: boolean;
@@ -185,6 +187,7 @@ function initialView(summary: DocSummary): DocViewState {
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,
     staves: [],
+    concertPitch: false,
     zoom: 1,
     autoFit: true,
     fit: null,

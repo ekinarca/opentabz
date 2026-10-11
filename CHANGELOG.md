@@ -137,6 +137,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   %MUSIC%", aligned left, centre or right) and every page's header and footer, the first page's
   and the later ones' apart, with the score's information and the page number and count. Lines a
   Guitar Pro file hides stay hidden, and the PDF, images and printing write the same.
+- **Concert pitch, tempo marks and lyrics.** The Staves menu's Concert pitch writes transposing
+  instruments (B♭ clarinet, F horn, saxophones…) as they sound, keeping the octave a guitar or a
+  tenor saxophone reads in; the stylesheet shows or hides tempo marks and lyrics. Bracketed
+  comments in lyrics stay out of the score.
 - **Chord names in a style.** Chord names in the score and the chords panel as written, or
   spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
 - **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard

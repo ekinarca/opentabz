@@ -49,6 +49,7 @@ export interface ScoreViewState {
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
   readonly staves: readonly TrackStaves[];
+  readonly concertPitch: boolean;
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
@@ -573,6 +574,7 @@ export class ScoreView {
       systemsLayout: state.systemsLayout,
       staffDisplay: state.staffDisplay,
       staves: state.staves,
+      concertPitch: state.concertPitch,
       width,
       notationScale: 1,
       // The pages' header and footer are drawn here: changing them needs no new layout.
@@ -868,6 +870,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
+    a.concertPitch === b.concertPitch &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -886,6 +889,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves, b.staves) &&
+    a.concertPitch === b.concertPitch &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );

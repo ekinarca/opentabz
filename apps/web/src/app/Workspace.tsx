@@ -181,6 +181,14 @@ function ViewToolbar({
           </MenuRadioGroup>
           <MenuSeparator />
           <MenuItem onSelect={onTrackStaves}>{strings.trackStaves.open}</MenuItem>
+          <MenuCheckboxItem
+            checked={view.concertPitch}
+            onCheckedChange={concertPitch => {
+              update({ concertPitch });
+            }}
+          >
+            {strings.trackStaves.concertPitch}
+          </MenuCheckboxItem>
         </MenuContent>
       </Menu>
 

@@ -12,7 +12,7 @@ import type { ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
-import { applyStaffDisplay } from './staff-display.ts';
+import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
   /** Increases with every layout; partial ids are only valid within their generation. */
@@ -149,11 +149,13 @@ export class RenderSession {
   }
 
   private withStaffDisplay(action: () => void): void {
-    const restore = applyStaffDisplay(
-      tracksFor(this.score, this.options.trackIndexes),
-      this.options.staffDisplay,
-      this.options.staves,
-    );
+    const tracks = tracksFor(this.score, this.options.trackIndexes);
+    const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
+    const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
+    const restore = () => {
+      restorePitch();
+      restoreStaves();
+    };
     const { style } = this.options;
     const restoreStyle = style === undefined ? null : applyScoreStyle(this.score, style, this.fileStyle);
     try {
@@ -204,6 +206,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
+    a.concertPitch === b.concertPitch &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&

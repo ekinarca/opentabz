@@ -10,6 +10,23 @@ interface StaffFlags {
 }
 
 /**
+ * Writes transposing instruments at concert pitch (REND-032): their staves stop shifting what
+ * is written from what sounds, but for whole octaves, which belong to the clef (a guitar still
+ * reads an octave up, a tenor saxophone keeps its octave and drops its step). Returns what puts
+ * the parts' own transpositions back.
+ */
+export function applyConcertPitch(tracks: readonly alphaTab.model.Track[], concert: boolean): () => void {
+  if (!concert) return () => undefined;
+  const saved = tracks.flatMap(track =>
+    track.staves.map(staff => [staff, staff.displayTranspositionPitch] as const),
+  );
+  for (const [staff, pitch] of saved) staff.displayTranspositionPitch = Math.trunc(pitch / 12) * 12;
+  return () => {
+    for (const [staff, pitch] of saved) staff.displayTranspositionPitch = pitch;
+  };
+}
+
+/**
  * Applies a view's staff display choice to the rendered tracks' staves, then the kinds of staff
  * chosen for single tracks (REND-031: standard, tablature, slash, numbered), and returns a
  * function that restores the document's own flags. Layout reads these flags synchronously, so a
