@@ -6,11 +6,13 @@
  */
 import {
   sameScoreStyle,
+  sameTrackStaves,
   type LayoutKind,
   type ScoreBounds,
   type ScoreStyle,
   type StaffDisplay,
   type SystemsLayout,
+  type TrackStaves,
   type ViewLayout,
   type ViewOptions,
 } from '@opentabz/core/shared';
@@ -42,6 +44,7 @@ export interface ScoreViewState {
   readonly style: ScoreStyle;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
+  readonly staves: readonly TrackStaves[];
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** Shown in the running header of pages after the first. */
@@ -566,6 +569,7 @@ export class ScoreView {
       layout: state.layout,
       systemsLayout: state.systemsLayout,
       staffDisplay: state.staffDisplay,
+      staves: state.staves,
       width,
       notationScale: 1,
       style: state.style,
@@ -854,6 +858,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     a.layout === b.layout &&
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
+    sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -871,6 +876,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     sameScoreStyle(a.style, b.style) &&
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
+    sameTrackStaves(a.staves, b.staves) &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );

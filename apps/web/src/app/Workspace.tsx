@@ -58,6 +58,7 @@ import { ScoreHost } from './ScoreHost.tsx';
 import { SongMap } from './SongMap.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
 import { StylesheetDialog } from './StylesheetDialog.tsx';
+import { TrackStavesDialog } from './TrackStavesDialog.tsx';
 import { Transport } from './Transport.tsx';
 import { ZoomControls } from './ZoomControls.tsx';
 
@@ -83,10 +84,12 @@ function ViewToolbar({
   doc,
   onInfo,
   onPageSetup,
+  onTrackStaves,
 }: {
   readonly doc: OpenDocument;
   readonly onInfo: () => void;
   readonly onPageSetup: () => void;
+  readonly onTrackStaves: () => void;
 }) {
   const updateView = useDocuments(state => state.updateView);
   const setPreferences = usePreferences(state => state.set);
@@ -155,12 +158,18 @@ function ViewToolbar({
       </Menu>
 
       <Menu>
-        <ToolbarMenuButton label={strings.toolbar.staves} value={strings.staffDisplays[view.staffDisplay]} />
+        <ToolbarMenuButton
+          label={strings.toolbar.staves}
+          value={
+            view.staves.length > 0 ? strings.trackStaves.value : strings.staffDisplays[view.staffDisplay]
+          }
+        />
         <MenuContent>
           <MenuRadioGroup<StaffDisplay>
             value={view.staffDisplay}
             onValueChange={value => {
-              update({ staffDisplay: value });
+              // One choice for every track again.
+              update({ staffDisplay: value, staves: [] });
               setPreferences({ staffDisplay: value });
             }}
           >
@@ -170,6 +179,8 @@ function ViewToolbar({
               </MenuRadioItem>
             ))}
           </MenuRadioGroup>
+          <MenuSeparator />
+          <MenuItem onSelect={onTrackStaves}>{strings.trackStaves.open}</MenuItem>
         </MenuContent>
       </Menu>
 
@@ -371,6 +382,7 @@ export function Workspace() {
   const active = docs.find(doc => doc.key === activeKey) ?? null;
   const [infoOpen, setInfoOpen] = useState(false);
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
+  const [stavesOpen, setStavesOpen] = useState(false);
   const fretboard = usePreferences(state => state.fretboard);
   const keyboard = usePreferences(state => state.keyboard);
   const chords = usePreferences(state => state.chords);
@@ -396,6 +408,9 @@ export function Workspace() {
             onPageSetup={() => {
               setPageSetupOpen(true);
             }}
+            onTrackStaves={() => {
+              setStavesOpen(true);
+            }}
           />
         ))}
       {docs.map(doc => (
@@ -416,6 +431,7 @@ export function Workspace() {
         <PageSetupDialog doc={active} open={pageSetupOpen} onOpenChange={setPageSetupOpen} />
       )}
       {active !== null && <StylesheetDialog doc={active} />}
+      {active !== null && <TrackStavesDialog doc={active} open={stavesOpen} onOpenChange={setStavesOpen} />}
     </main>
   );
 }

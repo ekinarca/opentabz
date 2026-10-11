@@ -40,6 +40,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       layout: 'page',
       systemsLayout: doc.view.systemsLayout,
       staffDisplay: doc.view.staffDisplay,
+      staves: doc.view.staves,
       width: contentWidth(geometry),
       notationScale: 1,
       style: doc.view.style,

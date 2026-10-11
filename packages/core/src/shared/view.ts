@@ -16,6 +16,31 @@ export const STAFF_DISPLAYS = ['default', 'score-tab', 'score', 'tab'] as const;
  */
 export type StaffDisplay = (typeof STAFF_DISPLAYS)[number];
 
+/** Which kinds of staff a track shows (REND-031), in place of what the file and the view say. */
+export interface TrackStaves {
+  readonly trackIndex: number;
+  readonly standard: boolean;
+  readonly tablature: boolean;
+  readonly slash: boolean;
+  readonly numbered: boolean;
+}
+
+export function sameTrackStaves(a: readonly TrackStaves[], b: readonly TrackStaves[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((entry, index) => {
+      const other = b[index];
+      return (
+        entry.trackIndex === other?.trackIndex &&
+        entry.standard === other.standard &&
+        entry.tablature === other.tablature &&
+        entry.slash === other.slash &&
+        entry.numbered === other.numbered
+      );
+    })
+  );
+}
+
 /** A run of master bars, by index (inclusive). */
 export interface BarRange {
   readonly first: number;
@@ -29,6 +54,8 @@ export interface ViewOptions {
   readonly layout: LayoutKind;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
+  /** Tracks whose staves are chosen one by one, overriding `staffDisplay`. */
+  readonly staves?: readonly TrackStaves[];
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

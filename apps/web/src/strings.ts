@@ -385,6 +385,19 @@ export const strings = {
     fullScreen: 'Full screen',
   },
 
+  trackStaves: {
+    open: 'Each track…',
+    value: 'Each track',
+    title: 'Staves of each track',
+    description:
+      'Which staves each track shows: standard notation, tablature, rhythm slashes and numbered notation.',
+    close: 'Close',
+    reset: 'As the Staves menu says',
+    track: 'Track',
+    kinds: { standard: 'Standard', tablature: 'Tab', slash: 'Slash', numbered: 'Numbered' },
+    kindFor: (kind: string, track: string) => `${kind} for ${track}`,
+  },
+
   stylesheet: {
     open: 'Stylesheet',
     title: 'Stylesheet',

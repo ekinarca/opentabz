@@ -132,6 +132,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard
+  notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
+  one another; one choice in the menu applies to every track again. Exports print the same.
 - **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
   (keeping the text's size if asked), the rhythmic spacing, brackets (none, a track's staves,
   similar instruments, around single staves too), barlines through all staves, the // separator

@@ -64,8 +64,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-001 | Standard notation + tablature                                                     | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
 | REND-002 | Tablature only                                                                    | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
 | REND-003 | Standard notation only                                                            | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
-| REND-004 | Rhythm / slash notation                                                           | GP  | M2  | alphatab/guitarpro7/slash.gp                                | —    | planned |
-| REND-005 | Numbered (jianpu) notation                                                        | GP  | M2  | —                                                           | —    | planned |
+| REND-004 | Rhythm / slash notation                                                           | GP  | M2  | alphatab/guitarpro7/slash.gp                                | packages/core/test/track-staves.test.ts, apps/web/e2e/track-staves.spec.ts | done |
+| REND-005 | Numbered (jianpu) notation                                                        | GP  | M2  | —                                                           | packages/core/test/track-staves.test.ts, apps/web/e2e/track-staves.spec.ts | done |
 | REND-006 | Lead-sheet / chord-chart layout (chords over lyrics)                              | OT  | M5  | —                                                           | —    | planned |
 | REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | —    | planned |
 | REND-010 | Page layout on A4 paper                                                           | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
@@ -82,7 +82,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-021 | Instant theme switch of rendered notation (no re-render)                          | OT  | M0  | — | packages/core/test/score-colors.test.ts, packages/core/test/render-session.test.ts | done |
 | REND-022 | Text marks (tempo, section names, effect texts) never run into other text | OT | M0 | alphatex/rendering/text-collisions.atex | apps/web/e2e/engraving.spec.ts | done |
 | REND-030 | Show all tracks or any subset of tracks                                           | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
-| REND-031 | Per-track staff visibility (standard / tab / slash / numbered)                    | GP  | M2  | —                                                           | —    | planned |
+| REND-031 | Per-track staff visibility (standard / tab / slash / numbered)                    | GP  | M2  | —                                                           | packages/core/test/track-staves.test.ts, apps/web/e2e/track-staves.spec.ts | done |
 | REND-032 | Transposing instruments: concert vs written pitch display                         | GP  | M2  | alphatab/guitarpro8/transposition-tonality-a.gp             | —    | planned |
 | REND-033 | Capo display                                                                      | GP  | M2  | —                                                           | —    | planned |
 | REND-034 | Tuning display (score header)                                                     | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |

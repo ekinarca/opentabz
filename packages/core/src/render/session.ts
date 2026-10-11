@@ -7,7 +7,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { sameScoreStyle, type ScoreStyle } from '../shared/style.ts';
-import type { PartialKind, PartialLayout, ViewOptions } from '../shared/view.ts';
+import { sameTrackStaves, type PartialKind, type PartialLayout, type ViewOptions } from '../shared/view.ts';
 import type { ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
@@ -152,6 +152,7 @@ export class RenderSession {
     const restore = applyStaffDisplay(
       tracksFor(this.score, this.options.trackIndexes),
       this.options.staffDisplay,
+      this.options.staves,
     );
     const { style } = this.options;
     const restoreStyle = style === undefined ? null : applyScoreStyle(this.score, style, this.fileStyle);
@@ -202,6 +203,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.layout === b.layout &&
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
+    sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&
