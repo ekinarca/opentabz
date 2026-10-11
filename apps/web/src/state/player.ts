@@ -2,7 +2,7 @@
  * Playback state for the UI. The audio engine runs in workers; this store mirrors what it reports
  * and exposes the transport actions. The cursor subscribes outside React for smoothness.
  */
-import type { PlaybackTimeline } from '@opentabz/core/shared';
+import type { PlaybackTimeline, TickRange } from '@opentabz/core/shared';
 import type { SynthEvent } from '@opentabz/audio/protocol';
 import { create } from 'zustand';
 import { getAudioEngine } from '../audio/audio-engine.ts';
@@ -35,17 +35,28 @@ export interface PlayerState {
   readonly metronome: boolean;
   readonly countIn: boolean;
   readonly loop: boolean;
+  /**
+   * The selected range (A/B). Playback stays inside it: it plays the range once, or repeats it
+   * while `loop` is on.
+   */
+  readonly selection: TickRange | null;
   readonly volume: number;
   readonly load: (doc: OpenDocument) => Promise<void>;
   readonly unload: () => void;
   /** Play/pause. Must be called from a user gesture (it may create the audio output). */
   readonly toggle: () => void;
   readonly stop: () => void;
+  /** Moves playback to `tick`; a tick outside the selection clears the selection. */
   readonly seek: (tick: number) => void;
   readonly setSpeed: (speed: number) => void;
   readonly setMetronome: (on: boolean) => void;
   readonly setCountIn: (on: boolean) => void;
   readonly setLoop: (on: boolean) => void;
+  /**
+   * Changes the selection. While a gesture is still adjusting it pass `final: false`: only the
+   * UI follows, and the synthesizer gets the range once the gesture ends.
+   */
+  readonly setSelection: (range: TickRange | null, final?: boolean) => void;
   readonly setVolume: (volume: number) => void;
 }
 
@@ -125,6 +136,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     metronome: false,
     countIn: false,
     loop: false,
+    selection: null,
     volume: 1,
 
     load: async doc => {
@@ -132,7 +144,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const engine = audio();
       if (get().transport.status === 'playing') engine.send({ type: 'pause' });
       dispatch({ type: 'load' });
-      set({ docKey: doc.key, timeline: null, tick: 0, time: 0, endTime: 0 });
+      set({ docKey: doc.key, timeline: null, tick: 0, time: 0, endTime: 0, selection: null });
       try {
         await engine.prepare();
         const playbackId = `${doc.key}#${seq}`;
@@ -166,7 +178,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     unload: () => {
       loadSeq += 1;
       if (get().transport.status === 'playing') audio().send({ type: 'pause' });
-      set({ docKey: null, timeline: null, tick: 0, time: 0, endTime: 0 });
+      set({ docKey: null, timeline: null, tick: 0, time: 0, endTime: 0, selection: null });
       dispatch({ type: 'unload' });
     },
 
@@ -191,10 +203,18 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
     stop: () => {
       audio().send({ type: 'stop' });
-      set({ tick: 0, time: 0 });
+      // The synthesizer returns to the start of the selection, if any; its positions follow.
+      const selection = get().selection;
+      if (selection === null) set({ tick: 0, time: 0 });
+      else set({ tick: selection.startTick });
     },
 
     seek: tick => {
+      // Playback cannot leave the selection, so moving outside it clears it.
+      const selection = get().selection;
+      if (selection !== null && (tick < selection.startTick || tick >= selection.endTick)) {
+        get().setSelection(null);
+      }
       audio().send({ type: 'seek', tick });
       set({ tick });
     },
@@ -216,8 +236,14 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     setLoop: on => {
-      audio().send({ type: 'setLoop', enabled: on, range: null });
+      audio().send({ type: 'setLoop', enabled: on, range: get().selection });
       set({ loop: on });
+    },
+
+    setSelection: (range, final = true) => {
+      const selection = range === null || range.endTick <= range.startTick ? null : range;
+      set({ selection });
+      if (final) audio().send({ type: 'setLoop', enabled: get().loop, range: selection });
     },
 
     setVolume: volume => {

@@ -4,12 +4,9 @@
  */
 import type { RingBuffers } from './ring.ts';
 
-export type { MidiDelivery } from '@opentabz/core/shared';
+import type { TickRange } from '@opentabz/core/shared';
 
-export interface TickRange {
-  readonly startTick: number;
-  readonly endTick: number;
-}
+export type { MidiDelivery, TickRange } from '@opentabz/core/shared';
 
 /** UI → synth worker. */
 export type SynthCommand =

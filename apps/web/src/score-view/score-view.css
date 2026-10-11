@@ -121,3 +121,93 @@
 .ot-partial {
   cursor: pointer;
 }
+
+/* Selection (the playback range) ------------------------------------------------------------ */
+
+.ot-sheet {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ot-selection-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.ot-selection {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--ot-accent) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ot-accent) 40%, transparent);
+}
+
+/* Handles keep their on-screen size at every zoom (the sheet is scaled with CSS zoom). */
+.ot-selection-handle {
+  --ot-px: calc(1px / var(--ot-zoom, 1));
+  --ot-knob: calc(14 * var(--ot-px));
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(36 * var(--ot-px));
+  margin-left: calc(-18 * var(--ot-px));
+  pointer-events: auto;
+  touch-action: none;
+  cursor: ew-resize;
+}
+
+.ot-selection-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: calc(2 * var(--ot-px));
+  margin-left: calc(-1 * var(--ot-px));
+  border-radius: var(--ot-px);
+  background: var(--ot-accent);
+}
+
+.ot-selection-knob {
+  position: absolute;
+  left: 50%;
+  width: var(--ot-knob);
+  height: var(--ot-knob);
+  margin-left: calc(var(--ot-knob) / -2);
+  border-radius: 50%;
+  background: var(--ot-accent);
+  box-shadow:
+    0 0 0 calc(2 * var(--ot-px)) var(--ot-paper),
+    0 calc(1 * var(--ot-px)) calc(4 * var(--ot-px)) rgb(0 0 0 / 0.25);
+  transition: transform 120ms ease-out;
+}
+
+.ot-selection-handle[data-end='start'] .ot-selection-knob {
+  top: calc(var(--ot-knob) / -2);
+}
+
+.ot-selection-handle[data-end='end'] .ot-selection-knob {
+  bottom: calc(var(--ot-knob) / -2);
+}
+
+.ot-selection-handle:hover .ot-selection-knob,
+.ot-selection-handle[data-active] .ot-selection-knob {
+  transform: scale(1.2);
+}
+
+@media (pointer: coarse) {
+  .ot-selection-handle {
+    --ot-knob: calc(18 * var(--ot-px));
+    width: calc(44 * var(--ot-px));
+    margin-left: calc(-22 * var(--ot-px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-selection-knob {
+    transition: none;
+  }
+}

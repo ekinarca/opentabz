@@ -44,6 +44,12 @@ export const BOUNDS_BAR_RECT_STRIDE = 4;
 export const BOUNDS_BEAT_INDEX_STRIDE = 4;
 export const BOUNDS_BEAT_RECT_STRIDE = 3;
 
+/** A span of score ticks, end exclusive (a selection, a loop). */
+export interface TickRange {
+  readonly startTick: number;
+  readonly endTick: number;
+}
+
 /** Engine worker → synth worker: everything needed to play a document. */
 export interface MidiDelivery {
   readonly type: 'midi';

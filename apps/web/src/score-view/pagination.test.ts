@@ -7,6 +7,8 @@ import {
   pageGeometry,
   paginate,
   placeContinuous,
+  sheetToEngine,
+  sheetToEngineNearest,
 } from './pagination.ts';
 
 let counter = 0;
@@ -102,6 +104,28 @@ describe('paginate', () => {
     const mapped = engineToSheet(sheet, 15, lastSystem.partial.y + 5);
     expect(mapped).toEqual({ x: lastSystem.x + 15, y: lastSystem.y + 5 });
     expect(engineToSheet(sheet, 0, -50)).toBeNull();
+  });
+
+  it('maps points outside the music to the nearest system, clamped into it', () => {
+    const parts = strip(20, 180);
+    const sheet = paginate(parts, geometry);
+    const systems = sheet.placements.filter(p => p.partial.kind === 'system');
+    const [first, second] = systems;
+    const last = systems.at(-1);
+    if (first === undefined || second === undefined || last === undefined) throw new Error('no systems');
+    // Inside a system both mappings agree.
+    const inside = { x: first.x + 20, y: first.y + 30 };
+    expect(sheetToEngineNearest(sheet, inside.x, inside.y)).toEqual(sheetToEngine(sheet, inside.x, inside.y));
+    // In the gap just below the first system: its bottom edge, not the header or the next system.
+    const gap = sheetToEngineNearest(sheet, first.x + 20, first.y + first.partial.height + 3);
+    expect(gap).toEqual({ x: 20, y: first.partial.y + first.partial.height });
+    // Far left of the page and far below the last page: clamped into the closest system.
+    expect(sheetToEngineNearest(sheet, -500, second.y + 10)).toEqual({ x: 0, y: second.partial.y + 10 });
+    expect(sheetToEngineNearest(sheet, last.x + 50, sheet.height + 400)).toEqual({
+      x: 50,
+      y: last.partial.y + last.partial.height,
+    });
+    expect(sheetToEngineNearest(paginate([], geometry), 0, 0)).toBeNull();
   });
 });
 

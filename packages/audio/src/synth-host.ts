@@ -57,10 +57,12 @@ export class SynthHost {
       case 'setCountInVolume':
         synth.countInVolume = command.value;
         break;
-      case 'setLoop':
+      case 'setLoop': {
+        const previous = this.loop.range;
         this.loop = { enabled: command.enabled, range: command.range };
-        this.applyLoop();
+        this.applyLoop(previous);
         break;
+      }
       case 'setChannelMute':
         synth.setChannelMute(command.channel, command.value);
         break;
@@ -135,7 +137,7 @@ export class SynthHost {
       synth.applyTranspositionPitches(
         new Map(delivery.transpositionPitches.map(([channel, pitch]) => [channel, pitch])),
       );
-      this.applyLoop();
+      this.applyLoop(null);
     } catch (error) {
       this.emit({ type: 'error', context: 'midi', message: messageOf(error) });
     }
@@ -146,17 +148,23 @@ export class SynthHost {
     this.output?.onProgress();
   }
 
-  private applyLoop(): void {
+  /** Applies the loop state; `previous` is the range the synthesizer currently has. */
+  private applyLoop(previous: TickRange | null): void {
     const synth = this.synth;
     if (synth === null) return;
     const { enabled, range } = this.loop;
     if (range === null) {
-      synth.playbackRange = null;
-    } else {
+      if (previous !== null || synth.playbackRange !== null) synth.playbackRange = null;
+    } else if (previous?.startTick !== range.startTick || previous.endTick !== range.endTick) {
+      const position = synth.tickPosition;
       const playbackRange = new alphaTab.synth.PlaybackRange();
       playbackRange.startTick = range.startTick + this.tickShift;
       playbackRange.endTick = range.endTick + this.tickShift;
+      // alphaTab moves the playhead to the start of a new range; a range adjusted around the
+      // playhead keeps playing from where it is.
       synth.playbackRange = playbackRange;
+      if (position > playbackRange.startTick && position < playbackRange.endTick)
+        synth.tickPosition = position;
     }
     synth.isLooping = enabled;
   }

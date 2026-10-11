@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { getEngine } from '../engine/instance.ts';
 import { pageGeometry } from '../score-view/pagination.ts';
 import { PlaybackCursor } from '../score-view/playback-cursor.ts';
-import { ScoreView } from '../score-view/score-view.ts';
+import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
+import { SelectionOverlay } from '../score-view/selection-overlay.ts';
 import { usePlayer } from '../state/player.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { strings } from '../strings.ts';
@@ -20,6 +21,30 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     if (scroller === null) return undefined;
     let measured = false;
     let cursor: PlaybackCursor | null = null;
+    let selection: SelectionOverlay | null = null;
+    const onGesture = (gesture: ScoreGesture) => {
+      const player = usePlayer.getState();
+      if (player.docKey !== key || cursor === null || selection === null) return;
+      switch (gesture.type) {
+        case 'tap': {
+          if (gesture.extend) {
+            selection.extendTo(gesture.x, gesture.y);
+            return;
+          }
+          const tick = cursor.tickAt(gesture.x, gesture.y);
+          if (tick !== null) player.seek(tick);
+          return;
+        }
+        case 'press':
+          if (selection.selectBarAt(gesture.x, gesture.y) && 'vibrate' in navigator) navigator.vibrate(10);
+          return;
+        case 'drag':
+          if (gesture.phase === 'start') selection.beginDrag(gesture.x, gesture.y);
+          else if (gesture.phase === 'move') selection.dragTo(gesture.x, gesture.y);
+          else selection.endDrag(gesture.x, gesture.y);
+          return;
+      }
+    };
     const view = new ScoreView(
       scroller,
       getEngine(),
@@ -36,14 +61,10 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
           }
         },
         onLayout: () => {
+          selection?.onLayout();
           cursor?.onLayout();
         },
-        onScoreClick: (x, y) => {
-          const player = usePlayer.getState();
-          if (player.docKey !== key || cursor === null) return;
-          const tick = cursor.tickAt(x, y);
-          if (tick !== null) player.seek(tick);
-        },
+        onGesture,
         onError: error => {
           useDocuments.getState().notify({
             title: strings.score.renderFailed,
@@ -56,22 +77,37 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     viewRef.current = view;
     cursor = new PlaybackCursor(view);
     const playbackCursor = cursor;
+    const selectionOverlay = new SelectionOverlay(view, {
+      onChange: (range, final) => {
+        if (usePlayer.getState().docKey === key) usePlayer.getState().setSelection(range, final);
+      },
+      currentTick: () => usePlayer.getState().tick,
+      onDragging: dragging => {
+        playbackCursor.setFollow(!dragging);
+      },
+    });
+    selection = selectionOverlay;
     const sync = (state: ReturnType<typeof usePlayer.getState>) => {
       const mine = state.docKey === key;
+      selectionOverlay.setRange(mine ? state.selection : null);
       playbackCursor.update(mine ? state.tick : 0, state.tempo, mine && state.transport.status === 'playing');
     };
     let timeline = usePlayer.getState().docKey === key ? usePlayer.getState().timeline : null;
     playbackCursor.setTimeline(timeline);
+    selectionOverlay.setTimeline(timeline);
     const unsubscribe = usePlayer.subscribe(state => {
       const next = state.docKey === key ? state.timeline : null;
       if (next !== timeline) {
         timeline = next;
+        selectionOverlay.setTimeline(next);
         playbackCursor.setTimeline(next);
       }
       sync(state);
     });
+    sync(usePlayer.getState());
     return () => {
       unsubscribe();
+      selectionOverlay.dispose();
       playbackCursor.dispose();
       view.dispose();
       viewRef.current = null;

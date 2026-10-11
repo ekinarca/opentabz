@@ -13,6 +13,7 @@ import {
   TIMELINE_SLICE_STRIDE,
   type PlaybackTimeline,
   type ScoreBounds,
+  type TickRange,
 } from '@opentabz/core/shared';
 
 export interface Rect {
@@ -171,16 +172,43 @@ export function beatAtPoint(
   y: number,
 ): number | null {
   const systemCount = bounds.systems.length / BOUNDS_SYSTEM_STRIDE;
-  let systemIndex = -1;
   for (let index = 0; index < systemCount; index++) {
     const rect = rectAt(bounds.systems, index, BOUNDS_SYSTEM_STRIDE);
-    if (y >= rect.y && y <= rect.y + rect.h) {
-      systemIndex = index;
-      break;
+    if (y >= rect.y && y <= rect.y + rect.h) return beatInSystem(bounds, tracks, index, x);
+  }
+  return null;
+}
+
+/**
+ * Like `beatAtPoint`, but a point between or beyond systems snaps to the nearest one (for drags
+ * that leave the music).
+ */
+export function beatNearPoint(
+  bounds: ScoreBounds,
+  tracks: ReadonlySet<number>,
+  x: number,
+  y: number,
+): number | null {
+  const systemCount = bounds.systems.length / BOUNDS_SYSTEM_STRIDE;
+  let nearest = -1;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < systemCount; index++) {
+    const rect = rectAt(bounds.systems, index, BOUNDS_SYSTEM_STRIDE);
+    const distance = y < rect.y ? rect.y - y : y > rect.y + rect.h ? y - (rect.y + rect.h) : 0;
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearest = index;
     }
   }
-  if (systemIndex < 0) return null;
+  return nearest < 0 ? null : beatInSystem(bounds, tracks, nearest, x);
+}
 
+function beatInSystem(
+  bounds: ScoreBounds,
+  tracks: ReadonlySet<number>,
+  systemIndex: number,
+  x: number,
+): number | null {
   let best: number | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
   const beatCount = bounds.beatIndex.length / BOUNDS_BEAT_INDEX_STRIDE;
@@ -226,7 +254,163 @@ export function tickOfBeat(timeline: PlaybackTimeline, beatId: number, preferAft
   return first;
 }
 
+/** Every tick at which `beatId` starts playing (one per pass through repeats), ascending. */
+export function beatTicks(timeline: PlaybackTimeline, beatId: number): number[] {
+  const ticks: number[] = [];
+  const itemCount = timeline.items.length / TIMELINE_ITEM_STRIDE;
+  for (let item = 0; item < itemCount; item++) {
+    const base = item * TIMELINE_ITEM_STRIDE;
+    if (timeline.items[base] !== beatId) continue;
+    const start = timeline.items[base + 2] ?? -1;
+    if (start >= 0 && ticks.at(-1) !== start) ticks.push(start);
+  }
+  return ticks;
+}
+
 /** Index (in playback order) of the slice that follows `current`, or null at the end. */
 export function nextSlice(timeline: PlaybackTimeline, current: Slice): Slice | null {
   return slice(timeline, current.index + 1);
+}
+
+/**
+ * The tick at which a beat that starts at `startTick` stops sounding: the end of the last
+ * consecutive slice that still lists it.
+ */
+export function beatEndTick(timeline: PlaybackTimeline, beatId: number, startTick: number): number {
+  const bar = occurrence(timeline, findBarOccurrence(timeline, startTick));
+  if (bar === null) return startTick;
+  let current = findSlice(timeline, bar, startTick);
+  let end = current?.endTick ?? startTick;
+  while (current !== null && listsBeat(timeline, current, beatId, startTick)) {
+    end = current.endTick;
+    current = nextSlice(timeline, current);
+  }
+  return end;
+}
+
+function listsBeat(timeline: PlaybackTimeline, target: Slice, beatId: number, startTick: number): boolean {
+  for (let item = target.firstItem; item < target.firstItem + target.itemCount; item++) {
+    const base = item * TIMELINE_ITEM_STRIDE;
+    if (timeline.items[base] === beatId && timeline.items[base + 2] === startTick) return true;
+  }
+  return false;
+}
+
+/**
+ * The playback range covering two beats (in either order): from the start of the earlier one to
+ * the end of the later one. Null if either beat is never played.
+ */
+export function rangeBetweenBeats(
+  timeline: PlaybackTimeline,
+  beatA: number,
+  beatB: number,
+  preferAfterTick = 0,
+): TickRange | null {
+  const startA = tickOfBeat(timeline, beatA, preferAfterTick);
+  const startB = tickOfBeat(timeline, beatB, preferAfterTick);
+  if (startA === null || startB === null) return null;
+  const [startTick, lastBeat, lastStart] =
+    startA <= startB ? [startA, beatB, startB] : [startB, beatA, startA];
+  return { startTick, endTick: beatEndTick(timeline, lastBeat, lastStart) };
+}
+
+/** The whole played bar containing `tick`. */
+export function barRange(timeline: PlaybackTimeline, tick: number): TickRange | null {
+  const bar = occurrence(timeline, findBarOccurrence(timeline, tick));
+  return bar === null ? null : { startTick: bar.startTick, endTick: bar.endTick };
+}
+
+/**
+ * Grows (`direction` 1) or shrinks (-1) a range by one played bar at its end. Without a range,
+ * selects the bar playing at `tick`. A range never shrinks below its first bar.
+ */
+export function resizeRangeByBar(
+  timeline: PlaybackTimeline,
+  range: TickRange | null,
+  tick: number,
+  direction: 1 | -1,
+): TickRange | null {
+  if (range === null) return barRange(timeline, tick);
+  const first = findBarOccurrence(timeline, range.startTick);
+  const last = findBarOccurrence(timeline, range.endTick - 1);
+  if (direction < 0 && last <= first) return range;
+  const target = occurrence(timeline, last + direction);
+  return target === null ? range : { startTick: range.startTick, endTick: target.endTick };
+}
+
+/** First and last played bar of a range, as master bar indexes (for labels). */
+export function rangeBars(
+  timeline: PlaybackTimeline,
+  range: TickRange,
+): { first: number; last: number } | null {
+  const first = occurrence(timeline, findBarOccurrence(timeline, range.startTick));
+  const last = occurrence(
+    timeline,
+    findBarOccurrence(timeline, Math.max(range.startTick, range.endTick - 1)),
+  );
+  if (first === null || last === null) return null;
+  return { first: first.masterBarIndex, last: last.masterBarIndex };
+}
+
+/**
+ * Rectangles (engine coordinates) covering `range` for the visible tracks, one per run of bars on
+ * a staff system: whole bars edge to edge, partly covered bars from beat to beat.
+ */
+export function rangeRects(
+  bounds: ScoreBounds,
+  timeline: PlaybackTimeline,
+  tracks: ReadonlySet<number>,
+  range: TickRange,
+): Rect[] {
+  const barBounds = new Map<number, number>();
+  const barCount = bounds.barIndex.length / BOUNDS_BAR_INDEX_STRIDE;
+  for (let index = 0; index < barCount; index++) {
+    const masterBar = bounds.barIndex[index * BOUNDS_BAR_INDEX_STRIDE] ?? -1;
+    if (!barBounds.has(masterBar)) barBounds.set(masterBar, index);
+  }
+  const beats = indexBeats(bounds);
+
+  const rects: { system: number; rect: Rect }[] = [];
+  for (let index = Math.max(0, findBarOccurrence(timeline, range.startTick)); ; index++) {
+    const bar = occurrence(timeline, index);
+    if (bar === null || bar.startTick >= range.endTick) break;
+    if (bar.endTick <= range.startTick) continue;
+    const boundsIndex = barBounds.get(bar.masterBarIndex);
+    if (boundsIndex === undefined) continue;
+    const barRect = rectAt(bounds.barRect, boundsIndex, BOUNDS_BAR_RECT_STRIDE);
+    const system = bounds.barIndex[boundsIndex * BOUNDS_BAR_INDEX_STRIDE + 1] ?? 0;
+    let left = barRect.x;
+    let right = barRect.x + barRect.w;
+    if (range.startTick > bar.startTick || range.endTick < bar.endTick) {
+      // Partly covered: span the visible beats that start inside the range.
+      let beatLeft = Number.POSITIVE_INFINITY;
+      let beatRight = Number.NEGATIVE_INFINITY;
+      for (let sliceIndex = bar.firstSlice; sliceIndex < bar.firstSlice + bar.sliceCount; sliceIndex++) {
+        const target = slice(timeline, sliceIndex);
+        if (target === null) break;
+        for (let item = target.firstItem; item < target.firstItem + target.itemCount; item++) {
+          const base = item * TIMELINE_ITEM_STRIDE;
+          const start = timeline.items[base + 2] ?? -1;
+          if (start < range.startTick || start >= range.endTick || start !== target.startTick) continue;
+          if (!tracks.has(timeline.items[base + 1] ?? -1)) continue;
+          const beat = beats.get(timeline.items[base] ?? -1);
+          if (beat === undefined) continue;
+          const realX = bounds.beatRect[beat * BOUNDS_BEAT_RECT_STRIDE + 1] ?? 0;
+          const realW = bounds.beatRect[beat * BOUNDS_BEAT_RECT_STRIDE + 2] ?? 0;
+          beatLeft = Math.min(beatLeft, realX);
+          beatRight = Math.max(beatRight, realX + realW);
+        }
+      }
+      if (beatLeft > beatRight) continue;
+      if (range.startTick > bar.startTick) left = beatLeft;
+      if (range.endTick < bar.endTick) right = beatRight;
+    }
+    const previous = rects.at(-1);
+    if (previous?.system === system && Math.abs(previous.rect.x + previous.rect.w - left) < 1) {
+      previous.rect = { ...previous.rect, w: right - previous.rect.x };
+    } else {
+      rects.push({ system, rect: { x: left, y: barRect.y, w: right - left, h: barRect.h } });
+    }
+  }
+  return rects.map(entry => entry.rect);
 }

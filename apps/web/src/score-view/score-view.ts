@@ -13,12 +13,14 @@ import type {
   ViewOptions,
 } from '@opentabz/core/shared';
 import type { EngineClient } from '../engine/client.ts';
+import { EdgeScroller } from './edge-scroll.ts';
 import {
   contentWidth,
   pageGeometry,
   paginate,
   placeContinuous,
   sheetToEngine,
+  sheetToEngineNearest,
   type PaperId,
   type SheetLayout,
 } from './pagination.ts';
@@ -45,10 +47,26 @@ export interface ScoreViewLayoutInfo {
   readonly layoutMs: number;
 }
 
+/** What a pointer did on the music, in engine coordinates (see ScoreBounds). */
+export type ScoreGesture =
+  /** A click or tap; `extend` when Shift was held. Points outside the music are not reported. */
+  | { readonly type: 'tap'; readonly x: number; readonly y: number; readonly extend: boolean }
+  /** A long press with a finger or pen (touch screens have no other way to start a selection). */
+  | { readonly type: 'press'; readonly x: number; readonly y: number }
+  /**
+   * A mouse drag. `move` repeats with the latest point, also while the view auto-scrolls near its
+   * edges; points beyond the music snap to the nearest staff system.
+   */
+  | {
+      readonly type: 'drag';
+      readonly phase: 'start' | 'move' | 'end';
+      readonly x: number;
+      readonly y: number;
+    };
+
 export interface ScoreViewEvents {
   readonly onLayout?: (info: ScoreViewLayoutInfo) => void;
-  /** A click on the music, in engine coordinates (see ScoreBounds). */
-  readonly onScoreClick?: (x: number, y: number) => void;
+  readonly onGesture?: (gesture: ScoreGesture) => void;
   readonly onFirstPaint?: () => void;
   readonly onError?: (error: unknown) => void;
 }
@@ -62,6 +80,23 @@ export interface ScoreViewLabels {
 const RELAYOUT_DELAY_MS = 120;
 /** Partials are painted this far ahead of the viewport. */
 const PREFETCH_MARGIN = '100% 50%';
+/** Movement (CSS px) after which a mouse press becomes a drag, or a touch becomes a scroll. */
+const MOUSE_SLOP = 6;
+const TOUCH_SLOP = 10;
+/** Hold time that makes a touch a long press. */
+const LONG_PRESS_MS = 450;
+
+interface PointerGesture {
+  readonly pointerId: number;
+  readonly touch: boolean;
+  readonly startX: number;
+  readonly startY: number;
+  clientX: number;
+  clientY: number;
+  shift: boolean;
+  state: 'pending' | 'dragging' | 'pressed';
+  timer: ReturnType<typeof setTimeout> | null;
+}
 
 interface Anchor {
   /** Bar at the top of the viewport and how far into its system the viewport starts (0–1). */
@@ -87,7 +122,11 @@ export class ScoreView {
   private generation = 0;
   private sheetLayout: SheetLayout | null = null;
   private scoreBounds: ScoreBounds | null = null;
-  private pointerStart: { x: number; y: number } | null = null;
+  private gesture: PointerGesture | null = null;
+  private dragFrame = 0;
+  private suppressContextMenuUntil = 0;
+  private readonly edgeScroller: EdgeScroller;
+  private externalScroll: (() => void) | null = null;
   private readonly elements = new Map<string, HTMLDivElement>();
   private readonly svgCache = new Map<string, string>();
   private readonly requested = new Set<string>();
@@ -125,7 +164,13 @@ export class ScoreView {
     this.sheet.append(this.pagesLayer, this.partialsLayer, this.overlay);
     this.scroller.append(this.sheet);
     this.scroller.addEventListener('pointerdown', this.onPointerDown);
+    this.scroller.addEventListener('pointermove', this.onPointerMove);
     this.scroller.addEventListener('pointerup', this.onPointerUp);
+    this.scroller.addEventListener('pointercancel', this.onPointerCancel);
+    this.scroller.addEventListener('contextmenu', this.onContextMenu);
+    this.edgeScroller = new EdgeScroller(this.scroller, () => {
+      this.emitDragMove();
+    });
 
     this.intersection = new IntersectionObserver(
       entries => {
@@ -174,8 +219,12 @@ export class ScoreView {
     if (this.relayoutTimer !== null) clearTimeout(this.relayoutTimer);
     this.intersection.disconnect();
     this.resize.disconnect();
+    this.endGesture();
     this.scroller.removeEventListener('pointerdown', this.onPointerDown);
+    this.scroller.removeEventListener('pointermove', this.onPointerMove);
     this.scroller.removeEventListener('pointerup', this.onPointerUp);
+    this.scroller.removeEventListener('pointercancel', this.onPointerCancel);
+    this.scroller.removeEventListener('contextmenu', this.onContextMenu);
     this.sheet.remove();
     void this.engine.call('closeView', { viewId: this.viewId }).catch(() => undefined);
   }
@@ -206,25 +255,147 @@ export class ScoreView {
     return this.scroller;
   }
 
-  private readonly onPointerDown = (event: PointerEvent): void => {
-    this.pointerStart = event.isPrimary && event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
-  };
-
-  /** A click (not a drag or scroll gesture) on the music reports its engine coordinates. */
-  private readonly onPointerUp = (event: PointerEvent): void => {
-    const start = this.pointerStart;
-    this.pointerStart = null;
-    if (start === null || this.sheetLayout === null || this.state === null) return;
-    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6) return;
+  /**
+   * Engine coordinates of a point in the viewport, or null outside the music. With `nearest`,
+   * points outside snap to the closest staff system.
+   */
+  public clientToEngine(clientX: number, clientY: number, nearest = false): { x: number; y: number } | null {
+    const layout = this.sheetLayout;
+    if (layout === null || this.state === null) return null;
     const rect = this.sheet.getBoundingClientRect();
     const zoom = this.state.zoom;
-    const point = sheetToEngine(
-      this.sheetLayout,
-      (event.clientX - rect.left) / zoom,
-      (event.clientY - rect.top) / zoom,
-    );
-    if (point !== null) this.events.onScoreClick?.(point.x, point.y);
+    const x = (clientX - rect.left) / zoom;
+    const y = (clientY - rect.top) / zoom;
+    return nearest ? sheetToEngineNearest(layout, x, y) : sheetToEngine(layout, x, y);
+  }
+
+  /**
+   * Scrolls while a drag elsewhere (a selection handle) holds the pointer near an edge; `onScroll`
+   * runs after each step. Pass null when the drag ends.
+   */
+  public autoScroll(clientX: number, clientY: number, onScroll: (() => void) | null): void {
+    this.externalScroll = onScroll;
+    if (onScroll === null) this.edgeScroller.stop();
+    else this.edgeScroller.update(clientX, clientY);
+  }
+
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    if (!event.isPrimary || event.button !== 0) return;
+    // Scrollbars and the margin around the pages are not music.
+    if (!(event.target instanceof Node) || !this.sheet.contains(event.target)) return;
+    this.endGesture();
+    const touch = event.pointerType !== 'mouse';
+    const gesture: PointerGesture = {
+      pointerId: event.pointerId,
+      touch,
+      startX: event.clientX,
+      startY: event.clientY,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      shift: event.shiftKey,
+      state: 'pending',
+      timer: null,
+    };
+    if (touch) {
+      gesture.timer = setTimeout(() => {
+        gesture.timer = null;
+        if (this.gesture !== gesture || gesture.state !== 'pending') return;
+        gesture.state = 'pressed';
+        this.suppressContextMenuUntil = performance.now() + 1500;
+        const point = this.clientToEngine(gesture.startX, gesture.startY, true);
+        if (point !== null) this.events.onGesture?.({ type: 'press', x: point.x, y: point.y });
+      }, LONG_PRESS_MS);
+    }
+    this.gesture = gesture;
   };
+
+  private readonly onPointerMove = (event: PointerEvent): void => {
+    const gesture = this.gesture;
+    if (gesture?.pointerId !== event.pointerId) return;
+    gesture.clientX = event.clientX;
+    gesture.clientY = event.clientY;
+    const moved = Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY);
+    if (gesture.state === 'pending') {
+      if (moved <= (gesture.touch ? TOUCH_SLOP : MOUSE_SLOP)) return;
+      if (gesture.touch) {
+        // The finger is scrolling the score.
+        this.endGesture();
+        return;
+      }
+      gesture.state = 'dragging';
+      this.scroller.setPointerCapture(event.pointerId);
+      const start = this.clientToEngine(gesture.startX, gesture.startY, true);
+      if (start !== null) this.events.onGesture?.({ type: 'drag', phase: 'start', x: start.x, y: start.y });
+    }
+    if (gesture.state !== 'dragging') return;
+    this.edgeScroller.update(event.clientX, event.clientY);
+    if (this.dragFrame === 0) {
+      this.dragFrame = requestAnimationFrame(() => {
+        this.dragFrame = 0;
+        this.emitDragMove();
+      });
+    }
+  };
+
+  private readonly onPointerUp = (event: PointerEvent): void => {
+    const gesture = this.gesture;
+    if (gesture?.pointerId !== event.pointerId) return;
+    gesture.clientX = event.clientX;
+    gesture.clientY = event.clientY;
+    if (gesture.state === 'pending') {
+      const point = this.clientToEngine(event.clientX, event.clientY);
+      this.endGesture();
+      if (point !== null) {
+        this.events.onGesture?.({
+          type: 'tap',
+          x: point.x,
+          y: point.y,
+          extend: gesture.shift || event.shiftKey,
+        });
+      }
+      return;
+    }
+    this.endGesture();
+  };
+
+  private readonly onPointerCancel = (event: PointerEvent): void => {
+    if (this.gesture?.pointerId === event.pointerId) this.endGesture();
+  };
+
+  /** A long press on a touch screen must not also open the browser's context menu. */
+  private readonly onContextMenu = (event: Event): void => {
+    if (this.gesture?.state === 'pressed' || performance.now() < this.suppressContextMenuUntil) {
+      event.preventDefault();
+    }
+  };
+
+  private emitDragMove(): void {
+    const gesture = this.gesture;
+    if (gesture?.state !== 'dragging') {
+      this.externalScroll?.();
+      return;
+    }
+    const point = this.clientToEngine(gesture.clientX, gesture.clientY, true);
+    if (point !== null) this.events.onGesture?.({ type: 'drag', phase: 'move', x: point.x, y: point.y });
+  }
+
+  /** Finishes the current pointer gesture (a drag reports its last point). */
+  private endGesture(): void {
+    const gesture = this.gesture;
+    if (gesture === null) return;
+    this.gesture = null;
+    if (gesture.timer !== null) clearTimeout(gesture.timer);
+    if (this.dragFrame !== 0) cancelAnimationFrame(this.dragFrame);
+    this.dragFrame = 0;
+    if (gesture.state !== 'dragging') return;
+    this.edgeScroller.stop();
+    if (this.scroller.hasPointerCapture(gesture.pointerId))
+      this.scroller.releasePointerCapture(gesture.pointerId);
+    const point = this.clientToEngine(gesture.clientX, gesture.clientY, true);
+    if (point !== null && !this.disposed) {
+      this.events.onGesture?.({ type: 'drag', phase: 'end', x: point.x, y: point.y });
+    }
+  }
 
   private engineOptions(state: ScoreViewState): ViewOptions | null {
     let width: number;
@@ -426,6 +597,8 @@ export class ScoreView {
     const center = (this.scroller.scrollTop + this.scroller.clientHeight / 2) / previous;
     const middle = (this.scroller.scrollLeft + this.scroller.clientWidth / 2) / previous;
     this.sheet.style.setProperty('zoom', String(zoom));
+    // Overlays that must keep a constant on-screen size (touch targets) divide by this.
+    this.sheet.style.setProperty('--ot-zoom', String(zoom));
     this.scroller.scrollTop = center * zoom - this.scroller.clientHeight / 2;
     this.scroller.scrollLeft = middle * zoom - this.scroller.clientWidth / 2;
   }

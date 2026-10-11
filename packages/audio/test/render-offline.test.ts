@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { generatePlayback, openScore } from '@opentabz/core';
 import { describe, expect, it } from 'vitest';
-import type { SynthEvent } from '../src/protocol.ts';
+import type { SynthCommand, SynthEvent } from '../src/protocol.ts';
 import { createRingBuffers, RingReader, RingWriter } from '../src/ring.ts';
 import { SynthHost } from '../src/synth-host.ts';
 
@@ -18,10 +18,20 @@ function soundFont(): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 }
 
+type Command = Exclude<SynthCommand, { type: 'init' }>;
+
+interface RenderOptions {
+  /** Sent after the MIDI is loaded, before playing. */
+  readonly before?: readonly Command[];
+  /** Sent once the given number of seconds of audio has been played. */
+  readonly schedule?: readonly { readonly at: number; readonly command: Command }[];
+}
+
 /** Plays a score through the real synth host and ring buffer, simulating the AudioWorklet. */
 async function renderOffline(
   tex: string,
   seconds: number,
+  options: RenderOptions = {},
 ): Promise<{ left: Float32Array; events: SynthEvent[] }> {
   const events: SynthEvent[] = [];
   const host = new SynthHost(event => events.push(event));
@@ -38,7 +48,9 @@ async function renderOffline(
     transpositionPitches: playback.transpositionPitches,
   });
   await Promise.resolve();
+  for (const command of options.before ?? []) host.handle(command);
   host.handle({ type: 'play' });
+  const schedule = [...(options.schedule ?? [])].sort((a, b) => a.at - b.at);
 
   const reader = new RingReader(buffers);
   const total = Math.ceil((seconds * SAMPLE_RATE) / QUANTUM) * QUANTUM;
@@ -46,6 +58,10 @@ async function renderOffline(
   const right = new Float32Array(total);
   let sincePing = 0;
   for (let offset = 0; offset < total; offset += QUANTUM) {
+    while (schedule.length > 0 && (schedule[0]?.at ?? Infinity) * SAMPLE_RATE <= offset) {
+      const next = schedule.shift();
+      if (next !== undefined) host.handle(next.command);
+    }
     reader.read(left.subarray(offset, offset + QUANTUM), right.subarray(offset, offset + QUANTUM));
     sincePing += QUANTUM;
     if (sincePing >= PING_FRAMES) {
@@ -98,6 +114,22 @@ function fundamental(samples: Float32Array): number {
   return SAMPLE_RATE / (bestLag + (Number.isFinite(shift) ? shift : 0));
 }
 
+/** Power of one frequency (Goertzel). */
+function power(samples: Float32Array, frequency: number): number {
+  const coefficient = 2 * Math.cos((2 * Math.PI * frequency) / SAMPLE_RATE);
+  let previous = 0;
+  let beforePrevious = 0;
+  for (const sample of samples) {
+    const current = sample + coefficient * previous - beforePrevious;
+    beforePrevious = previous;
+    previous = current;
+  }
+  return (
+    (previous * previous + beforePrevious * beforePrevious - coefficient * previous * beforePrevious) /
+    samples.length
+  );
+}
+
 function window(samples: Float32Array, from: number, to: number): Float32Array {
   return samples.subarray(Math.floor(from * SAMPLE_RATE), Math.floor(to * SAMPLE_RATE));
 }
@@ -136,5 +168,61 @@ describe('offline playback through the real synth path', () => {
     // About two seconds in at 120 BPM: two quarters per second, 960 ticks per quarter.
     expect(last?.time).toBeGreaterThan(1500);
     expect(last?.tick).toBeGreaterThan(2.8 * 960);
+  });
+
+  // Three bars at 120 BPM in 4/4: two seconds each, one pitch per bar.
+  const BARS = '\\tempo 120\n\\track "Flute" {instrument flute}\n\\staff {score}\nA4.1 | C5.1 | E5.1';
+  const BAR_TICKS = 4 * 960;
+
+  it('loops a range: starts at its beginning and never plays past its end', async () => {
+    const range = { startTick: BAR_TICKS, endTick: 2 * BAR_TICKS };
+    const { left, events } = await renderOffline(BARS, 6.2, {
+      before: [{ type: 'setLoop', enabled: true, range }],
+    });
+    for (const start of [0.2, 2.2, 4.2]) {
+      const pitch = fundamental(window(left, start, start + 0.5));
+      expect(pitch).toBeGreaterThan(523.25 * 0.98);
+      expect(pitch).toBeLessThan(523.25 * 1.02);
+    }
+    const started = events.findIndex(event => event.type === 'state' && event.playing);
+    const ticks = events.slice(started).flatMap(event => (event.type === 'position' ? [event.tick] : []));
+    expect(ticks.length).toBeGreaterThan(20);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(range.startTick);
+    // Positions are reported per audio block, so the last one before wrapping may be a block late.
+    const blockTicks = ((PING_FRAMES / SAMPLE_RATE) * 1000 * 960) / 500;
+    expect(Math.max(...ticks)).toBeLessThanOrEqual(range.endTick + blockTicks);
+    // Nothing of the following bar (E5) leaks into the wrap.
+    for (const wrap of [2, 4]) {
+      const around = window(left, wrap - 0.05, wrap + 0.15);
+      expect(power(around, 659.26)).toBeLessThan(power(around, 523.25) / 20);
+    }
+    expect(events.filter(event => event.type === 'finished').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps the playhead when a range is adjusted around it and jumps when it is not', async () => {
+    const { events } = await renderOffline(BARS, 2.6, {
+      before: [{ type: 'setLoop', enabled: true, range: { startTick: 0, endTick: 2 * BAR_TICKS } }],
+      schedule: [
+        // Widened around the playhead (about 0.75 bars in): playback continues.
+        {
+          at: 1.5,
+          command: { type: 'setLoop', enabled: true, range: { startTick: 0, endTick: 3 * BAR_TICKS } },
+        },
+        // Moved away from the playhead: playback jumps to the new start.
+        {
+          at: 2.2,
+          command: {
+            type: 'setLoop',
+            enabled: true,
+            range: { startTick: 2 * BAR_TICKS, endTick: 3 * BAR_TICKS },
+          },
+        },
+      ],
+    });
+    const positions = events.flatMap(event => (event.type === 'position' ? [event] : []));
+    const afterWiden = positions.find(event => event.time > 1500 && event.isSeek);
+    expect(afterWiden?.tick ?? 0).toBeGreaterThan(0.6 * BAR_TICKS);
+    const last = positions.at(-1);
+    expect(last?.tick ?? 0).toBeGreaterThanOrEqual(2 * BAR_TICKS);
   });
 });

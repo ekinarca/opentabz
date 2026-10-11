@@ -312,8 +312,18 @@ export const strings = {
     speed: 'Playback speed',
     speedValue: (speed: number) => `${Math.round(speed * 100)} %`,
     loop: 'Loop',
+    loopSelection: 'Loop the selection',
+    selection: (first: number, last: number) =>
+      first === last ? `Bar ${first} selected` : `Bars ${first}–${last} selected`,
+    selectionBars: (first: number, last: number) =>
+      first === last ? `Bar ${first}` : `Bars ${first}–${last}`,
+    clearSelection: 'Clear selection',
+    clearSelectionShortcut: 'Esc',
+    selectionHelp:
+      'Playback stays inside the selection. Drag across the music to select, Shift+click to extend, or long-press a bar on a touch screen.',
     metronome: 'Metronome',
     countIn: 'Count-in',
+    more: 'More playback controls',
     volume: 'Volume',
     mute: 'Mute',
     unmute: 'Unmute',

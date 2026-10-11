@@ -1,17 +1,30 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generatePlayback, openScore, RenderSession } from '@opentabz/core';
-import type { PlaybackTimeline, ScoreBounds } from '@opentabz/core/shared';
+import {
+  BOUNDS_BAR_INDEX_STRIDE,
+  BOUNDS_BAR_RECT_STRIDE,
+  type PlaybackTimeline,
+  type ScoreBounds,
+} from '@opentabz/core/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  barRange,
   beatAtPoint,
+  beatEndTick,
+  beatNearPoint,
   beatPlacement,
   beatsStartingAt,
+  beatTicks,
   findBarOccurrence,
   findSlice,
   indexBeats,
   nextSlice,
   occurrence,
+  rangeBars,
+  rangeBetweenBeats,
+  rangeRects,
+  resizeRangeByBar,
   tickOfBeat,
 } from './timeline-lookup.ts';
 
@@ -91,5 +104,114 @@ describe('timeline lookups', () => {
     if (first === null) return;
     expect(beatsStartingAt(timeline, first, new Set())).toEqual([]);
     expect(beatsStartingAt(timeline, first, new Set([0, 2])).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('playback ranges', () => {
+  it('covers two beats in either order and draws whole bars edge to edge', () => {
+    const { timeline, bounds } = load('alphatex/demos/twelve-bar-shuffle.atex');
+    const tracks = new Set([0]);
+    const bar2 = occurrence(timeline, 1);
+    const bar5 = occurrence(timeline, 4);
+    if (bar2 === null || bar5 === null) throw new Error('missing bars');
+    const firstSlice = findSlice(timeline, bar2, bar2.startTick);
+    const lastSlice = findSlice(timeline, bar5, bar5.endTick - 1);
+    const first = firstSlice === null ? undefined : beatsStartingAt(timeline, firstSlice, tracks)[0];
+    const last = lastSlice === null ? undefined : beatsStartingAt(timeline, lastSlice, tracks)[0];
+    if (first === undefined || last === undefined) throw new Error('missing beats');
+
+    const forward = rangeBetweenBeats(timeline, first, last);
+    expect(rangeBetweenBeats(timeline, last, first)).toEqual(forward);
+    expect(forward).toEqual({ startTick: bar2.startTick, endTick: bar5.endTick });
+    expect(beatEndTick(timeline, last, tickOfBeat(timeline, last) ?? 0)).toBe(bar5.endTick);
+    expect(barRange(timeline, bar2.startTick + 10)).toEqual({
+      startTick: bar2.startTick,
+      endTick: bar2.endTick,
+    });
+    if (forward === null) throw new Error('no range');
+    expect(rangeBars(timeline, forward)).toEqual({ first: 1, last: 4 });
+
+    // Whole bars: the rectangles are exactly the bars' rectangles, merged per system.
+    const rects = rangeRects(bounds, timeline, tracks, forward);
+    const expected = new Map<number, { left: number; right: number; y: number }>();
+    for (let index = 0; index < bounds.barIndex.length / BOUNDS_BAR_INDEX_STRIDE; index++) {
+      const masterBar = bounds.barIndex[index * BOUNDS_BAR_INDEX_STRIDE] ?? -1;
+      if (masterBar < 1 || masterBar > 4) continue;
+      const system = bounds.barIndex[index * BOUNDS_BAR_INDEX_STRIDE + 1] ?? -1;
+      const x = bounds.barRect[index * BOUNDS_BAR_RECT_STRIDE] ?? 0;
+      const w = bounds.barRect[index * BOUNDS_BAR_RECT_STRIDE + 2] ?? 0;
+      const y = bounds.barRect[index * BOUNDS_BAR_RECT_STRIDE + 1] ?? 0;
+      const entry = expected.get(system);
+      expected.set(system, {
+        left: Math.min(entry?.left ?? x, x),
+        right: Math.max(entry?.right ?? x + w, x + w),
+        y,
+      });
+    }
+    expect(rects).toHaveLength(expected.size);
+    for (const [index, entry] of [...expected.values()].entries()) {
+      expect(rects[index]?.x).toBeCloseTo(entry.left, 3);
+      expect((rects[index]?.x ?? 0) + (rects[index]?.w ?? 0)).toBeCloseTo(entry.right, 3);
+      expect(rects[index]?.y).toBeCloseTo(entry.y, 3);
+    }
+  });
+
+  it('draws a range inside one bar from beat to beat', () => {
+    const { timeline, bounds } = load('alphatex/demos/twelve-bar-shuffle.atex');
+    const tracks = new Set([0]);
+    const bar = occurrence(timeline, 2);
+    if (bar === null) throw new Error('missing bar');
+    const middle = findSlice(timeline, bar, bar.startTick + (bar.endTick - bar.startTick) / 2);
+    if (middle === null) throw new Error('missing slice');
+    const range = { startTick: middle.startTick, endTick: bar.endTick };
+    const [rect] = rangeRects(bounds, timeline, tracks, range);
+    const whole = rangeRects(bounds, timeline, tracks, { startTick: bar.startTick, endTick: bar.endTick })[0];
+    if (rect === undefined || whole === undefined) throw new Error('missing rects');
+    expect(rect.x).toBeGreaterThan(whole.x + 1);
+    expect(rect.x + rect.w).toBeCloseTo(whole.x + whole.w, 3);
+  });
+
+  it('lists every pass of a beat through repeats', () => {
+    const tex =
+      '\\tempo 120\n\\track "Flute" {instrument flute}\n\\staff {score}\nC4.1 | \\ro D4.1 | \\rc 2 E4.1';
+    const { score } = openScore(new TextEncoder().encode(tex), 'repeat.atex');
+    const { timeline } = generatePlayback(score, 'test');
+    const repeated = score.tracks[0]?.staves[0]?.bars[1]?.voices[0]?.beats[0];
+    const once = score.tracks[0]?.staves[0]?.bars[0]?.voices[0]?.beats[0];
+    if (repeated === undefined || once === undefined) throw new Error('missing beats');
+    // Bars 2–3 repeat: D4 plays in bar 2 and again after bar 3.
+    expect(beatTicks(timeline, repeated.id)).toEqual([3840, 11520]);
+    expect(beatTicks(timeline, once.id)).toEqual([0]);
+    expect(beatTicks(timeline, -5)).toEqual([]);
+  });
+
+  it('grows and shrinks a range bar by bar from its end', () => {
+    const { timeline } = load('alphatex/demos/twelve-bar-shuffle.atex');
+    const bar = (index: number) => {
+      const found = occurrence(timeline, index);
+      if (found === null) throw new Error(`missing bar ${index}`);
+      return found;
+    };
+    const one = resizeRangeByBar(timeline, null, bar(2).startTick + 5, 1);
+    expect(one).toEqual({ startTick: bar(2).startTick, endTick: bar(2).endTick });
+    const two = resizeRangeByBar(timeline, one, 0, 1);
+    expect(two).toEqual({ startTick: bar(2).startTick, endTick: bar(3).endTick });
+    expect(resizeRangeByBar(timeline, two, 0, -1)).toEqual(one);
+    // Never below the first bar, never past the end of the song.
+    expect(resizeRangeByBar(timeline, one, 0, -1)).toEqual(one);
+    const count = timeline.bars.length / 5;
+    const lastBar = { startTick: bar(count - 1).startTick, endTick: bar(count - 1).endTick };
+    expect(resizeRangeByBar(timeline, lastBar, 0, 1)).toEqual(lastBar);
+  });
+
+  it('snaps points between systems to the nearest system', () => {
+    const { bounds } = load('alphatex/demos/twelve-bar-shuffle.atex');
+    const tracks = new Set([0]);
+    const firstSystemY = bounds.systems[1] ?? 0;
+    const x = (bounds.systems[0] ?? 0) + 40;
+    expect(beatAtPoint(bounds, tracks, x, firstSystemY - 30)).toBeNull();
+    expect(beatNearPoint(bounds, tracks, x, firstSystemY - 30)).toBe(
+      beatAtPoint(bounds, tracks, x, firstSystemY + 5),
+    );
   });
 });

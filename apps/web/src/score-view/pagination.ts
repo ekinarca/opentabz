@@ -170,3 +170,31 @@ export function sheetToEngine(layout: SheetLayout, x: number, y: number): { x: n
   }
   return null;
 }
+
+/**
+ * Like `sheetToEngine`, but a point outside the music maps to the closest staff system, clamped
+ * into it (for drags that leave the music or cross the gap between pages).
+ */
+export function sheetToEngineNearest(
+  layout: SheetLayout,
+  x: number,
+  y: number,
+): { x: number; y: number } | null {
+  let best: Placement | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const placement of layout.placements) {
+    const { partial } = placement;
+    if (partial.kind !== 'system') continue;
+    const dx = Math.max(placement.x - x, 0, x - (placement.x + partial.width));
+    const dy = Math.max(placement.y - y, 0, y - (placement.y + partial.height));
+    const distance = dx * dx + dy * dy;
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = placement;
+    }
+  }
+  if (best === null) return null;
+  const clampedX = Math.min(Math.max(x, best.x), best.x + best.partial.width);
+  const clampedY = Math.min(Math.max(y, best.y), best.y + best.partial.height);
+  return { x: best.partial.x + (clampedX - best.x), y: best.partial.y + (clampedY - best.y) };
+}
