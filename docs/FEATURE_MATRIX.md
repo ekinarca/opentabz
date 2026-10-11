@@ -791,7 +791,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-002 | PNG                                                                   | GP  | M2  | —       | —    | planned |
 | EXP-003 | SVG                                                                   | OT  | M2  | —       | —    | planned |
 | EXP-004 | MIDI (effects as pitch bend / CC, tempo map, markers)                 | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
-| EXP-005 | WAV                                                                   | GP  | M2  | —       | —    | planned |
+| EXP-005 | WAV                                                                   | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-006 | MP3                                                                   | GP  | M7  | —       | —    | planned |
 | EXP-007 | OGG                                                                   | GP  | M7  | —       | —    | planned |
 | EXP-008 | FLAC                                                                  | GP  | M7  | —       | —    | planned |
@@ -815,9 +815,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | —    | planned |
 | EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | —    | planned |
 | EXP-028 | File-name templates with tokens (title, track name, number and count, date, time) and a preview | GP  | M2  | —       | —    | planned |
-| EXP-029 | Audio export of the selected bars only                                | GP  | M2  | —       | —    | planned |
-| EXP-030 | Metronome click and count-in in audio export                          | GP  | M2  | —       | —    | planned |
-| EXP-031 | Audio export applies the current practice speed and transpose         | GP  | M2  | —       | —    | planned |
+| EXP-029 | Audio export of the selected bars only                                | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
+| EXP-030 | Metronome click and count-in in audio export                          | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
+| EXP-031 | Audio export applies the current practice speed and transpose         | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-032 | MP3 settings: quality and bitrate mode (CBR, VBR, ABR)                | GP  | M7  | —       | —    | planned |
 | EXP-033 | Loudness normalization for audio export                               | GP+ | M7  | —       | —    | planned |
 | EXP-034 | LilyPond                                                              | OT  | S   | —       | —    | planned |

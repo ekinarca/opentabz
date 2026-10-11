@@ -25,6 +25,8 @@ export function generatePlayback(
   playbackId: string,
   settings: alphaTab.Settings = new alphaTab.Settings(),
   interpretations: readonly TrackInterpretation[] = [],
+  /** Silence after the song, in seconds, for the last notes to die away (audio export). */
+  tailSeconds = 0,
 ): GeneratedPlayback {
   const midiFile = new alphaTab.midi.MidiFile();
   const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
@@ -36,6 +38,7 @@ export function generatePlayback(
     generator.trackInterpretations.set(trackIndex, { ...interpretation });
   });
   generator.generate();
+  if (tailSeconds > 0) extendWithSilence(midiFile, tailSeconds);
 
   return {
     midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
@@ -50,6 +53,22 @@ export function generatePlayback(
       ]),
     ),
   };
+}
+
+/**
+ * Lets the song run on for `seconds` after its last event: the sequencer ends at its last event,
+ * and alphaTab cuts the voices still sounding when it does.
+ */
+function extendWithSilence(midiFile: alphaTab.midi.MidiFile, seconds: number): void {
+  const events = midiFile.events;
+  let end = 0;
+  let bpm = 120;
+  for (const event of events) {
+    end = Math.max(end, event.tick);
+    if (event instanceof alphaTab.midi.TempoChangeEvent) bpm = event.beatsPerMinute;
+  }
+  const ticks = Math.round(seconds * (bpm / 60) * midiFile.division);
+  midiFile.addEvent(new alphaTab.midi.AlphaTabRestEvent(0, end + ticks, 0));
 }
 
 function buildTimeline(

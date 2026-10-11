@@ -5,7 +5,7 @@
  */
 import type { OpenError } from './open-error.ts';
 import type { TrackNotes } from './notes.ts';
-import type { PlaybackTimeline, ScoreBounds, TrackInterpretation } from './playback.ts';
+import type { MidiDelivery, PlaybackTimeline, ScoreBounds, TrackInterpretation } from './playback.ts';
 import type { DocSummary } from './summary.ts';
 import type { PartialLayout, ViewOptions } from './view.ts';
 
@@ -68,6 +68,15 @@ export interface EngineMethods {
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
   /** The notes of one track, beat by beat, for instrument views. */
   trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
+  /**
+   * The song for an audio export: the MIDI playback would send the synthesizer (with a silent
+   * tail for the last notes to die away) and its timeline, returned rather than sent.
+   */
+  exportAudioSong(args: {
+    readonly docId: string;
+    readonly interpretations?: readonly TrackInterpretation[];
+    readonly tailSeconds: number;
+  }): { readonly song: MidiDelivery; readonly timeline: PlaybackTimeline };
   /** A Standard MIDI File of a document, as it is played. */
   exportMidi(args: {
     readonly docId: string;

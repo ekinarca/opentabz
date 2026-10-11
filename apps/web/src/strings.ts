@@ -264,6 +264,17 @@ export const strings = {
     exportMidi: 'Export MIDI',
     working: 'Exporting…',
     failed: (reason: string) => `The export failed: ${reason}`,
+    audio: 'Audio (WAV)',
+    audioHint: 'The song as playback plays it, with the mixer, made faster than real time.',
+    selectionOnly: 'Only the selected bars',
+    noSelection: 'Select bars in the score to export only them.',
+    practiceSpeed: (percent: number) => `At the practice speed (${percent} %)`,
+    metronome: 'Metronome',
+    countIn: 'Count-in',
+    exportWav: 'Export WAV',
+    rendering: (percent: number) => `Rendering… ${percent} %`,
+    progress: 'Rendering the audio',
+    cancel: 'Cancel',
   },
 
   settings: {

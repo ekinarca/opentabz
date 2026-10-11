@@ -3,7 +3,7 @@
  * and exposes the transport actions. The cursor subscribes outside React for smoothness.
  */
 import type { PlaybackTimeline, TickRange, TrackInterpretation } from '@opentabz/core/shared';
-import type { SynthEvent } from '@opentabz/audio/protocol';
+import type { SynthCommand, SynthEvent } from '@opentabz/audio/protocol';
 import { create } from 'zustand';
 import { getAudioEngine, type AudioEngine } from '../audio/audio-engine.ts';
 import type { SoundFontPreset } from '../audio/soundfont-presets.ts';
@@ -114,13 +114,21 @@ function nextMove(): number {
 /** Performance mark set when play is pressed; `ot:play-start` measures until the synth plays. */
 const PLAY_REQUEST = 'ot:play-request';
 
+/** Commands the UI sends the synthesizer once it runs. */
+export type ChannelCommand = Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>;
+
 /**
- * Sends a document's mixer state to the synthesizer, channel by channel: everything, or only
- * what changed since `before`. Pan and instrument go as overrides only when they differ from the
- * file, so the song's own pan and program changes play as written otherwise.
+ * A document's mixer state as synthesizer commands, channel by channel: everything, or only what
+ * changed since `before`. Pan and instrument go as overrides only when they differ from the file,
+ * so the song's own pan and program changes play as written otherwise. Playback and the audio
+ * export send the same.
  */
-function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?: OpenDocument): void {
-  const engine = getAudioEngine();
+export function mixCommands(
+  doc: OpenDocument,
+  timeline: PlaybackTimeline | null,
+  before?: OpenDocument,
+): ChannelCommand[] {
+  const commands: ChannelCommand[] = [];
   doc.summary.tracks.forEach((track, index) => {
     const mix = doc.mix[index];
     if (mix === undefined) return;
@@ -129,16 +137,16 @@ function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?:
     const oldVolume = before === undefined ? null : effectiveVolume(before.mix, before.focus, index);
     const filePan = Math.min(1, Math.max(-1, (track.mix.balance - 8) / 8));
     for (const { channel, drums } of trackChannels(index, track.channels, timeline)) {
-      if (old?.mute !== mix.mute) engine.send({ type: 'setChannelMute', channel, value: mix.mute });
-      if (old?.solo !== mix.solo) engine.send({ type: 'setChannelSolo', channel, value: mix.solo });
-      if (oldVolume !== volume) engine.send({ type: 'setChannelVolume', channel, value: volume });
+      if (old?.mute !== mix.mute) commands.push({ type: 'setChannelMute', channel, value: mix.mute });
+      if (old?.solo !== mix.solo) commands.push({ type: 'setChannelSolo', channel, value: mix.solo });
+      if (oldVolume !== volume) commands.push({ type: 'setChannelVolume', channel, value: volume });
       if (old?.pan !== mix.pan) {
-        engine.send({ type: 'setChannelPan', channel, value: mix.pan === filePan ? null : mix.pan });
+        commands.push({ type: 'setChannelPan', channel, value: mix.pan === filePan ? null : mix.pan });
       }
       if (drums) continue;
       if (old?.program !== mix.program) {
         // On a drum track the program is the kit.
-        engine.send({
+        commands.push({
           type: 'setChannelProgram',
           channel,
           program: mix.program === track.program ? null : mix.program,
@@ -146,11 +154,18 @@ function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?:
       }
       if (track.isPercussion) continue;
       if (old?.transpose !== mix.transpose) {
-        engine.send({ type: 'setChannelTranspose', channel, semitones: mix.transpose });
+        commands.push({ type: 'setChannelTranspose', channel, semitones: mix.transpose });
       }
-      if (old?.detune !== mix.detune) engine.send({ type: 'setChannelDetune', channel, cents: mix.detune });
+      if (old?.detune !== mix.detune) commands.push({ type: 'setChannelDetune', channel, cents: mix.detune });
     }
   });
+  return commands;
+}
+
+/** Sends a document's mixer state (or what changed since `before`) to the synthesizer. */
+function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?: OpenDocument): void {
+  const engine = getAudioEngine();
+  for (const command of mixCommands(doc, timeline, before)) engine.send(command);
 }
 
 function sendMetronome(engine: AudioEngine, practice: PracticeSettings): void {

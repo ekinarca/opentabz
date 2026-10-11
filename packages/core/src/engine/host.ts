@@ -205,6 +205,32 @@ export class EngineHost implements EngineMethods {
     return collectTrackNotes(document.score, args.trackIndex);
   }
 
+  public exportAudioSong(args: EngineArgs<'exportAudioSong'>): EngineResult<'exportAudioSong'> {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    const playback = generatePlayback(
+      document.score,
+      'export',
+      new alphaTab.Settings(),
+      args.interpretations ?? [],
+      args.tailSeconds,
+    );
+    return {
+      song: {
+        type: 'midi',
+        playbackId: 'export',
+        midi: playback.midi,
+        tickShift: playback.tickShift,
+        transpositionPitches: playback.transpositionPitches,
+        bars: playback.bars,
+        endTick: playback.timeline.endTick,
+        centeredChannels: drumChannels(playback.timeline.extraChannels),
+        replace: false,
+      },
+      timeline: playback.timeline,
+    };
+  }
+
   public exportMidi(args: EngineArgs<'exportMidi'>): EngineResult<'exportMidi'> {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
