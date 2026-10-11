@@ -38,9 +38,9 @@ function shape(d: string) {
 describe('outlines from font files', () => {
   it('reads Bravura’s PostScript outlines as its SVG font has them', () => {
     const outlines = readOutlines(bravura);
-    const symbols = Object.values(alphaTab.model.MusicFontSymbol).filter(
-      (value): value is number => typeof value === 'number' && value > 0 && musicGlyph(value) !== undefined,
-    );
+    const symbols = Object.values(alphaTab.model.MusicFontSymbol)
+      .filter((value): value is number => typeof value === 'number')
+      .filter(codePoint => codePoint > 0 && musicGlyph(codePoint) !== undefined);
     expect(symbols.length).toBeGreaterThan(250);
     let compared = 0;
     for (const symbol of symbols) {
