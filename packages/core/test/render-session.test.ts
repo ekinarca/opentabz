@@ -86,6 +86,26 @@ describe('RenderSession', () => {
     expect({ standard: staff?.showStandardNotation, tab: staff?.showTablature }).toEqual(before);
   });
 
+  it('renders standard notation only when asked: no tablature lines in the painted system', () => {
+    const { score } = openScore(readFixture('alphatab/guitarpro7/notes.gp'), 'notes.gp');
+    const paintFirstSystem = (staffDisplay: ViewOptions['staffDisplay']) => {
+      const session = new RenderSession(score, { ...BASE, staffDisplay });
+      const layout = session.layout();
+      const first = layout.partials.find(p => p.kind === 'system');
+      const svg = first === undefined ? '' : (session.paint([first.id])[0]?.svg ?? '');
+      session.dispose();
+      return { svg, height: first?.height ?? 0 };
+    };
+    const both = paintFirstSystem('score-tab');
+    const scoreOnly = paintFirstSystem('score');
+    const tabOnly = paintFirstSystem('tab');
+    expect(scoreOnly.height).toBeLessThan(both.height);
+    // Tablature numbers are text; the notation-only system has none of the tab staff's frets.
+    const tabTexts = (svg: string) => (svg.match(/<text[^>]*>\d+<\/text>/g) ?? []).length;
+    expect(tabTexts(tabOnly.svg)).toBeGreaterThan(0);
+    expect(tabTexts(scoreOnly.svg)).toBeLessThan(tabTexts(both.svg));
+  });
+
   it('honours the file systems layout in model mode', () => {
     const session = sessionFor('alphatab/guitarpro7/layout-configuration-multi-track-1.gp', {
       systemsLayout: 'model',
