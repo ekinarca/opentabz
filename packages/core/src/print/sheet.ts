@@ -4,6 +4,7 @@
  * pdf.ts; both draw the same thing.
  */
 import type { PageText, TextAlign } from '../shared/page-text.ts';
+import { fontFamilies } from '../shared/text-fonts.ts';
 import { resolveScoreColor, type ScorePalette } from '../shared/score-colors.ts';
 import { readDrawing, type DrawOp, type Shade, type TextStyle } from './drawing.ts';
 import { musicGlyph, placeSymbols } from './glyphs.ts';
@@ -55,13 +56,22 @@ export function pageTexts(sheet: Sheet): Extract<DrawOp, { kind: 'text' }>[] {
   const left = sheet.margins?.left ?? DEFAULT_SIDE;
   const right = sheet.width - (sheet.margins?.right ?? DEFAULT_SIDE);
   const x = (align: TextAlign) => (align === 'left' ? left : align === 'right' ? right : sheet.width / 2);
+  const styleOf = (line: PageText, fallback: TextStyle): TextStyle =>
+    line.font === undefined
+      ? fallback
+      : {
+          families: fontFamilies(line.font.family),
+          size: line.font.size,
+          bold: line.font.bold,
+          italic: line.font.italic,
+        };
   if (sheet.header !== null && sheet.header.text.length > 0) {
     texts.push({
       kind: 'text',
       x: x(sheet.header.align),
       y: 22,
       text: sheet.header.text,
-      style: { ...PAGE_TEXT_STYLE, italic: true },
+      style: styleOf(sheet.header, { ...PAGE_TEXT_STYLE, italic: true }),
       anchor: ANCHORS[sheet.header.align],
       baseline: 'hanging',
       fill: PAGE_TEXT_COLOR,
@@ -73,7 +83,7 @@ export function pageTexts(sheet: Sheet): Extract<DrawOp, { kind: 'text' }>[] {
       x: x(sheet.footer.align),
       y: sheet.height - 20,
       text: sheet.footer.text,
-      style: PAGE_TEXT_STYLE,
+      style: styleOf(sheet.footer, PAGE_TEXT_STYLE),
       anchor: ANCHORS[sheet.footer.align],
       baseline: 'ideographic',
       fill: PAGE_TEXT_COLOR,

@@ -37,7 +37,7 @@ test('the title block and the pages’ lines, on screen and in the PDF', async (
   await page.keyboard.press('F7');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
 
-  await dialog.getByRole('checkbox', { name: 'Artist' }).uncheck();
+  await dialog.getByRole('checkbox', { name: 'Artist', exact: true }).uncheck();
   await expect.poll(async () => (await scoreTexts(page)).includes('OpenTabz')).toBe(false);
   await template(dialog, 'Title', '%TITLE% (%ARTIST%)');
   await expect
@@ -74,4 +74,32 @@ test('the title block and the pages’ lines, on screen and in the PDF', async (
   expect(await pageText(1)).toContain('Twelve-Bar Shuffle in A (OpenTabz)');
   expect(await pageText(1)).not.toContain('OpenTabz');
   expect(await pageText(2)).toContain('Twelve-Bar Shuffle in A · OpenTabz');
+});
+
+test('each kind of text in the font, size and style chosen (REND-238)', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('region', { name: /^Score/ }).focus();
+  await page.keyboard.press('F7');
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+
+  await dialog.getByRole('combobox', { name: 'Font of Title' }).selectOption('mono');
+  const size = dialog.getByRole('spinbutton', { name: 'Size of Title' });
+  await size.fill('40');
+  await size.blur();
+  const title = page.locator('.ot-scroll:not([hidden]) .ot-partials text', {
+    hasText: /^Twelve-Bar Shuffle in A$/,
+  });
+  await expect.poll(async () => (await title.getAttribute('style')) ?? '').toContain('40px');
+  expect(await title.getAttribute('style')).toContain('Courier New');
+
+  await dialog.getByRole('checkbox', { name: 'Page footer in bold' }).check();
+  await expect(page.locator('.ot-page').first().locator('.ot-page-footer')).toHaveCSS('font-weight', '700');
+  await dialog.getByRole('checkbox', { name: 'Fret numbers in italics' }).check();
+  await expect
+    .poll(async () =>
+      page
+        .locator('.ot-scroll:not([hidden]) .ot-partials text', { hasText: /^[0-9]$/ })
+        .evaluateAll(texts => texts.some(text => (text.getAttribute('style') ?? '').includes('italic 14px'))),
+    )
+    .toBe(true);
 });

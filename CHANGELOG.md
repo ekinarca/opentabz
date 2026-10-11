@@ -132,6 +132,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Fonts of the score's texts.** The stylesheet's Text section sets the font, size, bold and
+  italics of each kind of text: the title block's lines, the pages' header and footer, track
+  names, the tuning legend, sections, free text, chord names and diagram frets, lyrics, fret
+  numbers, fingering, technique labels, bar numbers, repeats and endings, directions and the
+  timer. Serif, sans-serif or monospace, or any installed font by name; texts left alone keep
+  their usual fonts, and exports and printing write the same.
 - **Header, footer and title block.** The stylesheet's Header and footer section writes the
   first page's title block line by line (shown or not, from a template such as "Music by
   %MUSIC%", aligned left, centre or right) and every page's header and footer, the first page's

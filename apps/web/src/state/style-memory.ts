@@ -7,16 +7,19 @@ import {
   BRACKET_MODES,
   CHORD_SPELLINGS,
   DEFAULT_SCORE_STYLE,
+  FONT_SIZE,
   PAGE_LINES,
   STYLE_SCALE,
   STYLE_SPACING,
   TEXT_ALIGNS,
+  TEXT_ELEMENTS,
   TEXT_ORIENTATIONS,
   TITLE_ELEMENTS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
   type PageFurniture,
   type ScoreStyle,
+  type TextFonts,
   type TitleBlock,
 } from '@opentabz/core/shared';
 
@@ -51,6 +54,30 @@ function parseTitleBlock(value: unknown, fallback: TitleBlock): TitleBlock | nul
   });
   if (lines.some(line => line === null)) return null;
   return Object.fromEntries(lines.filter(line => line !== null)) as unknown as TitleBlock;
+}
+
+/** Stored fonts, or null; kinds of text it lacks come from `fallback`. */
+function parseFonts(value: unknown, fallback: TextFonts): TextFonts | null {
+  if (!isRecord(value)) return null;
+  const fonts = TEXT_ELEMENTS.map(element => {
+    const font = value[element];
+    if (font === undefined) return [element, fallback[element]] as const;
+    if (
+      !isRecord(font) ||
+      typeof font['family'] !== 'string' ||
+      font['family'].trim().length === 0 ||
+      typeof font['bold'] !== 'boolean' ||
+      typeof font['italic'] !== 'boolean'
+    ) {
+      return null;
+    }
+    const size = within(font['size'], FONT_SIZE);
+    return size === null
+      ? null
+      : ([element, { family: font['family'], size, bold: font['bold'], italic: font['italic'] }] as const);
+  });
+  if (fonts.some(font => font === null)) return null;
+  return Object.fromEntries(fonts.filter(font => font !== null)) as unknown as TextFonts;
 }
 
 function parsePages(value: unknown): PageFurniture | null {
@@ -106,7 +133,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   const pages = raw.pages === undefined ? fallback.pages : parsePages(raw.pages);
   const chordSpelling =
     raw.chordSpelling === undefined ? fallback.chordSpelling : oneOf(raw.chordSpelling, CHORD_SPELLINGS);
-  if (titleBlock === null || pages === null || chordSpelling === null) return null;
+  const fonts = raw.fonts === undefined ? fallback.fonts : parseFonts(raw.fonts, fallback.fonts);
+  if (titleBlock === null || pages === null || chordSpelling === null || fonts === null) return null;
   return {
     ...DEFAULT_SCORE_STYLE,
     ...Object.fromEntries(flags.map(flag => [flag, raw[flag] === true])),
@@ -117,6 +145,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     titleBlock,
     pages,
     chordSpelling,
+    fonts,
   };
 }
 

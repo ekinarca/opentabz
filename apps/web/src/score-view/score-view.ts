@@ -6,9 +6,9 @@
  */
 import {
   DEFAULT_PAGE_FURNITURE,
-  pageLines,
   samePageFurniture,
   sameScoreStyle,
+  sameTextFont,
   sameTrackStaves,
   type LayoutKind,
   type ScoreBounds,
@@ -21,6 +21,7 @@ import {
   type ViewOptions,
 } from '@opentabz/core/shared';
 import type { EngineClient } from '../engine/client.ts';
+import { pagesTexts } from '../state/score-fields.ts';
 import { EdgeScroller } from './edge-scroll.ts';
 import { SvgCache } from './svg-cache.ts';
 import {
@@ -260,7 +261,9 @@ export class ScoreView {
       previous !== null &&
       this.sheetLayout !== null &&
       (!sameFields(previous.fields, state.fields) ||
-        !samePageFurniture(previous.style.pages, state.style.pages))
+        !samePageFurniture(previous.style.pages, state.style.pages) ||
+        !sameTextFont(previous.style.fonts.pageHeader, state.style.fonts.pageHeader) ||
+        !sameTextFont(previous.style.fonts.pageFooter, state.style.fonts.pageFooter))
     ) {
       this.renderPages(this.sheetLayout);
     }
@@ -688,7 +691,7 @@ export class ScoreView {
       // An endless sheet has no pages to number.
       if (state === null || state.arrangement === 'endless') continue;
       const { margins } = pageGeometry(state.page);
-      const lines = pageLines(state.style.pages, state.fields, page.index + 1, total);
+      const lines = pagesTexts(state.style, state.fields, page.index + 1, total);
       for (const [line, className] of [
         [lines.header, 'ot-page-header'],
         [lines.footer, 'ot-page-footer'],
@@ -698,6 +701,12 @@ export class ScoreView {
         text.className = className;
         text.textContent = line.text;
         text.style.textAlign = line.align;
+        if (line.font !== undefined) {
+          text.style.fontFamily = line.font.family;
+          text.style.fontSize = `${line.font.size}px`;
+          text.style.fontWeight = line.font.bold ? 'bold' : 'normal';
+          text.style.fontStyle = line.font.italic ? 'italic' : 'normal';
+        }
         text.style.paddingLeft = `${margins.left}px`;
         text.style.paddingRight = `${margins.right}px`;
         element.append(text);

@@ -45,6 +45,20 @@ describe('styles remembered per song', () => {
     expect(parseStyle({ ...stored, pages: { laterFooter: { template: 1 } } })).toBeNull();
   });
 
+  it('reads the fonts, and nothing broken', () => {
+    const fonts = {
+      ...DEFAULT_SCORE_STYLE.fonts,
+      title: { family: '"Comic Sans MS", sans-serif', size: 40, bold: true, italic: false },
+    };
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, fonts })) as Record<string, unknown>;
+    expect(parseStyle(stored)?.fonts.title).toEqual(fonts.title);
+    expect(parseStyle({ ...stored, fonts: { ...fonts, title: { ...fonts.title, size: 500 } } })).toBeNull();
+    expect(parseStyle({ ...stored, fonts: { ...fonts, tab: { ...fonts.tab, family: ' ' } } })).toBeNull();
+    // A kind of text an older version did not keep comes from the file's style.
+    const { tab: _tab, ...older } = fonts;
+    expect(parseStyle({ ...stored, fonts: older })?.fonts.tab).toEqual(DEFAULT_SCORE_STYLE.fonts.tab);
+  });
+
   it('keeps a song’s style for the next time it is opened', () => {
     const style = { ...DEFAULT_SCORE_STYLE, systemSeparator: true };
     rememberStyle(HASH, style);

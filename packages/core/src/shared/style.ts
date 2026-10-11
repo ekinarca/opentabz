@@ -3,6 +3,7 @@
  * in the Stylesheet panel. Plain data for the UI and the engine.
  */
 import type { ChordSpelling } from './chord-spelling.ts';
+import { DEFAULT_TEXT_FONTS, sameTextFonts, type TextFonts } from './text-fonts.ts';
 import {
   DEFAULT_PAGE_FURNITURE,
   DEFAULT_TITLE_BLOCK,
@@ -70,6 +71,8 @@ export interface ScoreStyle {
   readonly titleBlock: TitleBlock;
   /** The pages' running header and footer, the first page's and the later ones' (REND-237). */
   readonly pages: PageFurniture;
+  /** The font of each kind of text (REND-238). */
+  readonly fonts: TextFonts;
 }
 
 export const STYLE_SCALE = { min: 0.5, max: 2 } as const;
@@ -102,6 +105,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   hideEmptyStavesInFirstSystem: false,
   titleBlock: DEFAULT_TITLE_BLOCK,
   pages: DEFAULT_PAGE_FURNITURE,
+  fonts: DEFAULT_TEXT_FONTS,
 };
 
 const STYLE_KEYS = Object.keys(DEFAULT_SCORE_STYLE) as (keyof ScoreStyle)[];
@@ -112,6 +116,8 @@ function sameSetting(a: ScoreStyle, b: ScoreStyle, key: keyof ScoreStyle): boole
       return sameTitleBlock(a.titleBlock, b.titleBlock);
     case 'pages':
       return samePageFurniture(a.pages, b.pages);
+    case 'fonts':
+      return sameTextFonts(a.fonts, b.fonts);
     default:
       return a[key] === b[key];
   }

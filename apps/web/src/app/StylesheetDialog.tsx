@@ -15,6 +15,7 @@ import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { HeaderFooterSection } from './HeaderFooterSection.tsx';
+import { TextFontsSection } from './TextFontsSection.tsx';
 import { Field } from './MetronomeSettingsForm.tsx';
 
 const s = strings.stylesheet;
@@ -289,6 +290,10 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
 
         <Section title={s.sections.headerFooter} wide>
           <HeaderFooterSection style={style} set={set} />
+        </Section>
+
+        <Section title={s.sections.text} wide>
+          <TextFontsSection style={style} set={set} />
         </Section>
       </div>
     </Dialog>

@@ -3,11 +3,11 @@
  * tracks, staves, systems and paper) in an engine view of its own, then painted a page at a time.
  */
 import type { Sheet } from '@opentabz/core/print';
-import { DEFAULT_PAGE_FURNITURE, pageLines, type BarRange } from '@opentabz/core/shared';
+import { DEFAULT_PAGE_FURNITURE, type BarRange } from '@opentabz/core/shared';
 import { getEngine } from '../engine/instance.ts';
 import { contentWidth, pageGeometry, paginate, type Size } from '../score-view/pagination.ts';
 import type { OpenDocument } from '../state/documents.ts';
-import { scoreFields } from '../state/score-fields.ts';
+import { pagesTexts, scoreFields } from '../state/score-fields.ts';
 
 export interface PagedScore {
   readonly pageCount: number;
@@ -75,7 +75,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
           x: placement.x - page.x,
           y: placement.y - page.y,
         })),
-        ...pageLines(doc.view.style.pages, fields, index + 1, pageCount),
+        ...pagesTexts(doc.view.style, fields, index + 1, pageCount),
         margins: { left: geometry.margins.left, right: geometry.margins.right },
       };
     },

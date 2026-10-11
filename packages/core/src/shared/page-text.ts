@@ -4,6 +4,7 @@
  * Templates name the information with tokens, Guitar Pro's way: %TITLE%, %SUBTITLE%, %ARTIST%,
  * %ALBUM%, %WORDS%, %MUSIC%, %WORDSMUSIC%, %TABBER%, %COPYRIGHT%, and on pages %PAGE% and %PAGES%.
  */
+import type { TextFont } from './text-fonts.ts';
 
 export const TEXT_ALIGNS = ['left', 'center', 'right'] as const;
 export type TextAlign = (typeof TEXT_ALIGNS)[number];
@@ -111,6 +112,8 @@ export function pageLines(
 export interface PageText {
   readonly text: string;
   readonly align: TextAlign;
+  /** The font, if not the paged view's own. */
+  readonly font?: TextFont;
 }
 
 /** The lines of the title block, in Guitar Pro's (and alphaTab's) order. */

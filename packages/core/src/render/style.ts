@@ -6,6 +6,8 @@
 import * as alphaTab from '@coderline/alphatab';
 import { spellChord, type ChordSpelling } from '../shared/chord-spelling.ts';
 import { DEFAULT_PAGE_FURNITURE } from '../shared/page-text.ts';
+import { DEFAULT_TEXT_FONTS } from '../shared/text-fonts.ts';
+import { applyTextFonts } from './text-fonts.ts';
 import {
   styleChanges,
   type BracketMode,
@@ -79,6 +81,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     hideEmptyStaves: sheet.hideEmptyStaves,
     hideEmptyStavesInFirstSystem: sheet.hideEmptyStavesInFirstSystem,
     titleBlock: readTitleBlock(score),
+    // alphaTab reads no fonts from Guitar Pro files: the texts start in its own.
+    fonts: DEFAULT_TEXT_FONTS,
     // Guitar Pro's page numbers are not among what alphaTab reads: the pages start as ours.
     pages: DEFAULT_PAGE_FURNITURE,
   };
@@ -185,6 +189,7 @@ export function applyScoreStyle(
       case 'chordSpelling':
       case 'tempoMarks':
       case 'lyrics':
+      case 'fonts':
         break;
     }
   }
@@ -224,6 +229,7 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
+  applyTextFonts(display.resources, style.fonts);
   if (style.keepTextSize && style.scale !== 1) {
     // The renderer scales text with the score: text drawn at its size divided by the scale stays put.
     const fonts = display.resources.elementFonts;
