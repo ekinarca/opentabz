@@ -1,8 +1,18 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..f1026c7e5683d09ba373900ddca05ba2c8e3ffc3 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..b65d307fb84b33743ad83cc8590145d50a0b1d07 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
-@@ -16417,24 +16417,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
+@@ -7100,7 +7100,8 @@ class Beat {
+ 	* Gets a value indicating whether this beat is a full bar rest.
+ 	*/
+ 	get isFullBarRest() {
+-		return this.isRest && this.voice.beats.length === 1 && this.duration === Duration.Whole;
++		// OpenTabz patch 0004: importers compute durations before the beat joins its voice.
++		return this.isRest && this.voice !== undefined && this.voice.beats.length === 1 && this.duration === Duration.Whole;
+ 	}
+ 	/**
+ 	* Gets or sets whether any note in this beat has a let-ring applied.
+@@ -16417,24 +16418,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
  /**
  * @internal
  */
@@ -41,7 +51,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..f1026c7e5683d09ba373900ddca05ba2
  		return defaultValue;
  	}
  	getElementsByTagName(name, recursive = false) {
-@@ -30449,8 +30460,10 @@ class FontSizes {
+@@ -30449,8 +30461,10 @@ class FontSizes {
  	*/
  	static generateFontLookup(family) {
  		if (FontSizes.fontSizeLookupTables.has(family)) return;
@@ -54,7 +64,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..f1026c7e5683d09ba373900ddca05ba2
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -65583,7 +65596,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +65597,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,

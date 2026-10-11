@@ -3,6 +3,8 @@
 | Directory             | Contents                                                                                      | License                           |
 | --------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
 | `alphatex/`           | Scores authored for OpenTabz in alphaTex: demos and one file per feature-matrix area          | AGPL-3.0-or-later (original work) |
+| `musicxml/`           | Original MusicXML scores for cases the test suite lacks (timewise)                            | AGPL-3.0-or-later (original work) |
+| `capella/`            | Original Capella scores (CapXML, compressed `.capx` and plain)                                | AGPL-3.0-or-later (original work) |
 | `generated/`          | Binary files (`.gp`, …) produced from `alphatex/` by `pnpm fixtures`, plus corrupted variants | AGPL-3.0-or-later                 |
 | `alphatab/`           | Feature test files from alphaTab, unmodified — see [NOTICE](alphatab/NOTICE.md)               | MPL-2.0                           |
 | `musicxml-testsuite/` | Kainhofer's MusicXML unit tests, unmodified — see [NOTICE](musicxml-testsuite/NOTICE.md)      | MIT                               |

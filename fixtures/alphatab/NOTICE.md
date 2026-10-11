@@ -23,3 +23,6 @@ song lyrics were **not** copied (ADR-0010 in `docs/DECISIONS.md`):
 `guitarpro8/faulty.gp`, `guitarpro8/orphan-tempo-automation.gp`, `audio/full-song.gp5`, and the
 whole `conversion/` and `visual-tests/` directories. Binary audio, SoundFonts and reference
 images from the test data were not copied either.
+
+`musicxml3/compressed.mxl` (a compressed MusicXML file with placeholder title and composer) was
+added later from the same tag.

@@ -27,14 +27,52 @@ function openError(bytes: Uint8Array, name: string): OpenError {
 
 describe('openScore — every public fixture opens', () => {
   const fixtures = [
-    ...listFixtures('alphatab', /\.(gp[345x]?)$/),
+    ...listFixtures('alphatab', /\.(gp[345x]?|mxl)$/),
     ...listFixtures('musicxml-testsuite', /\.xml$/),
+    ...listFixtures('capella', /\.(capx|capxml)$/),
   ];
   it.each(fixtures)('%s', path => {
     const opened = openScore(readFixture(path), path.split('/').pop() ?? path);
     expect(opened.score.tracks.length).toBeGreaterThan(0);
     expect(opened.score.masterBars.length).toBeGreaterThan(0);
     expect(opened.extensionMismatch).toBe(false);
+  });
+});
+
+describe('openScore — MusicXML timewise', () => {
+  it('reads a timewise score part by part', () => {
+    const opened = openScore(
+      readFixture('musicxml/original-timewise.musicxml'),
+      'original-timewise.musicxml',
+    );
+    expect(opened.format).toBe('musicxml');
+    const { score } = opened;
+    // alphaTab keeps MusicXML title spacing with no-break spaces.
+    expect(score.title.replace(/\u00a0/g, ' ')).toBe('Two Voices, Timewise');
+    expect(score.tracks.map(track => track.name)).toEqual(['Flute', 'Guitar']);
+    expect(score.masterBars).toHaveLength(2);
+    expect(noteCount(score)).toBe(10);
+  });
+});
+
+describe('openScore — Capella', () => {
+  it.each(['capella/original-air.capx', 'capella/original-air.capxml'])('reads %s completely', path => {
+    const opened = openScore(readFixture(path), path.split('/').pop() ?? path);
+    expect(opened.format).toBe('capella');
+    const { score } = opened;
+    expect(score.tracks.map(track => track.name)).toEqual(['Recorder', 'Cello']);
+    expect(score.masterBars).toHaveLength(8);
+    expect(score.masterBars[0]?.timeSignatureNumerator).toBe(3);
+    expect(score.tempo).toBe(96);
+    expect(score.tab).toBe('OpenTabz contributors');
+    const beats = score.tracks[0]?.staves[0]?.bars.flatMap(bar => bar.voices[0]?.beats ?? []) ?? [];
+    expect(beats.flatMap(beat => beat.lyrics ?? []).join(' ')).toBe('Mor- ning light on the hill');
+    expect(beats.filter(beat => beat.tupletNumerator === 3)).toHaveLength(3);
+    expect(beats.flatMap(beat => beat.notes).filter(note => note.isTieDestination)).toHaveLength(1);
+    // Every bar is exactly full: 3/4 at 960 ticks per quarter.
+    for (const bar of score.tracks[0]?.staves[0]?.bars ?? []) {
+      expect(bar.voices[0]?.beats.reduce((sum, beat) => sum + beat.playbackDuration, 0)).toBe(2880);
+    }
   });
 });
 

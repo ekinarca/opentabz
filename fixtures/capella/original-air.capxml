@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- "A Small Air" — original music written for the OpenTabz test suite (AGPL-3.0-or-later). -->
+<score xmlns="http://www.capella.de/CapXML/2.0" version="2.0">
+  <info>
+    <author>OpenTabz contributors</author>
+    <comment>A Small Air: original music for the OpenTabz test suite.</comment>
+  </info>
+  <layout>
+    <staves>
+      <staffLayout description="Recorder">
+        <notation defaultClef="treble"/>
+        <sound instr="74" volume="100"/>
+      </staffLayout>
+      <staffLayout description="Cello">
+        <notation defaultClef="bass"/>
+        <sound instr="42" volume="90"/>
+      </staffLayout>
+    </staves>
+    <brackets/>
+  </layout>
+  <systems>
+    <system tempo="96">
+      <staves>
+        <staff layout="Recorder" defaultTime="3/4">
+          <voices>
+            <voice>
+              <noteObjects>
+                <keySign fifths="1"/>
+                <timeSign time="3/4"/>
+                <chord><duration base="1/4"/><heads><head pitch="D5"/></heads><lyric><verse hyphen="true">Mor</verse></lyric></chord>
+                <chord><duration base="1/4"/><heads><head pitch="B4"/></heads><lyric><verse>ning</verse></lyric></chord>
+                <chord><duration base="1/4"/><heads><head pitch="G4"/></heads><lyric><verse>light</verse></lyric></chord>
+                <barline/>
+                <chord><duration base="1/4" dots="1"/><heads><head pitch="A4"/></heads><lyric><verse>on</verse></lyric></chord>
+                <chord><duration base="1/8"/><heads><head pitch="B4"/></heads><lyric><verse>the</verse></lyric></chord>
+                <chord><duration base="1/4"/><heads><head pitch="C5"/></heads><lyric><verse>hill</verse></lyric></chord>
+                <barline/>
+                <chord><duration base="1/8"><tuplet count="3"/></duration><heads><head pitch="D5"/></heads></chord>
+                <chord><duration base="1/8"><tuplet count="3"/></duration><heads><head pitch="E5"/></heads></chord>
+                <chord><duration base="1/8"><tuplet count="3"/></duration><heads><head pitch="D5"/></heads></chord>
+                <chord><duration base="1/4"/><articulation type="staccato"/><heads><head pitch="B4"/></heads></chord>
+                <rest><duration base="1/4"/></rest>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="G4"><tie begin="true"/></head></heads></chord>
+                <barline/>
+              </noteObjects>
+            </voice>
+          </voices>
+        </staff>
+        <staff layout="Cello" defaultTime="3/4">
+          <voices>
+            <voice>
+              <noteObjects>
+                <keySign fifths="1"/>
+                <timeSign time="3/4"/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="G2"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2"/><heads><head pitch="D3"/></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="C3"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="B2"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="G2"/><head pitch="D3"/></heads></chord>
+                <barline/>
+              </noteObjects>
+            </voice>
+          </voices>
+        </staff>
+      </staves>
+    </system>
+    <system>
+      <staves>
+        <staff layout="Recorder" defaultTime="3/4">
+          <voices>
+            <voice>
+              <noteObjects>
+                <chord><duration base="1/4"/><heads><head pitch="G4"><tie end="true"/></head></heads></chord>
+                <chord><duration base="1/4"/><articulation type="normalAccent"/><heads><head pitch="F5"><alter step="1"/></head></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="E5"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/8"/><heads><head pitch="D5"/></heads></chord>
+                <chord><duration base="1/8"/><heads><head pitch="C5"/></heads></chord>
+                <chord><duration base="1/8"/><heads><head pitch="B4"/></heads></chord>
+                <chord><duration base="1/8"/><heads><head pitch="A4"/></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="B4"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/4"/><articulation type="strongAccent"/><heads><head pitch="A4"/></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="F4"><alter step="1"/></head></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="A4"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="G4"/></heads></chord>
+                <barline type="end"/>
+              </noteObjects>
+            </voice>
+          </voices>
+        </staff>
+        <staff layout="Cello" defaultTime="3/4">
+          <voices>
+            <voice>
+              <noteObjects>
+                <chord><duration base="1/2"/><heads><head pitch="E3"/></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="C3"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="D3"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2"/><heads><head pitch="D3"/></heads></chord>
+                <chord><duration base="1/4"/><heads><head pitch="D2"/></heads></chord>
+                <barline/>
+                <chord><duration base="1/2" dots="1"/><heads><head pitch="G2"/><head pitch="D3"/><head pitch="B3"/></heads></chord>
+                <barline type="end"/>
+              </noteObjects>
+            </voice>
+          </voices>
+        </staff>
+      </staves>
+    </system>
+  </systems>
+</score>
