@@ -28,6 +28,7 @@ available as source: the patch file is that source.
 | [0017](0017-extra-channels.md)              | Channels of their own for slap and pop, golpe and unison bends                     | Slap and pop sounded plain, golpe was silent, unison bends shared a curve  | not yet  |
 | [0018](0018-track-interpretation.md)        | A track's playing style: let ring, strummed chords, palm-mute damping, accents     | Guitar Pro's track interpretation had no equivalent                        | not yet  |
 | [0019](0019-sample-accurate-events.md)      | Events take effect on their own sample within the synthesizer's 64-sample blocks   | Notes started up to 1.45 ms early, unevenly                                | not yet  |
+| [0020](0020-gpif-read-as-it-closes.md)      | Read a Guitar Pro 7+ document as its elements close, then let them go              | A large file held about 900 MB of XML nodes while it opened                | not yet  |
 
 ## Working on a patch
 
@@ -39,5 +40,7 @@ pnpm patch-commit /tmp/alphatab-edit
 
 Only `dist/alphaTab.core.mjs` is patched: the web app bundles it directly (see `vite.config.ts`)
 and the Node entry point (`dist/alphaTab.mjs`, used by the unit tests) imports it.
-After changing a patch, run `pnpm test` and `pnpm test:e2e`; for parser changes, also compare
-parsed scores across all fixtures as described in 0003.
+After changing a patch, run `pnpm test` and `pnpm test:e2e`. `packages/core/test/import-golden.test.ts`
+fingerprints the score of every fixture: a change that alters an imported score fails it, and
+its snapshot is updated (`pnpm vitest run packages/core/test/import-golden.test.ts -u`) only when
+the change is meant to.

@@ -102,8 +102,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   passes (0011), exact text measurement (0012), section names on a row of their own (0013),
   mixer overrides with detune (0014), playback techniques that were drawn but not heard
   (0015), jumps that follow Guitar Pro's rules (0016), channels of their own for slap, pop,
-  golpe and unison bends (0017), a playing style per track (0018) and sample-accurate events
-  (0019). See [docs/upstream/](docs/upstream/).
+  golpe and unison bends (0017), a playing style per track (0018), sample-accurate events
+  (0019) and Guitar Pro 7+ documents read as they close (0020). See
+  [docs/upstream/](docs/upstream/).
+- Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
+  paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
+  opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
 
 ### Fixed
 
