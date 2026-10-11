@@ -68,6 +68,16 @@ export interface EngineMethods {
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
   /** The notes of one track, beat by beat, for instrument views. */
   trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
+  /** A Standard MIDI File of a document, as it is played. */
+  exportMidi(args: {
+    readonly docId: string;
+    /** Tracks left out (muted in the mixer). */
+    readonly leaveOut?: readonly number[];
+    /** Two channels per track (bends on their own) or one. */
+    readonly channelsPerTrack?: 1 | 2;
+    /** How each track is played, by track index. */
+    readonly interpretations?: readonly TrackInterpretation[];
+  }): { readonly bytes: Uint8Array };
 }
 
 export type EngineMethod = keyof EngineMethods;

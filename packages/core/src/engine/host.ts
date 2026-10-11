@@ -3,6 +3,7 @@
  * forwards protocol messages here; tests call it directly in Node.
  */
 import { summarizeScore } from '../document/summary.ts';
+import { exportMidi } from '../export/midi.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
 import { collectTrackNotes } from '../playback/track-notes.ts';
@@ -17,6 +18,7 @@ import {
 } from '../shared/playback.ts';
 import type {
   EngineArgs,
+  EngineResult,
   EngineInfo,
   EngineMethods,
   OpenResult,
@@ -201,6 +203,12 @@ export class EngineHost implements EngineMethods {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
     return collectTrackNotes(document.score, args.trackIndex);
+  }
+
+  public exportMidi(args: EngineArgs<'exportMidi'>): EngineResult<'exportMidi'> {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    return { bytes: exportMidi(document.score, args) };
   }
 
   /** Number of open documents (for tests and diagnostics). */

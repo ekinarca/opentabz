@@ -233,7 +233,7 @@ usePreferences.subscribe((state, previous) => {
 });
 
 /** How each track of a document is played: its mixer's playing style. */
-function interpretations(doc: OpenDocument): TrackInterpretation[] {
+export function interpretations(doc: OpenDocument): TrackInterpretation[] {
   return doc.mix.map(mix => ({
     letRing: mix.letRing,
     brush: mix.brush,

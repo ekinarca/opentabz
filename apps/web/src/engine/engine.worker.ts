@@ -45,6 +45,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.previewBeats(message.args as EngineRequestMessage<'previewBeats'>['args']);
     case 'trackNotes':
       return host.trackNotes(message.args as EngineRequestMessage<'trackNotes'>['args']);
+    case 'exportMidi':
+      return host.exportMidi(message.args as EngineRequestMessage<'exportMidi'>['args']);
   }
 }
 

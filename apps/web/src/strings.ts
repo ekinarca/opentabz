@@ -245,6 +245,25 @@ export const strings = {
     theme: 'Theme',
     settings: 'Settings',
     about: 'About OpenTabz',
+    export: 'Export',
+  },
+
+  exportDialog: {
+    title: 'Export',
+    description: 'Save the score as a file for other programs. It is made on this device and sent nowhere.',
+    close: 'Close',
+    midi: 'MIDI file',
+    midiHint: 'Every track as it is played, with the tempo map and a marker at each section.',
+    leaveOutMuted: 'Leave out muted tracks',
+    channels: 'Channels per track',
+    channelOptions: { two: 'Two', one: 'One' },
+    channelHints: {
+      two: 'Bends on a channel of their own, so they move only the bent note (as Guitar Pro does).',
+      one: 'Each instrument on one channel, for programs that expect it; a bend moves every note sounding.',
+    },
+    exportMidi: 'Export MIDI',
+    working: 'Exporting…',
+    failed: (reason: string) => `The export failed: ${reason}`,
   },
 
   settings: {

@@ -7,6 +7,7 @@ import { AboutDialog } from './AboutDialog.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { MetronomeTool } from './MetronomeTool.tsx';
 import { SettingsDialog } from './SettingsDialog.tsx';
+import { ExportDialog } from './ExportDialog.tsx';
 import { ShortcutSheet } from './ShortcutSheet.tsx';
 import { Home } from './Home.tsx';
 import { Notices } from './Notices.tsx';
@@ -74,6 +75,7 @@ export function App() {
         <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
         <ShortcutSheet />
         <SettingsDialog />
+        <ExportDialog />
         <MetronomeTool />
         <Notices />
       </ToastProvider>

@@ -790,7 +790,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-001 | PDF (vector, fonts embedded, correct pagination)                      | GP  | M2  | —       | —    | planned |
 | EXP-002 | PNG                                                                   | GP  | M2  | —       | —    | planned |
 | EXP-003 | SVG                                                                   | OT  | M2  | —       | —    | planned |
-| EXP-004 | MIDI (effects as pitch bend / CC, tempo map, markers)                 | GP  | M2  | —       | —    | planned |
+| EXP-004 | MIDI (effects as pitch bend / CC, tempo map, markers)                 | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-005 | WAV                                                                   | GP  | M2  | —       | —    | planned |
 | EXP-006 | MP3                                                                   | GP  | M7  | —       | —    | planned |
 | EXP-007 | OGG                                                                   | GP  | M7  | —       | —    | planned |
@@ -810,7 +810,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-021 | Guitar Pro 6 (.gpx)                                                   | GP  | M5  | —       | —    | planned |
 | EXP-022 | Guitar Pro 5 (.gp5)                                                   | GP  | M5  | —       | —    | planned |
 | EXP-023 | AIFF                                                                  | GP  | M7  | —       | —    | planned |
-| EXP-024 | MIDI options: muted tracks left out, one or two channels per track    | GP  | M2  | —       | —    | planned |
+| EXP-024 | MIDI options: muted tracks left out, one or two channels per track    | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-025 | MIDI round trip keeps decimal tempos and note-level audio settings    | GP  | M5  | —       | —    | planned |
 | EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | —    | planned |
 | EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | —    | planned |

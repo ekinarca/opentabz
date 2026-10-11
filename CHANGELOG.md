@@ -90,6 +90,11 @@ All notable changes to OpenTabz are recorded here. The format follows
 - **Quality gates.** Playwright end-to-end tests on Chromium, WebKit and Firefox, desktop and
   phones, with performance budgets (warm start, drop to first render, view changes, play
   start); a bundle budget check; deterministic generated fixtures.
+- **Export to MIDI.** The Export button saves the score as a Standard MIDI File, made on the
+  device: a conductor track with the title, tempo map, meter and a marker each time a section
+  comes round, and one named track per instrument as it is played (playing style included),
+  with bends as pitch bends on a channel of their own or on the track's only one; muted tracks
+  can be left out.
 - **Engraving proofs.** Every guitar technique Guitar Pro draws is checked, on Guitar Pro files
   and alphaTex, to be drawn on its beat and nowhere else: bends of every kind, whammy dives and
   dips, slides, hammer-ons and pull-offs, tapping, slap and pop, every harmonic, vibrato, palm
