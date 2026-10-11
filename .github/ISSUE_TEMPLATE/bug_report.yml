@@ -1,0 +1,43 @@
+name: Bug report
+description: Something renders, plays or behaves incorrectly.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make OpenTabz better. Please do **not** attach copyrighted songs. If a file triggers the
+        bug, describe what it contains (format, Guitar Pro version, which effect) or attach a minimal file you made yourself.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a .gp5 file containing …
+        2. Press …
+    validations:
+      required: true
+  - type: input
+    id: format
+    attributes:
+      label: File format and version
+      placeholder: e.g. Guitar Pro 5.10 (.gp5), Guitar Pro 8 (.gp), MusicXML 4.0
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: e.g. Chrome 141 on macOS 26, Safari on iOS 26
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Technical details
+      description: If OpenTabz showed an error, paste the "technical details" text from the error panel.
+      render: text

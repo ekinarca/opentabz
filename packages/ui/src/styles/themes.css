@@ -1,0 +1,153 @@
+/*
+ * OpenTabz themes. Every colour in the product comes from these custom properties; components and
+ * rendered notation (via --score-*) switch instantly when [data-theme] changes.
+ *
+ * Contrast: text and muted text meet WCAG 2.2 AA (4.5:1) on --ot-surface and --ot-bg in every theme;
+ * accent fills carry --ot-on-accent text at ≥ 4.5:1.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --ot-bg: #ebe8e1;
+  --ot-surface: #fbfaf7;
+  --ot-surface-raised: #ffffff;
+  --ot-surface-sunken: #f2efe9;
+  --ot-border: #d9d4c8;
+  --ot-border-strong: #b9b2a3;
+  --ot-text: #17161a;
+  --ot-text-muted: #59554d;
+  --ot-text-faint: #7a756b;
+  --ot-accent: #c2410c;
+  --ot-accent-hover: #a7360a;
+  --ot-accent-soft: #fbe5d8;
+  --ot-on-accent: #ffffff;
+  --ot-focus: #c2410c;
+  --ot-danger: #b42318;
+  --ot-danger-soft: #fdecea;
+  --ot-warning: #8a5a00;
+  --ot-warning-soft: #fdf3dc;
+  --ot-success: #1b7a3d;
+  --ot-paper: #ffffff;
+  --ot-paper-edge: rgb(23 22 26 / 0.08);
+  --ot-paper-shadow: 0 1px 2px rgb(23 22 26 / 0.08), 0 8px 24px rgb(23 22 26 / 0.08);
+  --ot-page-text: #6b665d;
+  --ot-overlay: rgb(23 22 26 / 0.45);
+  --ot-drop: rgb(194 65 12 / 0.08);
+
+  --score-ink: #141414;
+  --score-ink-secondary: rgb(20 20 20 / 0.42);
+  --score-staff-line: #8f8f8f;
+  --score-barline: #262626;
+  --score-bar-number: #b4430f;
+  --score-info: #141414;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --ot-bg: #0d0d10;
+  --ot-surface: #16161a;
+  --ot-surface-raised: #1e1e23;
+  --ot-surface-sunken: #111114;
+  --ot-border: #2b2b32;
+  --ot-border-strong: #43434c;
+  --ot-text: #eceae6;
+  --ot-text-muted: #a9a6a1;
+  --ot-text-faint: #8b8883;
+  --ot-accent: #ff7a2f;
+  --ot-accent-hover: #ff8f4f;
+  --ot-accent-soft: #3a2014;
+  --ot-on-accent: #1a0c04;
+  --ot-focus: #ff8f4f;
+  --ot-danger: #ff7b6e;
+  --ot-danger-soft: #3a1714;
+  --ot-warning: #f2b544;
+  --ot-warning-soft: #33280f;
+  --ot-success: #5fd38a;
+  --ot-paper: #1b1b20;
+  --ot-paper-edge: rgb(255 255 255 / 0.06);
+  --ot-paper-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 10px 30px rgb(0 0 0 / 0.45);
+  --ot-page-text: #8b8883;
+  --ot-overlay: rgb(0 0 0 / 0.6);
+  --ot-drop: rgb(255 122 47 / 0.1);
+
+  --score-ink: #ebe8e2;
+  --score-ink-secondary: rgb(235 232 226 / 0.5);
+  --score-staff-line: #6c6c74;
+  --score-barline: #cdcac4;
+  --score-bar-number: #ff9a5c;
+  --score-info: #ebe8e2;
+}
+
+[data-theme='sepia'] {
+  color-scheme: light;
+  --ot-bg: #e0d1b2;
+  --ot-surface: #f3e9d4;
+  --ot-surface-raised: #f8f0de;
+  --ot-surface-sunken: #ebdfc4;
+  --ot-border: #d3c099;
+  --ot-border-strong: #b49f74;
+  --ot-text: #33271a;
+  --ot-text-muted: #5f4f3a;
+  --ot-text-faint: #7a6850;
+  --ot-accent: #9a3f17;
+  --ot-accent-hover: #823412;
+  --ot-accent-soft: #f0d7c2;
+  --ot-on-accent: #fff8ee;
+  --ot-focus: #9a3f17;
+  --ot-danger: #9b2c1f;
+  --ot-danger-soft: #f3dcd3;
+  --ot-warning: #7a5208;
+  --ot-warning-soft: #f3e6c4;
+  --ot-success: #2f6b33;
+  --ot-paper: #f8efdb;
+  --ot-paper-edge: rgb(51 39 26 / 0.12);
+  --ot-paper-shadow: 0 1px 2px rgb(51 39 26 / 0.12), 0 8px 22px rgb(51 39 26 / 0.12);
+  --ot-page-text: #7a6850;
+  --ot-overlay: rgb(51 39 26 / 0.45);
+  --ot-drop: rgb(154 63 23 / 0.1);
+
+  --score-ink: #2c2116;
+  --score-ink-secondary: rgb(44 33 22 / 0.45);
+  --score-staff-line: #9e8b6c;
+  --score-barline: #3a2d1e;
+  --score-bar-number: #9a3f17;
+  --score-info: #2c2116;
+}
+
+/* Stage: maximum contrast on black for dark rooms and distance reading. */
+[data-theme='stage'] {
+  color-scheme: dark;
+  --ot-bg: #000000;
+  --ot-surface: #0a0a0a;
+  --ot-surface-raised: #141414;
+  --ot-surface-sunken: #050505;
+  --ot-border: #2e2e2e;
+  --ot-border-strong: #5a5a5a;
+  --ot-text: #ffffff;
+  --ot-text-muted: #c8c8c8;
+  --ot-text-faint: #a8a8a8;
+  --ot-accent: #ffb000;
+  --ot-accent-hover: #ffc233;
+  --ot-accent-soft: #3a2a00;
+  --ot-on-accent: #000000;
+  --ot-focus: #ffc233;
+  --ot-danger: #ff8a80;
+  --ot-danger-soft: #3d1310;
+  --ot-warning: #ffd166;
+  --ot-warning-soft: #33290d;
+  --ot-success: #6ee7a0;
+  --ot-paper: #000000;
+  --ot-paper-edge: rgb(255 255 255 / 0.14);
+  --ot-paper-shadow: 0 0 0 1px rgb(255 255 255 / 0.14);
+  --ot-page-text: #a8a8a8;
+  --ot-overlay: rgb(0 0 0 / 0.7);
+  --ot-drop: rgb(255 176 0 / 0.12);
+
+  --score-ink: #ffffff;
+  --score-ink-secondary: rgb(255 255 255 / 0.6);
+  --score-staff-line: #9a9a9a;
+  --score-barline: #ffffff;
+  --score-bar-number: #ffb000;
+  --score-info: #ffffff;
+}

@@ -1,0 +1,28 @@
+diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
+index b6203da6066c95efcf66298fe48a690f144597a5..fc9f111b082aac9758985d63068b6461c6c34741 100644
+--- a/dist/alphaTab.core.mjs
++++ b/dist/alphaTab.core.mjs
+@@ -30449,8 +30449,10 @@ class FontSizes {
+ 	*/
+ 	static generateFontLookup(family) {
+ 		if (FontSizes.fontSizeLookupTables.has(family)) return;
+-		if (!Environment.isRunningInWorker && Environment.webPlatform !== WebPlatform.NodeJs) {
+-			const measureContext = document.createElement("canvas").getContext("2d");
++		let measureContext = null;
++		if (typeof OffscreenCanvas !== "undefined") measureContext = new OffscreenCanvas(1, 1).getContext("2d");
++		else if (!Environment.isRunningInWorker && Environment.webPlatform !== WebPlatform.NodeJs) measureContext = document.createElement("canvas").getContext("2d");
++		if (measureContext) {
+ 			measureContext.font = `11px ${family}`;
+ 			const widths = [];
+ 			const heights = [];
+@@ -65583,7 +65585,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+ //#region src/io/_barrel.ts
+ var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
+ 	ByteBuffer: () => ByteBuffer,
+-	IOHelper: () => IOHelper
++	EndOfReaderError: () => EndOfReaderError,
++	IOHelper: () => IOHelper,
++	OverflowError: () => OverflowError
+ });
+ //#endregion
+ //#region src/exporter/ScoreExporter.ts

@@ -1,0 +1,89 @@
+/*
+ * ScoreView layout. Colours of the rendered notation come from --score-* custom properties
+ * (themes.css) through the sentinel mapping injected by score-theme.ts (ADR-0006).
+ */
+
+.ot-scroll {
+  position: relative;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--ot-bg);
+  contain: strict;
+  scrollbar-gutter: stable;
+}
+
+.ot-scroll:focus-visible {
+  outline: 2px solid var(--ot-focus);
+  outline-offset: -2px;
+}
+
+.ot-sheet {
+  position: relative;
+  margin: 0 auto;
+}
+
+.ot-sheet[data-layout='scroll'],
+.ot-sheet[data-layout='horizontal'] {
+  background: var(--ot-paper);
+  margin: 0;
+  min-width: 100%;
+}
+
+.ot-pages,
+.ot-partials {
+  position: absolute;
+  inset: 0;
+}
+
+.ot-page {
+  position: absolute;
+  background: var(--ot-paper);
+  box-shadow: var(--ot-paper-shadow);
+  outline: 1px solid var(--ot-paper-edge);
+  border-radius: 2px;
+}
+
+.ot-page-header,
+.ot-page-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ot-page-text);
+  pointer-events: none;
+}
+
+.ot-page-header {
+  top: 22px;
+  font-style: italic;
+}
+
+.ot-page-footer {
+  bottom: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ot-partial {
+  position: absolute;
+  contain: layout paint style;
+}
+
+.ot-partial > svg {
+  display: block;
+  overflow: visible;
+}
+
+/* alphaTab draws music symbols as text in the SMuFL font. */
+.ot-partial .at {
+  font-family: 'Bravura', serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: visible;
+}

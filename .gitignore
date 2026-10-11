@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+.vite/
+
+# tests
+coverage/
+test-results/
+playwright-report/
+blob-report/
+apps/web/e2e/.cache/
+
+# private fixtures supplied by the owner (never committed)
+fixtures/private/
+
+# local env / tooling
+.env
+.env.*
+!.env.example
+.netlify/
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+lighthouse-report/

@@ -1,0 +1,5 @@
+packages:
+  - apps/*
+  - packages/*
+patchedDependencies:
+  '@coderline/alphatab@1.8.4': patches/@coderline__alphatab@1.8.4.patch

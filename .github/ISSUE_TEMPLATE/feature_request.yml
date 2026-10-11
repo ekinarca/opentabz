@@ -1,0 +1,20 @@
+name: Feature request
+description: Something a guitarist, bassist, drummer, songwriter or teacher would want.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the musical task or workflow, not just the button you'd like.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: How should it work?
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: How do other tools handle it?
+      description: If Guitar Pro or another app does this, describe how (in your own words).

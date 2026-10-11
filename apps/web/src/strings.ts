@@ -1,0 +1,387 @@
+/**
+ * Every user-facing string in OpenTabz (English only). Components import from here; no literal
+ * UI text lives anywhere else.
+ */
+import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
+import type { PaperId } from './score-view/pagination.ts';
+import type { ThemePreference } from './state/preferences.ts';
+
+const SUPPORTED_SUMMARY =
+  'Guitar Pro (.gp, .gpx, .gp5, .gp4, .gp3), MusicXML (.musicxml, .xml, .mxl), Capella (.capx) and alphaTex';
+
+export const formatNames: Readonly<Record<FormatId, string>> = {
+  gp3: 'Guitar Pro 3',
+  gp4: 'Guitar Pro 4',
+  gp5: 'Guitar Pro 5',
+  gpx: 'Guitar Pro 6',
+  gp: 'Guitar Pro 7/8',
+  gpif: 'Guitar Pro score XML (score.gpif)',
+  musicxml: 'MusicXML',
+  mxl: 'compressed MusicXML',
+  capella: 'Capella',
+  alphatex: 'alphaTex',
+  otz: 'OpenTabz project',
+  midi: 'Standard MIDI File',
+  'ascii-tab': 'plain-text tab',
+  chordpro: 'ChordPro chord sheet',
+  powertab: 'Power Tab document',
+  tuxguitar: 'TuxGuitar document',
+  'gp-legacy': 'Guitar Pro 1–2',
+  'gp-clipboard': 'Guitar Pro clipboard data',
+  tabledit: 'TablEdit document',
+  'capella-binary': 'capella document (binary .cap)',
+  'musicxml-opus': 'MusicXML opus',
+  musescore: 'MuseScore score',
+  pdf: 'PDF document',
+  image: 'image',
+  audio: 'audio file',
+  video: 'video file',
+  archive: 'archive',
+  html: 'web page',
+  text: 'text file',
+  unknown: 'unknown file',
+};
+
+/** Human-readable format with version, e.g. "Guitar Pro 8.1.3" or "MusicXML 4.0". */
+export function describeFormat(format: FormatId, version: string | null): string {
+  if (version === null || version.length === 0) return formatNames[format];
+  switch (format) {
+    case 'gp': {
+      const major = version.split('.')[0];
+      return major === '7' || major === '8' ? `Guitar Pro ${version}` : formatNames.gp;
+    }
+    case 'gp3':
+    case 'gp4':
+    case 'gp5':
+    case 'gp-legacy':
+      return `Guitar Pro ${version}`;
+    case 'musicxml':
+      return `MusicXML ${version}`;
+    case 'gpif':
+      return `Guitar Pro ${version} score XML`;
+    default:
+      return formatNames[format];
+  }
+}
+
+function quoted(name: string): string {
+  return `“${name}”`;
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function notSupportedExplanation(format: FormatId): string {
+  switch (format) {
+    case 'pdf':
+      return 'A PDF holds printed pages, not the score itself. To open a song in OpenTabz you need its Guitar Pro, MusicXML or alphaTex file.';
+    case 'image':
+      return 'Pictures of sheet music cannot be opened as scores. OpenTabz needs the song’s Guitar Pro, MusicXML or alphaTex file.';
+    case 'audio':
+    case 'video':
+      return 'Recordings cannot be opened as scores. OpenTabz needs the song’s Guitar Pro, MusicXML or alphaTex file.';
+    case 'html':
+      return 'It was probably saved from a website instead of downloading the score file itself. Download the actual file and open that.';
+    case 'archive':
+      return 'Extract the archive first, then open the score files inside it.';
+    case 'musescore':
+      return 'In MuseScore, choose File → Export → MusicXML, then open the exported file here.';
+    case 'powertab':
+    case 'tuxguitar':
+    case 'tabledit':
+      return 'TuxGuitar (free) can open this file and save it as Guitar Pro 5 (.gp5), which OpenTabz opens.';
+    case 'otz':
+      return 'This version of OpenTabz cannot read OpenTabz project files.';
+    case 'capella-binary':
+      return 'In capella, save the score as CapXML (.capx); OpenTabz opens that format.';
+    case 'musicxml-opus':
+      return 'An opus only lists other MusicXML files. Open the individual scores it refers to.';
+    default:
+      return `OpenTabz opens ${SUPPORTED_SUMMARY} files.`;
+  }
+}
+
+export interface ErrorText {
+  readonly title: string;
+  readonly explanation: string;
+}
+
+/** Title and explanation for a file that failed to open. */
+export function openErrorText(error: OpenError): ErrorText {
+  const file = quoted(error.fileName);
+  const format = error.format === null ? null : describeFormat(error.format, error.formatVersion);
+  switch (error.code) {
+    case 'empty':
+      return {
+        title: `${file} is empty`,
+        explanation: 'The file contains no data. It may not have finished downloading.',
+      };
+    case 'too-large':
+      return {
+        title: `${file} is too large`,
+        explanation: `OpenTabz opens files up to 256 MB; this one is ${formatBytes(error.byteLength)}.`,
+      };
+    case 'unrecognized':
+      return {
+        title: `OpenTabz can’t identify ${file}`,
+        explanation: `Its contents don’t match any score format OpenTabz knows. OpenTabz opens ${SUPPORTED_SUMMARY} files.`,
+      };
+    case 'not-supported':
+      return {
+        title: `${file} is ${articleFor(format ?? 'unknown file')} ${format ?? 'unknown file'}`,
+        explanation: notSupportedExplanation(error.format ?? 'unknown'),
+      };
+    case 'unsupported-version':
+      return error.format === 'gp-clipboard'
+        ? {
+            title: `${file} is Guitar Pro clipboard data`,
+            explanation:
+              'It holds a copied selection, not a song. Paste it into Guitar Pro and save the song as a file.',
+          }
+        : {
+            title: `${file} is from ${format ?? 'an old version of Guitar Pro'}`,
+            explanation:
+              'Files from Guitar Pro 1 and 2 can’t be read. Open the file in a later Guitar Pro or in TuxGuitar and save it as Guitar Pro 5 (.gp5).',
+          };
+    case 'truncated':
+      return {
+        title: `${file} is incomplete`,
+        explanation:
+          `This ${format ?? ''} file ends before all of its data. It was probably cut off while downloading or copying — try getting it again.`.replace(
+            '  ',
+            ' ',
+          ),
+      };
+    case 'corrupt':
+      return {
+        title: `${file} is damaged`,
+        explanation: `OpenTabz recognised it as ${format === null ? 'a score file' : `a ${format} file`}, but its contents are inconsistent. If it opens in other software, please report it so OpenTabz can be fixed.`,
+      };
+    case 'timeout':
+      return {
+        title: `Opening ${file} took too long`,
+        explanation:
+          'The engine stopped working on it and was restarted. Please report the file so OpenTabz can handle it.',
+      };
+    case 'read-failed':
+      return {
+        title: `${file} couldn’t be read`,
+        explanation:
+          'Your browser couldn’t read the file. Check that it still exists and that you’re allowed to open it.',
+      };
+    case 'network':
+      return {
+        title: 'The file couldn’t be downloaded',
+        explanation:
+          'The download failed or the website doesn’t allow other sites to fetch its files. Download the file yourself and drop it here instead.',
+      };
+    case 'internal':
+      return {
+        title: `Something went wrong opening ${file}`,
+        explanation: 'This is a bug in OpenTabz. The technical details below help fix it.',
+      };
+  }
+}
+
+function articleFor(noun: string): string {
+  return /^[aeiou]/i.test(noun) && !/^uni/i.test(noun) ? 'an' : 'a';
+}
+
+export const strings = {
+  appName: 'OpenTabz',
+  documentTitle: (title: string | null) =>
+    title === null ? 'OpenTabz — open any tab, instantly' : `${title} · OpenTabz`,
+
+  home: {
+    headline: 'Drop a tab.',
+    release: 'Let it go.',
+    lede: 'Guitar Pro, MusicXML and alphaTex files render instantly — right here, never uploaded.',
+    openFile: 'Open a file',
+    openUrl: 'Open from a link',
+    demosHeading: 'Or try',
+    privacy: 'Free and open source. No account, no tracking — your files never leave this device.',
+  },
+
+  demos: {
+    shuffle: { title: 'a blues shuffle' },
+    greensleeves: { title: 'Greensleeves' },
+    study: { title: 'an arpeggio study' },
+  },
+
+  drop: {
+    overlay: 'Drop to open',
+    overlayDetail: 'Guitar Pro, MusicXML, Capella or alphaTex',
+    folder: (name: string) => ({
+      title: `${quoted(name)} is a folder`,
+      explanation: 'Drop the score files inside the folder instead of the folder itself.',
+    }),
+  },
+
+  urlDialog: {
+    title: 'Open from URL',
+    description:
+      'OpenTabz downloads the file directly into your browser. The website must allow cross-site downloads (CORS).',
+    label: 'File address',
+    placeholder: 'https://example.com/song.gp',
+    submit: 'Open',
+    cancel: 'Cancel',
+    invalid: 'Enter a web address starting with https:// or http://',
+  },
+
+  topBar: {
+    home: 'OpenTabz home',
+    documents: 'Open documents',
+    close: (name: string) => `Close ${name}`,
+    openFile: 'Open file',
+    theme: 'Theme',
+    about: 'About OpenTabz',
+  },
+
+  themes: {
+    system: 'Match system',
+    light: 'Studio (light)',
+    dark: 'Night (dark)',
+    sepia: 'Parchment (sepia)',
+    stage: 'Stage (high contrast)',
+  } satisfies Record<ThemePreference, string>,
+
+  toolbar: {
+    label: 'Score view',
+    tracks: 'Tracks',
+    tracksAll: 'All tracks',
+    tracksCount: (shown: number, total: number) =>
+      shown === total ? 'All tracks' : `${shown} of ${total} tracks`,
+    tracksHeading: 'Show tracks',
+    staves: 'Staves',
+    layout: 'Layout',
+    paper: 'Paper',
+    systems: 'Line breaks',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    zoomReset: 'Reset zoom to 100 %',
+    zoomLevel: (zoom: number) => `${Math.round(zoom * 100)} %`,
+    zoomMenu: 'Zoom level',
+    songInfo: 'Song info',
+  },
+
+  staffDisplays: {
+    default: 'As in file',
+    'score-tab': 'Notation + tab',
+    score: 'Notation',
+    tab: 'Tab',
+  } satisfies Record<StaffDisplay, string>,
+
+  layouts: {
+    page: 'Page',
+    scroll: 'Vertical',
+    horizontal: 'Horizontal',
+  } satisfies Record<LayoutKind, string>,
+
+  papers: {
+    a4: 'A4',
+    letter: 'US Letter',
+  } satisfies Record<PaperId, string>,
+
+  systemsLayouts: {
+    model: 'As in file',
+    auto: 'Automatic',
+  } satisfies Record<SystemsLayout, string>,
+
+  score: {
+    region: (title: string) => `Score: ${title}`,
+    pageNumber: (page: number, pages: number) => `${page} / ${pages}`,
+    untitled: 'Untitled',
+    renderFailed: 'The score couldn’t be displayed',
+    renderFailedDetail:
+      'The engine reported an error while laying out this score. Technical details are below.',
+  },
+
+  songInfo: {
+    title: 'Song info',
+    fields: {
+      title: 'Title',
+      subtitle: 'Subtitle',
+      artist: 'Artist',
+      album: 'Album',
+      words: 'Words',
+      music: 'Music',
+      copyright: 'Copyright',
+      tab: 'Tab by',
+      instructions: 'Instructions',
+      notices: 'Notices',
+    },
+    file: 'File',
+    format: 'Format',
+    size: 'Size',
+    bars: 'Bars',
+    tempo: 'Tempo',
+    tempoValue: (bpm: number, label: string) => (label.length > 0 ? `${label} (${bpm} BPM)` : `${bpm} BPM`),
+    tracks: 'Tracks',
+    tuning: 'Tuning',
+    capo: (fret: number) => `capo ${fret}`,
+    percussion: 'percussion',
+    close: 'Close',
+  },
+
+  errors: {
+    dialogTitle: (count: number) =>
+      count === 1 ? 'The file couldn’t be opened' : `${count} files couldn’t be opened`,
+    technical: 'Technical details',
+    copy: 'Copy details',
+    copied: 'Copied',
+    dismiss: 'Close',
+    format: 'Detected format',
+    position: 'Position',
+    size: 'Size',
+  },
+
+  notices: {
+    extensionMismatch: (name: string, format: string) => ({
+      title: `Opened ${quoted(name)} as ${format}`,
+      description: 'The file’s extension suggested a different format; OpenTabz went by its contents.',
+    }),
+    truncated: (name: string) => ({
+      title: `${quoted(name)} seems to be cut off`,
+      description:
+        'OpenTabz opened everything it could read, but the end of the file is missing, so some content may be lost.',
+    }),
+    engineRestarted: {
+      title: 'The engine was restarted',
+      description: 'It stopped responding. Your open scores were reloaded.',
+    },
+    toastRegion: 'Notifications',
+    close: 'Dismiss',
+  },
+
+  about: {
+    title: 'About OpenTabz',
+    description: 'A free, open-source notation and tablature workstation that runs entirely in your browser.',
+    license: 'OpenTabz is free software under the GNU Affero General Public License v3.0 or later.',
+    source: 'Source code',
+    engine: 'Notation engine',
+    engineCredit:
+      'Scores are parsed and engraved by alphaTab (Mozilla Public License 2.0) by Daniel Kuschny and contributors. OpenTabz applies small patches, published with its source code.',
+    font: 'Music font: Bravura by Steinberg Media Technologies (SIL Open Font License 1.1).',
+    privacy:
+      'Privacy: OpenTabz has no server. Your files are opened in this browser tab and never uploaded. There are no cookies, analytics or trackers.',
+    trademark:
+      'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with or endorsed by Arobas Music; it opens Guitar Pro files for compatibility.',
+    notices: 'Third-party notices',
+    close: 'Close',
+  },
+
+  footer: {
+    license: 'Free software · AGPL-3.0',
+    engine: 'Notation engine: alphaTab',
+    trademark:
+      'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with Arobas Music.',
+  },
+
+  loading: {
+    opening: (name: string) => `Opening ${quoted(name)}…`,
+    downloading: 'Downloading…',
+  },
+} as const;

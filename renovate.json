@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":pinAllExceptPeerDependencies"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "pin",
+  "packageRules": [
+    {
+      "matchPackageNames": ["@coderline/alphatab"],
+      "groupName": "alphaTab",
+      "description": "alphaTab upgrades require re-applying patches/ and a full visual regression run.",
+      "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
+    }
+  ]
+}

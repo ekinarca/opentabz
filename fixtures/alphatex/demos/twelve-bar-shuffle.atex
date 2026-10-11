@@ -1,0 +1,80 @@
+// Twelve-Bar Shuffle in A — original music written for OpenTabz (AGPL-3.0-or-later).
+\title "Twelve-Bar Shuffle in A"
+\subtitle "OpenTabz demo"
+\artist "OpenTabz"
+\music "OpenTabz contributors"
+\copyright "Original music for OpenTabz · AGPL-3.0-or-later"
+\tempo (112 "Shuffle")
+
+\track ("Rhythm Guitar" "R.Gt.") {instrument overdrivenGuitar color "#2E6FBA"}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2) {label "Standard"}
+\chord ("A7" 0 2 0 2 0 x)
+\chord ("D7" 2 1 2 0 x x)
+\chord ("E7" 0 0 1 0 2 0)
+\ts (4 4) \ks A \tf triplet8th \section "Twelve bars"
+(0.5{pm} 2.4{pm}).8{ch "A7"} (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.5{pm} 2.4{pm}).8 (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.5{pm} 2.4{pm}).8 (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.5{pm} 2.4{pm}).8 (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.4{pm} 2.3{pm}).8{ch "D7"} (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) |
+(0.4{pm} 2.3{pm}).8 (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) |
+(0.5{pm} 2.4{pm}).8{ch "A7"} (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.5{pm} 2.4{pm}).8 (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+\section "Turnaround"
+(0.6{pm} 2.5{pm}).8{ch "E7"} (0.6{pm} 2.5{pm}) (0.6{pm} 4.5{pm}) (0.6{pm} 4.5{pm}) (0.6{pm} 2.5{pm}) (0.6{pm} 2.5{pm}) (0.6{pm} 4.5{pm}) (0.6{pm} 4.5{pm}) |
+(0.4{pm} 2.3{pm}).8{ch "D7"} (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 2.3{pm}) (0.4{pm} 4.3{pm}) (0.4{pm} 4.3{pm}) |
+(0.5{pm} 2.4{pm}).8{ch "A7"} (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 2.4{pm}) (0.5{pm} 4.4{pm}) (0.5{pm} 4.4{pm}) |
+(0.6{pm} 2.5{pm}).8{ch "E7"} (0.6{pm} 2.5{pm}) (0.6{pm} 4.5{pm}) (0.6{pm} 4.5{pm}) (0.6 2.5).4 r.4 |
+\section "Ending"
+(0.1 2.2 0.3 2.4 0.5).1{ch "A7" bd fermata medium}
+
+\track ("Lead Guitar" "Ld.Gt.") {instrument overdrivenGuitar color "#C2410C"}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2) {label "Standard"}
+r.1 |
+r.2 :8 5.3{h} 7.3 5.2{h} 7.2 |
+8.1{b (0 4)}.4 -.1{b (4 0)}.8 5.1.8 7.2{v}.2 |
+:8 5.1 8.2 5.2 7.3{h} 5.3 7.4{sl} 5.4.4 |
+r.4 :8 7.2 8.1 10.1{b (0 4)}.2 |
+-.1{b (4 0)}.8 8.1.8 10.2.8 8.2.8 10.3.4 7.3{v}.4 |
+5.1.4 8.2{b (0 2)}.8 5.2.8 7.3.8 5.3.8 7.4.4 |
+5.4{h}.8 7.4.8 5.5.8 7.5{sl}.8 5.5.2 |
+7.3{b (0 4)}.4 -.3{b (4 0)}.8 5.3.8 7.4{v}.2 |
+:8 10.1 8.1 10.2 8.2 10.3 7.3 8.3{h} 10.3 |
+8.1{b (0 4) v}.2 5.1.4 8.2.4 |
+:8 5.2 7.3 5.3 7.4 6.4 5.4 7.5 0.6 |
+(5.1 5.2 6.3 5.4).1{fermata medium}
+
+\track ("Bass" "B.") {instrument electricBassFinger color "#6B4BA3"}
+\staff {score tabs}
+\tuning (G2 D2 A1 E1) {label "Standard"}
+0.3.4 4.3 2.2 4.2 |
+5.2.4 4.2 2.2 4.3 |
+0.3.4 4.3 2.2 4.2 |
+5.2.4 4.2 2.2 4.3 |
+0.2.4 4.2 2.1 4.1 |
+5.1.4 4.1 2.1 4.2 |
+0.3.4 4.3 2.2 4.2 |
+5.2.4 4.2 2.2 4.3 |
+0.4.4 4.4 2.3 4.3 |
+0.2.4 4.2 2.1 4.1 |
+0.3.4 4.3 2.2 4.2 |
+0.4.4 4.4 2.3 4.3 |
+0.3.1{fermata medium}
+
+\track ("Drums" "Dr.") {instrument percussion}
+\articulation defaults
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatOpen |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatOpen |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatOpen |
+:8 (KickHit CrashHighHit) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed (KickHit HiHatClosed) (KickHit HiHatClosed) (SnareHit HiHatClosed) HiHatClosed |
+:8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed :16 SnareHit SnareHit HighTomHit HighTomHit MidTomHit MidTomHit LowTomHit LowTomHit |
+(KickHit CrashHighHit).1{fermata medium}

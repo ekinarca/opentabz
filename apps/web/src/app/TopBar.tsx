@@ -1,0 +1,137 @@
+import {
+  IconButton,
+  LogoMark,
+  Menu,
+  MenuContent,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+  Tooltip,
+  Wordmark,
+} from '@opentabz/ui';
+import { CircleHelp, FolderOpen, Palette, X } from 'lucide-react';
+import { useDocuments } from '../state/documents.ts';
+import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
+import { strings } from '../strings.ts';
+import { pickFiles } from './open-actions.ts';
+import { modKey } from './platform.ts';
+
+export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readonly home: boolean }) {
+  const docs = useDocuments(state => state.docs);
+  const activeKey = useDocuments(state => state.activeKey);
+  const activate = useDocuments(state => state.activate);
+  const close = useDocuments(state => state.close);
+  const theme = usePreferences(state => state.theme);
+  const setPreferences = usePreferences(state => state.set);
+
+  return (
+    <header
+      className={
+        home && docs.length === 0
+          ? 'absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5'
+          : 'flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-3'
+      }
+    >
+      <button
+        type="button"
+        onClick={() => {
+          activate(null);
+        }}
+        aria-label={strings.topBar.home}
+        aria-current={activeKey === null ? 'page' : undefined}
+        className="flex h-9 items-center gap-2 rounded-[var(--radius-control)] px-1.5 hover:bg-sunken"
+      >
+        <LogoMark size={26} />
+        <Wordmark className="hidden sm:inline" />
+      </button>
+
+      {docs.length > 0 && (
+        <nav aria-label={strings.topBar.documents} className="flex min-w-0 flex-1 items-center">
+          <ul className="flex min-w-0 items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none]">
+            {docs.map(doc => {
+              const active = doc.key === activeKey;
+              const name = doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
+              return (
+                <li key={doc.key} className="flex shrink-0 items-center">
+                  <div
+                    className={`group flex h-8 items-center rounded-[var(--radius-control)] border ${
+                      active
+                        ? 'border-line bg-raised text-ink shadow-sm'
+                        : 'border-transparent text-ink-muted hover:bg-sunken hover:text-ink'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        activate(doc.key);
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                      title={doc.source.name}
+                      className="max-w-[220px] truncate pr-1 pl-3 text-[13px] font-medium"
+                    >
+                      {name}
+                    </button>
+                    <Tooltip label={strings.topBar.close(name)}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          close(doc.key);
+                        }}
+                        aria-label={strings.topBar.close(name)}
+                        className="mr-1 inline-flex size-6 items-center justify-center rounded-md text-ink-faint hover:bg-sunken hover:text-ink"
+                      >
+                        <X size={14} aria-hidden />
+                      </button>
+                    </Tooltip>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
+      <div className={docs.length > 0 ? 'flex items-center gap-1' : 'ml-auto flex items-center gap-1'}>
+        {!home && (
+          <IconButton
+            label={strings.topBar.openFile}
+            shortcut={`${modKey()}+O`}
+            icon={<FolderOpen size={18} aria-hidden />}
+            onClick={pickFiles}
+          />
+        )}
+        <Menu>
+          <Tooltip label={strings.topBar.theme}>
+            <MenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={strings.topBar.theme}
+                className="inline-flex size-9 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink"
+              >
+                <Palette size={18} aria-hidden />
+              </button>
+            </MenuTrigger>
+          </Tooltip>
+          <MenuContent align="end">
+            <MenuRadioGroup<ThemePreference>
+              value={theme}
+              onValueChange={value => {
+                setPreferences({ theme: value });
+              }}
+            >
+              {THEME_PREFERENCES.map(option => (
+                <MenuRadioItem key={option} value={option}>
+                  {strings.themes[option]}
+                </MenuRadioItem>
+              ))}
+            </MenuRadioGroup>
+          </MenuContent>
+        </Menu>
+        <IconButton
+          label={strings.topBar.about}
+          icon={<CircleHelp size={18} aria-hidden />}
+          onClick={onAbout}
+        />
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+LICENSE
+dist/
+coverage/
+test-results/
+playwright-report/
+patches/
+fixtures/**/*.atex
+fixtures/alphatab/
+fixtures/generated/
+apps/web/e2e/__screenshots__/
+docs/FEATURE_MATRIX.md
+docs/PARITY.md
+docs/research/
