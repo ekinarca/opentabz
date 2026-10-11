@@ -64,3 +64,21 @@ describe('kinds of staff', () => {
     expect(staff?.showNumbered).toBe(false);
   });
 });
+
+describe('the grand staff (REND-186)', () => {
+  it('joins the two staves of a piano with a brace, treble over bass', () => {
+    const view = engraveFixture('alphatex/views/keyboard.atex', { trackIndexes: [0] });
+    expect(count(view, 'Brace')).toBe(1);
+    const treble = view.marks.find(mark => mark.name === 'GClef');
+    const bass = view.marks.find(mark => mark.name === 'FClef');
+    const brace = view.marks.find(mark => mark.name === 'Brace');
+    expect((treble?.y ?? 0) < (bass?.y ?? 0)).toBe(true);
+    // The brace stands before both staves, from the top one down past the bottom one's clef.
+    expect((brace?.x ?? 0) < (treble?.x ?? 0)).toBe(true);
+    expect((brace?.y ?? 0) >= (bass?.y ?? 0)).toBe(true);
+  });
+
+  it('gives a single-staff track no brace', () => {
+    expect(count(engraveFixture('alphatex/views/keyboard.atex', { trackIndexes: [1] }), 'Brace')).toBe(0);
+  });
+});

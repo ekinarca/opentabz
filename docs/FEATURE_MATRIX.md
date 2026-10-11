@@ -166,7 +166,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-172 | Multi-line lyrics with syllable alignment                                         | GP  | M2  | alphatab/guitarpro7/beat-lyrics.gp | packages/core/test/render-symbols.test.ts | done |
 | REND-173 | Drum notation with correct noteheads and positions                                | GP  | M2  | alphatab/guitarpro5/percussion-all.gp5                      | packages/core/test/render-symbols.test.ts | done |
 | REND-174 | Clefs (treble, bass, alto, tenor, neutral; octave clefs)                          | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
-| REND-175 | Beaming modes and custom beaming                                                  | GP  | M2  | alphatab/guitarpro8/custom-beaming.gp                       | —    | planned |
+| REND-175 | Beaming modes and custom beaming                                                  | GP  | M2  | alphatab/guitarpro8/beaming-mode.gp | packages/core/test/beaming.test.ts | done |
 | REND-176 | Multibar rests                                                                    | GP  | M2  | — | packages/core/test/render-symbols.test.ts | done |
 | REND-177 | Simile marks (one and two bars)                                                   | GP  | M2  | alphatab/guitarpro7/simile-mark.gp                          | packages/core/test/render-symbols.test.ts | done |
 | REND-178 | Golpe                                                                             | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
@@ -188,7 +188,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-308 | Per-note annotations                                                              | OT  | M5  | —                                                           | —    | planned |
 | REND-309 | Comment layer                                                                     | OT  | M5  | —                                                           | —    | planned |
 | REND-310 | Custom notation styling presets                                                   | OT  | M2  | —                                                           | —    | planned |
-| REND-186 | Grand staff: two staves of one track joined by a brace                            | GP  | M2  | —                                                           | —    | planned |
+| REND-186 | Grand staff: two staves of one track joined by a brace                            | GP  | M2  | alphatex/views/keyboard.atex | packages/core/test/track-staves.test.ts | done |
 | REND-187 | Partial capo display                                                              | GP  | M2  | —                                                           | —    | planned |
 | REND-188 | "Let ring throughout" marking for tracks with automatic let ring                  | GP  | M2  | —                                                           | —    | planned |
 | REND-189 | Note values from quadruple whole down to 256th                                    | GP+ | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
