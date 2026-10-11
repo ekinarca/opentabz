@@ -1,0 +1,16 @@
+// Triplet Feels — original exercise written for OpenTabz (AGPL-3.0-or-later).
+// Playback fixture: the same straight line under every triplet feel Guitar Pro offers.
+\title "Triplet Feels"
+\subtitle "OpenTabz playback fixture"
+\tempo 96
+\track ("Alto Saxophone" "A.Sax.") {instrument altoSax}
+\staff {score}
+\ts (4 4) \ks F
+\section "Straight" \tf none :8 F4 G4 A4 C5 D5 C5 A4 G4 |
+\section "Triplet 8th" \tf triplet8th :8 F4 G4 A4 C5 D5 C5 A4 G4 |
+\section "Triplet 16th" \tf triplet16th :16 F4 G4 A4 G4 F4 G4 A4 C5 D5 C5 A4 C5 D5 C5 A4 G4 |
+\section "Dotted 8th" \tf dotted8th :8 F4 G4 A4 C5 D5 C5 A4 G4 |
+\section "Dotted 16th" \tf dotted16th :16 F4 G4 A4 G4 F4 G4 A4 C5 D5 C5 A4 C5 D5 C5 A4 G4 |
+\section "Scottish 8th" \tf scottish8th :8 F4 G4 A4 C5 D5 C5 A4 G4 |
+\section "Scottish 16th" \tf scottish16th :16 F4 G4 A4 G4 F4 G4 A4 C5 D5 C5 A4 C5 D5 C5 A4 G4 |
+\tf none F4.1

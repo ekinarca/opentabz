@@ -1,0 +1,16 @@
+// Rasgueado Patterns — original exercise written for OpenTabz (AGPL-3.0-or-later).
+// Playback fixture: every rasgueado pattern, one beat each, over E, Am, Dm and E7.
+\title "Rasgueado Patterns"
+\subtitle "OpenTabz playback fixture"
+\tempo 80
+\track ("Flamenco Guitar" "Gtr.") {instrument acousticGuitarNylon}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (3 4)
+:4 (0.1 0.2 1.3 2.4 2.5 0.6){rasg ii} (0.1 0.2 1.3 2.4 2.5 0.6){rasg mi} (0.1 0.2 1.3 2.4 2.5 0.6){rasg miiTriplet} |
+:4 (0.1 1.2 2.3 2.4 0.5){rasg miiAnapaest} (0.1 1.2 2.3 2.4 0.5){rasg pmpTriplet} (0.1 1.2 2.3 2.4 0.5){rasg pmpAnapaest} |
+:4 (1.1 3.2 2.3 0.4){rasg peiTriplet} (1.1 3.2 2.3 0.4){rasg peiAnapaest} (1.1 3.2 2.3 0.4){rasg paiTriplet} |
+:4 (0.1 1.2 2.3 2.4 0.5){rasg paiAnapaest} (0.1 1.2 2.3 2.4 0.5){rasg amiTriplet} (0.1 1.2 2.3 2.4 0.5){rasg amiAnapaest} |
+:4 (0.1 3.2 1.3 0.4 2.5 0.6){rasg ppp} (0.1 3.2 1.3 0.4 2.5 0.6){rasg amii} (0.1 3.2 1.3 0.4 2.5 0.6){rasg amip} |
+:4 (0.1 0.2 1.3 2.4 2.5 0.6){rasg eami} (0.1 0.2 1.3 2.4 2.5 0.6){rasg eamii} (0.1 0.2 1.3 2.4 2.5 0.6){rasg peami} |
+(0.1 0.2 1.3 2.4 2.5 0.6).2{d}
