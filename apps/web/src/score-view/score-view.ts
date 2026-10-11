@@ -14,6 +14,7 @@ import type {
 } from '@opentabz/core/shared';
 import type { EngineClient } from '../engine/client.ts';
 import { EdgeScroller } from './edge-scroll.ts';
+import { SvgCache } from './svg-cache.ts';
 import {
   contentWidth,
   pageGeometry,
@@ -128,7 +129,7 @@ export class ScoreView {
   private readonly edgeScroller: EdgeScroller;
   private externalScroll: (() => void) | null = null;
   private readonly elements = new Map<string, HTMLDivElement>();
-  private readonly svgCache = new Map<string, string>();
+  private readonly svgCache = new SvgCache();
   private readonly requested = new Set<string>();
   private readonly nearViewport = new Set<string>();
   private readonly queue = new Set<string>();
@@ -572,7 +573,10 @@ export class ScoreView {
       const result = await this.engine.call('paint', { viewId: this.viewId, generation, ids });
       if (result.generation !== this.generation || this.isDisposed()) return;
       for (const painted of result.partials) {
-        this.svgCache.set(painted.id, painted.svg);
+        // Markup evicted from the cache is painted again by the worker when it comes back.
+        for (const evicted of this.svgCache.set(painted.id, painted.svg, id => this.nearViewport.has(id))) {
+          this.requested.delete(evicted);
+        }
         const element = this.elements.get(painted.id);
         if (element !== undefined && this.nearViewport.has(painted.id)) this.attach(element, painted.svg);
       }
