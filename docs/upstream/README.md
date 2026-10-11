@@ -29,6 +29,7 @@ available as source: the patch file is that source.
 | [0018](0018-track-interpretation.md)        | A track's playing style: let ring, strummed chords, palm-mute damping, accents     | Guitar Pro's track interpretation had no equivalent                        | not yet  |
 | [0019](0019-sample-accurate-events.md)      | Events take effect on their own sample within the synthesizer's 64-sample blocks   | Notes started up to 1.45 ms early, unevenly                                | not yet  |
 | [0020](0020-gpif-read-as-it-closes.md)      | Read a Guitar Pro 7+ document as its elements close, then let them go              | A large file held about 900 MB of XML nodes while it opened                | not yet  |
+| [0021](0021-let-ring-label.md)              | "let ring" as Guitar Pro writes it                                                 | Let-ring ranges were labelled "LetRing"                                    | not yet  |
 
 ## Working on a patch
 

@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..0b8145f6117cb0fd8782504c267b08923e2a70c4 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..2639e2e329050f0b926ffb2b2c39163f481cdf44 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -1701,7 +1701,17 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0b8145f6117cb0fd8782504c267b0892
  	}
  	onRenderFinished() {
  		return null;
-@@ -51986,8 +52930,10 @@ class MarkerEffectInfo extends EffectInfo {
+@@ -51902,7 +52846,8 @@ class LetRingEffectInfo extends EffectInfo {
+ 		return EffectBarGlyphSizing.GroupedOnBeat;
+ 	}
+ 	createNewGlyph(_renderer, _beat) {
+-		return new LineRangedGlyph("LetRing", NotationElement.EffectLetRing);
++		// OpenTabz patch 0021: the label as Guitar Pro writes it.
++		return new LineRangedGlyph("let ring", NotationElement.EffectLetRing);
+ 	}
+ 	canExpand(_from, _to) {
+ 		return true;
+@@ -51986,8 +52931,10 @@ class MarkerEffectInfo extends EffectInfo {
  	get hideOnMultiTrack() {
  		return true;
  	}
@@ -1713,7 +1723,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0b8145f6117cb0fd8782504c267b0892
  	}
  	get sizingMode() {
  		return EffectBarGlyphSizing.SinglePreBeat;
-@@ -65583,7 +66529,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +66530,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,

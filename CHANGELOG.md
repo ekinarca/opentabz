@@ -90,6 +90,11 @@ All notable changes to OpenTabz are recorded here. The format follows
 - **Quality gates.** Playwright end-to-end tests on Chromium, WebKit and Firefox, desktop and
   phones, with performance budgets (warm start, drop to first render, view changes, play
   start); a bundle budget check; deterministic generated fixtures.
+- **Engraving proofs.** Every guitar technique Guitar Pro draws is checked, on Guitar Pro files
+  and alphaTex, to be drawn on its beat and nowhere else: bends of every kind, whammy dives and
+  dips, slides, hammer-ons and pull-offs, tapping, slap and pop, every harmonic, vibrato, palm
+  mute and let ring, dead and ghost notes, accents, grace notes, tremolo picking, trills,
+  rasgueado, strokes and arpeggios, fingering, dynamics, hairpins and fades.
 
 ### Changed
 
@@ -103,13 +108,15 @@ All notable changes to OpenTabz are recorded here. The format follows
   mixer overrides with detune (0014), playback techniques that were drawn but not heard
   (0015), jumps that follow Guitar Pro's rules (0016), channels of their own for slap, pop,
   golpe and unison bends (0017), a playing style per track (0018), sample-accurate events
-  (0019) and Guitar Pro 7+ documents read as they close (0020). See
-  [docs/upstream/](docs/upstream/).
+  (0019), Guitar Pro 7+ documents read as they close (0020) and "let ring" written as Guitar Pro
+  writes it (0021). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
 
 ### Fixed
+
+- Let-ring ranges read "let ring", as in Guitar Pro, instead of "LetRing".
 
 - A mixer remembered for a file no longer makes playback unavailable when it is restored while
   the sound engine is still starting.
