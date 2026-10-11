@@ -442,6 +442,7 @@ export class ScoreView {
     const seq = ++this.layoutSeq;
     this.requestedOptions = options;
     const anchor = this.captureAnchor();
+    const started = performance.now();
     try {
       const layout = await this.engine.call('layoutView', {
         viewId: this.viewId,
@@ -450,6 +451,9 @@ export class ScoreView {
       });
       if (seq !== this.layoutSeq || this.disposed) return;
       this.apply(layout, anchor);
+      // Request to placed partials, for the "local operations under 100 ms" budget.
+      performance.clearMeasures('ot:layout');
+      performance.measure('ot:layout', { start: started, end: performance.now() });
     } catch (error) {
       if (seq !== this.layoutSeq || this.disposed) return;
       this.requestedOptions = null;

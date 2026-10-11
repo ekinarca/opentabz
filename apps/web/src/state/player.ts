@@ -62,6 +62,9 @@ export interface PlayerState {
 
 let loadSeq = 0;
 
+/** Performance mark set when play is pressed; `ot:play-start` measures until the synth plays. */
+const PLAY_REQUEST = 'ot:play-request';
+
 /** Sends a document's mixer state to the synthesizer, channel by channel. */
 function applyMix(doc: OpenDocument): void {
   const engine = getAudioEngine();
@@ -97,6 +100,11 @@ export const usePlayer = create<PlayerState>((set, get) => {
   const onSynthEvent = (event: SynthEvent) => {
     switch (event.type) {
       case 'state':
+        if (event.playing && performance.getEntriesByName(PLAY_REQUEST, 'mark').length > 0) {
+          performance.clearMeasures('ot:play-start');
+          performance.measure('ot:play-start', PLAY_REQUEST);
+          performance.clearMarks(PLAY_REQUEST);
+        }
         dispatch(event.playing ? { type: 'play' } : { type: 'pause' });
         break;
       case 'position':
@@ -190,6 +198,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         engine.send({ type: 'pause' });
         return;
       }
+      performance.clearMarks(PLAY_REQUEST);
+      performance.mark(PLAY_REQUEST);
       // Created synchronously inside the gesture; resolves once the output is connected.
       engine.ensureOutput().then(
         () => {

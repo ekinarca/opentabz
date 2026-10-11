@@ -53,7 +53,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        include:
+          - browser: chromium
+            projects: --project=chromium --project=mobile-chromium
+          - browser: firefox
+            projects: --project=firefox
+          - browser: webkit
+            projects: --project=webkit --project=mobile-webkit
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -65,8 +71,10 @@ jobs:
         run: pnpm --filter @opentabz/web exec playwright install --with-deps ${{ matrix.browser }}
       - name: Build
         run: pnpm build
+      - name: Fixtures
+        run: pnpm fixtures
       - name: E2E
-        run: pnpm --filter @opentabz/web exec playwright test --project=${{ matrix.browser }}
+        run: pnpm --filter @opentabz/web exec playwright test ${{ matrix.projects }}
       - if: failure()
         uses: actions/upload-artifact@v5
         with:

@@ -52,6 +52,8 @@ export default defineConfig({
     modulePreload: { polyfill: false },
     // Never inline assets as data: URLs; the CSP only allows fonts and scripts from 'self'.
     assetsInlineLimit: 0,
+    // dist/.vite/manifest.json: scripts/check-budgets.ts reads the initial chunk graph from it.
+    manifest: true,
     reportCompressedSize: false,
   },
   server: {

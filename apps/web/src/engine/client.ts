@@ -137,6 +137,8 @@ export class EngineClient {
       () => {
         this.started = true;
         this.startAttempts = 0;
+        // Tests and diagnostics wait for this before measuring open times.
+        performance.mark('ot:engine-ready');
       },
       () => undefined,
     );
