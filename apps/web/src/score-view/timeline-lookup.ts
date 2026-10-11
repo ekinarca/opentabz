@@ -320,24 +320,6 @@ export function barRange(timeline: PlaybackTimeline, tick: number): TickRange | 
   return bar === null ? null : { startTick: bar.startTick, endTick: bar.endTick };
 }
 
-/**
- * Grows (`direction` 1) or shrinks (-1) a range by one played bar at its end. Without a range,
- * selects the bar playing at `tick`. A range never shrinks below its first bar.
- */
-export function resizeRangeByBar(
-  timeline: PlaybackTimeline,
-  range: TickRange | null,
-  tick: number,
-  direction: 1 | -1,
-): TickRange | null {
-  if (range === null) return barRange(timeline, tick);
-  const first = findBarOccurrence(timeline, range.startTick);
-  const last = findBarOccurrence(timeline, range.endTick - 1);
-  if (direction < 0 && last <= first) return range;
-  const target = occurrence(timeline, last + direction);
-  return target === null ? range : { startTick: range.startTick, endTick: target.endTick };
-}
-
 /** First and last played bar of a range, as master bar indexes (for labels). */
 export function rangeBars(
   timeline: PlaybackTimeline,
@@ -413,4 +395,93 @@ export function rangeRects(
     }
   }
   return rects.map(entry => entry.rect);
+}
+
+/**
+ * The pass through master bar `masterBarIndex` at or after `preferAfterTick`, else its first pass
+ * (repeats play some bars several times). Null if the bar is never played.
+ */
+export function occurrenceOfMasterBar(
+  timeline: PlaybackTimeline,
+  masterBarIndex: number,
+  preferAfterTick = 0,
+): Occurrence | null {
+  let first: Occurrence | null = null;
+  const count = timeline.bars.length / TIMELINE_BAR_STRIDE;
+  for (let index = 0; index < count; index++) {
+    if (timeline.bars[index * TIMELINE_BAR_STRIDE + 2] !== masterBarIndex) continue;
+    const bar = occurrence(timeline, index);
+    if (bar === null) continue;
+    if (bar.startTick >= preferAfterTick) return bar;
+    first ??= bar;
+  }
+  return first;
+}
+
+export interface Meter {
+  readonly numerator: number;
+  readonly denominator: number;
+}
+
+/**
+ * Which beat of its meter `tick` falls on (1-based). A bar shorter than its meter (a pickup)
+ * counts from the end, so its last beat is the meter's last beat.
+ */
+export function beatInBar(bar: Occurrence, tick: number, meter: Meter): number {
+  const beatTicks = (4 * 960) / meter.denominator;
+  const missing = Math.max(0, meter.numerator * beatTicks - (bar.endTick - bar.startTick));
+  const beat = Math.floor((Math.max(0, tick - bar.startTick) + missing) / beatTicks) + 1;
+  return Math.min(meter.numerator, Math.max(1, beat));
+}
+
+/**
+ * Start tick of the previous or next slice where a beat of a visible track starts, in playback
+ * order; null at either end of the song.
+ */
+export function stepBeat(
+  timeline: PlaybackTimeline,
+  tick: number,
+  tracks: ReadonlySet<number>,
+  direction: 1 | -1,
+): number | null {
+  const bar = occurrence(timeline, findBarOccurrence(timeline, tick));
+  if (bar === null) return null;
+  let current = findSlice(timeline, bar, tick);
+  if (current === null) return null;
+  // From the middle of a slice, "previous" first goes back to that slice's start. Positions a few
+  // ticks past a start (time-to-tick rounding) count as at the start.
+  if (
+    direction < 0 &&
+    tick > current.startTick + 4 &&
+    beatsStartingAt(timeline, current, tracks).length > 0
+  ) {
+    return current.startTick;
+  }
+  for (;;) {
+    current = slice(timeline, current.index + direction);
+    if (current === null) return null;
+    if (beatsStartingAt(timeline, current, tracks).length > 0) return current.startTick;
+  }
+}
+
+/** The last slice of a played bar where a visible track starts a beat (for "end of bar"). */
+export function lastBeatTick(
+  timeline: PlaybackTimeline,
+  bar: Occurrence,
+  tracks: ReadonlySet<number>,
+): number {
+  for (let index = bar.firstSlice + bar.sliceCount - 1; index >= bar.firstSlice; index--) {
+    const target = slice(timeline, index);
+    if (target !== null && beatsStartingAt(timeline, target, tracks).length > 0) return target.startTick;
+  }
+  return bar.startTick;
+}
+
+/** Beat ids of the visible tracks that start exactly at `tick` (for audible stepping). */
+export function beatsAtTick(timeline: PlaybackTimeline, tick: number, tracks: ReadonlySet<number>): number[] {
+  const bar = occurrence(timeline, findBarOccurrence(timeline, tick));
+  if (bar === null) return [];
+  const target = findSlice(timeline, bar, tick);
+  if (target?.startTick !== tick) return [];
+  return beatsStartingAt(timeline, target, tracks);
 }

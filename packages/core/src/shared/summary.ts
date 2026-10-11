@@ -25,10 +25,21 @@ export interface DocSummary {
   readonly tempo: number;
   readonly tempoLabel: string;
   readonly barCount: number;
+  /** Per master bar, in score order: meter and section, for position displays and navigation. */
+  readonly masterBars: readonly MasterBarSummary[];
   readonly tracks: readonly TrackSummary[];
   /** Whether the file carries its own systems layout (bars per system), e.g. Guitar Pro 6–8. */
   readonly hasModelLayout: boolean;
   readonly hasBackingTrack: boolean;
+}
+
+export interface MasterBarSummary {
+  readonly numerator: number;
+  readonly denominator: number;
+  /** A pickup (anacrusis) bar, shorter than its meter. */
+  readonly anacrusis: boolean;
+  /** Section mark starting at this bar ("A", "Verse"…), or null. */
+  readonly section: { readonly marker: string; readonly text: string } | null;
 }
 
 export interface TrackSummary {

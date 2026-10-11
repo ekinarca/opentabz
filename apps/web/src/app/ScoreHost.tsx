@@ -31,6 +31,15 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
             selection.extendTo(gesture.x, gesture.y);
             return;
           }
+          // Double-tap selects the bar, triple-tap everything (as in Guitar Pro).
+          if (gesture.count === 2) {
+            selection.selectBarAt(gesture.x, gesture.y);
+            return;
+          }
+          if (gesture.count === 3 && player.timeline !== null) {
+            player.setSelection({ startTick: 0, endTick: player.timeline.endTick });
+            return;
+          }
           const tick = cursor.tickAt(gesture.x, gesture.y);
           if (tick !== null) player.seek(tick);
           return;

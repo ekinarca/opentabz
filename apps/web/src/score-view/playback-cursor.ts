@@ -131,8 +131,11 @@ export class PlaybackCursor {
     const ticksPerMs = (tempo * QUARTER_TICKS) / 60_000;
     const duration = Math.max(0, (next.tick - tick) / ticksPerMs);
     this.place(placement, next.placement, duration, playing);
-    if (playing && this.follow && placement.systemIndex !== this.currentSystem)
+    // A horizontal layout is a single system: check on every beat, the scroll keeps a margin.
+    const newSystem = placement.systemIndex !== this.currentSystem;
+    if (playing && this.follow && (newSystem || this.view.layoutKind === 'horizontal')) {
       this.scrollIntoView(placement);
+    }
     this.currentSystem = placement.systemIndex;
   }
 

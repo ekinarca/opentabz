@@ -5,8 +5,8 @@
 import {
   RingWriter,
   SynthHost,
-  type MidiDelivery,
   type SynthCommand,
+  type SynthDelivery,
   type SynthEvent,
 } from '@opentabz/audio';
 
@@ -27,8 +27,8 @@ scope.addEventListener('message', event => {
     command.workletPort.onmessage = () => {
       host.progress();
     };
-    command.enginePort.onmessage = (message: MessageEvent<MidiDelivery>) => {
-      host.receiveMidi(message.data);
+    command.enginePort.onmessage = (message: MessageEvent<SynthDelivery>) => {
+      host.receive(message.data);
     };
     return;
   }

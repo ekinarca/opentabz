@@ -5,6 +5,7 @@ import { useDocuments } from '../state/documents.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
+import { ShortcutSheet } from './ShortcutSheet.tsx';
 import { Home } from './Home.tsx';
 import { Notices } from './Notices.tsx';
 import { OpenErrorsDialog } from './OpenErrorsDialog.tsx';
@@ -69,6 +70,7 @@ export function App() {
         <OpenErrorsDialog />
         <UrlDialog open={urlOpen} onOpenChange={setUrlOpen} />
         <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+        <ShortcutSheet />
         <Notices />
       </ToastProvider>
     </TooltipProvider>

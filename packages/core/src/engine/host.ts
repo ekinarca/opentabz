@@ -7,7 +7,7 @@ import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
-import type { MidiDelivery, PlaybackTimeline } from '../shared/playback.ts';
+import type { PlaybackTimeline, SynthDelivery } from '../shared/playback.ts';
 import type {
   EngineArgs,
   EngineInfo,
@@ -25,6 +25,8 @@ import * as alphaTab from '@coderline/alphatab';
 interface OpenDocument {
   readonly score: alphaTab.model.Score;
   readonly summary: DocSummary;
+  /** Beats by id, built on first use (audible stepping). */
+  beats: Map<number, alphaTab.model.Beat> | null;
 }
 
 interface View {
@@ -41,7 +43,7 @@ export class EngineHostError extends Error {
 
 /** Where MIDI for the synthesizer is sent (a MessagePort in the browser). */
 export interface MidiSink {
-  postMessage(message: MidiDelivery): void;
+  postMessage(message: SynthDelivery): void;
 }
 
 export class EngineHost implements EngineMethods {
@@ -86,7 +88,7 @@ export class EngineHost implements EngineMethods {
         extensionMismatch: opened.extensionMismatch,
         truncated: opened.truncated,
       });
-      this.documents.set(id, { score: opened.score, summary });
+      this.documents.set(id, { score: opened.score, summary, beats: null });
       return { ok: true, summary, parseMs: performance.now() - started };
     } catch (error) {
       if (error instanceof OpenFailure) return { ok: false, error: error.error };
@@ -156,10 +158,42 @@ export class EngineHost implements EngineMethods {
     return playback.timeline;
   }
 
+  public previewBeats(args: EngineArgs<'previewBeats'>): null {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    if (this.synth === null) throw new EngineHostError('No synthesizer is connected.');
+    document.beats ??= indexBeats(document.score);
+    const beats = args.beatIds.flatMap(id => {
+      const beat = document.beats?.get(id);
+      return beat === undefined ? [] : [beat];
+    });
+    if (beats.length === 0) return null;
+    const midiFile = new alphaTab.midi.MidiFile();
+    const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
+    const generator = new alphaTab.midi.MidiFileGenerator(document.score, new alphaTab.Settings(), handler);
+    // Transposition is applied per channel by the synthesizer, as for the song itself.
+    generator.applyTranspositionPitches = false;
+    for (const beat of beats) generator.generateSingleBeat(beat);
+    this.synth.postMessage({
+      type: 'preview',
+      midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
+    });
+    return null;
+  }
+
   /** Number of open documents (for tests and diagnostics). */
   public get documentCount(): number {
     return this.documents.size;
   }
+}
+
+function indexBeats(score: alphaTab.model.Score): Map<number, alphaTab.model.Beat> {
+  const beats = new Map<number, alphaTab.model.Beat>();
+  for (const track of score.tracks)
+    for (const staff of track.staves)
+      for (const bar of staff.bars)
+        for (const voice of bar.voices) for (const beat of voice.beats) beats.set(beat.id, beat);
+  return beats;
 }
 
 const WARMUP_VIEW: ViewOptions = {

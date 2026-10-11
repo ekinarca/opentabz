@@ -4,8 +4,6 @@ import {
   MenuCheckboxItem,
   MenuContent,
   MenuItem,
-  MenuRadioGroup,
-  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
   Tooltip,
@@ -24,16 +22,14 @@ import {
   X,
 } from 'lucide-react';
 import { canToggle } from '../audio/transport-machine.ts';
-import { findBarOccurrence, occurrence, rangeBars } from '../score-view/timeline-lookup.ts';
+import { rangeBars } from '../score-view/timeline-lookup.ts';
 import { useDocuments } from '../state/documents.ts';
-import { SPEED_PRESETS, usePlayer } from '../state/player.ts';
-import { Mixer } from './Mixer.tsx';
+import { usePlayer } from '../state/player.ts';
 import { strings } from '../strings.ts';
-
-function formatTime(milliseconds: number): string {
-  const total = Math.max(0, Math.floor(milliseconds / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-}
+import { shortcutHint } from './keymap.ts';
+import { Mixer } from './Mixer.tsx';
+import { PositionReadout } from './PositionReadout.tsx';
+import { SpeedControl } from './SpeedControl.tsx';
 
 /** A metronome glyph (Lucide has none): body, pendulum and weight. */
 function MetronomeIcon({ size = 18 }: { readonly size?: number }) {
@@ -89,11 +85,7 @@ function SelectionChip({
 
 export function Transport() {
   const transport = usePlayer(state => state.transport);
-  const time = usePlayer(state => state.time);
-  const endTime = usePlayer(state => state.endTime);
-  const tick = usePlayer(state => state.tick);
   const timeline = usePlayer(state => state.timeline);
-  const speed = usePlayer(state => state.speed);
   const metronome = usePlayer(state => state.metronome);
   const countIn = usePlayer(state => state.countIn);
   const loop = usePlayer(state => state.loop);
@@ -101,7 +93,6 @@ export function Transport() {
   const volume = usePlayer(state => state.volume);
   const toggle = usePlayer(state => state.toggle);
   const stop = usePlayer(state => state.stop);
-  const setSpeed = usePlayer(state => state.setSpeed);
   const setMetronome = usePlayer(state => state.setMetronome);
   const setCountIn = usePlayer(state => state.setCountIn);
   const setLoop = usePlayer(state => state.setLoop);
@@ -111,17 +102,14 @@ export function Transport() {
   const activeDoc = useDocuments(state => state.docs.find(doc => doc.key === state.activeKey) ?? null);
   const playing = transport.status === 'playing';
   const loading = transport.status === 'loading' || transport.status === 'unloaded';
-  const bar = timeline === null ? null : occurrence(timeline, findBarOccurrence(timeline, tick));
   const selectedBars = timeline === null || selection === null ? null : rangeBars(timeline, selection);
   const clearSelection = () => {
     setSelection(null);
   };
 
-  let status: string;
+  let status: string | null = null;
   if (transport.status === 'error') status = strings.transport.unavailable;
   else if (loading) status = strings.transport.loading;
-  else if (bar === null) status = ' ';
-  else status = strings.transport.bar(bar.masterBarIndex + 1);
 
   return (
     <div
@@ -131,7 +119,7 @@ export function Transport() {
     >
       <Tooltip
         label={playing ? strings.transport.pause : strings.transport.play}
-        shortcut={strings.transport.playShortcut}
+        shortcut={shortcutHint('play-pause')}
       >
         <button
           type="button"
@@ -151,30 +139,14 @@ export function Transport() {
       </Tooltip>
       <IconButton
         label={strings.transport.stop}
-        shortcut={strings.transport.stopShortcut}
+        shortcut={shortcutHint('stop')}
         icon={<Square size={14} fill="currentColor" aria-hidden />}
         onClick={stop}
         disabled={!canToggle(transport)}
         className="max-sm:hidden"
       />
 
-      <div className="ml-1 flex min-w-0 shrink-0 flex-col leading-tight" aria-live="off">
-        <span className="font-mono text-[13px] text-ink tabular-nums">
-          {formatTime(time)} <span className="text-ink-faint">/ {formatTime(endTime)}</span>
-        </span>
-        <span className="text-[11px] text-ink-faint">
-          {selectedBars === null ? (
-            status
-          ) : (
-            <>
-              <span className="max-sm:hidden">{status}</span>
-              <span className="font-medium text-accent sm:hidden">
-                {strings.transport.selection(selectedBars.first + 1, selectedBars.last + 1)}
-              </span>
-            </>
-          )}
-        </span>
-      </div>
+      {activeDoc !== null && <PositionReadout doc={activeDoc} status={status} />}
 
       {selectedBars !== null && (
         <SelectionChip first={selectedBars.first + 1} last={selectedBars.last + 1} onClear={clearSelection} />
@@ -189,36 +161,11 @@ export function Transport() {
       )}
 
       <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
-        <Menu>
-          <Tooltip label={strings.transport.speed}>
-            <MenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={`${strings.transport.speed}: ${strings.transport.speedValue(speed)}`}
-                className="h-9 min-w-[52px] rounded-[var(--radius-control)] px-1.5 font-mono text-[13px] text-ink tabular-nums hover:bg-sunken sm:min-w-[64px] sm:px-2"
-              >
-                {strings.transport.speedValue(speed)}
-              </button>
-            </MenuTrigger>
-          </Tooltip>
-          <MenuContent align="end">
-            <MenuRadioGroup<string>
-              value={String(speed)}
-              onValueChange={value => {
-                setSpeed(Number(value));
-              }}
-            >
-              {SPEED_PRESETS.map(preset => (
-                <MenuRadioItem key={preset} value={String(preset)}>
-                  {strings.transport.speedValue(preset)}
-                </MenuRadioItem>
-              ))}
-            </MenuRadioGroup>
-          </MenuContent>
-        </Menu>
+        <SpeedControl />
         {activeDoc !== null && <Mixer doc={activeDoc} />}
         <IconButton
           label={selection === null ? strings.transport.loop : strings.transport.loopSelection}
+          shortcut={shortcutHint('loop')}
           icon={<Repeat size={17} aria-hidden />}
           pressed={loop}
           onClick={() => {

@@ -50,8 +50,17 @@ export interface ScoreViewLayoutInfo {
 
 /** What a pointer did on the music, in engine coordinates (see ScoreBounds). */
 export type ScoreGesture =
-  /** A click or tap; `extend` when Shift was held. Points outside the music are not reported. */
-  | { readonly type: 'tap'; readonly x: number; readonly y: number; readonly extend: boolean }
+  /**
+   * A click or tap; `extend` when Shift was held; `count` is 2 or 3 for double and triple taps in
+   * the same place. Points outside the music are not reported.
+   */
+  | {
+      readonly type: 'tap';
+      readonly x: number;
+      readonly y: number;
+      readonly extend: boolean;
+      readonly count: number;
+    }
   /** A long press with a finger or pen (touch screens have no other way to start a selection). */
   | { readonly type: 'press'; readonly x: number; readonly y: number }
   /**
@@ -86,6 +95,9 @@ const MOUSE_SLOP = 6;
 const TOUCH_SLOP = 10;
 /** Hold time that makes a touch a long press. */
 const LONG_PRESS_MS = 450;
+/** Taps closer than this in time and space count as a double or triple tap. */
+const MULTI_TAP_MS = 450;
+const MULTI_TAP_SLOP = 12;
 
 interface PointerGesture {
   readonly pointerId: number;
@@ -126,6 +138,7 @@ export class ScoreView {
   private gesture: PointerGesture | null = null;
   private dragFrame = 0;
   private suppressContextMenuUntil = 0;
+  private lastTap: { time: number; x: number; y: number; count: number } | null = null;
   private readonly edgeScroller: EdgeScroller;
   private externalScroll: (() => void) | null = null;
   private readonly elements = new Map<string, HTMLDivElement>();
@@ -352,6 +365,7 @@ export class ScoreView {
           x: point.x,
           y: point.y,
           extend: gesture.shift || event.shiftKey,
+          count: this.countTap(event.clientX, event.clientY),
         });
       }
       return;
@@ -362,6 +376,19 @@ export class ScoreView {
   private readonly onPointerCancel = (event: PointerEvent): void => {
     if (this.gesture?.pointerId === event.pointerId) this.endGesture();
   };
+
+  private countTap(clientX: number, clientY: number): number {
+    const now = performance.now();
+    const last = this.lastTap;
+    const count =
+      last !== null &&
+      now - last.time < MULTI_TAP_MS &&
+      Math.hypot(clientX - last.x, clientY - last.y) < MULTI_TAP_SLOP
+        ? Math.min(3, last.count + 1)
+        : 1;
+    this.lastTap = { time: now, x: clientX, y: clientY, count };
+    return count;
+  }
 
   /** A long press on a touch screen must not also open the browser's context menu. */
   private readonly onContextMenu = (event: Event): void => {

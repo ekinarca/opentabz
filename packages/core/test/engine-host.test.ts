@@ -1,3 +1,4 @@
+import * as alphaTab from '@coderline/alphatab';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
@@ -46,6 +47,32 @@ describe('EngineHost', () => {
     expect(result.parseMs).toBeGreaterThanOrEqual(0);
   });
 
+  it('summarizes every bar: meter, pickup and sections', () => {
+    const host = new EngineHost();
+    const shuffle = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    const greensleeves = host.open({
+      name: 'greensleeves.atex',
+      bytes: buffer('alphatex/demos/greensleeves.atex'),
+    });
+    if (!shuffle.ok || !greensleeves.ok) throw new Error('demo did not open');
+    const bars = shuffle.summary.masterBars;
+    expect(bars).toHaveLength(shuffle.summary.barCount);
+    expect(bars.every(bar => bar.numerator === 4 && bar.denominator === 4 && !bar.anacrusis)).toBe(true);
+    expect(bars.flatMap((bar, index) => (bar.section === null ? [] : [[index, bar.section.text]]))).toEqual([
+      [0, 'Twelve bars'],
+      [8, 'Turnaround'],
+      [12, 'Ending'],
+    ]);
+    expect(greensleeves.summary.masterBars[0]).toMatchObject({
+      numerator: 3,
+      denominator: 4,
+      anacrusis: true,
+    });
+  });
+
   it('returns typed errors instead of throwing', () => {
     const host = new EngineHost();
     const result = host.open({ name: 'empty.gp', bytes: new ArrayBuffer(0) });
@@ -81,5 +108,38 @@ describe('EngineHost', () => {
     const pkgPath = entry.replace(/dist[\\/][^\\/]+$/, 'package.json');
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version: string };
     expect(pkg.version).toBe(ALPHATAB_VERSION);
+  });
+});
+
+describe('EngineHost — audible stepping', () => {
+  it('sends the requested beats to the synth as a one-time MIDI starting at tick 0', () => {
+    const host = new EngineHost();
+    const sent: unknown[] = [];
+    host.connectSynth({ port: { postMessage: message => sent.push(message) } });
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const timeline = host.preparePlayback({ docId: opened.summary.id, playbackId: 'p' });
+    sent.length = 0;
+    // The first beat of every track sounds together.
+    const firstBeats = new Set<number>();
+    for (let index = 0; index < timeline.items.length; index += 3) {
+      if (timeline.items[index + 2] === 0) firstBeats.add(timeline.items[index] ?? -1);
+    }
+    expect(firstBeats.size).toBe(4);
+    host.previewBeats({ docId: opened.summary.id, beatIds: [...firstBeats] });
+    expect(sent).toHaveLength(1);
+    const delivery = sent[0] as { type: string; midi: unknown };
+    expect(delivery.type).toBe('preview');
+    const file = alphaTab.model.JsonConverter.jsObjectToMidiFile(delivery.midi);
+    const noteOns = file.events.filter(event => event.type === alphaTab.midi.MidiEventType.NoteOn);
+    // Rhythm guitar (two strings), bass (one) and drums (two); the lead guitar rests.
+    expect(noteOns).toHaveLength(5);
+    expect(new Set(noteOns.map(event => event.tick))).toEqual(new Set([0]));
+    // Unknown beats are ignored without sending anything.
+    host.previewBeats({ docId: opened.summary.id, beatIds: [-1] });
+    expect(sent).toHaveLength(1);
   });
 });

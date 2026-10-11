@@ -5,7 +5,7 @@ import { Tooltip } from './Tooltip.tsx';
 export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
   /** Accessible name and tooltip text. */
   readonly label: string;
-  readonly shortcut?: string;
+  readonly shortcut?: string | undefined;
   readonly icon: ReactNode;
   readonly pressed?: boolean;
   readonly size?: 'sm' | 'md';

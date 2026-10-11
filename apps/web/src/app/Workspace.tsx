@@ -19,6 +19,7 @@ import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.t
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
+import { zoomStep } from './keymap.ts';
 import { modKey } from './platform.ts';
 import { ScoreHost } from './ScoreHost.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
@@ -26,12 +27,6 @@ import { Transport } from './Transport.tsx';
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 const STAFF_DISPLAYS: readonly StaffDisplay[] = ['default', 'score-tab', 'score', 'tab'];
-
-export function zoomStep(zoom: number, direction: 1 | -1): number {
-  const steps = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
-  if (direction > 0) return steps.find(step => step > zoom + 0.001) ?? 4;
-  return [...steps].reverse().find(step => step < zoom - 0.001) ?? 0.25;
-}
 
 function ToolbarMenuButton({ label, value }: { readonly label: string; readonly value: string }) {
   return (

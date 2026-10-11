@@ -9,12 +9,14 @@ import {
   Tooltip,
   Wordmark,
 } from '@opentabz/ui';
-import { CircleHelp, FolderOpen, Palette, X } from 'lucide-react';
+import { CircleHelp, FolderOpen, Keyboard, Palette, X } from 'lucide-react';
 import { useDocuments } from '../state/documents.ts';
 import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { pickFiles } from './open-actions.ts';
 import { modKey } from './platform.ts';
+import { shortcutHint } from './keymap.ts';
+import { useUi } from '../state/ui.ts';
 
 export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readonly home: boolean }) {
   const docs = useDocuments(state => state.docs);
@@ -126,6 +128,15 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             </MenuRadioGroup>
           </MenuContent>
         </Menu>
+        <IconButton
+          label={strings.shortcuts.title}
+          shortcut={shortcutHint('shortcuts')}
+          icon={<Keyboard size={18} aria-hidden />}
+          onClick={() => {
+            useUi.getState().openPanel('shortcuts');
+          }}
+          className="max-md:hidden"
+        />
         <IconButton
           label={strings.topBar.about}
           icon={<CircleHelp size={18} aria-hidden />}

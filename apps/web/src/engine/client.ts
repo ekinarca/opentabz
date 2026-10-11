@@ -22,6 +22,7 @@ const DEADLINES: Readonly<Record<EngineMethod, number>> = {
   closeView: 5_000,
   connectSynth: 5_000,
   preparePlayback: 20_000,
+  previewBeats: 5_000,
 };
 
 export class EngineCallError extends Error {

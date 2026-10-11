@@ -1,5 +1,5 @@
 import { Popover as RadixPopover } from 'radix-ui';
-import { useRef, type ReactNode } from 'react';
+import { useRef, type ReactNode, type RefObject } from 'react';
 import { cx } from '../cx.ts';
 
 export const Popover = RadixPopover.Root;
@@ -11,6 +11,8 @@ export interface PopoverContentProps {
   readonly align?: 'start' | 'center' | 'end';
   readonly side?: 'top' | 'bottom' | 'left' | 'right';
   readonly className?: string;
+  /** Element to focus when the panel opens (default: the panel itself). */
+  readonly initialFocus?: RefObject<HTMLElement | null>;
 }
 
 export function PopoverContent({
@@ -19,6 +21,7 @@ export function PopoverContent({
   align = 'center',
   side = 'bottom',
   className,
+  initialFocus,
 }: PopoverContentProps) {
   const ref = useRef<HTMLDivElement>(null);
   return (
@@ -30,7 +33,7 @@ export function PopoverContent({
         // tooltip over the panel. Tab moves into the controls as usual.
         onOpenAutoFocus={event => {
           event.preventDefault();
-          ref.current?.focus();
+          (initialFocus?.current ?? ref.current)?.focus();
         }}
         aria-label={label}
         align={align}

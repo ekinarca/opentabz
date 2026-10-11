@@ -56,6 +56,8 @@ export interface EngineMethods {
   connectSynth(args: { readonly port: MessagePort }): null;
   /** Generates MIDI for a document, sends it to the synth and returns the playback timeline. */
   preparePlayback(args: { readonly docId: string; readonly playbackId: string }): PlaybackTimeline;
+  /** Sends the given beats to the synth to sound once, as if struck together (audible stepping). */
+  previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
 }
 
 export type EngineMethod = keyof EngineMethods;

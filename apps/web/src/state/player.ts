@@ -16,9 +16,10 @@ import {
 import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from './documents.ts';
 
-export const SPEED_PRESETS = [0.25, 0.5, 0.75, 0.9, 1, 1.25, 1.5, 2] as const;
-export const MIN_SPEED = 0.25;
-export const MAX_SPEED = 2;
+export const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
+/** Guitar Pro's practice range: 10 % to 300 % (alphaTab patch 0005 lowers its floor to 10 %). */
+export const MIN_SPEED = 0.1;
+export const MAX_SPEED = 3;
 
 export interface PlayerState {
   readonly transport: TransportState;
@@ -61,6 +62,19 @@ export interface PlayerState {
 }
 
 let loadSeq = 0;
+
+/**
+ * Commands that move the playhead (seek, stop, loop range) carry an id; position events that
+ * arrive before the synth's `moved` answer for the latest one describe the old position and are
+ * ignored, so quick successive moves never jump back.
+ */
+let moveId = 0;
+let awaitingMove: number | null = null;
+function nextMove(): number {
+  moveId += 1;
+  awaitingMove = moveId;
+  return moveId;
+}
 
 /** Performance mark set when play is pressed; `ot:play-start` measures until the synth plays. */
 const PLAY_REQUEST = 'ot:play-request';
@@ -108,7 +122,18 @@ export const usePlayer = create<PlayerState>((set, get) => {
         dispatch(event.playing ? { type: 'play' } : { type: 'pause' });
         break;
       case 'position':
+        if (awaitingMove !== null) break;
         set({ tick: event.tick, time: event.time, endTime: event.endTime, tempo: event.tempo });
+        break;
+      case 'moved':
+        if (event.id !== awaitingMove) break;
+        awaitingMove = null;
+        set(state => ({
+          tick: event.tick,
+          time: event.time,
+          endTime: event.endTime > 0 ? event.endTime : state.endTime,
+          tempo: event.tempo > 0 ? event.tempo : state.tempo,
+        }));
         break;
       case 'finished':
         if (!get().loop) dispatch({ type: 'finished' });
@@ -152,7 +177,15 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const engine = audio();
       if (get().transport.status === 'playing') engine.send({ type: 'pause' });
       dispatch({ type: 'load' });
-      set({ docKey: doc.key, timeline: null, tick: 0, time: 0, endTime: 0, selection: null });
+      set({
+        docKey: doc.key,
+        timeline: null,
+        tick: 0,
+        time: 0,
+        endTime: 0,
+        selection: null,
+        tempo: doc.summary.tempo * get().speed,
+      });
       try {
         await engine.prepare();
         const playbackId = `${doc.key}#${seq}`;
@@ -172,7 +205,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         engine.send({ type: 'setSpeed', value: speed });
         engine.send({ type: 'setMetronomeVolume', value: metronome ? 1 : 0 });
         engine.send({ type: 'setCountInVolume', value: countIn ? 1 : 0 });
-        engine.send({ type: 'setLoop', enabled: loop, range: null });
+        engine.send({ type: 'setLoop', enabled: loop, range: null, id: nextMove() });
         engine.send({ type: 'setMasterVolume', value: volume });
         applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc);
         set({ timeline, endTime: result.type === 'midiLoaded' ? result.endTime : 0 });
@@ -212,7 +245,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     stop: () => {
-      audio().send({ type: 'stop' });
+      audio().send({ type: 'stop', id: nextMove() });
       // The synthesizer returns to the start of the selection, if any; its positions follow.
       const selection = get().selection;
       if (selection === null) set({ tick: 0, time: 0 });
@@ -225,7 +258,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       if (selection !== null && (tick < selection.startTick || tick >= selection.endTick)) {
         get().setSelection(null);
       }
-      audio().send({ type: 'seek', tick });
+      audio().send({ type: 'seek', tick, id: nextMove() });
       set({ tick });
     },
 
@@ -246,14 +279,14 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     setLoop: on => {
-      audio().send({ type: 'setLoop', enabled: on, range: get().selection });
+      audio().send({ type: 'setLoop', enabled: on, range: get().selection, id: nextMove() });
       set({ loop: on });
     },
 
     setSelection: (range, final = true) => {
       const selection = range === null || range.endTick <= range.startTick ? null : range;
       set({ selection });
-      if (final) audio().send({ type: 'setLoop', enabled: get().loop, range: selection });
+      if (final) audio().send({ type: 'setLoop', enabled: get().loop, range: selection, id: nextMove() });
     },
 
     setVolume: volume => {

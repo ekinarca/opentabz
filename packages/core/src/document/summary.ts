@@ -1,6 +1,6 @@
 import type * as alphaTab from '@coderline/alphatab';
 import type { FormatId } from '../shared/formats.ts';
-import type { DocSummary, StaffSummary, TrackSummary } from '../shared/summary.ts';
+import type { DocSummary, MasterBarSummary, StaffSummary, TrackSummary } from '../shared/summary.ts';
 
 export interface SummaryMeta {
   readonly id: string;
@@ -29,10 +29,21 @@ export function summarizeScore(score: alphaTab.model.Score, meta: SummaryMeta): 
     tempo: score.tempo,
     tempoLabel: score.tempoLabel,
     barCount: score.masterBars.length,
+    masterBars: score.masterBars.map(summarizeMasterBar),
     tracks: score.tracks.map(summarizeTrack),
     hasModelLayout:
       score.systemsLayout.length > 0 || score.tracks.some(track => track.systemsLayout.length > 0),
     hasBackingTrack: score.backingTrack !== undefined && (score.backingTrack.rawAudioFile?.length ?? 0) > 0,
+  };
+}
+
+function summarizeMasterBar(bar: alphaTab.model.MasterBar): MasterBarSummary {
+  const section = bar.section;
+  return {
+    numerator: bar.timeSignatureNumerator,
+    denominator: bar.timeSignatureDenominator,
+    anacrusis: bar.isAnacrusis,
+    section: section === null ? null : { marker: section.marker, text: section.text },
   };
 }
 

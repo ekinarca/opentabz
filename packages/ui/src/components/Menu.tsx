@@ -45,7 +45,7 @@ export interface MenuItemProps {
   readonly children: ReactNode;
   readonly onSelect: () => void;
   readonly icon?: ReactNode;
-  readonly shortcut?: string;
+  readonly shortcut?: string | undefined;
   readonly disabled?: boolean;
 }
 

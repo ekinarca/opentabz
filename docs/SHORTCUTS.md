@@ -1,65 +1,107 @@
 # Keyboard shortcuts and gestures
 
-This page lists every shortcut and pointer gesture that OpenTabz supports today. It grows with
-each milestone. The source of truth is
-[`apps/web/src/app/use-shortcuts.ts`](../apps/web/src/app/use-shortcuts.ts) for keys and
-[`apps/web/src/score-view/score-view.ts`](../apps/web/src/score-view/score-view.ts) for gestures.
-A change to either file must update this page in the same commit.
-
-`Mod` means ⌘ on macOS, iOS and iPadOS, and Ctrl everywhere else.
+Every shortcut OpenTabz supports today. Keys follow Guitar Pro 8 wherever it has a shortcut for
+the same action, so switching is painless. The source of truth is the keymap in
+[`apps/web/src/app/keymap.ts`](../apps/web/src/app/keymap.ts); a test checks that every entry
+appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Rules
 
-- Single keys (Space, the arrows, Esc) work only while a score is open. They do nothing while
-  focus is in a text field, a slider, a menu or a dialog, so those controls keep their usual
-  keys. Space and the arrows also do nothing while focus is on a button or a link.
-- OpenTabz overrides a browser shortcut only when it does the same thing for the score. For
-  example, `Mod` `+` zooms the score instead of the page. If no score is open, the browser
-  shortcut works as usual.
-- No shortcut uses a single letter key, so screen reader quick-navigation keys keep working
-  (WCAG 2.2 SC 2.1.4).
+- Score shortcuts work only while a score is open.
+- Keys keep their usual meaning wherever focus gives them one: nothing happens while you type in
+  a text field, and inside a dialog, menu or popover the keys belong to it. On a focused button
+  or link, Space, Enter and the arrow keys keep their usual meaning, while typed characters
+  (`-`, `=`, `?`), shortcuts with ⌘/Ctrl or Alt, function keys and Esc still work. Sliders, menus
+  and other widgets keep typed characters too.
+- Single-key shortcuts (`-`, `=`, `?` …) can be turned off in the shortcut sheet, for screen
+  reader users and keyboards that need those keys (WCAG 2.2 SC 2.1.4).
+- On macOS, ⌘⌥← and ⌘⌥→ switch browser tabs before a web page sees them, so the sections also
+  answer to ⌥ Page Up and ⌥ Page Down.
 
 ## Playback
 
-| Keys                      | Action                                                                                                                                             |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Space`                   | Play or pause.                                                                                                                                     |
-| `Shift` `Space`           | Stop and go back to the start, or to the start of the selection.                                                                                   |
-| `←` / `→`                 | Go to the previous or next bar, in the order the bars are played. If playback is past the start of a bar, `←` first goes back to that bar's start. |
-| `Shift` `→` / `Shift` `←` | Grow or shrink the selection by one bar at its end. With no selection, `Shift` `→` selects the bar that is playing.                                |
-| `Esc`                     | Clear the selection.                                                                                                                               |
+| Action                                           | Windows and Linux | macOS      |
+| ------------------------------------------------ | ----------------- | ---------- |
+| Play or pause                                    | `Space`           | `Space`    |
+| Stop and go back to the start (of the selection) | `Shift Space`     | `⇧ Space`  |
+| Loop on or off                                   | `F9`              | `F9`       |
+| Playback speed…                                  | `Ctrl F9`         | `⌘ F9`     |
+| Slower (5 %)                                     | `-` or `_`        | `-` or `_` |
+| Faster (5 %)                                     | `=` or `+`        | `=` or `+` |
+| Metronome on or off                              | `Alt M`           | `⌥ M`      |
+| Count-in on or off                               | `Alt C`           | `⌥ C`      |
 
-## Files
+## Moving around
 
-| Keys      | Action                                                                                                                                                                                                                                  |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Mod` `O` | Open files.                                                                                                                                                                                                                             |
-| `Mod` `V` | Open what is on the clipboard. Files open as files. A single `https://` link opens the file it points to. Any other text, such as alphaTex, ASCII tab or ChordPro, opens as a score. This does not work while focus is in a text field. |
+| Action                     | Windows and Linux               | macOS                    |
+| -------------------------- | ------------------------------- | ------------------------ |
+| Previous beat              | `←`                             | `←`                      |
+| Next beat                  | `→`                             | `→`                      |
+| Previous beat, and hear it | `Alt ←`                         | `⌥ ←`                    |
+| Next beat, and hear it     | `Alt →`                         | `⌥ →`                    |
+| Previous bar               | `Ctrl ←`                        | `⌘ ←`                    |
+| Next bar                   | `Ctrl →`                        | `⌘ →`                    |
+| Previous section           | `Ctrl Alt ←` or `Alt Page Up`   | `⌘ ⌥ ←` or `⌥ Page Up`   |
+| Next section               | `Ctrl Alt →` or `Alt Page Down` | `⌘ ⌥ →` or `⌥ Page Down` |
+| Start of the bar           | `Home`                          | `Home`                   |
+| Last beat of the bar       | `End`                           | `End`                    |
+| First bar                  | `Ctrl Home`                     | `⌘ Home`                 |
+| Last bar                   | `Ctrl End`                      | `⌘ End`                  |
+| Go to bar or section…      | `Ctrl G`                        | `⌘ G`                    |
+
+## Selecting
+
+| Action                                       | Windows and Linux | macOS      |
+| -------------------------------------------- | ----------------- | ---------- |
+| Extend the selection one beat left           | `Shift ←`         | `⇧ ←`      |
+| Extend the selection one beat right          | `Shift →`         | `⇧ →`      |
+| Extend the selection one bar left            | `Ctrl Shift ←`    | `⌘ ⇧ ←`    |
+| Extend the selection one bar right           | `Ctrl Shift →`    | `⌘ ⇧ →`    |
+| Extend the selection to the start of the bar | `Shift Home`      | `⇧ Home`   |
+| Extend the selection to the end of the bar   | `Shift End`       | `⇧ End`    |
+| Extend the selection to the start            | `Ctrl Shift Home` | `⌘ ⇧ Home` |
+| Extend the selection to the end              | `Ctrl Shift End`  | `⌘ ⇧ End`  |
+| Select everything                            | `Ctrl A`          | `⌘ A`      |
+| Clear the selection                          | `Esc`             | `Esc`      |
 
 ## View
 
-| Keys                   | Action                      |
-| ---------------------- | --------------------------- |
-| `Mod` `=` or `Mod` `+` | Zoom in.                    |
-| `Mod` `-`              | Zoom out.                   |
-| `Mod` `0`              | Set the zoom back to 100 %. |
+| Action        | Windows and Linux    | macOS          |
+| ------------- | -------------------- | -------------- |
+| Zoom in       | `Ctrl =` or `Ctrl +` | `⌘ =` or `⌘ +` |
+| Zoom out      | `Ctrl -` or `Ctrl _` | `⌘ -` or `⌘ _` |
+| Zoom to 100 % | `Ctrl 0`             | `⌘ 0`          |
+
+## Files
+
+| Action     | Windows and Linux | macOS |
+| ---------- | ----------------- | ----- |
+| Open files | `Ctrl O`          | `⌘ O` |
+
+## Help
+
+| Action                  | Windows and Linux | macOS |
+| ----------------------- | ----------------- | ----- |
+| Show keyboard shortcuts | `?`               | `?`   |
 
 ## Pointer and touch gestures
 
-| Gesture                                   | Action                                                                                                                                  |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Click or tap a note                       | Move playback to that beat. If a selection exists and the beat is outside it, the selection is cleared.                                 |
-| Drag across the music (mouse or trackpad) | Select a range from the beat where the drag starts to the beat under the pointer. Hold the pointer near the edge of the view to scroll. |
-| `Shift` click                             | Extend the selection to the clicked beat. With no selection, select from the start of the playing bar.                                  |
-| Long-press a bar (finger or pen)          | Select that bar.                                                                                                                        |
-| Drag a selection handle                   | Move the start or the end of the selection. This works with a mouse, a finger or a pen, and the view scrolls near its edges.            |
-| Drop files anywhere                       | Open them. If you drop a folder, OpenTabz explains why it cannot open it.                                                               |
+| Gesture                                   | Action                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Click or tap a note                       | Move playback to that beat. A beat outside the selection clears it.                                                             |
+| Drag across the music (mouse or trackpad) | Select from the beat where the drag starts to the beat under the pointer. Hold the pointer near the edge of the view to scroll. |
+| Shift-click                               | Extend the selection to the clicked beat. With no selection, select from the start of the playing bar.                          |
+| Double-click or double-tap                | Select that bar.                                                                                                                |
+| Triple-click or triple-tap                | Select everything.                                                                                                              |
+| Long-press a bar (finger or pen)          | Select that bar.                                                                                                                |
+| Drag a selection handle                   | Move the start or the end of the selection, with a mouse, a finger or a pen. The view scrolls near its edges.                   |
+| Drop files anywhere                       | Open them. A dropped folder is explained instead.                                                                               |
 
 ## What the selection does
 
-Once a range is selected, playback stays inside it. Play starts at the start of the selection
-and stops at its end. When Loop is on, the selection repeats. If you change the selection while
-it plays, playback continues from the current beat, as long as that beat is still inside the
-selection. Otherwise playback jumps to the start of the new selection.
+Once a range is selected, playback stays inside it: Play starts at the start of the selection and
+stops at its end, and with Loop on the selection repeats. If you change the selection while it
+plays, playback continues from the current beat as long as that beat is still selected;
+otherwise it jumps to the start of the new selection.
 
 On phones, Stop, Clear selection, Metronome and Count-in are in the `⋯` menu of the playback bar.

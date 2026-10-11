@@ -1,8 +1,18 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..b65d307fb84b33743ad83cc8590145d50a0b1d07 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..d1a9f7ccefa9531e7fd7a69d158434c185fa5ab2 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
-@@ -7100,7 +7100,8 @@ class Beat {
+@@ -3619,7 +3619,8 @@ class SynthConstants {
+ 	static MinVolume = 0;
+ 	static MinProgram = 0;
+ 	static MaxProgram = 127;
+-	static MinPlaybackSpeed = .125;
++	// OpenTabz patch 0005: practice at 10 % (Guitar Pro's minimum).
++	static MinPlaybackSpeed = .1;
+ 	static MaxPlaybackSpeed = 8;
+ 	static PercussionChannel = 9;
+ 	static PercussionBank = 128;
+@@ -7100,7 +7101,8 @@ class Beat {
  	* Gets a value indicating whether this beat is a full bar rest.
  	*/
  	get isFullBarRest() {
@@ -12,7 +22,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..b65d307fb84b33743ad83cc8590145d5
  	}
  	/**
  	* Gets or sets whether any note in this beat has a let-ring applied.
-@@ -16417,24 +16418,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
+@@ -16417,24 +16419,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
  /**
  * @internal
  */
@@ -51,7 +61,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..b65d307fb84b33743ad83cc8590145d5
  		return defaultValue;
  	}
  	getElementsByTagName(name, recursive = false) {
-@@ -30449,8 +30461,10 @@ class FontSizes {
+@@ -30449,8 +30462,10 @@ class FontSizes {
  	*/
  	static generateFontLookup(family) {
  		if (FontSizes.fontSizeLookupTables.has(family)) return;
@@ -64,7 +74,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..b65d307fb84b33743ad83cc8590145d5
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -65583,7 +65597,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +65598,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,

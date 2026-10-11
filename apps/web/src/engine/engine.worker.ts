@@ -41,6 +41,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.connectSynth(message.args as EngineRequestMessage<'connectSynth'>['args']);
     case 'preparePlayback':
       return host.preparePlayback(message.args as EngineRequestMessage<'preparePlayback'>['args']);
+    case 'previewBeats':
+      return host.previewBeats(message.args as EngineRequestMessage<'previewBeats'>['args']);
   }
 }
 

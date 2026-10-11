@@ -50,6 +50,16 @@ export interface TickRange {
   readonly endTick: number;
 }
 
+/** Engine worker → synth worker: a few beats to sound once (stepping through a score). */
+export interface PreviewDelivery {
+  readonly type: 'preview';
+  /** alphaTab MidiFile serialized with JsonConverter.midiFileToJsObject, starting at tick 0. */
+  readonly midi: unknown;
+}
+
+/** Everything the engine worker sends to the synth worker. */
+export type SynthDelivery = MidiDelivery | PreviewDelivery;
+
 /** Engine worker → synth worker: everything needed to play a document. */
 export interface MidiDelivery {
   readonly type: 'midi';

@@ -6,7 +6,7 @@ import type { RingBuffers } from './ring.ts';
 
 import type { TickRange } from '@opentabz/core/shared';
 
-export type { MidiDelivery, TickRange } from '@opentabz/core/shared';
+export type { MidiDelivery, PreviewDelivery, SynthDelivery, TickRange } from '@opentabz/core/shared';
 
 /** UI → synth worker. */
 export type SynthCommand =
@@ -22,13 +22,20 @@ export type SynthCommand =
   | { readonly type: 'loadSoundFont'; readonly bytes: ArrayBuffer }
   | { readonly type: 'play' }
   | { readonly type: 'pause' }
-  | { readonly type: 'stop' }
-  | { readonly type: 'seek'; readonly tick: number }
+  /** `id` is echoed by a `moved` event once the position has changed. */
+  | { readonly type: 'stop'; readonly id: number }
+  | { readonly type: 'seek'; readonly tick: number; readonly id: number }
   | { readonly type: 'setSpeed'; readonly value: number }
   | { readonly type: 'setMasterVolume'; readonly value: number }
   | { readonly type: 'setMetronomeVolume'; readonly value: number }
   | { readonly type: 'setCountInVolume'; readonly value: number }
-  | { readonly type: 'setLoop'; readonly enabled: boolean; readonly range: TickRange | null }
+  | {
+      readonly type: 'setLoop';
+      readonly enabled: boolean;
+      readonly range: TickRange | null;
+      /** Echoed by a `moved` event: a new range may move the playhead. */
+      readonly id: number;
+    }
   | { readonly type: 'setChannelMute'; readonly channel: number; readonly value: boolean }
   | { readonly type: 'setChannelSolo'; readonly channel: number; readonly value: boolean }
   | { readonly type: 'setChannelVolume'; readonly channel: number; readonly value: number };
@@ -55,5 +62,10 @@ export type SynthEvent =
     }
   | { readonly type: 'state'; readonly playing: boolean; readonly stopped: boolean }
   | ({ readonly type: 'position' } & SynthPosition)
+  /**
+   * The position changed because of command `id` (seek, stop, loop range). Position events sent
+   * before it describe the old position.
+   */
+  | ({ readonly type: 'moved'; readonly id: number } & SynthPosition)
   | { readonly type: 'finished' }
   | { readonly type: 'error'; readonly context: string; readonly message: string };

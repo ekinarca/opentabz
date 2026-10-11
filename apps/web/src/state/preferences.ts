@@ -15,6 +15,8 @@ export interface Preferences {
   readonly layout: LayoutKind;
   readonly paper: PaperId;
   readonly staffDisplay: StaffDisplay;
+  /** Shortcuts on a single character key (−, =, ?): can be turned off (WCAG 2.2 SC 2.1.4). */
+  readonly singleKeyShortcuts: boolean;
 }
 
 export const STORAGE_KEY = 'opentabz.preferences.v1';
@@ -25,7 +27,13 @@ export function defaultPaper(locale: string): PaperId {
 }
 
 export function defaultPreferences(locale: string): Preferences {
-  return { theme: 'system', layout: 'page', paper: defaultPaper(locale), staffDisplay: 'default' };
+  return {
+    theme: 'system',
+    layout: 'page',
+    paper: defaultPaper(locale),
+    staffDisplay: 'default',
+    singleKeyShortcuts: true,
+  };
 }
 
 export function parsePreferences(raw: string | null, fallback: Preferences): Preferences {
@@ -48,6 +56,10 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
         value.staffDisplay === 'tab'
           ? value.staffDisplay
           : fallback.staffDisplay,
+      singleKeyShortcuts:
+        typeof value.singleKeyShortcuts === 'boolean'
+          ? value.singleKeyShortcuts
+          : fallback.singleKeyShortcuts,
     };
   } catch {
     return fallback;
@@ -79,8 +91,8 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
   ...load(),
   set: patch => {
     set(patch);
-    const { theme, layout, paper, staffDisplay } = get();
-    save({ theme, layout, paper, staffDisplay });
+    const { theme, layout, paper, staffDisplay, singleKeyShortcuts } = get();
+    save({ theme, layout, paper, staffDisplay, singleKeyShortcuts });
   },
 }));
 

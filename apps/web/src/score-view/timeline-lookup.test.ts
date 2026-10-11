@@ -24,7 +24,6 @@ import {
   rangeBars,
   rangeBetweenBeats,
   rangeRects,
-  resizeRangeByBar,
   tickOfBeat,
 } from './timeline-lookup.ts';
 
@@ -185,25 +184,6 @@ describe('playback ranges', () => {
     expect(beatTicks(timeline, -5)).toEqual([]);
   });
 
-  it('grows and shrinks a range bar by bar from its end', () => {
-    const { timeline } = load('alphatex/demos/twelve-bar-shuffle.atex');
-    const bar = (index: number) => {
-      const found = occurrence(timeline, index);
-      if (found === null) throw new Error(`missing bar ${index}`);
-      return found;
-    };
-    const one = resizeRangeByBar(timeline, null, bar(2).startTick + 5, 1);
-    expect(one).toEqual({ startTick: bar(2).startTick, endTick: bar(2).endTick });
-    const two = resizeRangeByBar(timeline, one, 0, 1);
-    expect(two).toEqual({ startTick: bar(2).startTick, endTick: bar(3).endTick });
-    expect(resizeRangeByBar(timeline, two, 0, -1)).toEqual(one);
-    // Never below the first bar, never past the end of the song.
-    expect(resizeRangeByBar(timeline, one, 0, -1)).toEqual(one);
-    const count = timeline.bars.length / 5;
-    const lastBar = { startTick: bar(count - 1).startTick, endTick: bar(count - 1).endTick };
-    expect(resizeRangeByBar(timeline, lastBar, 0, 1)).toEqual(lastBar);
-  });
-
   it('snaps points between systems to the nearest system', () => {
     const { bounds } = load('alphatex/demos/twelve-bar-shuffle.atex');
     const tracks = new Set([0]);
@@ -213,5 +193,54 @@ describe('playback ranges', () => {
     expect(beatNearPoint(bounds, tracks, x, firstSystemY - 30)).toBe(
       beatAtPoint(bounds, tracks, x, firstSystemY + 5),
     );
+  });
+});
+
+describe('navigation lookups', () => {
+  it('finds the pass through a bar nearest the playback position', async () => {
+    const { occurrenceOfMasterBar } = await import('./timeline-lookup.ts');
+    const tex =
+      '\\tempo 120\n\\track "Flute" {instrument flute}\n\\staff {score}\nC4.1 | \\ro D4.1 | \\rc 2 E4.1 | F4.1';
+    const { score } = openScore(new TextEncoder().encode(tex), 'repeat.atex');
+    const { timeline } = generatePlayback(score, 'test');
+    expect(occurrenceOfMasterBar(timeline, 1)?.startTick).toBe(3840);
+    expect(occurrenceOfMasterBar(timeline, 1, 4000)?.startTick).toBe(11520);
+    expect(occurrenceOfMasterBar(timeline, 1, 99999)?.startTick).toBe(3840);
+    expect(occurrenceOfMasterBar(timeline, 3)?.startTick).toBe(19200);
+    expect(occurrenceOfMasterBar(timeline, 9)).toBeNull();
+  });
+
+  it('counts beats in the meter, with pickups counted from the end', async () => {
+    const { beatInBar } = await import('./timeline-lookup.ts');
+    const full = { index: 0, startTick: 0, endTick: 3840, masterBarIndex: 0, firstSlice: 0, sliceCount: 1 };
+    expect(beatInBar(full, 0, { numerator: 4, denominator: 4 })).toBe(1);
+    expect(beatInBar(full, 959, { numerator: 4, denominator: 4 })).toBe(1);
+    expect(beatInBar(full, 2880, { numerator: 4, denominator: 4 })).toBe(4);
+    const sixEight = { ...full, endTick: 2880 };
+    expect(beatInBar(sixEight, 480, { numerator: 6, denominator: 8 })).toBe(2);
+    // A one-quarter pickup in 3/4 is beat 3.
+    const pickup = { ...full, endTick: 960 };
+    expect(beatInBar(pickup, 0, { numerator: 3, denominator: 4 })).toBe(3);
+  });
+
+  it('steps beat by beat in playback order, and finds bar ends and beats at a tick', async () => {
+    const { stepBeat, lastBeatTick, beatsAtTick } = await import('./timeline-lookup.ts');
+    const { timeline } = load('alphatex/demos/twelve-bar-shuffle.atex');
+    const tracks = new Set([0]);
+    const second = stepBeat(timeline, 0, tracks, 1);
+    expect(second).toBeGreaterThan(0);
+    expect(stepBeat(timeline, second ?? 0, tracks, -1)).toBe(0);
+    // From inside a beat, "back" returns to its start first; a tick of rounding is not "inside".
+    expect(stepBeat(timeline, (second ?? 0) + 10, tracks, -1)).toBe(second);
+    expect(stepBeat(timeline, (second ?? 0) + 1, tracks, -1)).toBe(0);
+    expect(stepBeat(timeline, 0, tracks, -1)).toBeNull();
+    const bar = occurrence(timeline, 0);
+    if (bar === null) throw new Error('no bar');
+    const last = lastBeatTick(timeline, bar, tracks);
+    expect(last).toBeGreaterThan(bar.startTick);
+    expect(last).toBeLessThan(bar.endTick);
+    expect(stepBeat(timeline, last, tracks, 1)).toBe(bar.endTick);
+    expect(beatsAtTick(timeline, 0, tracks)).toHaveLength(1);
+    expect(beatsAtTick(timeline, 1, tracks)).toEqual([]);
   });
 });
