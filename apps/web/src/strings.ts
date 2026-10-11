@@ -7,6 +7,8 @@ import type {
   ChordSpelling,
   FormatId,
   LayoutKind,
+  NoteColorMode,
+  NotePalette,
   OpenError,
   PageLineId,
   StaffDisplay,
@@ -389,6 +391,51 @@ export const strings = {
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
     fullScreen: 'Full screen',
+  },
+
+  noteColors: {
+    open: 'Note colours',
+    title: 'Note colours',
+    mode: 'Colour notes by',
+    modes: {
+      off: 'Off',
+      string: 'String',
+      interval: 'Interval',
+      degree: 'Degree',
+      chordTone: 'Chord tone',
+    } satisfies Record<NoteColorMode, string>,
+    palette: 'Colours',
+    palettes: { standard: 'Standard', colorBlind: 'Colour-blind safe', custom: 'Your own' } satisfies Record<
+      NotePalette,
+      string
+    >,
+    customHint: 'Your own colours are the strings’; the other ways keep the standard ones.',
+    legendLabel: 'What the colours stand for',
+    stringColor: (string: string) => `Colour of the ${string}`,
+    legend: {
+      strings: [
+        'lowest string',
+        '2nd string up',
+        '3rd string up',
+        '4th string up',
+        '5th string up',
+        '6th string up',
+        '7th string up',
+        '8th string up',
+      ],
+      intervals: ['Tonic', '♭2', '2', '♭3', '3', '4', '♭5', '5', '♭6', '6', '♭7', '7'],
+      degrees: [
+        '1st degree',
+        '2nd degree',
+        '3rd degree',
+        '4th degree',
+        '5th degree',
+        '6th degree',
+        '7th degree',
+        'Outside the key',
+      ],
+      chordTones: ['Root', 'Third', 'Fifth', 'Seventh', 'Other chord notes'],
+    },
   },
 
   trackStaves: {

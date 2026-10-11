@@ -132,6 +132,11 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Note colours.** The brush button colours notes, in the notation and the tablature, by the
+  string they are played on, their interval above the key's tonic, their degree in the key, or
+  their part in the chord over them (root, third, fifth, seventh); in standard colours, colour-blind
+  safe ones (Okabe and Ito's, Paul Tol's) or string colours of one's own, with what each colour
+  stands for. Exports print the same; the choice is remembered.
 - **Stylesheet looks and stylesheets of one's own.** The stylesheet applies a look (Classic,
   Pop, Jazz chart, Large print, Compact) over the file's style, saves the style under a name, and
   makes one of them the stylesheet scores opened from then on start with.

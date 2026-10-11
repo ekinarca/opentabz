@@ -7,10 +7,12 @@
 import {
   DEFAULT_PAGE_FURNITURE,
   samePageFurniture,
+  sameColoring,
   sameScoreStyle,
   sameTextFont,
   sameTrackStaves,
   type LayoutKind,
+  type NoteColoring,
   type ScoreBounds,
   type ScoreFields,
   type ScoreStyle,
@@ -51,6 +53,8 @@ export interface ScoreViewState {
   readonly staffDisplay: StaffDisplay;
   readonly staves: readonly TrackStaves[];
   readonly concertPitch: boolean;
+  /** Notes coloured, if asked (REND-300…REND-303). */
+  readonly noteColors: NoteColoring | undefined;
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
@@ -578,6 +582,7 @@ export class ScoreView {
       staffDisplay: state.staffDisplay,
       staves: state.staves,
       concertPitch: state.concertPitch,
+      ...(state.noteColors === undefined ? {} : { noteColors: state.noteColors }),
       width,
       notationScale: 1,
       // The pages' header and footer are drawn here: changing them needs no new layout.
@@ -880,6 +885,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.concertPitch === b.concertPitch &&
+    sameColoring(a.noteColors, b.noteColors) &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -899,6 +905,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves, b.staves) &&
     a.concertPitch === b.concertPitch &&
+    sameColoring(a.noteColors, b.noteColors) &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );

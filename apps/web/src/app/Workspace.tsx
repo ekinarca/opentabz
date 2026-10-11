@@ -49,6 +49,7 @@ import { DrumsPanel } from './DrumsPanel.tsx';
 import { ChordIcon } from './icons.tsx';
 import { KeyboardPanel } from './KeyboardPanel.tsx';
 import { LyricsPanel } from './LyricsPanel.tsx';
+import { NoteColorsControl } from './NoteColorsControl.tsx';
 import { OverviewPanel } from './OverviewPanel.tsx';
 import { shortcutHint } from './keymap.ts';
 import { PageSetupDialog, usePageSetup } from './PageSetupDialog.tsx';
@@ -347,6 +348,7 @@ function ViewToolbar({
             setPreferences({ overview: !overview });
           }}
         />
+        <NoteColorsControl />
         <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
         <IconButton

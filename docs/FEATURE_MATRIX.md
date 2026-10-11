@@ -177,10 +177,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-183 | Slurs                                                                             | GP  | M2  | —                                                           | packages/core/test/render-symbols.test.ts | done |
 | REND-184 | Bar numbers (every bar / first of system / hidden)                                | GP  | M2  | alphatab/guitarpro8/barnumbers-all.gp                       | packages/core/test/render-symbols.test.ts | done |
 | REND-185 | Beat timer (absolute time above beats)                                            | GP  | M2  | alphatab/guitarpro8/timer.gp                                | packages/core/test/render-symbols.test.ts | done |
-| REND-300 | Note colouring by string                                                          | OT  | M2  | —                                                           | —    | planned |
-| REND-301 | Note colouring by interval                                                        | OT  | M2  | —                                                           | —    | planned |
-| REND-302 | Note colouring by scale degree                                                    | OT  | M2  | —                                                           | —    | planned |
-| REND-303 | Note colouring by chord tone                                                      | OT  | M2  | —                                                           | —    | planned |
+| REND-300 | Note colouring by string                                                          | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
+| REND-301 | Note colouring by interval                                                        | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
+| REND-302 | Note colouring by scale degree                                                    | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
+| REND-303 | Note colouring by chord tone                                                      | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
 | REND-304 | Roman numeral analysis row                                                        | OT  | M5  | —                                                           | —    | planned |
 | REND-305 | Nashville number row                                                              | OT  | M5  | —                                                           | —    | planned |
 | REND-306 | Note names in tablature                                                           | OT  | M2  | —                                                           | —    | planned |
@@ -260,7 +260,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-313 | Lyrics on any staff, any number of verses, per-verse styling                      | OT  | M5  | —                                                           | —    | planned |
 | REND-314 | Left-handed (mirrored) chord and scale diagrams                                   | OT  | M2  | —                                                           | —    | planned |
 | REND-315 | Inverted tablature string order (lowest string on top)                            | OT  | M2  | —                                                           | —    | planned |
-| REND-316 | Colour-blind-safe palettes and custom string colours                              | OT  | M2  | —                                                           | —    | planned |
+| REND-316 | Colour-blind-safe palettes and custom string colours                              | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
 | REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | —    | planned |
 | REND-318 | Percussion legend for drum staves                                                 | OT  | M2  | —                                                           | —    | planned |
 | REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | —                                                           | —    | planned |

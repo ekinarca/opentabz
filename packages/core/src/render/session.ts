@@ -6,12 +6,14 @@
  * the UI asks for the partials that approach the viewport via `paint()`.
  */
 import * as alphaTab from '@coderline/alphatab';
+import { sameColoring } from '../shared/note-colors.ts';
 import { sameScoreStyle, type ScoreStyle } from '../shared/style.ts';
 import { sameTrackStaves, type PartialKind, type PartialLayout, type ViewOptions } from '../shared/view.ts';
 import type { ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
+import { applyNoteColors } from './note-colors.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
@@ -152,7 +154,9 @@ export class RenderSession {
     const tracks = tracksFor(this.score, this.options.trackIndexes);
     const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
+    const restoreColors = applyNoteColors(tracks, this.options.noteColors);
     const restore = () => {
+      restoreColors();
       restorePitch();
       restoreStaves();
     };
@@ -207,6 +211,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.staffDisplay === b.staffDisplay &&
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.concertPitch === b.concertPitch &&
+    sameColoring(a.noteColors, b.noteColors) &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&

@@ -2,7 +2,15 @@
  * User preferences, persisted in localStorage (until the M3 library moves them to IndexedDB).
  * Reads and writes are guarded: private windows and blocked storage fall back to defaults.
  */
-import type { LayoutKind, StaffDisplay } from '@opentabz/core/shared';
+import {
+  NOTE_COLOR_MODES,
+  NOTE_PALETTES,
+  STRING_COLORS,
+  type LayoutKind,
+  type NoteColorMode,
+  type NotePalette,
+  type StaffDisplay,
+} from '@opentabz/core/shared';
 import { create } from 'zustand';
 import {
   FRETBOARD_SHOWS,
@@ -59,6 +67,11 @@ export interface Preferences {
   readonly scrollOffset: number;
   readonly cursorStyle: CursorStyle;
   readonly cursorColor: CursorColor;
+  /** Notes coloured by string, interval, degree or chord tone, and in which colours (REND-300…). */
+  readonly noteColors: NoteColorMode;
+  readonly notePalette: NotePalette;
+  /** One's own string colours, from the lowest string up. */
+  readonly stringColors: readonly string[];
   /** A tint on the bar being played. */
   readonly barHighlight: boolean;
   /** The notes being played drawn in the cursor colour. */
@@ -112,6 +125,9 @@ export function defaultPreferences(locale: string): Preferences {
     scrollOffset: 0.18,
     cursorStyle: 'smooth',
     cursorColor: 'accent',
+    noteColors: 'off',
+    notePalette: 'standard',
+    stringColors: STRING_COLORS.standard,
     barHighlight: true,
     noteHighlight: true,
     fretboard: false,
@@ -208,6 +224,14 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
           : fallback.scrollOffset,
       cursorStyle: oneOf(value.cursorStyle, CURSOR_STYLES, fallback.cursorStyle),
       cursorColor: oneOf(value.cursorColor, CURSOR_COLORS, fallback.cursorColor),
+      noteColors: oneOf(value.noteColors, NOTE_COLOR_MODES, fallback.noteColors),
+      notePalette: oneOf(value.notePalette, NOTE_PALETTES, fallback.notePalette),
+      stringColors:
+        Array.isArray(value.stringColors) &&
+        value.stringColors.length === fallback.stringColors.length &&
+        value.stringColors.every(color => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color))
+          ? (value.stringColors as string[])
+          : fallback.stringColors,
       barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
       noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
       fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
@@ -272,6 +296,9 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       scrollOffset: state.scrollOffset,
       cursorStyle: state.cursorStyle,
       cursorColor: state.cursorColor,
+      noteColors: state.noteColors,
+      notePalette: state.notePalette,
+      stringColors: state.stringColors,
       barHighlight: state.barHighlight,
       noteHighlight: state.noteHighlight,
       fretboard: state.fretboard,
