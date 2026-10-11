@@ -1,0 +1,16 @@
+// Coda March — original music written for OpenTabz (AGPL-3.0-or-later).
+// Playback fixture: a repeated intro, a Segno, To Coda, D.S. al Coda and a Coda.
+\title "Coda March"
+\subtitle "OpenTabz playback fixture"
+\tempo 108
+\track ("Flute" "Fl.") {instrument flute}
+\staff {score}
+\ts (4 4) \ks C
+\section "Intro" \ro \rc 2 :4 C4 E4 G4 E4 |
+\section "Verse" \jump segno :4 C5 B4 A4 G4 |
+:4 F4 A4 G4 E4 |
+\jump daCoda :4 D4 F4 E4 D4 |
+\section "Bridge" :4 A4 A4 B4 B4 |
+\jump dalSegnoAlCoda :4 C5 D5 E5 G4 |
+\section "Coda" \jump coda :4 E5 D5 B4 G4 |
+C5.1
