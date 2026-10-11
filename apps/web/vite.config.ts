@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
@@ -31,15 +30,43 @@ function productionHeaders(): Plugin {
 }
 
 /**
+ * alphaTab is patched with `pnpm patch` (patches/). A new patch installs alphaTab under another
+ * path and invalidates the pre-bundled dependencies, so the dev server restarts itself, forcing
+ * a new dependency optimization, whenever a patch changes.
+ */
+function restartOnPatchChange(): Plugin {
+  const patches = join(import.meta.dirname, '..', '..', 'patches');
+  return {
+    name: 'opentabz:restart-on-patch-change',
+    configureServer(server) {
+      server.watcher.add(patches);
+      const restart = (file: string) => {
+        if (file.startsWith(patches)) void server.restart(true);
+      };
+      server.watcher.on('change', restart);
+      server.watcher.on('add', restart);
+    },
+  };
+}
+
+/**
  * alphaTab's package entry auto-initializes its own worker message handlers when imported inside
  * a worker, and those crash on messages that are not alphaTab's. The engine worker therefore
  * imports the side-effect-free core module (ARCHITECTURE.md §4).
  */
-const require = createRequire(import.meta.url);
-const alphaTabCore = join(dirname(require.resolve('@coderline/alphatab')), 'alphaTab.core.mjs');
+// Through the package's symlink, not require.resolve: Node caches resolved real paths for the life
+// of the process, so a dev server restarted after a new patch would keep the old copy.
+const alphaTabCore = join(
+  import.meta.dirname,
+  'node_modules',
+  '@coderline',
+  'alphatab',
+  'dist',
+  'alphaTab.core.mjs',
+);
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), productionHeaders()],
+  plugins: [react(), tailwindcss(), productionHeaders(), restartOnPatchChange()],
   resolve: {
     alias: [{ find: /^@coderline\/alphatab$/, replacement: alphaTabCore }],
   },

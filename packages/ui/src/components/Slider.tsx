@@ -10,9 +10,22 @@ export interface SliderProps {
   /** Spoken value for screen readers, e.g. "80 %". */
   readonly valueText?: string;
   readonly className?: string;
+  /** For values on both sides of a centre (pan, balance, tuning): the fill starts here. */
+  readonly origin?: number;
 }
 
-export function Slider({ label, value, min, max, step, onValueChange, valueText, className }: SliderProps) {
+export function Slider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onValueChange,
+  valueText,
+  className,
+  origin,
+}: SliderProps) {
+  const percent = (input: number) => ((input - min) / (max - min)) * 100;
   return (
     <RadixSlider.Root
       className={`relative flex h-5 touch-none items-center select-none ${className ?? ''}`}
@@ -26,7 +39,18 @@ export function Slider({ label, value, min, max, step, onValueChange, valueText,
       }}
     >
       <RadixSlider.Track className="relative h-1 grow overflow-hidden rounded-full bg-line">
-        <RadixSlider.Range className="absolute h-full rounded-full bg-accent" />
+        {origin === undefined ? (
+          <RadixSlider.Range className="absolute h-full rounded-full bg-accent" />
+        ) : (
+          <span
+            aria-hidden
+            className="absolute h-full rounded-full bg-accent"
+            style={{
+              left: `${Math.min(percent(origin), percent(value))}%`,
+              width: `${Math.abs(percent(value) - percent(origin))}%`,
+            }}
+          />
+        )}
       </RadixSlider.Track>
       <RadixSlider.Thumb
         aria-label={label}

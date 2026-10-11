@@ -1,7 +1,16 @@
 import { EngineHost } from '@opentabz/core';
 import type { SynthDelivery } from '@opentabz/core/shared';
 import { describe, expect, it } from 'vitest';
-import { fundamental, PING_FRAMES, power, renderOffline, rms, SAMPLE_RATE, window } from './offline.ts';
+import {
+  fundamental,
+  PING_FRAMES,
+  power,
+  renderOffline,
+  rms,
+  SAMPLE_RATE,
+  window,
+  type Command,
+} from './offline.ts';
 
 describe('offline playback through the real synth path', () => {
   it('plays notes at the right pitch and time and stays silent during rests', async () => {
@@ -168,6 +177,58 @@ describe('offline playback through the real synth path', () => {
     );
     expect(a(master)).toBeLessThan(a(open) / 8);
     expect(e(master)).toBeLessThan(e(open) / 8);
+  });
+
+  it('pans, changes instrument, transposes and detunes a track, also after a seek', async () => {
+    // Track one (A4) on its channels 0 and 1; track two (E5) is left alone.
+    const one = [0, 1];
+    const forOne = (command: (channel: number) => Command) => one.map(command);
+    // Quarter notes, so that notes keep starting after the seek.
+    const quarters =
+      '\\tempo 120\n\\track "One" {instrument flute}\n\\staff {score}\n:4 A4 A4 A4 A4 | A4 A4 A4 A4\n\\track "Two" {instrument flute}\n\\staff {score}\n:4 E5 E5 E5 E5 | E5 E5 E5 E5';
+    const render = (commands: Command[]) =>
+      renderOffline(quarters, 1.6, {
+        before: commands,
+        // A seek replays the song's own pan and program events: the mixer's must win.
+        schedule: [{ at: 0.6, command: { type: 'seek', tick: 960, id: 1 } }],
+      });
+    const after = (samples: Float32Array) => window(samples, 0.75, 1.5);
+
+    const plain = await render([]);
+    const panned = await render(forOne(channel => ({ type: 'setChannelPan', channel, value: -1 })));
+    expect(power(after(panned.right), 440)).toBeLessThan(power(after(panned.left), 440) / 100);
+    expect(power(after(panned.right), 659.26)).toBeGreaterThan(power(after(plain.right), 659.26) / 2);
+
+    // A square lead instead of the flute: much stronger odd harmonics.
+    const harmonics = (samples: Float32Array) => power(samples, 1320) / power(samples, 440);
+    const lead = await render(forOne(channel => ({ type: 'setChannelProgram', channel, program: 80 })));
+    expect(harmonics(after(lead.left))).toBeGreaterThan(10 * harmonics(after(plain.left)));
+    const back = await render([
+      ...forOne(channel => ({ type: 'setChannelProgram', channel, program: 80 }) as const),
+      ...forOne(channel => ({ type: 'setChannelProgram', channel, program: null }) as const),
+    ]);
+    expect(harmonics(after(back.left))).toBeLessThan(2 * harmonics(after(plain.left)));
+
+    const octave = await render(forOne(channel => ({ type: 'setChannelTranspose', channel, semitones: 12 })));
+    const muted = { type: 'setChannelMute', channel: 2, value: true } as const;
+    const octaveAlone = await render([
+      ...forOne(channel => ({ type: 'setChannelTranspose', channel, semitones: 12 }) as const),
+      muted,
+      { ...muted, channel: 3 },
+    ]);
+    expect(power(after(octave.left), 880)).toBeGreaterThan(power(after(plain.left), 880) * 10);
+    const raised = fundamental(after(octaveAlone.left));
+    expect(raised).toBeGreaterThan(880 * 0.98);
+    expect(raised).toBeLessThan(880 * 1.02);
+
+    const detuned = await render([
+      ...forOne(channel => ({ type: 'setChannelDetune', channel, cents: 50 }) as const),
+      muted,
+      { ...muted, channel: 3 },
+    ]);
+    const sharp = fundamental(after(detuned.left));
+    expect(sharp).toBeGreaterThan(440 * 2 ** (50 / 1200) * 0.995);
+    expect(sharp).toBeLessThan(440 * 2 ** (50 / 1200) * 1.005);
   });
 
   it('slows down without changing the pitch', async () => {

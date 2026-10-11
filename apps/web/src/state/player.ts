@@ -15,6 +15,7 @@ import {
 } from '../audio/transport-machine.ts';
 import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from './documents.ts';
+import { effectiveVolume } from './mixer-memory.ts';
 import { usePractice, type PracticeSettings } from './practice.ts';
 
 export const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
@@ -53,6 +54,8 @@ export interface PlayerState {
    */
   readonly selection: TickRange | null;
   readonly volume: number;
+  /** Master balance, -1 (left) to 1 (right). */
+  readonly balance: number;
   readonly load: (doc: OpenDocument) => Promise<void>;
   readonly unload: () => void;
   /** Play/pause. Must be called from a user gesture (it may create the audio output). */
@@ -73,6 +76,7 @@ export interface PlayerState {
    */
   readonly setSelection: (range: TickRange | null, final?: boolean) => void;
   readonly setVolume: (volume: number) => void;
+  readonly setBalance: (balance: number) => void;
 }
 
 export interface CountInBeat {
@@ -103,16 +107,39 @@ function nextMove(): number {
 /** Performance mark set when play is pressed; `ot:play-start` measures until the synth plays. */
 const PLAY_REQUEST = 'ot:play-request';
 
-/** Sends a document's mixer state to the synthesizer, channel by channel. */
-function applyMix(doc: OpenDocument): void {
+/**
+ * Sends a document's mixer state to the synthesizer, channel by channel: everything, or only
+ * what changed since `before`. Pan and instrument go as overrides only when they differ from the
+ * file, so the song's own pan and program changes play as written otherwise.
+ */
+function applyMix(doc: OpenDocument, before?: OpenDocument): void {
   const engine = getAudioEngine();
   doc.summary.tracks.forEach((track, index) => {
     const mix = doc.mix[index];
     if (mix === undefined) return;
+    const old = before?.mix[index];
+    const volume = effectiveVolume(doc.mix, doc.focus, index);
+    const oldVolume = before === undefined ? null : effectiveVolume(before.mix, before.focus, index);
+    const filePan = Math.min(1, Math.max(-1, (track.mix.balance - 8) / 8));
     for (const channel of track.channels) {
-      engine.send({ type: 'setChannelMute', channel, value: mix.mute });
-      engine.send({ type: 'setChannelSolo', channel, value: mix.solo });
-      engine.send({ type: 'setChannelVolume', channel, value: mix.volume });
+      if (old?.mute !== mix.mute) engine.send({ type: 'setChannelMute', channel, value: mix.mute });
+      if (old?.solo !== mix.solo) engine.send({ type: 'setChannelSolo', channel, value: mix.solo });
+      if (oldVolume !== volume) engine.send({ type: 'setChannelVolume', channel, value: volume });
+      if (old?.pan !== mix.pan) {
+        engine.send({ type: 'setChannelPan', channel, value: mix.pan === filePan ? null : mix.pan });
+      }
+      if (track.isPercussion) continue;
+      if (old?.program !== mix.program) {
+        engine.send({
+          type: 'setChannelProgram',
+          channel,
+          program: mix.program === track.program ? null : mix.program,
+        });
+      }
+      if (old?.transpose !== mix.transpose) {
+        engine.send({ type: 'setChannelTranspose', channel, semitones: mix.transpose });
+      }
+      if (old?.detune !== mix.detune) engine.send({ type: 'setChannelDetune', channel, cents: mix.detune });
     }
   });
 }
@@ -194,7 +221,9 @@ useDocuments.subscribe((state, previous) => {
   if (key === null) return;
   const doc = state.docs.find(candidate => candidate.key === key);
   const before = previous.docs.find(candidate => candidate.key === key);
-  if (doc !== undefined && before !== undefined && doc.mix !== before.mix) applyMix(doc);
+  if (doc !== undefined && before !== undefined && (doc.mix !== before.mix || doc.focus !== before.focus)) {
+    applyMix(doc, before);
+  }
 });
 
 export function clampSpeed(speed: number): number {
@@ -285,6 +314,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     loop: false,
     selection: null,
     volume: 1,
+    balance: 0,
 
     load: async doc => {
       const seq = ++loadSeq;
@@ -484,6 +514,12 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const value = Math.min(1, Math.max(0, volume));
       audio().send({ type: 'setMasterVolume', value });
       set({ volume: value });
+    },
+
+    setBalance: balance => {
+      const value = Math.min(1, Math.max(-1, balance));
+      audio().setBalance(value);
+      set({ balance: value });
     },
   };
 });

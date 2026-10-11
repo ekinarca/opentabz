@@ -22,6 +22,7 @@ available as source: the patch file is that source.
 | [0011](0011-rests-between-loop-passes.md)   | Rests between loop passes, reported beat by beat                                   | Players want silent bars between passes to reset their hands               | not yet  |
 | [0012](0012-exact-text-measurement.md)      | Measure text exactly, in its font, where a canvas exists                           | Tempo marks and names came out narrower than drawn and overlapped          | not yet  |
 | [0013](0013-section-markers-own-row.md)     | Section names on an effect row of their own                                        | Section names ran through effects starting on the next beat                | not yet  |
+| [0014](0014-mixer-overrides.md)             | Mixer pan and instrument that the song's events do not undo; detune in cents       | A seek undid the mixer; an unused instrument was silent                    | not yet  |
 
 ## Working on a patch
 

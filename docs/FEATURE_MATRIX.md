@@ -309,14 +309,14 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-043 | Audible fades and swells                              | GP  | M1  | —                                                     | —    | planned |
 | PLAY-044 | Audible whammy bar                                    | GP  | M1  | —                                                     | packages/core/test/playback-pitch-effects.test.ts | done |
 | PLAY-050 | Mixer: per-track volume                               | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
-| PLAY-051 | Mixer: per-track pan                                  | GP  | M1  | —                                                     | —    | planned |
+| PLAY-051 | Mixer: per-track pan                                  | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-052 | Mixer: mute                                           | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-053 | Mixer: solo                                           | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
-| PLAY-054 | Mixer: program and bank                               | GP  | M1  | —                                                     | —    | planned |
-| PLAY-055 | Mixer: playback transpose                             | GP  | M1  | —                                                     | —    | planned |
+| PLAY-054 | Mixer: program and bank                               | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | in progress |
+| PLAY-055 | Mixer: playback transpose                             | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-056 | Practice mode: mute my track                          | OT  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-057 | Master volume                                         | GP  | M1  | — | packages/audio/test/render-offline.test.ts | done |
-| PLAY-058 | Mixer state persisted per song                        | OT  | M1  | —                                                     | —    | planned |
+| PLAY-058 | Mixer state persisted per song                        | OT  | M1  | —                                                     | apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-060 | Buses and sends                                       | OT  | M7  | —                                                     | —    | planned |
 | PLAY-061 | Automation lanes                                      | GP  | M7  | —                                                     | —    | planned |
 | PLAY-062 | Per-track EQ with spectrum analyzer                   | GP  | M7  | —                                                     | —    | planned |
@@ -330,9 +330,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-073 | Audible stepping: move beat by beat and hear each one without starting playback | GP  | M1  | — | packages/core/test/engine-host.test.ts, packages/audio/test/render-offline.test.ts, apps/web/e2e/practice.spec.ts | done |
 | PLAY-074 | Cursor styles: none, smooth, jump per note, jump per metronome beat | GP  | M1  | —                                                     | —    | planned |
 | PLAY-075 | Elapsed and total time display in score time, unaffected by practice speed | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
-| PLAY-076 | Playback detune in cents                              | GP  | M1  | —                                                     | —    | planned |
-| PLAY-077 | Focus/unfocus: boost or duck the active track against the rest | GP  | M1  | —                                                     | —    | planned |
-| PLAY-078 | Master pan (balance)                                  | GP  | M1  | —                                                     | —    | planned |
+| PLAY-076 | Playback detune in cents                              | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
+| PLAY-077 | Focus/unfocus: boost or duck the active track against the rest | GP  | M1  | —                                                     | apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/playback.spec.ts | done |
+| PLAY-078 | Master pan (balance)                                  | GP  | M1  | —                                                     | apps/web/e2e/playback.spec.ts | done |
 | PLAY-079 | Audible accents and heavy accents                     | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-080 | Audible ghost notes                                   | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-081 | Fermatas (short, medium, long) hold time in playback  | GP  | M1  | —                                                     | —    | planned |
@@ -741,7 +741,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | AUD-001 | AudioWorklet-based, glitch-free, low-latency output                                              | OT  | M1  | —       | —    | planned |
 | AUD-002 | Correct playback when the tab is backgrounded                                                    | OT  | M1  | —       | —    | planned |
 | AUD-003 | Sample-accurate scheduling                                                                       | OT  | M1  | —       | —    | planned |
-| AUD-004 | Per-track stereo panning                                                                         | GP  | M1  | —       | —    | planned |
+| AUD-004 | Per-track stereo panning                                                                         | GP  | M1  | —       | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | AUD-005 | Compact default GM SoundFont for instant playback                                                | GP  | M1  | — | packages/audio/test/render-offline.test.ts | done |
 | AUD-006 | Downloadable higher-quality sound packs, cached locally                                          | GP  | M7  | —       | —    | planned |
 | AUD-007 | User SF2 / SF3 SoundFonts                                                                        | OT  | M7  | —       | —    | planned |

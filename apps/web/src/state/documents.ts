@@ -10,7 +10,10 @@ import { EngineTimeoutError } from '../engine/client.ts';
 import type { IntakeSource } from '../features/open/intake.ts';
 import type { PaperId } from '../score-view/pagination.ts';
 import { describeFormat, strings } from '../strings.ts';
+import { fingerprint, recallMix, rememberMix, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
+
+export type { TrackMix } from './mixer-memory.ts';
 
 export interface DocViewState {
   readonly trackIndexes: readonly number[];
@@ -23,14 +26,6 @@ export interface DocViewState {
   readonly autoFit: boolean;
 }
 
-/** Mixer state of one track (applied to every MIDI channel the track uses). */
-export interface TrackMix {
-  readonly mute: boolean;
-  readonly solo: boolean;
-  /** Mix level, 0–1, on top of the volume stored in the file. */
-  readonly volume: number;
-}
-
 export interface OpenDocument {
   /** Stable key for the UI; also the engine view id. */
   readonly key: string;
@@ -39,6 +34,10 @@ export interface OpenDocument {
   readonly summary: DocSummary;
   readonly view: DocViewState;
   readonly mix: readonly TrackMix[];
+  /** The track the others are ducked against (the mixer's focus), if any. */
+  readonly focus: number | null;
+  /** SHA-256 of the file, once known: the mixer is remembered under it. */
+  readonly fingerprint: string | null;
   readonly source: { readonly name: string; readonly bytes: ArrayBuffer };
   /** Performance mark set when the file arrived (drop, pick, paste or download). */
   readonly intakeMark: string;
@@ -75,11 +74,58 @@ interface DocumentsState {
   readonly activate: (key: string | null) => void;
   readonly updateView: (key: string, patch: Partial<DocViewState>) => void;
   readonly updateMix: (key: string, trackIndex: number, patch: Partial<TrackMix>) => void;
+  readonly setFocus: (key: string, trackIndex: number | null) => void;
+  /** Back to the mixer stored in the file. */
+  readonly resetMix: (key: string) => void;
   readonly reportFailure: (error: OpenError) => void;
   readonly dismissFailures: () => void;
   readonly notify: (notice: Omit<Notice, 'id'>) => void;
   readonly dismissNotice: (id: string) => void;
   readonly reopenAll: () => Promise<void>;
+}
+
+/** The mixer as the file stores it. */
+export function initialMix(summary: DocSummary): TrackMix[] {
+  return summary.tracks.map(track => ({
+    mute: track.mix.mute,
+    solo: track.mix.solo,
+    volume: 1,
+    // Guitar Pro balance: 0 (left) to 16 (right), 8 in the middle.
+    pan: Math.min(1, Math.max(-1, (track.mix.balance - 8) / 8)),
+    program: track.program,
+    transpose: 0,
+    detune: 0,
+  }));
+}
+
+/** Keeps the document's mixer for the next time the same file is opened. */
+function remembered(doc: OpenDocument | undefined): void {
+  const hash = doc?.fingerprint ?? null;
+  if (doc === undefined || hash === null) return;
+  rememberMix(hash, { tracks: doc.mix, focus: doc.focus });
+}
+
+/** Brings back the mixer of a file opened before (recognised by its contents). */
+async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): Promise<void> {
+  let hash: string;
+  try {
+    hash = await fingerprint(bytes);
+  } catch {
+    // No crypto.subtle (an insecure context): the mixer is simply not remembered.
+    return;
+  }
+  const stored = recallMix(hash, trackCount);
+  useDocuments.setState(state => ({
+    docs: state.docs.map(doc =>
+      doc.key === key
+        ? {
+            ...doc,
+            fingerprint: hash,
+            ...(stored === null ? {} : { mix: stored.tracks, focus: stored.focus }),
+          }
+        : doc,
+    ),
+  }));
 }
 
 let counter = 0;
@@ -168,11 +214,14 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           engineId: summary.id,
           summary,
           view: initialView(summary),
-          mix: summary.tracks.map(track => ({ mute: track.mix.mute, solo: track.mix.solo, volume: 1 })),
+          mix: initialMix(summary),
+          focus: null,
+          fingerprint: null,
           source: { name: loaded.name, bytes },
           intakeMark,
         };
         set(state => ({ docs: [...state.docs, doc] }));
+        void restoreMix(key, bytes, summary.tracks.length);
         lastOpened = key;
         if (summary.truncated) get().notify({ ...strings.notices.truncated(loaded.name), tone: 'warning' });
         else if (summary.extensionMismatch) {
@@ -224,6 +273,23 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           : doc,
       ),
     }));
+    remembered(get().docs.find(doc => doc.key === key));
+  },
+
+  setFocus: (key, trackIndex) => {
+    set(state => ({
+      docs: state.docs.map(doc => (doc.key === key ? { ...doc, focus: trackIndex } : doc)),
+    }));
+    remembered(get().docs.find(doc => doc.key === key));
+  },
+
+  resetMix: key => {
+    set(state => ({
+      docs: state.docs.map(doc =>
+        doc.key === key ? { ...doc, mix: initialMix(doc.summary), focus: null } : doc,
+      ),
+    }));
+    remembered(get().docs.find(doc => doc.key === key));
   },
 
   reportFailure: error => {

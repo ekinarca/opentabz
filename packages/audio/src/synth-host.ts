@@ -32,6 +32,12 @@ interface ChannelMix {
   mute: boolean;
   solo: boolean;
   volume: number;
+  /** -1 to 1, or null for the song's own pan. */
+  pan: number | null;
+  /** General MIDI program, or null for the song's own. */
+  program: number | null;
+  transpose: number;
+  detune: number;
 }
 
 export class SynthHost {
@@ -169,6 +175,22 @@ export class SynthHost {
       case 'setChannelVolume':
         this.mixFor(command.channel).volume = command.value;
         synth.setChannelVolume(command.channel, command.value);
+        break;
+      case 'setChannelPan':
+        this.mixFor(command.channel).pan = command.value;
+        synth.setChannelPan(command.channel, command.value);
+        break;
+      case 'setChannelProgram':
+        this.mixFor(command.channel).program = command.program;
+        synth.setChannelProgram(command.channel, command.program);
+        break;
+      case 'setChannelTranspose':
+        this.mixFor(command.channel).transpose = command.semitones;
+        synth.setChannelTranspositionPitch(command.channel, command.semitones);
+        break;
+      case 'setChannelDetune':
+        this.mixFor(command.channel).detune = command.cents;
+        synth.setChannelDetune(command.channel, command.cents);
         break;
     }
   }
@@ -405,6 +427,10 @@ export class SynthHost {
       synth.setChannelMute(mixChannel, mix.mute);
       synth.setChannelSolo(mixChannel, mix.solo);
       synth.setChannelVolume(mixChannel, mix.volume);
+      synth.setChannelPan(mixChannel, mix.pan);
+      if (mix.program !== null) synth.setChannelProgram(mixChannel, mix.program);
+      if (mix.transpose !== 0) synth.setChannelTranspositionPitch(mixChannel, mix.transpose);
+      if (mix.detune !== 0) synth.setChannelDetune(mixChannel, mix.detune);
     }
     // alphaTab's own metronome stays off: the clicks above replace it.
     synth.metronomeVolume = 0;
@@ -481,7 +507,7 @@ export class SynthHost {
   private mixFor(channel: number): ChannelMix {
     let mix = this.mixer.get(channel);
     if (mix === undefined) {
-      mix = { mute: false, solo: false, volume: 1 };
+      mix = { mute: false, solo: false, volume: 1, pan: null, program: null, transpose: 0, detune: 0 };
       this.mixer.set(channel, mix);
     }
     return mix;

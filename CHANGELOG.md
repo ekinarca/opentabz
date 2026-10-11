@@ -29,6 +29,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   count-in of one or two bars with its own volume, shown large on screen, fitted to where
   playback starts (mid-bar starts count the beats before them), optionally before every loop
   pass. Changing the pattern while playing never interrupts it. Settings are remembered.
+- **A fuller mixer.** Per track pan, instrument (any General MIDI program), transposition in
+  semitones and fine tuning in cents, a focus that plays the other tracks quieter, the master
+  balance and a reset to the file's mixer. The mixer is remembered for each file (recognised by
+  its contents) and comes back when the same file is opened again.
 - **Fixed-tempo practice and rests in loops.** One tempo for the whole song, ignoring its tempo
   changes (typed or from presets), switched on and off without stopping; bars of rest between
   loop passes, shown on screen.
@@ -59,7 +63,7 @@ All notable changes to OpenTabz are recorded here. The format follows
   switch while audio is generated, without gaps or drift (0006), drum kits on any channel and
   silence instead of `NaN` for unloaded samples (0007), centred channels (0008), replacing
   the song while it plays (0009), speed changes without a seek (0010), rests between loop
-  passes (0011), exact text measurement (0012) and section names on a row of their own (0013). See [docs/upstream/](docs/upstream/).
+  passes (0011), exact text measurement (0012) and section names on a row of their own (0013) and mixer overrides with detune (0014). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
 

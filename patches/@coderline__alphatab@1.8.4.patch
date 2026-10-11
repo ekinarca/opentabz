@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d8ff80413 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313b8ab95c3 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -298,25 +298,48 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  			state.synthData.push(metronome);
  			metronome.time = metronomeTime;
  			metronomeTick += metronomeLengthInTicks;
-@@ -37974,7 +38149,8 @@ class Channels {
+@@ -37963,6 +38138,10 @@ class Channel {
+ 	mixVolume = 0;
+ 	mute = false;
+ 	solo = false;
++	/** OpenTabz patch 0014: fine tuning in cents set by the mixer, kept over resets. */
++	detune = 0;
++	/** OpenTabz patch 0014: the program the song's own events selected. */
++	songProgram = 0;
+ }
+ //#endregion
+ //#region src/synth/synthesis/Channels.ts
+@@ -37974,7 +38153,8 @@ class Channels {
  	channelList = [];
  	setupVoice(tinySoundFont, voice) {
  		const c = this.channelList[this.activeChannel];
 -		const newpan = voice.region.pan + c.panOffset;
 +		// OpenTabz patch 0008: a centered channel ignores the pan of the SoundFont region.
-+		const newpan = (tinySoundFont.channelIsCentered(this.activeChannel) ? 0 : voice.region.pan) + c.panOffset;
++		const newpan = (tinySoundFont.channelIsCentered(this.activeChannel) ? 0 : voice.region.pan) + tinySoundFont.channelPanOffset(this.activeChannel, c.panOffset);
  		voice.playingChannel = this.activeChannel;
  		voice.mixVolume = c.mixVolume;
  		voice.noteGainDb += c.gainDb;
-@@ -38875,6 +39051,7 @@ class TinySoundFont {
+@@ -38613,7 +38793,7 @@ class Voice {
+ 	updatePitchRatio(c, outSampleRate) {
+ 		let pitchWheel = c.pitchWheel;
+ 		if (c.perNotePitchWheel.has(this.playingKey)) pitchWheel += c.perNotePitchWheel.get(this.playingKey) - 8192;
+-		const pitchShift = pitchWheel === 8192 ? c.tuning : pitchWheel / 16383 * c.pitchRange * 2 - c.pitchRange + c.tuning;
++		const pitchShift = (pitchWheel === 8192 ? c.tuning : pitchWheel / 16383 * c.pitchRange * 2 - c.pitchRange + c.tuning) + c.detune / 100;
+ 		this.calcPitchRatio(pitchShift, outSampleRate);
+ 	}
+ 	calcPitchRatio(pitchShift, outSampleRate) {
+@@ -38875,6 +39055,10 @@ class TinySoundFont {
  	_midiEventQueue = new Queue();
  	_mutedChannels = /* @__PURE__ */ new Map();
  	_soloChannels = /* @__PURE__ */ new Map();
 +	_centeredChannels = /* @__PURE__ */ new Map();
++	// OpenTabz patch 0014: mixer settings that the song's own events do not undo.
++	_panOverrides = /* @__PURE__ */ new Map();
++	_programOverrides = /* @__PURE__ */ new Map();
  	_isAnySolo = false;
  	_transpositionPitches = /* @__PURE__ */ new Map();
  	_liveTranspositionPitches = /* @__PURE__ */ new Map();
-@@ -38903,6 +39080,19 @@ class TinySoundFont {
+@@ -38903,6 +39087,45 @@ class TinySoundFont {
  		if (mute) this._mutedChannels.set(channel, true);
  		else this._mutedChannels.delete(channel);
  	}
@@ -333,18 +356,47 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
 +	channelIsCentered(channel) {
 +		return this._centeredChannels.has(channel);
 +	}
++	/** OpenTabz patch 0014: the pan offset (-0.5 to 0.5) of a channel, the mixer's if it set one. */
++	channelPanOffset(channel, songOffset) {
++		return this._panOverrides.has(channel) ? this._panOverrides.get(channel) - .5 : songOffset;
++	}
++	/** OpenTabz patch 0014: a pan (0 left, 1 right) that wins over the song's pan events; null gives them back. */
++	channelSetPanOverride(channel, pan) {
++		if (pan === null) this._panOverrides.delete(channel);
++		else this._panOverrides.set(channel, Math.min(1, Math.max(0, pan)));
++		const c = this._channelInit(channel);
++		this.channelSetPan(channel, c.midiPan / 16383);
++	}
++	/** OpenTabz patch 0014: a program that wins over the song's program changes; null gives them back. */
++	channelSetProgramOverride(channel, program) {
++		if (program === null) this._programOverrides.delete(channel);
++		else this._programOverrides.set(channel, program);
++		const c = this._channelInit(channel);
++		const bank = c.bank;
++		const bankMsb = (bank & 32768) !== 0 ? bank & 127 : bank >> 7 & 127;
++		this.channelSetPresetNumber(channel, program === null ? c.songProgram : program, channel === 9 || bankMsb === 127);
++	}
++	/** OpenTabz patch 0014: fine tuning of a channel in cents. */
++	channelSetDetune(channel, cents) {
++		const c = this._channelInit(channel);
++		c.detune = cents;
++		for (const v of this._voices) if (v.playingChannel === channel && v.playingPreset !== -1) v.updatePitchRatio(c, this.outSampleRate);
++	}
  	channelSetSolo(channel, solo) {
  		if (solo) this._soloChannels.set(channel, true);
  		else this._soloChannels.delete(channel);
-@@ -38911,6 +39101,7 @@ class TinySoundFont {
+@@ -38911,6 +39134,10 @@ class TinySoundFont {
  	resetChannelStates() {
  		this._mutedChannels = /* @__PURE__ */ new Map();
  		this._soloChannels = /* @__PURE__ */ new Map();
 +		this._centeredChannels = /* @__PURE__ */ new Map();
++		this._panOverrides = /* @__PURE__ */ new Map();
++		this._programOverrides = /* @__PURE__ */ new Map();
++		if (this._channels) for (const c of this._channels.channelList) c.detune = 0;
  		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
  		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
  		this._isAnySolo = false;
-@@ -38948,8 +39139,10 @@ class TinySoundFont {
+@@ -38948,8 +39175,10 @@ class TinySoundFont {
  		while (!this._midiEventQueue.isEmpty) {
  			const m = this._midiEventQueue.dequeue();
  			if (m.isMetronome && this.metronomeVolume > 0) {
@@ -356,7 +408,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  			} else if (m.event) this.processMidiMessage(m.event);
  			processedEvents.push(m);
  		}
-@@ -38982,7 +39175,11 @@ class TinySoundFont {
+@@ -38982,7 +39211,14 @@ class TinySoundFont {
  				break;
  			case MidiEventType.ProgramChange:
  				const programChange = e;
@@ -365,11 +417,14 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
 +				const programBank = this._channelInit(programChange.channel).bank;
 +				const programBankMsb = (programBank & 32768) !== 0 ? programBank & 127 : programBank >> 7 & 127;
 +				const xgDrums = programBankMsb === 127;
-+				this.channelSetPresetNumber(programChange.channel, programChange.program, programChange.channel === 9 || xgDrums);
++				// OpenTabz patch 0014: the song's program, unless the mixer chose another.
++				this._channelInit(programChange.channel).songProgram = programChange.program;
++				const program = this._programOverrides.has(programChange.channel) ? this._programOverrides.get(programChange.channel) : programChange.program;
++				this.channelSetPresetNumber(programChange.channel, program, programChange.channel === 9 || xgDrums);
  				break;
  			case MidiEventType.TempoChange:
  				const tempoChange = e;
-@@ -39100,6 +39297,8 @@ class TinySoundFont {
+@@ -39100,6 +39336,8 @@ class TinySoundFont {
  		const voicePlayIndex = this._voicePlayIndex++;
  		for (const region of this.presets[presetIndex].regions) {
  			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
@@ -378,16 +433,19 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  			let voice = null;
  			if (region.group !== 0) {
  				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
-@@ -39360,7 +39559,7 @@ class TinySoundFont {
+@@ -39359,8 +39597,10 @@ class TinySoundFont {
+ 	* @param pan stereo panning value from 0.0 (left) to 1.0 (right) (default 0.5 center)
  	*/
  	channelSetPan(channel, pan) {
++		// OpenTabz patch 0014: the mixer's pan wins over the song's.
++		if (this._panOverrides.has(channel)) pan = this._panOverrides.get(channel);
  		for (const v of this._voices) if (v.playingChannel === channel && v.playingPreset !== -1) {
 -			const newPan = v.region.pan + pan - .5;
 +			const newPan = (this.channelIsCentered(channel) ? 0 : v.region.pan) + pan - .5;
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39787,6 +39986,64 @@ class AlphaSynthBase {
+@@ -39787,6 +40027,64 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -452,7 +510,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  	get output() {
  		return this._output;
  	}
-@@ -39841,8 +40098,24 @@ class AlphaSynthBase {
+@@ -39841,8 +40139,24 @@ class AlphaSynthBase {
  	}
  	updatePlaybackSpeed(value) {
  		const oldSpeed = this.sequencer.playbackSpeed;
@@ -477,7 +535,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  	}
  	get loadedMidiInfo() {
  		return this._loadedMidiInfo;
-@@ -39861,11 +40134,14 @@ class AlphaSynthBase {
+@@ -39861,11 +40175,14 @@ class AlphaSynthBase {
  	}
  	set timePosition(value) {
  		Logger.debug("AlphaSynth", `Seeking to position ${value}ms (main)`);
@@ -492,7 +550,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40213,20 @@ class AlphaSynthBase {
+@@ -39937,10 +40254,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
@@ -514,7 +572,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40234,112 @@ class AlphaSynthBase {
+@@ -39948,15 +40275,112 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
@@ -627,7 +685,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  		}
  		this.output.play();
  		return true;
-@@ -39990,8 +40373,14 @@ class AlphaSynthBase {
+@@ -39990,8 +40414,14 @@ class AlphaSynthBase {
  		this.state = PlayerState.Paused;
  		this.output.pause();
  		this._notPlayedSamples = 0;
@@ -642,7 +700,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40392,7 @@ class AlphaSynthBase {
+@@ -40003,6 +40433,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -650,13 +708,36 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +40472,72 @@ class AlphaSynthBase {
+@@ -40082,16 +40513,95 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
 +	/** OpenTabz patch 0008: plays a channel's notes centered, ignoring the SoundFont's region pans. */
 +	setChannelCentered(channel, centered) {
 +		this.synthesizer.channelSetCentered(channel, centered);
++	}
++	/** OpenTabz patch 0014: a mixer pan (-1 left to 1 right) over the song's; null gives it back. */
++	setChannelPan(channel, pan) {
++		this.synthesizer.channelSetPanOverride(channel, pan === null ? null : (pan + 1) / 2);
++	}
++	/**
++	* OpenTabz patch 0014: plays a channel with another program (instrument) than the song's; null
++	* gives the song's back. The program's samples are loaded if the song did not use it.
++	*/
++	setChannelProgram(channel, program) {
++		if (program !== null && !this.sequencer.instrumentPrograms.has(program)) {
++			this.sequencer.instrumentPrograms.add(program);
++			let append = false;
++			for (const soundFont of this._loadedSoundFonts) {
++				this.synthesizer.loadPresets(soundFont, this.sequencer.instrumentPrograms, this.sequencer.percussionKeys, append);
++				append = true;
++			}
++		}
++		this.synthesizer.channelSetProgramOverride(channel, program);
++	}
++	/** OpenTabz patch 0014: fine tuning of a channel in cents. */
++	setChannelDetune(channel, cents) {
++		this.synthesizer.channelSetDetune(channel, cents);
 +	}
 +	/**
 +	* OpenTabz patch 0009: swaps the loaded song for one of the same timing without interrupting
@@ -727,15 +808,18 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +40874,7 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +40938,10 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
 +	channelSetCentered(_channel, _centered) {}
++	channelSetPanOverride(_channel, _pan) {}
++	channelSetProgramOverride(_channel, _program) {}
++	channelSetDetune(_channel, _cents) {}
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -49793,7 +50240,8 @@ class SvgCanvas {
+@@ -49793,7 +50307,8 @@ class SvgCanvas {
  	}
  	measureText(text) {
  		if (!text) return new MeasuredText(0, 0);
@@ -745,7 +829,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  	}
  	onRenderFinished() {
  		return null;
-@@ -51986,8 +52434,10 @@ class MarkerEffectInfo extends EffectInfo {
+@@ -51986,8 +52501,10 @@ class MarkerEffectInfo extends EffectInfo {
  	get hideOnMultiTrack() {
  		return true;
  	}
@@ -757,7 +841,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  	}
  	get sizingMode() {
  		return EffectBarGlyphSizing.SinglePreBeat;
-@@ -65583,7 +66033,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +66100,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -769,7 +853,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d
  //#endregion
  //#region src/exporter/ScoreExporter.ts
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..3bf257ea3152b246ce27613825006c8c2eadb575 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..31001bfe33238b173155419eefd5d352f1cfd108 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
 @@ -128,6 +128,34 @@ declare class AlphaSynthBase implements IAlphaSynth {
@@ -807,12 +891,21 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..3bf257ea3152b246ce27613825006c8c
      get countInVolume(): number;
      set countInVolume(value: number);
      get midiEventsPlayedFilter(): MidiEventType[];
-@@ -167,6 +195,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
+@@ -167,6 +195,22 @@ declare class AlphaSynthBase implements IAlphaSynth {
      setChannelMute(channel: number, mute: boolean): void;
      resetChannelStates(): void;
      setChannelSolo(channel: number, solo: boolean): void;
 +    /** OpenTabz patch 0008: plays a channel's notes centered, ignoring the SoundFont's region pans. */
 +    setChannelCentered(channel: number, centered: boolean): void;
++    /** OpenTabz patch 0014: a mixer pan (-1 left to 1 right) over the song's; null gives it back. */
++    setChannelPan(channel: number, pan: number | null): void;
++    /**
++     * OpenTabz patch 0014: plays a channel with another program (instrument) than the song's; null
++     * gives the song's back. The program's samples are loaded if the song did not use it.
++     */
++    setChannelProgram(channel: number, program: number | null): void;
++    /** OpenTabz patch 0014: fine tuning of a channel in cents. */
++    setChannelDetune(channel: number, cents: number): void;
 +    /**
 +     * OpenTabz patch 0009: swaps the loaded song for one of the same timing without interrupting
 +     * playback: what is buffered plays out, and the rest is generated from the new song.

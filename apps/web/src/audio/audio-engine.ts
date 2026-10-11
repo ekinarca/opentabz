@@ -40,6 +40,9 @@ export class AudioEngine {
   private outputPromise: Promise<void> | null = null;
   private preparePromise: Promise<void> | null = null;
   private readonly listeners = new Set<Listener>();
+  /** Master balance, -1 (left) to 1 (right), applied on the main thread's audio graph. */
+  private balance = 0;
+  private panner: StereoPannerNode | null = null;
 
   /** Subscribes to every event of the synth worker. */
   public subscribe(listener: Listener): () => void {
@@ -81,6 +84,12 @@ export class AudioEngine {
 
   public send(command: Exclude<SynthCommand, { type: 'init' }>): void {
     this.worker?.postMessage(command);
+  }
+
+  /** Master balance (pan of the whole mix), -1 (left) to 1 (right). */
+  public setBalance(value: number): void {
+    this.balance = Math.min(1, Math.max(-1, value));
+    if (this.panner !== null) this.panner.pan.value = this.balance;
   }
 
   public dispose(): void {
@@ -183,7 +192,9 @@ export class AudioEngine {
       processorOptions: { ring },
     });
     node.port.postMessage({ port }, [port]);
-    node.connect(context.destination);
+    const panner = new StereoPannerNode(context, { pan: this.balance });
+    this.panner = panner;
+    node.connect(panner).connect(context.destination);
     this.workletPort = null;
   }
 

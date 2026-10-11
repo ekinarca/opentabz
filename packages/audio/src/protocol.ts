@@ -66,7 +66,15 @@ export type SynthCommand =
     }
   | { readonly type: 'setChannelMute'; readonly channel: number; readonly value: boolean }
   | { readonly type: 'setChannelSolo'; readonly channel: number; readonly value: boolean }
-  | { readonly type: 'setChannelVolume'; readonly channel: number; readonly value: number };
+  | { readonly type: 'setChannelVolume'; readonly channel: number; readonly value: number }
+  /** Pan from -1 (left) to 1 (right), over the song's own pan; null gives the song's back. */
+  | { readonly type: 'setChannelPan'; readonly channel: number; readonly value: number | null }
+  /** Another General MIDI program (instrument) than the song's; null gives the song's back. */
+  | { readonly type: 'setChannelProgram'; readonly channel: number; readonly program: number | null }
+  /** Playback transposition in semitones. */
+  | { readonly type: 'setChannelTranspose'; readonly channel: number; readonly semitones: number }
+  /** Fine tuning in cents. */
+  | { readonly type: 'setChannelDetune'; readonly channel: number; readonly cents: number };
 
 export interface CountInSettings {
   readonly enabled: boolean;

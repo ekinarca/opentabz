@@ -294,4 +294,93 @@ test.describe('mixer', () => {
       'true',
     );
   });
+
+  test('the balance pans the whole mix', async ({ page }) => {
+    await page.addInitScript(() => {
+      const panners: StereoPannerNode[] = [];
+      Object.assign(window, { panners });
+      class RecordedPanner extends StereoPannerNode {
+        public constructor(context: BaseAudioContext, options?: StereoPannerOptions) {
+          super(context, options);
+          panners.push(this);
+        }
+      }
+      window.StereoPannerNode = RecordedPanner;
+    });
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Mixer' }).click();
+    const balance = page.getByRole('dialog', { name: 'Mixer' }).getByRole('slider', { name: 'Balance' });
+    await balance.focus();
+    await page.keyboard.press('End');
+    await expect(balance).toHaveAttribute('aria-valuetext', 'Right 100 %');
+    const pan = () =>
+      page.evaluate(() =>
+        (window as unknown as { panners: StereoPannerNode[] }).panners.map(node => node.pan.value),
+      );
+    await expect.poll(pan).toEqual([1]);
+    await page.keyboard.press('Home');
+    await expect.poll(pan).toEqual([-1]);
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  });
+
+  test('pans, focuses, changes instrument, transposes and detunes, remembered for the file', async ({
+    page,
+  }) => {
+    const openMixer = async () => {
+      await page.getByRole('button', { name: 'Mixer' }).click();
+      const mixer = page.getByRole('dialog', { name: 'Mixer' });
+      await expect(mixer).toBeVisible();
+      return mixer;
+    };
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    let mixer = await openMixer();
+    const pan = mixer.getByRole('slider', { name: 'Lead Guitar pan' });
+    await pan.focus();
+    await page.keyboard.press('Home');
+    await expect(pan).toHaveAttribute('aria-valuetext', 'Left 100 %');
+    const focus = mixer.getByRole('button', { name: /^Focus on Bass/ });
+    await focus.click();
+    await expect(focus).toHaveAttribute('aria-pressed', 'true');
+    await mixer.getByRole('button', { name: 'More settings for Lead Guitar' }).click();
+    await mixer.getByLabel('Instrument').selectOption({ label: 'Acoustic Grand Piano' });
+    await mixer.getByLabel('Transpose').selectOption({ label: '+2 semitones' });
+    const detune = mixer.getByRole('slider', { name: 'Lead Guitar: Fine tuning' });
+    await detune.focus();
+    for (let step = 0; step < 5; step++) await page.keyboard.press('ArrowRight');
+    await expect(detune).toHaveAttribute('aria-valuetext', '+5 cents');
+    // The drums have no instrument, transposition or tuning to change.
+    await expect(mixer.getByRole('button', { name: 'More settings for Drums' })).toHaveCount(0);
+
+    // The same file, opened again after a reload, gets its mixer back.
+    await page.reload();
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    mixer = await openMixer();
+    await expect(mixer.getByRole('slider', { name: 'Lead Guitar pan' })).toHaveAttribute(
+      'aria-valuetext',
+      'Left 100 %',
+    );
+    await expect(mixer.getByRole('button', { name: /^Focus on Bass/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await mixer.getByRole('button', { name: 'More settings for Lead Guitar' }).click();
+    await expect(mixer.getByLabel('Instrument')).toHaveValue('0');
+    await expect(mixer.getByLabel('Transpose')).toHaveValue('2');
+
+    // And back to the mixer stored in the file.
+    await mixer.getByRole('button', { name: 'Back to the mixer in the file' }).click();
+    await expect(mixer.getByLabel('Transpose')).toHaveValue('0');
+    await expect(mixer.getByRole('button', { name: /^Focus on Bass/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
 });
