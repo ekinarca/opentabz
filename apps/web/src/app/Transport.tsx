@@ -230,19 +230,32 @@ export function Transport() {
               icon={<Square size={12} fill="currentColor" aria-hidden />}
               onSelect={stop}
               disabled={!canToggle(transport)}
+              shortcut={shortcutHint('stop')}
             >
               {strings.transport.stop}
             </MenuItem>
             {selection !== null && (
-              <MenuItem icon={<X size={14} aria-hidden />} onSelect={clearSelection}>
+              <MenuItem
+                icon={<X size={14} aria-hidden />}
+                onSelect={clearSelection}
+                shortcut={shortcutHint('clear-selection')}
+              >
                 {strings.transport.clearSelection}
               </MenuItem>
             )}
             <MenuSeparator />
-            <MenuCheckboxItem checked={metronome} onCheckedChange={setMetronome}>
+            <MenuCheckboxItem
+              checked={metronome}
+              onCheckedChange={setMetronome}
+              shortcut={shortcutHint('metronome')}
+            >
               {strings.transport.metronome}
             </MenuCheckboxItem>
-            <MenuCheckboxItem checked={countIn} onCheckedChange={setCountIn}>
+            <MenuCheckboxItem
+              checked={countIn}
+              onCheckedChange={setCountIn}
+              shortcut={shortcutHint('count-in')}
+            >
               {strings.transport.countIn}
             </MenuCheckboxItem>
             <MenuItem icon={<Settings size={14} aria-hidden />} onSelect={openPracticeSettings}>

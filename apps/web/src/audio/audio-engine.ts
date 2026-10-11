@@ -12,6 +12,7 @@ import type { SynthCommand, SynthEvent } from '@opentabz/audio/protocol';
 import { createRingBuffers, Slot, type RingBuffers } from '@opentabz/audio/ring';
 import sonivoxUrl from '@coderline/alphatab/soundfont/sonivox.sf2?url';
 import { getEngine } from '../engine/instance.ts';
+import { DRUM_BANK, soundFontPresets, type SoundFontPreset } from './soundfont-presets.ts';
 import workletUrl from './ring-player.worklet.ts?worker&url';
 
 /** The synthesizer renders at this rate; the AudioContext resamples if the device differs. */
@@ -44,6 +45,7 @@ export class AudioEngine {
   private balance = 0;
   private panner: StereoPannerNode | null = null;
   private latencyHint: AudioContextLatencyCategory = 'interactive';
+  private presets: readonly SoundFontPreset[] = [];
 
   /** Subscribes to every event of the synth worker. */
   public subscribe(listener: Listener): () => void {
@@ -106,6 +108,11 @@ export class AudioEngine {
     this.workletPort = channel.port1;
     const command: SynthCommand = { type: 'connectWorklet', port: channel.port2 };
     worker.postMessage(command, [channel.port2]);
+  }
+
+  /** The sound bank's drum kits, once it is loaded. */
+  public get drumKits(): readonly SoundFontPreset[] {
+    return this.presets.filter(preset => preset.bank === DRUM_BANK);
   }
 
   /** What the output adds up to: its delay, and the audio it had to skip for lack of samples. */
@@ -192,6 +199,7 @@ export class AudioEngine {
       if (!response.ok)
         throw new AudioUnavailableError(`Loading the sound bank failed (HTTP ${response.status}).`);
       const bytes = await response.arrayBuffer();
+      this.presets = soundFontPresets(bytes);
       const loaded = this.waitFor(
         event =>
           event.type === 'soundFontLoaded' || (event.type === 'error' && event.context === 'soundFont'),

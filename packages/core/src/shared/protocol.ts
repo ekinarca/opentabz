@@ -5,7 +5,7 @@
  */
 import type { OpenError } from './open-error.ts';
 import type { TrackNotes } from './notes.ts';
-import type { PlaybackTimeline, ScoreBounds } from './playback.ts';
+import type { PlaybackTimeline, ScoreBounds, TrackInterpretation } from './playback.ts';
 import type { DocSummary } from './summary.ts';
 import type { PartialLayout, ViewOptions } from './view.ts';
 
@@ -56,7 +56,14 @@ export interface EngineMethods {
   /** Hands the engine a port to the synth worker; MIDI goes there directly. */
   connectSynth(args: { readonly port: MessagePort }): null;
   /** Generates MIDI for a document, sends it to the synth and returns the playback timeline. */
-  preparePlayback(args: { readonly docId: string; readonly playbackId: string }): PlaybackTimeline;
+  preparePlayback(args: {
+    readonly docId: string;
+    readonly playbackId: string;
+    /** How each track is played, by track index; tracks left out play as written. */
+    readonly interpretations?: readonly TrackInterpretation[];
+    /** The song is already loaded: swap the new MIDI in, keeping the position. */
+    readonly replace?: boolean;
+  }): PlaybackTimeline;
   /** Sends the given beats to the synth to sound once, as if struck together (audible stepping). */
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
   /** The notes of one track, beat by beat, for instrument views. */

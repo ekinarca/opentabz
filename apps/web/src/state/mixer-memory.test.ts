@@ -18,6 +18,10 @@ const TRACK: TrackMix = {
   program: 30,
   transpose: 2,
   detune: -10,
+  letRing: true,
+  brush: false,
+  palmMute: 0.8,
+  accent: true,
 };
 const HASH = 'a'.repeat(64);
 
@@ -34,6 +38,17 @@ describe('mixer memory', () => {
       tracks: [TRACK, { ...TRACK, volume: 1, pan: -1, program: 127, transpose: 12, detune: 50 }],
       focus: 1,
     });
+  });
+
+  it('plays songs remembered before playing styles existed as written', () => {
+    const { letRing: _letRing, brush: _brush, palmMute: _palmMute, accent: _accent, ...older } = TRACK;
+    const memory = parseMemory(
+      JSON.stringify({ [HASH]: { tracks: [older, { ...older, palmMute: 7 }], focus: null } }),
+    );
+    expect(memory.get(HASH)?.tracks).toEqual([
+      { ...older, letRing: false, brush: false, palmMute: 0.5, accent: false },
+      { ...older, letRing: false, brush: false, palmMute: 1, accent: false },
+    ]);
   });
 
   it('leaves out songs it cannot read', () => {

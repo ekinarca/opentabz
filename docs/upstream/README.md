@@ -26,6 +26,8 @@ available as source: the patch file is that source.
 | [0015](0015-playback-techniques.md)         | Tremolo speed, fades, ornaments in key, tapping, hairpins, fermatas, ramps, pedal  | These techniques were drawn but played wrongly or not at all               | not yet  |
 | [0016](0016-jumps-after-repeats.md)         | Jumps after pickups, inside repeats, D.S.S. after D.S., last ending after a jump   | The form was played in the wrong order                                     | not yet  |
 | [0017](0017-extra-channels.md)              | Channels of their own for slap and pop, golpe and unison bends                     | Slap and pop sounded plain, golpe was silent, unison bends shared a curve  | not yet  |
+| [0018](0018-track-interpretation.md)        | A track's playing style: let ring, strummed chords, palm-mute damping, accents     | Guitar Pro's track interpretation had no equivalent                        | not yet  |
+| [0019](0019-sample-accurate-events.md)      | Events take effect on their own sample within the synthesizer's 64-sample blocks   | Notes started up to 1.45 ms early, unevenly                                | not yet  |
 
 ## Working on a patch
 

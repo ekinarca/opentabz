@@ -57,8 +57,16 @@ test.describe('phones', () => {
     await expect(page.locator('.ot-selection:not([hidden])').first()).toBeVisible();
     expect(await transportText(page)).toMatch(/Bar \d+ selected/);
 
-    // Less frequent controls live in the ⋯ menu on phones.
+    // Less frequent controls live in the ⋯ menu on phones, with their keys for a keyboard.
     await page.getByRole('button', { name: 'More playback controls' }).tap();
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem', { name: /^Stop and go to the start/ }).locator('kbd')).toHaveText(
+      /(Shift|⇧) Space/,
+    );
+    await expect(menu.getByRole('menuitemcheckbox', { name: /^Metronome/ }).locator('kbd')).toHaveText(
+      /(Alt|⌥) M/,
+    );
+    await expect(menu.getByRole('menuitem', { name: /^Clear selection/ }).locator('kbd')).toHaveText('Esc');
     await page.getByRole('menuitem', { name: 'Clear selection' }).tap();
     await expect(page.locator('.ot-selection:not([hidden])')).toHaveCount(0);
   });

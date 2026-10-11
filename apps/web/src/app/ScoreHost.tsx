@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LocateFixed } from 'lucide-react';
 import { getEngine } from '../engine/instance.ts';
+import { forgetPainted, markPainted } from '../score-view/first-paint.ts';
 import { pageGeometry } from '../score-view/pagination.ts';
 import { PlaybackCursor, type CursorOptions } from '../score-view/playback-cursor.ts';
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
@@ -77,6 +78,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       { pageNumber: strings.score.pageNumber },
       {
         onFirstPaint: () => {
+          markPainted(key);
           if (measured) return;
           measured = true;
           try {
@@ -144,6 +146,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       selectionOverlay.dispose();
       playbackCursor.dispose();
       view.dispose();
+      forgetPainted(key);
       viewRef.current = null;
       cursorRef.current = null;
     };

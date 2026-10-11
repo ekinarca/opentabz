@@ -10,7 +10,7 @@ import { EngineTimeoutError } from '../engine/client.ts';
 import type { IntakeSource } from '../features/open/intake.ts';
 import type { PaperId } from '../score-view/pagination.ts';
 import { describeFormat, strings } from '../strings.ts';
-import { fingerprint, recallMix, rememberMix, type TrackMix } from './mixer-memory.ts';
+import { fingerprint, recallMix, rememberMix, STYLE_DEFAULTS, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
 
 export type { TrackMix } from './mixer-memory.ts';
@@ -99,6 +99,7 @@ export function initialMix(summary: DocSummary): TrackMix[] {
     program: track.program,
     transpose: 0,
     detune: 0,
+    ...STYLE_DEFAULTS,
   }));
 }
 

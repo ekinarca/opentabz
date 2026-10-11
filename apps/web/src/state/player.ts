@@ -2,10 +2,11 @@
  * Playback state for the UI. The audio engine runs in workers; this store mirrors what it reports
  * and exposes the transport actions. The cursor subscribes outside React for smoothness.
  */
-import type { PlaybackTimeline, TickRange } from '@opentabz/core/shared';
+import type { PlaybackTimeline, TickRange, TrackInterpretation } from '@opentabz/core/shared';
 import type { SynthEvent } from '@opentabz/audio/protocol';
 import { create } from 'zustand';
 import { getAudioEngine, type AudioEngine } from '../audio/audio-engine.ts';
+import type { SoundFontPreset } from '../audio/soundfont-presets.ts';
 import {
   canToggle,
   INITIAL_TRANSPORT,
@@ -14,6 +15,8 @@ import {
   type TransportState,
 } from '../audio/transport-machine.ts';
 import { getEngine } from '../engine/instance.ts';
+import { whenPainted } from '../score-view/first-paint.ts';
+import { strings } from '../strings.ts';
 import { useDocuments, type OpenDocument } from './documents.ts';
 import { effectiveVolume } from './mixer-memory.ts';
 import { trackChannels } from './track-channels.ts';
@@ -58,6 +61,8 @@ export interface PlayerState {
   readonly volume: number;
   /** Master balance, -1 (left) to 1 (right). */
   readonly balance: number;
+  /** The sound bank's drum kits, once it is loaded. */
+  readonly drumKits: readonly SoundFontPreset[];
   readonly load: (doc: OpenDocument) => Promise<void>;
   readonly unload: () => void;
   /** Play/pause. Must be called from a user gesture (it may create the audio output). */
@@ -130,14 +135,16 @@ function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?:
       if (old?.pan !== mix.pan) {
         engine.send({ type: 'setChannelPan', channel, value: mix.pan === filePan ? null : mix.pan });
       }
-      if (track.isPercussion || drums) continue;
+      if (drums) continue;
       if (old?.program !== mix.program) {
+        // On a drum track the program is the kit.
         engine.send({
           type: 'setChannelProgram',
           channel,
           program: mix.program === track.program ? null : mix.program,
         });
       }
+      if (track.isPercussion) continue;
       if (old?.transpose !== mix.transpose) {
         engine.send({ type: 'setChannelTranspose', channel, semitones: mix.transpose });
       }
@@ -225,14 +232,70 @@ usePreferences.subscribe((state, previous) => {
   getAudioEngine().setLatencyHint(state.audioLatency);
 });
 
+/** How each track of a document is played: its mixer's playing style. */
+function interpretations(doc: OpenDocument): TrackInterpretation[] {
+  return doc.mix.map(mix => ({
+    letRing: mix.letRing,
+    brush: mix.brush,
+    palmMute: mix.palmMute,
+    accent: mix.accent,
+  }));
+}
+
+function styleChanged(doc: OpenDocument, before: OpenDocument): boolean {
+  return doc.mix.some((mix, index) => {
+    const old = before.mix[index];
+    return (
+      old !== undefined &&
+      (old.letRing !== mix.letRing ||
+        old.brush !== mix.brush ||
+        old.palmMute !== mix.palmMute ||
+        old.accent !== mix.accent)
+    );
+  });
+}
+
+/** How long playback waits for the score's first paint before it is prepared anyway. */
+const PAINT_WAIT_MS = 4000;
+
+/** A playing style changed: the song is generated again and swapped in where it is playing. */
+const RESTYLE_DELAY_MS = 300;
+let restyleTimer: ReturnType<typeof setTimeout> | null = null;
+function restyle(key: string): void {
+  if (restyleTimer !== null) clearTimeout(restyleTimer);
+  restyleTimer = setTimeout(() => {
+    restyleTimer = null;
+    const { docKey, timeline } = usePlayer.getState();
+    const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
+    if (docKey !== key || timeline === null || doc === undefined) return;
+    getEngine()
+      .call('preparePlayback', {
+        docId: doc.engineId,
+        playbackId: timeline.playbackId,
+        interpretations: interpretations(doc),
+        replace: true,
+      })
+      .catch((error: unknown) => {
+        useDocuments.getState().notify({
+          title: strings.transport.unavailable,
+          description: error instanceof Error ? error.message : String(error),
+          tone: 'error',
+        });
+      });
+  }, RESTYLE_DELAY_MS);
+}
+
 // Keep the synthesizer in step with mixer changes of the loaded document.
 useDocuments.subscribe((state, previous) => {
   const key = usePlayer.getState().docKey;
   if (key === null) return;
   const doc = state.docs.find(candidate => candidate.key === key);
   const before = previous.docs.find(candidate => candidate.key === key);
+  // While the song loads, the whole mixer is sent once it is ready.
+  if (usePlayer.getState().transport.status === 'loading') return;
   if (doc !== undefined && before !== undefined && (doc.mix !== before.mix || doc.focus !== before.focus)) {
     applyMix(doc, usePlayer.getState().timeline, before);
+    if (styleChanged(doc, before)) restyle(key);
   }
 });
 
@@ -325,6 +388,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     selection: null,
     volume: 1,
     balance: 0,
+    drumKits: [],
 
     load: async doc => {
       const seq = ++loadSeq;
@@ -346,13 +410,22 @@ export const usePlayer = create<PlayerState>((set, get) => {
       });
       try {
         await engine.prepare();
+        set({ drumKits: engine.drumKits });
         const playbackId = `${doc.key}#${seq}`;
         const loaded = engine.waitFor(
           event =>
             (event.type === 'midiLoaded' && event.playbackId === playbackId) ||
             (event.type === 'error' && event.context === 'midi'),
         );
-        const timeline = await getEngine().call('preparePlayback', { docId: doc.engineId, playbackId });
+        // The engine worker does one thing at a time: the score paints first.
+        await whenPainted(doc.key, PAINT_WAIT_MS);
+        if (seq !== loadSeq) return;
+        const current = useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc;
+        const timeline = await getEngine().call('preparePlayback', {
+          docId: doc.engineId,
+          playbackId,
+          interpretations: interpretations(current),
+        });
         const result = await loaded;
         if (seq !== loadSeq) return;
         if (result.type === 'error') {

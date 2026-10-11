@@ -154,7 +154,12 @@ export class EngineHost implements EngineMethods {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
     if (this.synth === null) throw new EngineHostError('No synthesizer is connected.');
-    const playback = generatePlayback(document.score, args.playbackId);
+    const playback = generatePlayback(
+      document.score,
+      args.playbackId,
+      new alphaTab.Settings(),
+      args.interpretations ?? [],
+    );
     this.synth.postMessage({
       type: 'midi',
       playbackId: args.playbackId,
@@ -164,6 +169,7 @@ export class EngineHost implements EngineMethods {
       bars: playback.bars,
       endTick: playback.timeline.endTick,
       centeredChannels: drumChannels(playback.timeline.extraChannels),
+      replace: args.replace ?? false,
     });
     return playback.timeline;
   }

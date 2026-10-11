@@ -67,6 +67,7 @@ export async function renderOffline(
       bars: playback.bars,
       endTick: playback.timeline.endTick,
       centeredChannels: [],
+      replace: false,
     });
   }
   await Promise.resolve();

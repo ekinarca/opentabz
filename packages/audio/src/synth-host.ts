@@ -85,6 +85,9 @@ export class SynthHost {
   public handle(command: Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>): void {
     const synth = this.synth;
     if (synth === null) {
+      // Mixer settings arriving before the synthesizer are not lost: the UI sends the whole mixer
+      // again once a song is loaded.
+      if (command.type.startsWith('setChannel')) return;
       this.emit({ type: 'error', context: command.type, message: 'The synthesizer is not initialized.' });
       return;
     }
@@ -299,6 +302,20 @@ export class SynthHost {
   public receiveMidi(delivery: MidiDelivery): void {
     const synth = this.synth;
     if (synth === null) return;
+    // The same song played another way: swapped in while playing, the position carried by tick.
+    if (delivery.replace && this.song !== null && this.clickTrack === null) {
+      try {
+        this.song = delivery;
+        synth.replaceMidiFile(this.buildMidi(delivery));
+        synth.applyTranspositionPitches(
+          new Map(delivery.transpositionPitches.map(([key, pitch]) => [key, pitch])),
+        );
+        for (const channel of delivery.centeredChannels) synth.setChannelCentered(channel, true);
+      } catch (error) {
+        this.emit({ type: 'error', context: 'midi', message: messageOf(error) });
+      }
+      return;
+    }
     try {
       synth.pause();
       this.song = delivery;
@@ -594,6 +611,7 @@ function clickTrackDelivery(
     bars,
     endTick,
     centeredChannels: [],
+    replace: false,
   };
 }
 

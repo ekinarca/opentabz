@@ -275,7 +275,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-003 | Bar stepping (previous / next bar)                    | GP  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/keymap.test.ts | done |
 | PLAY-004 | Jump to section                                       | GP  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/keymap.test.ts | done |
 | PLAY-005 | Go to bar                                             | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
-| PLAY-006 | Mini-map / timeline scrubber                          | OT  | M1  | —                                                     | —    | planned |
+| PLAY-006 | Mini-map / timeline scrubber                          | OT  | M1  | —                                                     | apps/web/e2e/song-map.spec.ts | done |
 | PLAY-007 | Tap tempo                                             | OT  | M1  | —                                                     | apps/web/e2e/practice.spec.ts, apps/web/e2e/metronome.spec.ts, apps/web/src/state/practice.test.ts | done |
 | PLAY-008 | Keyboard shortcuts for every transport action         | GP  | M1  | — | apps/web/src/app/keymap.test.ts, apps/web/src/app/shortcuts-doc.test.ts, apps/web/e2e/practice.spec.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-009 | A sound engine that cannot start or load says why and can be retried (never loads forever) | OT | M1 | — | apps/web/e2e/playback.spec.ts | done |
@@ -312,7 +312,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-051 | Mixer: per-track pan                                  | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-052 | Mixer: mute                                           | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-053 | Mixer: solo                                           | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
-| PLAY-054 | Mixer: program and bank                               | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | in progress |
+| PLAY-054 | Mixer: program and bank                               | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/src/audio/soundfont-presets.test.ts, apps/web/e2e/style.spec.ts | done |
 | PLAY-055 | Mixer: playback transpose                             | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-056 | Practice mode: mute my track                          | OT  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-057 | Master volume                                         | GP  | M1  | — | packages/audio/test/render-offline.test.ts | done |
@@ -369,10 +369,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-112 | Traversal: To Coda, firing on the first pass inside a repeat and armed by an "al Coda" jump | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-113 | Traversal: To Double Coda                             | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-114 | Traversal: Fine ends playback only after a jump       | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
-| PLAY-115 | Track interpretation: automatic let ring              | GP  | M1  | —                                                     | —    | planned |
-| PLAY-116 | Track interpretation: automatic brush on chords       | GP  | M1  | —                                                     | —    | planned |
-| PLAY-117 | Track interpretation: palm-mute intensity             | GP  | M1  | —                                                     | —    | planned |
-| PLAY-118 | Track interpretation: accentuation of strong beats    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-115 | Track interpretation: automatic let ring              | GP  | M1  | —                                                     | packages/core/test/playback-interpretation.test.ts, apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/style.spec.ts | done |
+| PLAY-116 | Track interpretation: automatic brush on chords       | GP  | M1  | —                                                     | packages/core/test/playback-interpretation.test.ts, apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/style.spec.ts | done |
+| PLAY-117 | Track interpretation: palm-mute intensity             | GP  | M1  | —                                                     | packages/core/test/playback-interpretation.test.ts, apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/style.spec.ts | done |
+| PLAY-118 | Track interpretation: accentuation of strong beats    | GP  | M1  | —                                                     | packages/core/test/playback-interpretation.test.ts, apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/style.spec.ts | done |
 | PLAY-119 | Per-note audio settings (length, timing offset, velocity), including grace notes | GP  | M7  | —                                                     | —    | planned |
 | PLAY-120 | Automation editor: points snapped to beats or bars, drag, delete, clear, text labels | GP  | M7  | —                                                     | —    | planned |
 | PLAY-121 | Automation points either hold (step) or ramp to the next | GP  | M7  | —                                                     | —    | planned |
@@ -740,7 +740,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | ------- | ------------------------------------------------------------------------------------------------ | --- | --- | ------- | ---- | ------- |
 | AUD-001 | AudioWorklet-based, glitch-free, low-latency output                                              | OT  | M1  | —       | packages/audio/test/ring.test.ts, apps/web/e2e/settings.spec.ts | done |
 | AUD-002 | Correct playback when the tab is backgrounded                                                    | OT  | M1  | —       | apps/web/e2e/background.spec.ts | done |
-| AUD-003 | Sample-accurate scheduling                                                                       | OT  | M1  | —       | —    | planned |
+| AUD-003 | Sample-accurate scheduling                                                                       | OT  | M1  | —       | packages/core/test/playback-timing.test.ts | done |
 | AUD-004 | Per-track stereo panning                                                                         | GP  | M1  | —       | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | AUD-005 | Compact default GM SoundFont for instant playback                                                | GP  | M1  | — | packages/audio/test/render-offline.test.ts | done |
 | AUD-006 | Downloadable higher-quality sound packs, cached locally                                          | GP  | M7  | —       | —    | planned |
@@ -890,7 +890,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-011 | Drag, dock and pop out panels                                                                                               | OT  | M3  | —        | —    | planned |
 | UX-012 | Named workspace layouts                                                                                                     | OT  | M3  | —        | —    | planned |
 | UX-013 | Split view: two documents, or two views of one                                                                              | OT  | M3  | —        | —    | planned |
-| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action                                                                          | OT  | M3  | —        | —    | planned |
+| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action, with each action's shortcut | OT  | M3  | —        | —    | planned |
 | UX-015 | Every action reachable within one click or one shortcut                                                                     | OT  | M3  | —        | —    | planned |
 | UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | — | apps/web/e2e/app.spec.ts, packages/core/test/score-colors.test.ts | done |
 | UX-021 | Desktop and mobile first-class; no feature removed on mobile                                                                | OT  | M3  | —        | —    | planned |
@@ -903,7 +903,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-028 | Optionally reopen the previous session's documents                                                                          | GP  | M3  | —        | —    | planned |
 | UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | —    | planned |
 | UX-030 | Context menus (right-click or long-press) on tracks, bars, symbols, document tabs and the waveform                          | GP  | M3  | —        | —    | planned |
-| UX-031 | Shortcut hints in tooltips, menus and the command palette                                                                   | GP  | M1  | —        | —    | in progress |
+| UX-031 | Shortcut hints in tooltips and menus | GP  | M1  | —        | apps/web/e2e/practice.spec.ts, apps/web/e2e/mobile.spec.ts | done |
 | UX-032 | Command palette lists every command; unavailable ones disabled with the reason                                              | GP  | M3  | —        | —    | planned |
 | UX-033 | Command palette search by prefix, abbreviation, alias and localized name                                                    | GP  | M3  | —        | —    | planned |
 | UX-034 | Command palette quick toggles for effects (run again to remove)                                                             | GP  | M4  | —        | —    | planned |
@@ -926,7 +926,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PERF-002 | File drop → first render < 300 ms (5 tracks, 150 bars) | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
 | PERF-003 | File drop → first render < 1.5 s (20 tracks, 500 bars) | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
 | PERF-004 | Local operations under 100 ms, never a spinner         | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
-| PERF-005 | Steady 60 fps cursor, scrolling and editing            | OT  | M1  | —         | —    | planned |
+| PERF-005 | Steady 60 fps cursor and scrolling while playing | OT  | M1  | —         | apps/web/e2e/budgets.spec.ts | done |
+| PERF-011 | Steady 60 fps while editing                            | OT  | M4  | —         | —    | planned |
 | PERF-006 | Playback starts < 100 ms after pressing space          | OT  | M1  | — | apps/web/e2e/budgets.spec.ts | done |
 | PERF-007 | Pitch-detection feedback < 50 ms                       | OT  | M6  | —         | —    | planned |
 | PERF-008 | Initial JS < 300 KB gzip before the engine chunk       | OT  | M0  | — | scripts/check-budgets.ts | done |

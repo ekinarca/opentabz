@@ -26,6 +26,7 @@ import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { modKey } from './platform.ts';
 import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
+import { SongMap } from './SongMap.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
 import { Transport } from './Transport.tsx';
 
@@ -287,6 +288,7 @@ export function Workspace() {
         <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey} />
       ))}
       {active !== null && fretboard && <FretboardPanel doc={active} />}
+      {active !== null && <SongMap doc={active} />}
       {active !== null && <Transport />}
       {active !== null && <PracticeDialog />}
       {active !== null && <CountInOverlay />}

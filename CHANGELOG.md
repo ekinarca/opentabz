@@ -50,6 +50,16 @@ All notable changes to OpenTabz are recorded here. The format follows
   Segno comes after the Dal Segno, and after a jump only the last alternate ending plays. Slapped
   and popped bass notes play the slap bass sounds (other instruments strike them harder), a golpe
   knocks on the guitar's top, and two strings bent from the same pitch bend independently.
+- **Notes on their sample.** Every note and controller takes effect on its own sample instead of
+  at the start of the synthesizer's 64-sample block: steady rhythms stay steady to the sample.
+- **Song map.** A strip above the playback bar with every bar of the song, its sections named
+  and shaded, the bar being played and the selection: click or drag to go anywhere; as a slider
+  the arrow keys step bars and Page Up/Down sections.
+- **Drum kits.** A drum track can play any kit of the sound bank (Standard, Room, Jazz, Brush in
+  the bundled one), remembered for the file. Menus show the keys of their actions, like tooltips.
+- **A playing style per track.** In the mixer, each track can let its notes ring, strum its
+  chords, damp palm mutes lightly or heavily, and stress the strong beats, as Guitar Pro's track
+  interpretation does; changes apply while playing and are remembered for the file.
 - **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
   breaks up), with the output's delay and any audio it had to skip shown live; the left-handed
   fretboard; single-key shortcuts.
@@ -91,10 +101,16 @@ All notable changes to OpenTabz are recorded here. The format follows
   the song while it plays (0009), speed changes without a seek (0010), rests between loop
   passes (0011), exact text measurement (0012), section names on a row of their own (0013),
   mixer overrides with detune (0014), playback techniques that were drawn but not heard
-  (0015), jumps that follow Guitar Pro's rules (0016) and channels of their own for slap, pop,
-  golpe and unison bends (0017). See [docs/upstream/](docs/upstream/).
+  (0015), jumps that follow Guitar Pro's rules (0016), channels of their own for slap, pop,
+  golpe and unison bends (0017), a playing style per track (0018) and sample-accurate events
+  (0019). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
+
+- A mixer remembered for a file no longer makes playback unavailable when it is restored while
+  the sound engine is still starting.
+- A big score's first systems no longer wait behind the preparation of its playback: the engine
+  prepares playback once the score has painted.
 
 - The playback cursor no longer steps back and starts over during long notes when other tracks
   are hidden (each of their notes restarted its glide).

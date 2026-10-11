@@ -112,6 +112,10 @@ Layouts also return `ScoreBounds`: compact typed arrays with every system, bar a
 rectangle, which the main thread uses for the cursor, hit testing and selections without
 asking the worker again.
 
+The worker does one thing at a time, so the order of requests matters: the player asks for
+`preparePlayback` (MIDI generation, the longest step for a big score) only once the document has
+painted its first systems (`whenPainted`, with a timeout), never before them.
+
 ### 4.2 Documents
 
 A document is an alphaTab `Score` plus OpenTabz metadata (source format, file name, byte size,
@@ -313,6 +317,10 @@ jumps follow Guitar Pro's rules, and techniques that need a sound of their own g
 their own: slap bass sounds, a drum kit for golpe, a second channel for strings bent from the
 same pitch. Those channels travel with the timeline (`extraChannels`), so the mixer applies a
 track's settings to all of its channels; drum kits are centred so the track's pan places them.
+Each track's playing style (let ring, strummed chords, palm-mute damping, accents; patch 0018)
+goes with `preparePlayback`; a change regenerates the MIDI and the synth worker swaps it in
+where it plays (`replace`). Events take effect on their own sample: the synthesizer splits its
+64-sample blocks at them (patch 0019).
 
 **Output delay.** The `AudioContext` keeps the latency hint it is made with. Settings offer the
 shortest, a balanced or the steadiest output; a change pauses playback and closes the output,

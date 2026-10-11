@@ -101,6 +101,9 @@ test.describe('opening files', () => {
     await expect(page.getByRole('navigation', { name: 'Open documents' })).toContainText(
       'Twelve-Bar Shuffle in A',
     );
+    // The sounds load once a score is open. Leaving while they still arrive is covered in
+    // playback.spec.ts; here the page is left once they are in.
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
 
     await openHome(page);
     await page.getByRole('button', { name: /^Open from a link/ }).click();

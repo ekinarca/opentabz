@@ -65,10 +65,12 @@ export function MenuCheckboxItem({
   children,
   checked,
   onCheckedChange,
+  shortcut,
 }: {
   readonly children: ReactNode;
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
+  readonly shortcut?: string | undefined;
 }) {
   return (
     <DropdownMenu.CheckboxItem
@@ -83,6 +85,7 @@ export function MenuCheckboxItem({
         <Check size={14} aria-hidden />
       </DropdownMenu.ItemIndicator>
       {children}
+      {shortcut !== undefined && <Kbd>{shortcut}</Kbd>}
     </DropdownMenu.CheckboxItem>
   );
 }

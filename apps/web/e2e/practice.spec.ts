@@ -112,6 +112,17 @@ test.describe('practice controls', () => {
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   });
 
+  test('tooltips show the keys of their actions', async ({ page }) => {
+    await openShuffle(page);
+    await page.getByRole('button', { name: 'Fretboard', exact: true }).hover();
+    await expect(page.getByRole('tooltip').filter({ hasText: 'Fretboard' })).toContainText(/(Ctrl|⌘) F6/);
+    // Tooltips close as the pointer moves on (Radix keeps a grace area towards the tooltip).
+    await page.mouse.move(0, 300, { steps: 8 });
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Loop', exact: true }).hover();
+    await expect(page.getByRole('tooltip').filter({ hasText: 'Loop' })).toContainText('F9');
+  });
+
   test('goes to a bar or a section, and steps through sections', async ({ page }) => {
     await openShuffle(page);
     await page.keyboard.press(`${MOD}+g`);

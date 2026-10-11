@@ -3,7 +3,12 @@
  * timeline of when each beat sounds, used by the UI for the playback cursor.
  */
 import * as alphaTab from '@coderline/alphatab';
-import { TIMELINE_ITEM_STRIDE, TIMELINE_SLICE_STRIDE, type PlaybackTimeline } from '../shared/playback.ts';
+import {
+  TIMELINE_ITEM_STRIDE,
+  TIMELINE_SLICE_STRIDE,
+  type PlaybackTimeline,
+  type TrackInterpretation,
+} from '../shared/playback.ts';
 
 export interface GeneratedPlayback {
   /** alphaTab MidiFile as a cloneable object (JsonConverter.midiFileToJsObject). */
@@ -19,12 +24,17 @@ export function generatePlayback(
   score: alphaTab.model.Score,
   playbackId: string,
   settings: alphaTab.Settings = new alphaTab.Settings(),
+  interpretations: readonly TrackInterpretation[] = [],
 ): GeneratedPlayback {
   const midiFile = new alphaTab.midi.MidiFile();
   const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
   const generator = new alphaTab.midi.MidiFileGenerator(score, settings, handler);
   // Transposition is applied by the synthesizer per channel, like alphaTab's own player.
   generator.applyTranspositionPitches = false;
+  // How each track is played (alphaTab patch 0018).
+  interpretations.forEach((interpretation, trackIndex) => {
+    generator.trackInterpretations.set(trackIndex, { ...interpretation });
+  });
   generator.generate();
 
   return {

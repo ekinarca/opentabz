@@ -40,13 +40,16 @@ fermatas, hairpins, tempo ramps, the sustain pedal and the guitar's techniques. 
 cursor that follows the music the way you like it (scrolling continuously at the line you choose,
 page by page or not at all; gliding, stepping note by note or beat by beat, in your colour, with
 the notes being played lit up), a fretboard that shows them on the neck of any instrument with
-strings (with the next notes or the whole bar, note names, a capo, left-handed), click-to-seek,
-and speed from 10 % to 300 % without changing the pitch (or tap the tempo you want). A metronome with six sounds, one to
+strings (with the next notes or the whole bar, note names, a capo, left-handed), a song map to
+jump anywhere, click-to-seek, and speed from 10 % to 300 % without changing the pitch (or tap the
+tempo you want). A metronome with six sounds, one to
 four clicks per beat, swing, half time, accents you set beat by beat, polyrhythms and silent bars
 to practise keeping time; a count-in of one or two bars, shown large on screen, fitted to where
 you start and, if you like, before every pass of a loop; and a standalone metronome with tap
-tempo for practising without a song. A mixer with mute, solo and level per track, plus a
-practice mode that mutes the parts you are playing yourself. Drag across the music (or
+tempo for practising without a song. A mixer with mute, solo, level, pan, instrument (or drum
+kit), transposition and fine tuning per track, a playing style per track (let ring, strummed
+chords, palm-mute damping, accents), plus a practice mode that mutes the parts you are playing
+yourself. Drag across the music (or
 long-press a bar on a phone, or type bar numbers) to select a range, then loop it seamlessly, a
 set number of times or endlessly, with rests between passes if you like and a speed trainer
 that brings it up to tempo step by step; or play the whole song at one fixed tempo.

@@ -22,6 +22,25 @@ export interface PlaybackTimeline {
   readonly extraChannels: Int32Array;
 }
 
+/**
+ * How a track is played, as Guitar Pro's track interpretation: every note ringing on, chords
+ * strummed, palm mutes damped from light (0) to heavy (1), strong beats stressed.
+ */
+export interface TrackInterpretation {
+  readonly letRing: boolean;
+  readonly brush: boolean;
+  readonly palmMute: number;
+  readonly accent: boolean;
+}
+
+/** As written: nothing added, palm mutes as Guitar Pro plays them. */
+export const DEFAULT_INTERPRETATION: TrackInterpretation = {
+  letRing: false,
+  brush: false,
+  palmMute: 0.5,
+  accent: false,
+};
+
 export const TIMELINE_BAR_STRIDE = 5;
 export const TIMELINE_SLICE_STRIDE = 4;
 export const TIMELINE_ITEM_STRIDE = 3;
@@ -89,4 +108,6 @@ export interface MidiDelivery {
    * pan places them, not the kit's own spread (alphaTab patch 0008).
    */
   readonly centeredChannels: readonly number[];
+  /** The same song played another way (a track's style changed): swapped in, keeping the position. */
+  readonly replace: boolean;
 }

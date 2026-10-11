@@ -421,6 +421,12 @@ export const strings = {
     next: (notes: readonly string[]) => (notes.length === 0 ? '' : ` Next: ${notes.join(', ')}.`),
   },
 
+  songMap: {
+    label: 'Song map',
+    value: (bar: number, count: number, section: string) =>
+      section.length > 0 ? `Bar ${bar} of ${count}, ${section}` : `Bar ${bar} of ${count}`,
+  },
+
   playbackView: {
     open: 'Following the music',
     title: 'Following the music',
@@ -625,6 +631,13 @@ export const strings = {
     detune: 'Fine tuning',
     detuneValue: (cents: number) =>
       cents === 0 ? '0 cents' : `${cents > 0 ? '+' : '−'}${Math.abs(cents)} cents`,
+    drumKit: 'Drum kit',
+    style: 'Playing style',
+    letRing: 'Let notes ring',
+    brush: 'Strum chords',
+    accent: 'Stress strong beats',
+    palmMute: 'Palm mute',
+    palmMuteValue: (damping: number) => (damping < 0.34 ? 'Light' : damping > 0.66 ? 'Heavy' : 'As written'),
     balance: 'Balance',
     reset: 'Back to the mixer in the file',
     remembered: 'Changes are remembered for this file.',

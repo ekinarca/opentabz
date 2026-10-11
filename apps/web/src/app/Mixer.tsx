@@ -1,4 +1,4 @@
-import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Tooltip } from '@opentabz/ui';
+import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Switch, Tooltip } from '@opentabz/ui';
 import { ChevronDown, Focus, Headphones, RotateCcw, SlidersHorizontal, VolumeX } from 'lucide-react';
 import { useId, useState } from 'react';
 import type { TrackSummary } from '@opentabz/core/shared';
@@ -54,7 +54,34 @@ function TrackDetails({
 }) {
   const instrumentId = useId();
   const transposeId = useId();
-  if (track.isPercussion) return null;
+  const drumKits = usePlayer(state => state.drumKits);
+  if (track.isPercussion) {
+    if (drumKits.length === 0) return null;
+    return (
+      <div className="mt-1.5 flex flex-col gap-1 pl-[18px]">
+        <label htmlFor={instrumentId} className="text-[11px] font-medium text-ink-muted">
+          {s.drumKit}
+        </label>
+        <select
+          id={instrumentId}
+          value={mix.program}
+          onChange={event => {
+            onChange({ program: Number(event.target.value) });
+          }}
+          className={SELECT_CLASS}
+        >
+          {drumKits.map(kit => (
+            <option key={kit.program} value={kit.program}>
+              {kit.name}
+            </option>
+          ))}
+          {!drumKits.some(kit => kit.program === mix.program) && (
+            <option value={mix.program}>{mix.program}</option>
+          )}
+        </select>
+      </div>
+    );
+  }
   return (
     <div className="mt-1.5 grid grid-cols-2 gap-2 pl-[18px]">
       <div className="col-span-2 flex flex-col gap-1">
@@ -120,6 +147,48 @@ function TrackDetails({
           }}
         />
       </div>
+      <fieldset className="col-span-2 flex flex-col gap-1.5 pt-1">
+        <legend className="mb-1 text-[11px] font-medium text-ink-muted">{s.style}</legend>
+        <Switch
+          label={s.letRing}
+          checked={mix.letRing}
+          onCheckedChange={letRing => {
+            onChange({ letRing });
+          }}
+        />
+        <Switch
+          label={s.brush}
+          checked={mix.brush}
+          onCheckedChange={brush => {
+            onChange({ brush });
+          }}
+        />
+        <Switch
+          label={s.accent}
+          checked={mix.accent}
+          onCheckedChange={accent => {
+            onChange({ accent });
+          }}
+        />
+        <div className="flex items-center gap-3">
+          <span className="w-20 shrink-0 text-[12px] text-ink">{s.palmMute}</span>
+          <Slider
+            className="h-8 flex-1"
+            label={`${name}: ${s.palmMute}`}
+            valueText={s.palmMuteValue(mix.palmMute)}
+            value={mix.palmMute}
+            min={0}
+            max={1}
+            step={0.05}
+            onValueChange={palmMute => {
+              onChange({ palmMute });
+            }}
+          />
+          <span className="w-16 shrink-0 text-right text-[11px] text-ink-faint">
+            {s.palmMuteValue(mix.palmMute)}
+          </span>
+        </div>
+      </fieldset>
     </div>
   );
 }
@@ -134,6 +203,7 @@ export function Mixer({ doc }: { readonly doc: OpenDocument }) {
   const resetMix = useDocuments(state => state.resetMix);
   const balance = usePlayer(state => state.balance);
   const setBalance = usePlayer(state => state.setBalance);
+  const drumKits = usePlayer(state => state.drumKits);
   const [expanded, setExpanded] = useState<number | null>(null);
   const shown = new Set(doc.view.trackIndexes);
   const practiceMuted = doc.summary.tracks.every(
@@ -258,7 +328,7 @@ export function Mixer({ doc }: { readonly doc: OpenDocument }) {
                       change({ pan: Math.abs(value) < 0.025 ? 0 : value });
                     }}
                   />
-                  {!track.isPercussion && (
+                  {(!track.isPercussion || drumKits.length > 0) && (
                     <button
                       type="button"
                       aria-label={s.more(name)}

@@ -179,6 +179,22 @@ describe('offline playback through the real synth path', () => {
     expect(e(master)).toBeLessThan(e(open) / 8);
   });
 
+  it('PLAY-054 plays a drum track on another of the sound bank’s kits, and back', async () => {
+    const drums =
+      '\\tempo 120\n\\track "Drums" {instrument percussion}\n\\articulation defaults\n:4 SnareHit SnareHit KickHit KickHit';
+    const kit = (program: number | null) =>
+      renderOffline(drums, 2.2, { before: [{ type: 'setChannelProgram', channel: 9, program }] });
+    const snare = (samples: Float32Array) => rms(window(samples, 0, 0.45));
+    const standard = await renderOffline(drums, 2.2);
+    // The Brush kit's snare is a brush, far softer than the Standard kit's stick.
+    const brush = await kit(40);
+    expect(snare(brush.left)).toBeLessThan(snare(standard.left) * 0.75);
+    expect(snare(brush.left)).toBeGreaterThan(0);
+    // Back to the file's kit.
+    const back = await kit(null);
+    expect(snare(back.left)).toBeCloseTo(snare(standard.left), 4);
+  });
+
   it('pans, changes instrument, transposes and detunes a track, also after a seek', async () => {
     // Track one (A4) on its channels 0 and 1; track two (E5) is left alone.
     const one = [0, 1];

@@ -18,7 +18,18 @@ export interface TrackMix {
   readonly transpose: number;
   /** Fine tuning in cents. */
   readonly detune: number;
+  /** Playing style (Guitar Pro's track interpretation): every note rings on. */
+  readonly letRing: boolean;
+  /** Chords are strummed. */
+  readonly brush: boolean;
+  /** Palm mutes damped from light (0) to heavy (1); 0.5 as written. */
+  readonly palmMute: number;
+  /** Strong beats are stressed. */
+  readonly accent: boolean;
 }
+
+/** The playing style when the file or the user says nothing. */
+export const STYLE_DEFAULTS = { letRing: false, brush: false, palmMute: 0.5, accent: false } as const;
 
 export interface RememberedMix {
   readonly tracks: readonly TrackMix[];
@@ -64,6 +75,8 @@ function parseTrack(value: unknown): TrackMix | null {
   ) {
     return null;
   }
+  // The playing style came later: songs remembered before it play as written.
+  const palmMute = number(raw.palmMute);
   return {
     mute: raw.mute,
     solo: raw.solo,
@@ -72,6 +85,10 @@ function parseTrack(value: unknown): TrackMix | null {
     program: clamp(Math.round(program), 0, 127),
     transpose: clamp(Math.round(transpose), -MAX_TRANSPOSE, MAX_TRANSPOSE),
     detune: clamp(Math.round(detune), -MAX_DETUNE, MAX_DETUNE),
+    letRing: typeof raw.letRing === 'boolean' ? raw.letRing : STYLE_DEFAULTS.letRing,
+    brush: typeof raw.brush === 'boolean' ? raw.brush : STYLE_DEFAULTS.brush,
+    palmMute: palmMute === null ? STYLE_DEFAULTS.palmMute : clamp(palmMute, 0, 1),
+    accent: typeof raw.accent === 'boolean' ? raw.accent : STYLE_DEFAULTS.accent,
   };
 }
 

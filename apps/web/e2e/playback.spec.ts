@@ -167,6 +167,27 @@ test.describe('when the sound engine cannot start', () => {
   });
 });
 
+test.describe('leaving the page while the sounds load', () => {
+  test('is quiet: no error for the download it stops', async ({ page }) => {
+    // Hold the sound bank back until the page has gone.
+    let release = (): void => undefined;
+    const held = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    await page.route('**/assets/sonivox-*.sf2', async route => {
+      await held;
+      await route.continue().catch(() => undefined);
+    });
+    const requested = page.waitForRequest('**/assets/sonivox-*.sf2');
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    await requested;
+    await openHome(page);
+    release();
+  });
+});
+
 test.describe('the cursor never steps back', () => {
   test('glides through beats of hidden tracks', async ({ page }) => {
     // Record where every cursor glide starts and ends, to compare with where the cursor was.
@@ -355,8 +376,12 @@ test.describe('mixer', () => {
     await detune.focus();
     for (let step = 0; step < 5; step++) await page.keyboard.press('ArrowRight');
     await expect(detune).toHaveAttribute('aria-valuetext', '+5 cents');
-    // The drums have no instrument, transposition or tuning to change.
-    await expect(mixer.getByRole('button', { name: 'More settings for Drums' })).toHaveCount(0);
+    // The drums change kit, not instrument, transposition or tuning (one track's settings show at a time).
+    await mixer.getByRole('button', { name: 'More settings for Drums' }).click();
+    await expect(mixer.getByLabel('Drum kit')).toBeVisible();
+    await expect(mixer.getByLabel('Instrument')).toHaveCount(0);
+    await expect(mixer.getByLabel('Transpose')).toHaveCount(0);
+    await expect(mixer.getByRole('slider', { name: 'Drums: Fine tuning' })).toHaveCount(0);
 
     // The same file, opened again after a reload, gets its mixer back.
     await page.reload();
