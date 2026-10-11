@@ -9,6 +9,7 @@ import { openScore } from '../src/open/open.ts';
 import { RenderSession } from '../src/render/session.ts';
 import {
   BOUNDS_BAR_INDEX_STRIDE,
+  BOUNDS_BAR_RECT_STRIDE,
   BOUNDS_BEAT_INDEX_STRIDE,
   BOUNDS_BEAT_RECT_STRIDE,
   BOUNDS_SYSTEM_STRIDE,
@@ -33,6 +34,14 @@ export interface Mark {
   /** A path's commands (`M`, `L`, `Q`, `C`, `A`, `z`) and its points on the page (arcs left out). */
   readonly commands?: string;
   readonly points?: readonly { readonly x: number; readonly y: number }[];
+}
+
+/** Where a master bar sits on the page: its extent along the staff lines, and its system. */
+export interface BarPlace {
+  readonly index: number;
+  readonly left: number;
+  readonly right: number;
+  readonly system: number;
 }
 
 /** Where a beat sits on the page: its horizontal extent, its notes, and the system it is in. */
@@ -229,6 +238,8 @@ export class Engraving {
   private readonly spans = new Map<number, Span>();
   /** Top and bottom of each system on the page. */
   private readonly systems: { readonly top: number; readonly bottom: number }[] = [];
+  /** Every master bar shown, in order. */
+  public readonly bars: BarPlace[] = [];
 
   public constructor(score: alphaTab.model.Score, options: Partial<ViewOptions> = {}) {
     this.score = score;
@@ -240,10 +251,19 @@ export class Engraving {
         const partial = partials.get(painted.id);
         return partial === undefined ? [] : readMarks(painted.svg, 0, partial.y);
       });
-      const { beatIndex, beatRect, barIndex, systems } = layout.bounds;
+      const { beatIndex, beatRect, barIndex, barRect, systems } = layout.bounds;
       for (let i = 0; i * BOUNDS_SYSTEM_STRIDE < systems.length; i++) {
         const top = systems[i * BOUNDS_SYSTEM_STRIDE + 1] ?? 0;
         this.systems.push({ top, bottom: top + (systems[i * BOUNDS_SYSTEM_STRIDE + 3] ?? 0) });
+      }
+      for (let i = 0; i * BOUNDS_BAR_INDEX_STRIDE < barIndex.length; i++) {
+        const left = barRect[i * BOUNDS_BAR_RECT_STRIDE] ?? 0;
+        this.bars.push({
+          index: barIndex[i * BOUNDS_BAR_INDEX_STRIDE] ?? -1,
+          system: barIndex[i * BOUNDS_BAR_INDEX_STRIDE + 1] ?? -1,
+          left,
+          right: left + (barRect[i * BOUNDS_BAR_RECT_STRIDE + 2] ?? 0),
+        });
       }
       for (let i = 0; i * BOUNDS_BEAT_INDEX_STRIDE < beatIndex.length; i++) {
         const id = beatIndex[i * BOUNDS_BEAT_INDEX_STRIDE] ?? -1;
@@ -337,6 +357,37 @@ export class Engraving {
   private within(mark: Mark, span: Span): boolean {
     const x = centre(mark);
     return x >= span.left && x < span.right && this.systemOf(mark) === span.system;
+  }
+
+  /**
+   * The master bar a mark is in, in its system: where its centre is, or its right end for text
+   * aligned to the end of a bar; -1 between bars or in the margins.
+   */
+  public barOf(mark: Mark, by: 'centre' | 'end' = 'centre'): number {
+    const system = this.systemOf(mark);
+    const x = by === 'centre' ? centre(mark) : mark.x + mark.width - 0.5;
+    return this.bars.find(bar => bar.system === system && x >= bar.left && x < bar.right)?.index ?? -1;
+  }
+
+  /** The master bar whose start (its left barline) a mark is centred nearest, in its system. */
+  public barStartNear(mark: Mark): number {
+    const system = this.systemOf(mark);
+    let best = -1;
+    let distance = Number.POSITIVE_INFINITY;
+    for (const bar of this.bars) {
+      if (bar.system !== system) continue;
+      const away = Math.abs(centre(mark) - bar.left);
+      if (away < distance) {
+        best = bar.index;
+        distance = away;
+      }
+    }
+    return best;
+  }
+
+  /** The master bars, in order, where marks of a kind and name are (see `barOf`). */
+  public barsWith(kind: MarkKind, name: string, by: 'centre' | 'end' = 'centre'): number[] {
+    return this.find(kind, name).map(mark => this.barOf(mark, by));
   }
 
   /** For each mark of a kind and name, the beat whose notes it is nearest. */

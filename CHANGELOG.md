@@ -94,7 +94,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   and alphaTex, to be drawn on its beat and nowhere else: bends of every kind, whammy dives and
   dips, slides, hammer-ons and pull-offs, tapping, slap and pop, every harmonic, vibrato, palm
   mute and let ring, dead and ghost notes, accents, grace notes, tremolo picking, trills,
-  rasgueado, strokes and arpeggios, fingering, dynamics, hairpins and fades.
+  rasgueado, strokes and arpeggios, fingering, dynamics, hairpins and fades; and so is the
+  notation of rhythm, meter and form: octave lines, tuplets of any ratio, ties, dots, rests,
+  fermatas, time and key signatures, tempo marks, triplet feel, free time, repeats, endings,
+  segno and coda with every D.C. and D.S., sections and texts.
 
 ### Changed
 
@@ -108,8 +111,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   mixer overrides with detune (0014), playback techniques that were drawn but not heard
   (0015), jumps that follow Guitar Pro's rules (0016), channels of their own for slap, pop,
   golpe and unison bends (0017), a playing style per track (0018), sample-accurate events
-  (0019), Guitar Pro 7+ documents read as they close (0020) and "let ring" written as Guitar Pro
-  writes it (0021). See [docs/upstream/](docs/upstream/).
+  (0019), Guitar Pro 7+ documents read as they close (0020), "let ring" written as Guitar Pro
+  writes it (0021), octave lines below the staff (0022) and rests of lower voices placed below
+  the first voice (0023). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
@@ -117,6 +121,9 @@ All notable changes to OpenTabz are recorded here. The format follows
 ### Fixed
 
 - Let-ring ranges read "let ring", as in Guitar Pro, instead of "LetRing".
+- 8vb and 15mb passages show their sign and line below the staff (they were not drawn at all).
+- In bars with two voices, a rest of the second voice moves below the first voice instead of
+  above the staff, and no longer sits on a rest of the first voice of another length.
 
 - A mixer remembered for a file no longer makes playback unavailable when it is restored while
   the sound engine is still starting.

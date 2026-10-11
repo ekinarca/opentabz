@@ -30,6 +30,8 @@ available as source: the patch file is that source.
 | [0019](0019-sample-accurate-events.md)      | Events take effect on their own sample within the synthesizer's 64-sample blocks   | Notes started up to 1.45 ms early, unevenly                                | not yet  |
 | [0020](0020-gpif-read-as-it-closes.md)      | Read a Guitar Pro 7+ document as its elements close, then let them go              | A large file held about 900 MB of XML nodes while it opened                | not yet  |
 | [0021](0021-let-ring-label.md)              | "let ring" as Guitar Pro writes it                                                 | Let-ring ranges were labelled "LetRing"                                    | not yet  |
+| [0022](0022-octaves-below.md)               | Octave lines below the staff (8vb, 15mb)                                           | 8vb and 15mb passages were drawn as written, without sign or line          | not yet  |
+| [0023](0023-rests-of-lower-voices.md)       | Rests of lower voices move below the first voice, on any overlap                   | Second-voice rests went above the staff, or over the first voice's rest    | not yet  |
 
 ## Working on a patch
 
