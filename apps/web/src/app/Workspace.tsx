@@ -1,4 +1,10 @@
-import type { LayoutKind, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
+import {
+  NOTE_NAMES,
+  type LayoutKind,
+  type NoteNames,
+  type StaffDisplay,
+  type SystemsLayout,
+} from '@opentabz/core/shared';
 import {
   IconButton,
   Menu,
@@ -100,6 +106,8 @@ function ViewToolbar({
   const lyrics = usePreferences(state => state.lyrics);
   const drums = usePreferences(state => state.drums);
   const overview = usePreferences(state => state.overview);
+  const noteNames = usePreferences(state => state.noteNames);
+  const beatCounts = usePreferences(state => state.beatCounts);
   const { view, summary } = doc;
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
@@ -189,6 +197,28 @@ function ViewToolbar({
             }}
           >
             {strings.trackStaves.concertPitch}
+          </MenuCheckboxItem>
+          <MenuSeparator />
+          <MenuLabel>{strings.readingAids.noteNames}</MenuLabel>
+          <MenuRadioGroup<NoteNames>
+            value={noteNames}
+            onValueChange={value => {
+              setPreferences({ noteNames: value });
+            }}
+          >
+            {NOTE_NAMES.map(option => (
+              <MenuRadioItem key={option} value={option}>
+                {strings.readingAids.names[option]}
+              </MenuRadioItem>
+            ))}
+          </MenuRadioGroup>
+          <MenuCheckboxItem
+            checked={beatCounts}
+            onCheckedChange={value => {
+              setPreferences({ beatCounts: value });
+            }}
+          >
+            {strings.readingAids.counts}
           </MenuCheckboxItem>
         </MenuContent>
       </Menu>

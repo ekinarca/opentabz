@@ -183,7 +183,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-303 | Note colouring by chord tone                                                      | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
 | REND-304 | Roman numeral analysis row                                                        | OT  | M5  | —                                                           | —    | planned |
 | REND-305 | Nashville number row                                                              | OT  | M5  | —                                                           | —    | planned |
-| REND-306 | Note names in tablature                                                           | OT  | M2  | —                                                           | —    | planned |
+| REND-306 | Note names in tablature                                                           | OT  | M2  | —                                                           | packages/core/test/reading-aids.test.ts, apps/web/e2e/reading-aids.spec.ts | done |
 | REND-307 | Microtonal accidentals                                                            | OT  | M5  | —                                                           | —    | planned |
 | REND-308 | Per-note annotations                                                              | OT  | M5  | —                                                           | —    | planned |
 | REND-309 | Comment layer                                                                     | OT  | M5  | —                                                           | —    | planned |
@@ -261,7 +261,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-314 | Left-handed (mirrored) chord and scale diagrams                                   | OT  | M2  | —                                                           | —    | planned |
 | REND-315 | Inverted tablature string order (lowest string on top)                            | OT  | M2  | —                                                           | —    | planned |
 | REND-316 | Colour-blind-safe palettes and custom string colours                              | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
-| REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | —    | planned |
+| REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | packages/core/test/reading-aids.test.ts, apps/web/e2e/reading-aids.spec.ts | done |
 | REND-318 | Percussion legend for drum staves                                                 | OT  | M2  | —                                                           | —    | planned |
 | REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | —                                                           | —    | planned |
 | REND-320 | Hide staves that rest for a whole system                                          | OT  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
@@ -524,7 +524,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-006 | Drum pad view                                             | GP  | M2  | —       | packages/core/test/track-drums.test.ts, apps/web/src/instrument-view/drums.test.ts, apps/web/e2e/drums.spec.ts | done |
 | VIEW-007 | Chord diagram panel                                       | GP  | M2  | —       | packages/core/test/track-chords.test.ts, apps/web/src/instrument-view/chords.test.ts, apps/web/e2e/chords.spec.ts | done |
 | VIEW-008 | Scale diagrams                                            | GP  | M5  | —       | —    | planned |
-| VIEW-009 | Note-name view                                            | OT  | M2  | —       | —    | planned |
+| VIEW-009 | Note-name view                                            | OT  | M2  | —       | packages/core/test/reading-aids.test.ts, apps/web/e2e/reading-aids.spec.ts | done |
 | VIEW-010 | Lyrics pane                                               | GP  | M2  | —       | packages/core/test/track-lyrics.test.ts, apps/web/src/instrument-view/lyrics.test.ts, apps/web/e2e/lyrics.spec.ts | done |
 | VIEW-011 | Song info / notice page                                   | GP  | M2  | alphatex/views/lyrics.atex | apps/web/e2e/song-info.spec.ts | done |
 | VIEW-012 | Section navigator                                         | OT  | M2  | —       | apps/web/e2e/practice.spec.ts, apps/web/e2e/song-map.spec.ts | done |

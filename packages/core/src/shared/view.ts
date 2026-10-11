@@ -1,5 +1,6 @@
 /** Options shared between the UI and the engine for one rendered view of a document. */
 import type { NoteColoring } from './note-colors.ts';
+import type { ReadingAids } from './reading-aids.ts';
 import type { ScoreStyle } from './style.ts';
 
 export const LAYOUT_KINDS = ['page', 'scroll', 'horizontal'] as const;
@@ -61,6 +62,8 @@ export interface ViewOptions {
   readonly concertPitch?: boolean;
   /** Notes coloured by string, interval, degree or chord tone (REND-300…REND-303). */
   readonly noteColors?: NoteColoring;
+  /** Note names above the notes and beat counts under them (VIEW-009, REND-306, REND-317). */
+  readonly readingAids?: ReadingAids;
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

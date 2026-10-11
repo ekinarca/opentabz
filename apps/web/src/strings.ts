@@ -8,6 +8,7 @@ import type {
   FormatId,
   LayoutKind,
   NoteColorMode,
+  NoteNames,
   NotePalette,
   OpenError,
   PageLineId,
@@ -391,6 +392,15 @@ export const strings = {
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
     fullScreen: 'Full screen',
+  },
+
+  readingAids: {
+    noteNames: 'Note names',
+    names: { off: 'None', letters: 'Letters', octaves: 'Letters and octaves' } satisfies Record<
+      NoteNames,
+      string
+    >,
+    counts: 'Beat counts',
   },
 
   noteColors: {

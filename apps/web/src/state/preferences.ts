@@ -4,10 +4,12 @@
  */
 import {
   NOTE_COLOR_MODES,
+  NOTE_NAMES,
   NOTE_PALETTES,
   STRING_COLORS,
   type LayoutKind,
   type NoteColorMode,
+  type NoteNames,
   type NotePalette,
   type StaffDisplay,
 } from '@opentabz/core/shared';
@@ -72,6 +74,9 @@ export interface Preferences {
   readonly notePalette: NotePalette;
   /** One's own string colours, from the lowest string up. */
   readonly stringColors: readonly string[];
+  /** Note names above the notes, and beat counts under them (VIEW-009, REND-317). */
+  readonly noteNames: NoteNames;
+  readonly beatCounts: boolean;
   /** A tint on the bar being played. */
   readonly barHighlight: boolean;
   /** The notes being played drawn in the cursor colour. */
@@ -128,6 +133,8 @@ export function defaultPreferences(locale: string): Preferences {
     noteColors: 'off',
     notePalette: 'standard',
     stringColors: STRING_COLORS.standard,
+    noteNames: 'off',
+    beatCounts: false,
     barHighlight: true,
     noteHighlight: true,
     fretboard: false,
@@ -232,6 +239,8 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
         value.stringColors.every(color => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color))
           ? (value.stringColors as string[])
           : fallback.stringColors,
+      noteNames: oneOf(value.noteNames, NOTE_NAMES, fallback.noteNames),
+      beatCounts: typeof value.beatCounts === 'boolean' ? value.beatCounts : fallback.beatCounts,
       barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
       noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
       fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
@@ -299,6 +308,8 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       noteColors: state.noteColors,
       notePalette: state.notePalette,
       stringColors: state.stringColors,
+      noteNames: state.noteNames,
+      beatCounts: state.beatCounts,
       barHighlight: state.barHighlight,
       noteHighlight: state.noteHighlight,
       fretboard: state.fretboard,

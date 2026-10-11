@@ -19,3 +19,4 @@ export * from './page-text.ts';
 export * from './chord-spelling.ts';
 export * from './text-fonts.ts';
 export * from './note-colors.ts';
+export * from './reading-aids.ts';

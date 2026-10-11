@@ -7,7 +7,7 @@ import { PlaybackCursor, type CursorOptions } from '../score-view/playback-curso
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
 import { usePlayer } from '../state/player.ts';
-import { noteColoring } from '../state/note-coloring.ts';
+import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { scoreFields } from '../state/score-fields.ts';
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePreferences, type Preferences } from '../state/preferences.ts';
@@ -37,6 +37,9 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   const colorMode = usePreferences(state => state.noteColors);
   const notePalette = usePreferences(state => state.notePalette);
   const stringColors = usePreferences(state => state.stringColors);
+  const noteNames = usePreferences(state => state.noteNames);
+  const beatCounts = usePreferences(state => state.beatCounts);
+  const aids = useMemo(() => readingAids({ noteNames, beatCounts }), [noteNames, beatCounts]);
   const coloring = useMemo(
     () => noteColoring({ noteColors: colorMode, notePalette, stringColors }),
     [colorMode, notePalette, stringColors],
@@ -225,11 +228,12 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       staves: doc.view.staves,
       concertPitch: doc.view.concertPitch,
       noteColors: coloring,
+      readingAids: aids,
       trackIndexes: doc.view.trackIndexes,
       zoom: doc.view.zoom,
       fields,
     });
-  }, [doc.engineId, doc.view, fields, coloring]);
+  }, [doc.engineId, doc.view, fields, coloring, aids]);
 
   return (
     <div hidden={hidden} className="relative flex min-h-0 flex-1 flex-col">

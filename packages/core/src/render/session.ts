@@ -7,6 +7,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { sameColoring } from '../shared/note-colors.ts';
+import { sameReadingAids } from '../shared/reading-aids.ts';
 import { sameScoreStyle, type ScoreStyle } from '../shared/style.ts';
 import { sameTrackStaves, type PartialKind, type PartialLayout, type ViewOptions } from '../shared/view.ts';
 import type { ScoreBounds } from '../shared/playback.ts';
@@ -14,6 +15,7 @@ import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyNoteColors } from './note-colors.ts';
+import { applyReadingAids } from './reading-aids.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
@@ -155,7 +157,9 @@ export class RenderSession {
     const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
     const restoreColors = applyNoteColors(tracks, this.options.noteColors);
+    const restoreAids = applyReadingAids(tracks, this.options.readingAids);
     const restore = () => {
+      restoreAids();
       restoreColors();
       restorePitch();
       restoreStaves();
@@ -212,6 +216,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.concertPitch === b.concertPitch &&
     sameColoring(a.noteColors, b.noteColors) &&
+    sameReadingAids(a.readingAids, b.readingAids) &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&

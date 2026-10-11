@@ -8,11 +8,13 @@ import {
   DEFAULT_PAGE_FURNITURE,
   samePageFurniture,
   sameColoring,
+  sameReadingAids,
   sameScoreStyle,
   sameTextFont,
   sameTrackStaves,
   type LayoutKind,
   type NoteColoring,
+  type ReadingAids,
   type ScoreBounds,
   type ScoreFields,
   type ScoreStyle,
@@ -55,6 +57,8 @@ export interface ScoreViewState {
   readonly concertPitch: boolean;
   /** Notes coloured, if asked (REND-300…REND-303). */
   readonly noteColors: NoteColoring | undefined;
+  /** Note names and beat counts, if asked (VIEW-009, REND-317). */
+  readonly readingAids: ReadingAids | undefined;
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
@@ -583,6 +587,7 @@ export class ScoreView {
       staves: state.staves,
       concertPitch: state.concertPitch,
       ...(state.noteColors === undefined ? {} : { noteColors: state.noteColors }),
+      ...(state.readingAids === undefined ? {} : { readingAids: state.readingAids }),
       width,
       notationScale: 1,
       // The pages' header and footer are drawn here: changing them needs no new layout.
@@ -886,6 +891,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     sameTrackStaves(a.staves ?? [], b.staves ?? []) &&
     a.concertPitch === b.concertPitch &&
     sameColoring(a.noteColors, b.noteColors) &&
+    sameReadingAids(a.readingAids, b.readingAids) &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -906,6 +912,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     sameTrackStaves(a.staves, b.staves) &&
     a.concertPitch === b.concertPitch &&
     sameColoring(a.noteColors, b.noteColors) &&
+    sameReadingAids(a.readingAids, b.readingAids) &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );
