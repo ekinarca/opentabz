@@ -85,11 +85,15 @@ export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom * 100) / 100));
 }
 
+/** Below this width a printed page cannot be read; scores reflow to the screen instead. */
+export const NARROW_SCREEN = 640;
+
 function initialView(summary: DocSummary): DocViewState {
   const preferences = usePreferences.getState();
+  const narrow = window.innerWidth < NARROW_SCREEN;
   return {
     trackIndexes: [0],
-    layout: preferences.layout,
+    layout: narrow && preferences.layout === 'page' ? 'scroll' : preferences.layout,
     paper: preferences.paper,
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,

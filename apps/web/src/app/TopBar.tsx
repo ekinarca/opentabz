@@ -29,7 +29,7 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
       className={
         home && docs.length === 0
           ? 'absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5'
-          : 'flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-3'
+          : 'flex min-h-12 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 pt-[env(safe-area-inset-top)] sm:px-3'
       }
     >
       <button

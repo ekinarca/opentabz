@@ -10,11 +10,15 @@ export interface Segment<T extends string> {
   readonly iconOnly?: boolean;
 }
 
+/** `collapse`: below the md breakpoint, segments with an icon show only the icon. */
+export type SegmentedDensity = 'regular' | 'collapse';
+
 export interface SegmentedControlProps<T extends string> {
   readonly label: string;
   readonly value: T;
   readonly segments: readonly Segment<T>[];
   readonly onValueChange: (value: T) => void;
+  readonly density?: SegmentedDensity;
 }
 
 export function SegmentedControl<T extends string>({
@@ -22,6 +26,7 @@ export function SegmentedControl<T extends string>({
   value,
   segments,
   onValueChange,
+  density = 'regular',
 }: SegmentedControlProps<T>) {
   return (
     <ToggleGroup.Root
@@ -42,7 +47,15 @@ export function SegmentedControl<T extends string>({
             className="inline-flex h-full items-center gap-1.5 rounded-[6px] px-2.5 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink data-[state=on]:bg-raised data-[state=on]:text-ink data-[state=on]:shadow-sm"
           >
             {segment.icon}
-            {segment.iconOnly === true ? null : segment.label}
+            {segment.iconOnly === true ? null : (
+              <span
+                className={
+                  density === 'collapse' && segment.icon !== undefined ? 'max-md:sr-only' : undefined
+                }
+              >
+                {segment.label}
+              </span>
+            )}
           </ToggleGroup.Item>
         );
         return segment.iconOnly === true ? (

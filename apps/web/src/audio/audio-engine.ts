@@ -61,6 +61,9 @@ export class AudioEngine {
       if (this.context.state !== 'running') void this.context.resume();
       return this.outputPromise ?? Promise.resolve();
     }
+    // iOS mutes Web Audio with the ring/silent switch unless the session is declared as playback.
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session !== undefined) session.type = 'playback';
     const context = new AudioContext({ sampleRate: SYNTH_SAMPLE_RATE, latencyHint: 'interactive' });
     this.context = context;
     this.outputPromise = this.connectOutput(context);

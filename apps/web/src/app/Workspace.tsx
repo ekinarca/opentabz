@@ -129,6 +129,7 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
       </Menu>
 
       <SegmentedControl<LayoutKind>
+        density="collapse"
         label={strings.toolbar.layout}
         value={view.layout}
         onValueChange={value => {

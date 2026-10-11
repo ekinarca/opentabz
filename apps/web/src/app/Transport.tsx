@@ -76,7 +76,7 @@ export function Transport() {
     <div
       role="toolbar"
       aria-label={strings.transport.label}
-      className="flex h-14 shrink-0 items-center gap-2 border-t border-line bg-surface px-3"
+      className="flex min-h-14 shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line bg-surface px-2 pb-[env(safe-area-inset-bottom)] [scrollbar-width:none] sm:gap-2 sm:px-3"
     >
       <Tooltip
         label={playing ? strings.transport.pause : strings.transport.play}
@@ -106,7 +106,7 @@ export function Transport() {
         disabled={!canToggle(transport)}
       />
 
-      <div className="ml-1 flex min-w-0 flex-col leading-tight" aria-live="off">
+      <div className="ml-1 flex min-w-0 shrink-0 flex-col leading-tight" aria-live="off">
         <span className="font-mono text-[13px] text-ink tabular-nums">
           {formatTime(time)} <span className="text-ink-faint">/ {formatTime(endTime)}</span>
         </span>
@@ -129,14 +129,14 @@ export function Transport() {
         </Tooltip>
       )}
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
         <Menu>
           <Tooltip label={strings.transport.speed}>
             <MenuTrigger asChild>
               <button
                 type="button"
                 aria-label={`${strings.transport.speed}: ${strings.transport.speedValue(speed)}`}
-                className="h-9 min-w-[64px] rounded-[var(--radius-control)] px-2 font-mono text-[13px] text-ink tabular-nums hover:bg-sunken"
+                className="h-9 min-w-[52px] rounded-[var(--radius-control)] px-1.5 font-mono text-[13px] text-ink tabular-nums hover:bg-sunken sm:min-w-[64px] sm:px-2"
               >
                 {strings.transport.speedValue(speed)}
               </button>
@@ -181,7 +181,7 @@ export function Transport() {
             setCountIn(!countIn);
           }}
         />
-        <div className="ml-1 flex items-center gap-1.5">
+        <div className="ml-1 hidden items-center gap-1.5 sm:flex">
           <IconButton
             label={volume === 0 ? strings.transport.unmute : strings.transport.mute}
             icon={volume === 0 ? <VolumeX size={17} aria-hidden /> : <Volume2 size={17} aria-hidden />}
