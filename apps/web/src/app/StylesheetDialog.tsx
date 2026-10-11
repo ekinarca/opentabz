@@ -15,6 +15,7 @@ import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { HeaderFooterSection } from './HeaderFooterSection.tsx';
+import { StylesheetChoices } from './StylesheetChoices.tsx';
 import { TextFontsSection } from './TextFontsSection.tsx';
 import { Field } from './MetronomeSettingsForm.tsx';
 
@@ -75,6 +76,16 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
       }
     >
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+        <Section title={s.sections.choices} wide>
+          <StylesheetChoices
+            style={style}
+            fileStyle={doc.summary.style}
+            onApply={next => {
+              updateView(doc.key, { style: next });
+            }}
+          />
+        </Section>
+
         <Section title={s.sections.page}>
           <Field label={s.scale} value={s.scaleValue(style.scale)}>
             <Slider

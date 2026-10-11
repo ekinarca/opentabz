@@ -21,6 +21,7 @@ import { describeFormat, strings } from '../strings.ts';
 import { fingerprint, recallMix, rememberMix, STYLE_DEFAULTS, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
 import { recallStyle, rememberStyle } from './style-memory.ts';
+import { startingStyle } from './stylesheets.ts';
 
 export type { TrackMix } from './mixer-memory.ts';
 
@@ -183,7 +184,8 @@ function initialView(summary: DocSummary): DocViewState {
     layout: narrow && preferences.layout === 'page' ? 'scroll' : preferences.layout,
     page: preferences.page,
     arrangement: preferences.pageArrangement,
-    style: summary.style,
+    // The default stylesheet, if one is chosen; the file's otherwise (REND-220).
+    style: startingStyle(summary.style),
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,
     staves: [],

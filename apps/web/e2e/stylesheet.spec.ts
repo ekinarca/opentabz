@@ -91,3 +91,31 @@ test('chord names are spelled in the style chosen, in the score and the chords p
     page.getByRole('region', { name: 'Chords', exact: true }).getByText('C-', { exact: true }).first(),
   ).toBeVisible();
 });
+
+test('looks and stylesheets of one’s own, one the default for scores opened from now on (REND-220)', async ({
+  page,
+}) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatab/guitarpro7/chords.gp')]);
+  await expectScore(page);
+  const texts = () => page.locator('.ot-scroll:not([hidden]) .ot-partials text').allTextContents();
+  await expect.poll(async () => (await texts()).includes('Cm')).toBe(true);
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByLabel('Apply a stylesheet').selectOption({ label: 'Jazz chart' });
+  await expect.poll(async () => (await texts()).includes('C-')).toBe(true);
+
+  await dialog.getByLabel('Save this style as').fill('Gig');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog.getByRole('list', { name: 'Your stylesheets' })).toContainText('Gig');
+  await dialog.getByLabel('Scores opened from now on').selectOption({ label: 'Gig' });
+  await page.keyboard.press('Escape');
+
+  // Another score starts with it: the jazz chart has no tuning legend.
+  await openHome(page);
+  await page.getByRole('button', { name: 'a blues shuffle' }).click();
+  await expectScore(page);
+  await expect.poll(async () => (await texts()).includes('Twelve-Bar Shuffle in A')).toBe(true);
+  expect(await texts()).not.toContain('Standard');
+});

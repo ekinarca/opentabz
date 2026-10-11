@@ -21,6 +21,7 @@ import type {
 import type { PngResolution } from './export/page-files.ts';
 import type { Orientation, PageArrangement, PaperId } from './score-view/pagination.ts';
 import type { ZoomFit } from './state/documents.ts';
+import type { LookId } from './state/stylesheets.ts';
 import type { ThemePreference } from './state/preferences.ts';
 
 const SUPPORTED_SUMMARY =
@@ -417,6 +418,28 @@ export const strings = {
       notation: 'Notation',
       headerFooter: 'Header and footer',
       text: 'Text',
+      choices: 'Stylesheets',
+    },
+    choices: {
+      apply: 'Apply a stylesheet',
+      applyHint: 'A look changes some of the style and keeps the rest; one of your own replaces it all.',
+      choose: 'Choose…',
+      looks: 'Looks',
+      own: 'Your stylesheets',
+      lookNames: {
+        classic: 'Classic',
+        pop: 'Pop',
+        jazz: 'Jazz chart',
+        large: 'Large print',
+        compact: 'Compact',
+      } satisfies Record<LookId, string>,
+      default: 'Scores opened from now on',
+      defaultHint: 'The stylesheet they start with. A score you styled before keeps its own.',
+      asInFile: 'As in the file',
+      saveAs: 'Save this style as',
+      namePlaceholder: 'My stylesheet',
+      save: 'Save',
+      delete: (name: string) => `Delete ${name}`,
     },
     text: {
       kind: 'Text',

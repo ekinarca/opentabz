@@ -132,6 +132,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Stylesheet looks and stylesheets of one's own.** The stylesheet applies a look (Classic,
+  Pop, Jazz chart, Large print, Compact) over the file's style, saves the style under a name, and
+  makes one of them the stylesheet scores opened from then on start with.
 - **Fonts of the score's texts.** The stylesheet's Text section sets the font, size, bold and
   italics of each kind of text: the title block's lines, the pages' header and footer, track
   names, the tuning legend, sections, free text, chord names and diagram frets, lyrics, fret
