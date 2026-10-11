@@ -213,7 +213,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | —                                                           | —    | planned |
 | REND-209 | Scale diagrams attached to beats (geometry, custom dots, grid spacing)            | GP  | M2  | —                                                           | —    | planned |
 | REND-210 | Show or hide tempo-automation marks                                               | GP  | M2  | —                                                           | —    | planned |
-| REND-211 | Tempo marks against any beat unit (e.g. dotted quarter)                           | GP  | M2  | —                                                           | —    | planned |
+| REND-211 | Tempo marks against any beat unit (e.g. dotted quarter)                           | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
 | REND-212 | Page layout with pages side by side, scrolling horizontally                       | GP  | M2  | —                                                           | —    | planned |
 | REND-213 | Page grid: as many pages per row as the window fits                               | GP  | M2  | —                                                           | —    | planned |
 | REND-214 | Continuous page-width layout without page breaks                                  | GP  | M2  | —                                                           | —    | planned |

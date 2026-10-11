@@ -578,9 +578,9 @@ exports[`every fixture imports to the same score > musicxml-testsuite/31a-Direct
 
 exports[`every fixture imports to the same score > musicxml-testsuite/31b-Directions-Order.xml 1`] = `"d78ad33e585fe157"`;
 
-exports[`every fixture imports to the same score > musicxml-testsuite/31c-MetronomeMarks.xml 1`] = `"1d739ca794bd9f75"`;
+exports[`every fixture imports to the same score > musicxml-testsuite/31c-MetronomeMarks.xml 1`] = `"b5b657979e68e94f"`;
 
-exports[`every fixture imports to the same score > musicxml-testsuite/31d-Directions-Compounds.xml 1`] = `"a6a4fbac19622abc"`;
+exports[`every fixture imports to the same score > musicxml-testsuite/31d-Directions-Compounds.xml 1`] = `"889f88203cad4ba1"`;
 
 exports[`every fixture imports to the same score > musicxml-testsuite/32a-Notations.xml 1`] = `"0809b80e5f16bbf1"`;
 

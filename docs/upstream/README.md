@@ -33,6 +33,7 @@ available as source: the patch file is that source.
 | [0022](0022-octaves-below.md)               | Octave lines below the staff (8vb, 15mb)                                           | 8vb and 15mb passages were drawn as written, without sign or line          | not yet  |
 | [0023](0023-rests-of-lower-voices.md)       | Rests of lower voices move below the first voice, on any overlap                   | Second-voice rests went above the staff, or over the first voice's rest    | not yet  |
 | [0024](0024-256th-flag-down.md)             | 256th notes with their stems down get their own flag                               | They were drawn with a 128th's flag                                        | not yet  |
+| [0025](0025-tempo-beat-units.md)            | Tempo marks keep their beat unit; MusicXML metronome units converted the right way | 6/8 tempos drawn against a quarter; MusicXML eighth = 120 played at 240    | not yet  |
 
 ## Working on a patch
 

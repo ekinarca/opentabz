@@ -303,6 +303,41 @@ describe('meter and tempo', () => {
     expect(texts(named.marks)).toEqual(expect.arrayContaining(['Andante', '= 90']));
   });
 
+  it('REND-211: tempo marks against any beat unit, played at the right speed', () => {
+    const xml = (unit: string, dots: number, perMinute: number) =>
+      new TextEncoder().encode(
+        `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><direction placement="above"><direction-type><metronome><beat-unit>${unit}</beat-unit>${'<beat-unit-dot/>'.repeat(dots)}<per-minute>${perMinute}</per-minute></metronome></direction-type></direction><note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note></measure></part></score-partwise>`,
+      );
+    const marks = (view: Engraving) => ({
+      notes: glyphs(view.marks).filter(name => name.startsWith('MetNote') || name === 'MetAugmentationDot'),
+      text: texts(view.marks).filter(text => text.startsWith('= ')),
+    });
+    const cases: [string, number, number, number, string[]][] = [
+      ['eighth', 0, 120, 60, ['MetNote8thUp']],
+      ['quarter', 0, 96, 96, ['MetNoteQuarterUp']],
+      ['quarter', 1, 60, 90, ['MetNoteQuarterUp', 'MetAugmentationDot']],
+      ['half', 0, 60, 120, ['MetNoteHalfUp']],
+      ['half', 1, 40, 120, ['MetNoteHalfUp', 'MetAugmentationDot']],
+    ];
+    for (const [unit, dots, perMinute, quarters, notes] of cases) {
+      const label = `${unit}${'.'.repeat(dots)} = ${perMinute}`;
+      const { score } = openScore(xml(unit, dots, perMinute), 'tempo.musicxml');
+      // Played in quarters a minute…
+      expect(score.tempo, label).toBe(quarters);
+      // …written as in the file.
+      expect(marks(new EngravingOf(score)), label).toEqual({ notes, text: [`= ${perMinute}`] });
+    }
+    // A Guitar Pro 7+ file keeps the unit when saved and opened again.
+    const { score } = openScore(xml('quarter', 1, 60), 'tempo.musicxml');
+    const saved = new alphaTab.exporter.Gp7Exporter().export(score, new alphaTab.Settings());
+    const reopened = openScore(saved, 'tempo.gp').score;
+    expect(reopened.tempo).toBe(90);
+    expect(marks(new EngravingOf(reopened))).toEqual({
+      notes: ['MetNoteQuarterUp', 'MetAugmentationDot'],
+      text: ['= 60'],
+    });
+  });
+
   it('REND-157: triplet feel is shown as two eighths equal to a triplet', () => {
     const view = engraveTex('\\tf triplet-8th\n:8 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3');
     expect(glyphs(view.marks)).toEqual(

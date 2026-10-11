@@ -1,8 +1,72 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a8fe2cf14 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..7b57e6f87433ef0468aefbd675312e18663f17e4 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
-@@ -3619,7 +3619,8 @@ class SynthConstants {
+@@ -503,21 +503,54 @@ class Automation {
+ 	* e.g. tempo changes shown in the score while volume changes are not).
+ 	*/
+ 	isVisible = true;
++	// OpenTabz patch 0025: a tempo keeps the beat unit it is written against (a dotted quarter in
++	// 6/8, say). `value` stays in quarter notes per minute, for playback.
++	/**
++	* The beat unit of a tempo, as a {@link Duration} (a quarter by default).
++	*/
++	referenceDuration = 4;
++	/**
++	* The dots of the beat unit of a tempo.
++	*/
++	referenceDots = 0;
++	/**
++	* Quarter notes in one beat unit of this tempo.
++	*/
++	get referenceQuarters() {
++		const quarters = this.referenceDuration > 0 ? 4 / this.referenceDuration : -4 * this.referenceDuration;
++		return quarters * (2 - Math.pow(.5, this.referenceDots));
++	}
++	/**
++	* The tempo as written: beat units per minute.
++	*/
++	get referenceValue() {
++		return Math.round(this.value / this.referenceQuarters * 1e3) / 1e3;
++	}
++	/**
++	* Guitar Pro's codes for beat units: eighth, quarter, dotted quarter, half, dotted half.
++	*/
++	static _gpReferences = [
++		[8, 0],
++		[4, 0],
++		[4, 1],
++		[2, 0],
++		[2, 1]
++	];
++	/**
++	* The Guitar Pro code of this tempo's beat unit, or 2 (a quarter) when Guitar Pro has none for it.
++	*/
++	get gpReference() {
++		const index = Automation._gpReferences.findIndex(([duration, dots]) => duration === this.referenceDuration && dots === this.referenceDots);
++		return index < 0 ? 2 : index + 1;
++	}
+ 	static buildTempoAutomation(isLinear, ratioPosition, value, reference, isVisible = true) {
+ 		if (reference < 1 || reference > 5) reference = 2;
+-		const references = new Float32Array([
+-			1,
+-			.5,
+-			1,
+-			1.5,
+-			2,
+-			3
+-		]);
+ 		const automation = new Automation();
+ 		automation.type = 0;
+ 		automation.isLinear = isLinear;
+ 		automation.ratioPosition = ratioPosition;
+-		automation.value = value * references[reference];
++		[automation.referenceDuration, automation.referenceDots] = Automation._gpReferences[reference - 1];
++		automation.value = value * automation.referenceQuarters;
+ 		automation.isVisible = isVisible;
+ 		return automation;
+ 	}
+@@ -3619,7 +3652,8 @@ class SynthConstants {
  	static MinVolume = 0;
  	static MinProgram = 0;
  	static MaxProgram = 127;
@@ -12,7 +76,18 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	static MaxPlaybackSpeed = 8;
  	static PercussionChannel = 9;
  	static PercussionBank = 128;
-@@ -7100,7 +7101,8 @@ class Beat {
+@@ -4922,6 +4956,10 @@ var MusicFontSymbol = /* @__PURE__ */ function(MusicFontSymbol) {
+ 	MusicFontSymbol[MusicFontSymbol["MetNoteQuarterUp"] = 60581] = "MetNoteQuarterUp";
+ 	MusicFontSymbol[MusicFontSymbol["MetNote8thUp"] = 60583] = "MetNote8thUp";
+ 	MusicFontSymbol[MusicFontSymbol["MetAugmentationDot"] = 60599] = "MetAugmentationDot";
++	// OpenTabz patch 0025: metronome notes for tempo marks against other beat units.
++	MusicFontSymbol[MusicFontSymbol["MetNoteWhole"] = 60578] = "MetNoteWhole";
++	MusicFontSymbol[MusicFontSymbol["MetNoteHalfUp"] = 60579] = "MetNoteHalfUp";
++	MusicFontSymbol[MusicFontSymbol["MetNote16thUp"] = 60585] = "MetNote16thUp";
+ 	MusicFontSymbol[MusicFontSymbol["ArrowheadBlackUp"] = 60280] = "ArrowheadBlackUp";
+ 	MusicFontSymbol[MusicFontSymbol["ArrowheadBlackDown"] = 60284] = "ArrowheadBlackDown";
+ 	MusicFontSymbol[MusicFontSymbol["AugmentationDot"] = 57831] = "AugmentationDot";
+@@ -7100,7 +7138,8 @@ class Beat {
  	* Gets a value indicating whether this beat is a full bar rest.
  	*/
  	get isFullBarRest() {
@@ -22,7 +97,16 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	/**
  	* Gets or sets whether any note in this beat has a let-ring applied.
-@@ -16417,24 +16419,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
+@@ -7841,6 +7880,8 @@ class AutomationCloner {
+ 		clone.ratioPosition = original.ratioPosition;
+ 		clone.text = original.text;
+ 		clone.isVisible = original.isVisible;
++		clone.referenceDuration = original.referenceDuration;
++		clone.referenceDots = original.referenceDots;
+ 		return clone;
+ 	}
+ }
+@@ -16417,24 +16458,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
  /**
  * @internal
  */
@@ -61,7 +145,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		return defaultValue;
  	}
  	getElementsByTagName(name, recursive = false) {
-@@ -16538,7 +16551,9 @@ class XmlParser {
+@@ -16538,7 +16590,9 @@ class XmlParser {
  		["quot", "\""],
  		["apos", "'"]
  	]);
@@ -72,7 +156,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		let c = str.charCodeAt(p);
  		let state = 1;
  		let next = 1;
-@@ -16716,7 +16731,8 @@ class XmlParser {
+@@ -16716,7 +16770,8 @@ class XmlParser {
  					}
  					break;
  				case 9:
@@ -82,7 +166,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  					start = p;
  					state = 1;
  					break;
-@@ -16724,6 +16740,7 @@ class XmlParser {
+@@ -16724,6 +16779,7 @@ class XmlParser {
  					switch (c) {
  						case XmlParser.CharCodeGreaterThan:
  							state = 1;
@@ -90,7 +174,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  							break;
  						default: throw new XmlError("Expected >", str, p);
  					}
-@@ -16935,8 +16952,8 @@ class XmlDocument extends XmlNode {
+@@ -16935,8 +16991,8 @@ class XmlDocument extends XmlNode {
  		super();
  		this.nodeType = XmlNodeType.Document;
  	}
@@ -101,7 +185,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	toString() {
  		return this.toFormattedString();
-@@ -19459,9 +19476,22 @@ class GpifParser {
+@@ -19459,9 +19515,22 @@ class GpifParser {
  		this._soundsByTrack = /* @__PURE__ */ new Map();
  		this._skipApplyLyrics = false;
  		const dom = new XmlDocument();
@@ -125,7 +209,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			throw new UnsupportedFormatError("Could not parse XML", e);
  		}
  		this._parseDom(dom);
-@@ -19470,48 +19500,89 @@ class GpifParser {
+@@ -19470,48 +19539,89 @@ class GpifParser {
  		this.score.finish(settings);
  		if (!this._skipApplyLyrics && this._lyricsByTrack.size > 0) for (const [t, lyrics] of this._lyricsByTrack) this._tracksById.get(t).applyLyrics(lyrics);
  	}
@@ -251,7 +335,55 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	_parseAssets(element) {
  		for (const c of element.childElements()) switch (c.localName) {
  			case "Asset":
-@@ -30449,8 +30520,10 @@ class FontSizes {
+@@ -23650,19 +23760,27 @@ class MusicXmlImporter extends ScoreImporter {
+ 	}
+ 	_parseMetronome(element, masterBar, ratioPosition) {
+ 		let unit = null;
++		let dots = 0;
+ 		let perMinute = -1;
+ 		for (const c of element.childElements()) switch (c.localName) {
+ 			case "beat-unit":
+ 				unit = this._parseBeatDuration(c);
+ 				break;
++			case "beat-unit-dot":
++				if (unit !== null) dots++;
++				break;
+ 			case "per-minute":
+ 				perMinute = Number.parseFloat(c.innerText);
+ 				break;
+ 		}
+ 		if (unit !== null && perMinute > 0) {
++			// OpenTabz patch 0025: "eighth = 120" is 60 quarters a minute (it was taken as 240) and a
++			// dotted quarter counts one and a half; the unit is kept for the mark.
+ 			const tempoAutomation = new Automation();
+ 			tempoAutomation.type = AutomationType.Tempo;
+-			tempoAutomation.value = perMinute * (unit / 4);
++			tempoAutomation.referenceDuration = unit;
++			tempoAutomation.referenceDots = dots;
++			tempoAutomation.value = perMinute * tempoAutomation.referenceQuarters;
+ 			tempoAutomation.ratioPosition = ratioPosition;
+ 			if (!this._hasSameTempo(masterBar, tempoAutomation)) masterBar.tempoAutomations.push(tempoAutomation);
+ 		}
+@@ -26240,6 +26358,18 @@ class EngravingSettings {
+ 				bBoxNE: [1.328, 2.752],
+ 				bBoxSW: [0, -.564]
+ 			},
++			metNoteWhole: {
++				bBoxNE: [1.836, .592],
++				bBoxSW: [0, -.5]
++			},
++			metNoteHalfUp: {
++				bBoxNE: [1.364, 2.752],
++				bBoxSW: [0, -.564]
++			},
++			metNote16thUp: {
++				bBoxNE: [2.084, 3.805],
++				bBoxSW: [0, -.564]
++			},
+ 			note8thUp: {
+ 				bBoxNE: [2.264, 3.492],
+ 				bBoxSW: [0, -.552]
+@@ -30449,8 +30579,10 @@ class FontSizes {
  	*/
  	static generateFontLookup(family) {
  		if (FontSizes.fontSizeLookupTables.has(family)) return;
@@ -264,7 +396,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -30468,6 +30541,35 @@ class FontSizes {
+@@ -30468,6 +30600,35 @@ class FontSizes {
  			FontSizes.fontSizeLookupTables.set(family, data);
  		}
  	}
@@ -300,7 +432,26 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	static measureString(s, families, size, style, weight) {
  		let data;
  		const dataSize = 11;
-@@ -34864,6 +34966,8 @@ class SynthEvent {
+@@ -30852,10 +31013,18 @@ class AutomationSerializer {
+ 		o.set("ratioposition", obj.ratioPosition);
+ 		o.set("text", obj.text);
+ 		o.set("isvisible", obj.isVisible);
++		if (obj.referenceDuration !== 4) o.set("referenceduration", obj.referenceDuration);
++		if (obj.referenceDots !== 0) o.set("referencedots", obj.referenceDots);
+ 		return o;
+ 	}
+ 	static setProperty(obj, property, v) {
+ 		switch (property) {
++			case "referenceduration":
++				obj.referenceDuration = v;
++				return true;
++			case "referencedots":
++				obj.referenceDots = v;
++				return true;
+ 			case "islinear":
+ 				obj.isLinear = v;
+ 				return true;
+@@ -34864,6 +35033,8 @@ class SynthEvent {
  	event;
  	isMetronome;
  	time = 0;
@@ -309,7 +460,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	constructor(eventIndex, e) {
  		this.eventIndex = eventIndex;
  		this.event = e;
-@@ -34988,6 +35092,42 @@ class MidiFileSequencer {
+@@ -34988,6 +35159,42 @@ class MidiFileSequencer {
  	get isPlayingCountIn() {
  		return this._currentState === this._countInState;
  	}
@@ -352,7 +503,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	constructor(synthesizer) {
  		this._synthesizer = synthesizer;
  		this._mainState = new MidiSequencerState();
-@@ -35078,6 +35218,46 @@ class MidiFileSequencer {
+@@ -35078,6 +35285,46 @@ class MidiFileSequencer {
  		this._mainState = this.createStateFromFile(midiFile);
  		this._currentState = this._mainState;
  	}
@@ -399,7 +550,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	createStateFromFile(midiFile) {
  		const state = new MidiSequencerState();
  		this.percussionKeys.add(SynthConstants.MetronomeKey);
-@@ -35096,6 +35276,8 @@ class MidiFileSequencer {
+@@ -35096,6 +35343,8 @@ class MidiFileSequencer {
  		let metronomeTime = 0;
  		let maxChannel = 0;
  		let previousTick = 0;
@@ -408,7 +559,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		for (const mEvent of midiFile.events) {
  			const synthData = new SynthEvent(state.synthData.length, mEvent);
  			state.synthData.push(synthData);
-@@ -35126,15 +35308,21 @@ class MidiFileSequencer {
+@@ -35126,15 +35375,21 @@ class MidiFileSequencer {
  					state.firstTimeSignatureNumerator = meta.numerator;
  					state.firstTimeSignatureDenominator = timeSignatureDenominator;
  				}
@@ -432,7 +583,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				if (noteOn.channel > maxChannel) maxChannel = noteOn.channel;
  			}
  		}
-@@ -35159,6 +35347,7 @@ class MidiFileSequencer {
+@@ -35159,6 +35414,7 @@ class MidiFileSequencer {
  		this._currentState.currentTime = endTime;
  		while (this._currentState.eventIndex < this._currentState.synthData.length && this._currentState.synthData[this._currentState.eventIndex].time < this._currentState.currentTime) {
  			const synthEvent = this._currentState.synthData[this._currentState.eventIndex];
@@ -440,7 +591,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			this._synthesizer.dispatchEvent(synthEvent);
  			this._currentState.eventIndex++;
  			anyEventsDispatched = true;
-@@ -35167,6 +35356,9 @@ class MidiFileSequencer {
+@@ -35167,6 +35423,9 @@ class MidiFileSequencer {
  	}
  	_fillMidiEventQueueLimited(maxMilliseconds) {
  		let millisecondsPerBuffer = SynthConstants.MicroBufferSize / this._synthesizer.outSampleRate * 1e3 * this.playbackSpeed;
@@ -450,7 +601,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		let endTime = this._internalEndTime;
  		if (maxMilliseconds > 0) {
  			if (maxMilliseconds < millisecondsPerBuffer) millisecondsPerBuffer = maxMilliseconds;
-@@ -35175,7 +35367,9 @@ class MidiFileSequencer {
+@@ -35175,7 +35434,9 @@ class MidiFileSequencer {
  		let anyEventsDispatched = false;
  		this._currentState.currentTime += millisecondsPerBuffer;
  		while (this._currentState.eventIndex < this._currentState.synthData.length && this._currentState.synthData[this._currentState.eventIndex].time < this._currentState.currentTime && this._currentState.currentTime < endTime) {
@@ -461,7 +612,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			this._currentState.eventIndex++;
  			anyEventsDispatched = true;
  		}
-@@ -35351,6 +35545,52 @@ class MidiFileSequencer {
+@@ -35351,6 +35612,52 @@ class MidiFileSequencer {
  		this._countInState = null;
  		this._currentState = this._mainState;
  	}
@@ -514,7 +665,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	startCountIn() {
  		this.generateCountInMidi();
  		this._currentState = this._countInState;
-@@ -35377,8 +35617,9 @@ class MidiFileSequencer {
+@@ -35377,8 +35684,9 @@ class MidiFileSequencer {
  		const metronomeLengthInMillis = metronomeLengthInTicks * (6e4 / (bpm * this._mainState.division));
  		let metronomeTick = 0;
  		let metronomeTime = 0;
@@ -526,7 +677,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			state.synthData.push(metronome);
  			metronome.time = metronomeTime;
  			metronomeTick += metronomeLengthInTicks;
-@@ -37963,6 +38204,12 @@ class Channel {
+@@ -37963,6 +38271,12 @@ class Channel {
  	mixVolume = 0;
  	mute = false;
  	solo = false;
@@ -539,7 +690,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  }
  //#endregion
  //#region src/synth/synthesis/Channels.ts
-@@ -37974,7 +38221,8 @@ class Channels {
+@@ -37974,7 +38288,8 @@ class Channels {
  	channelList = [];
  	setupVoice(tinySoundFont, voice) {
  		const c = this.channelList[this.activeChannel];
@@ -549,7 +700,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		voice.playingChannel = this.activeChannel;
  		voice.mixVolume = c.mixVolume;
  		voice.noteGainDb += c.gainDb;
-@@ -38610,10 +38858,12 @@ class Voice {
+@@ -38610,10 +38925,12 @@ class Voice {
  	vibLfo = new VoiceLfo();
  	mixVolume = 0;
  	mute = false;
@@ -563,7 +714,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		this.calcPitchRatio(pitchShift, outSampleRate);
  	}
  	calcPitchRatio(pitchShift, outSampleRate) {
-@@ -38875,6 +39125,10 @@ class TinySoundFont {
+@@ -38875,6 +39192,10 @@ class TinySoundFont {
  	_midiEventQueue = new Queue();
  	_mutedChannels = /* @__PURE__ */ new Map();
  	_soloChannels = /* @__PURE__ */ new Map();
@@ -574,7 +725,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	_isAnySolo = false;
  	_transpositionPitches = /* @__PURE__ */ new Map();
  	_liveTranspositionPitches = /* @__PURE__ */ new Map();
-@@ -38903,6 +39157,45 @@ class TinySoundFont {
+@@ -38903,6 +39224,45 @@ class TinySoundFont {
  		if (mute) this._mutedChannels.set(channel, true);
  		else this._mutedChannels.delete(channel);
  	}
@@ -620,7 +771,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	channelSetSolo(channel, solo) {
  		if (solo) this._soloChannels.set(channel, true);
  		else this._soloChannels.delete(channel);
-@@ -38911,6 +39204,10 @@ class TinySoundFont {
+@@ -38911,6 +39271,10 @@ class TinySoundFont {
  	resetChannelStates() {
  		this._mutedChannels = /* @__PURE__ */ new Map();
  		this._soloChannels = /* @__PURE__ */ new Map();
@@ -631,7 +782,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
  		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
  		this._isAnySolo = false;
-@@ -38943,23 +39240,37 @@ class TinySoundFont {
+@@ -38943,23 +39307,37 @@ class TinySoundFont {
  		this._midiEventQueue.enqueue(synthEvent);
  	}
  	_fillWorkingBuffer(buffer, bufferPos, sampleCount) {
@@ -673,7 +824,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	processMidiMessage(e) {
  		switch (e.type) {
-@@ -38982,7 +39293,14 @@ class TinySoundFont {
+@@ -38982,7 +39360,14 @@ class TinySoundFont {
  				break;
  			case MidiEventType.ProgramChange:
  				const programChange = e;
@@ -689,7 +840,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				break;
  			case MidiEventType.TempoChange:
  				const tempoChange = e;
-@@ -39044,7 +39362,10 @@ class TinySoundFont {
+@@ -39044,7 +39429,10 @@ class TinySoundFont {
  			c.gainDb = 0;
  			c.pitchRange = 2;
  			c.tuning = 0;
@@ -700,7 +851,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	presets = null;
  	_voices = [];
-@@ -39100,6 +39421,8 @@ class TinySoundFont {
+@@ -39100,6 +39488,8 @@ class TinySoundFont {
  		const voicePlayIndex = this._voicePlayIndex++;
  		for (const region of this.presets[presetIndex].regions) {
  			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
@@ -709,7 +860,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			let voice = null;
  			if (region.group !== 0) {
  				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
-@@ -39117,6 +39440,7 @@ class TinySoundFont {
+@@ -39117,6 +39507,7 @@ class TinySoundFont {
  			voice.playingPreset = presetIndex;
  			voice.playingKey = key;
  			voice.playIndex = voicePlayIndex;
@@ -717,7 +868,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			voice.noteGainDb = this.globalGainDb - region.attenuation - SynthHelper.gainToDecibels(1 / vel);
  			if (this._channels) this._channels.setupVoice(this, voice);
  			else {
-@@ -39286,9 +39610,19 @@ class TinySoundFont {
+@@ -39286,9 +39677,19 @@ class TinySoundFont {
  		}
  		this._channelInit(channel).perNotePitchWheel.delete(key);
  		if (!matchFirst) return;
@@ -738,7 +889,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		}
  	}
  	/**
-@@ -39359,8 +39693,10 @@ class TinySoundFont {
+@@ -39359,8 +39760,10 @@ class TinySoundFont {
  	* @param pan stereo panning value from 0.0 (left) to 1.0 (right) (default 0.5 center)
  	*/
  	channelSetPan(channel, pan) {
@@ -750,7 +901,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39492,6 +39828,11 @@ class TinySoundFont {
+@@ -39492,6 +39895,11 @@ class TinySoundFont {
  			case ControllerType.NonRegisteredParameterCourse:
  				c.midiRpn = 65535;
  				return;
@@ -762,7 +913,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			case ControllerType.AllSoundOff:
  				this.channelSoundsOffAll(channel);
  				return;
-@@ -39503,6 +39844,8 @@ class TinySoundFont {
+@@ -39503,6 +39911,8 @@ class TinySoundFont {
  				c.midiExpression = 16383;
  				c.midiPan = 8192;
  				c.bank = 0;
@@ -771,7 +922,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				this.channelSetVolume(channel, 1);
  				this.channelSetPan(channel, .5);
  				this.channelSetPitchRange(channel, 2);
-@@ -39787,6 +40130,64 @@ class AlphaSynthBase {
+@@ -39787,6 +40197,64 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -836,7 +987,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	get output() {
  		return this._output;
  	}
-@@ -39841,8 +40242,24 @@ class AlphaSynthBase {
+@@ -39841,8 +40309,24 @@ class AlphaSynthBase {
  	}
  	updatePlaybackSpeed(value) {
  		const oldSpeed = this.sequencer.playbackSpeed;
@@ -861,7 +1012,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	get loadedMidiInfo() {
  		return this._loadedMidiInfo;
-@@ -39861,11 +40278,14 @@ class AlphaSynthBase {
+@@ -39861,11 +40345,14 @@ class AlphaSynthBase {
  	}
  	set timePosition(value) {
  		Logger.debug("AlphaSynth", `Seeking to position ${value}ms (main)`);
@@ -876,7 +1027,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40357,20 @@ class AlphaSynthBase {
+@@ -39937,10 +40424,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
@@ -898,7 +1049,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40378,112 @@ class AlphaSynthBase {
+@@ -39948,15 +40445,112 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
@@ -1011,7 +1162,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		}
  		this.output.play();
  		return true;
-@@ -39990,8 +40517,14 @@ class AlphaSynthBase {
+@@ -39990,8 +40584,14 @@ class AlphaSynthBase {
  		this.state = PlayerState.Paused;
  		this.output.pause();
  		this._notPlayedSamples = 0;
@@ -1026,7 +1177,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40536,7 @@ class AlphaSynthBase {
+@@ -40003,6 +40603,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -1034,7 +1185,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +40616,95 @@ class AlphaSynthBase {
+@@ -40082,16 +40683,95 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
@@ -1134,7 +1285,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +41041,10 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +41108,10 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
@@ -1145,7 +1296,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -41966,11 +42583,58 @@ class MidiPlaybackController {
+@@ -41966,11 +42650,58 @@ class MidiPlaybackController {
  	shouldPlay = true;
  	index = 0;
  	currentTick = 0;
@@ -1204,7 +1355,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	processCurrent() {
  		const masterBar = this._score.masterBars[this.index];
-@@ -41994,7 +42658,12 @@ class MidiPlaybackController {
+@@ -41994,7 +42725,12 @@ class MidiPlaybackController {
  				if ((masterBarAlternateEndings & 1 << iteration) === 0) this.shouldPlay = false;
  				else this.shouldPlay = true;
  			}
@@ -1218,7 +1369,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		if (this.shouldPlay) this.currentTick += masterBar.calculateDuration();
  	}
  	moveNext() {
-@@ -42008,7 +42677,8 @@ class MidiPlaybackController {
+@@ -42008,7 +42744,8 @@ class MidiPlaybackController {
  	}
  	_handleDaCapo(directions, daCapo, newState) {
  		if (directions.has(daCapo)) {
@@ -1228,7 +1379,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			this._state = newState;
  			this._resetRepeats();
  			return true;
-@@ -42017,8 +42687,11 @@ class MidiPlaybackController {
+@@ -42017,8 +42754,11 @@ class MidiPlaybackController {
  	}
  	_handleDalSegno(directions, dalSegno, newState, jumpTarget) {
  		if (directions.has(dalSegno)) {
@@ -1240,7 +1391,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			this.index = segno;
  			this._state = newState;
  			this._resetRepeats();
-@@ -42026,6 +42699,21 @@ class MidiPlaybackController {
+@@ -42026,6 +42766,21 @@ class MidiPlaybackController {
  		}
  		return false;
  	}
@@ -1262,7 +1413,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	_handleDaCoda(directions, daCoda, jumpTarget) {
  		if (directions.has(daCoda)) {
  			const coda = this._findJumpTarget(jumpTarget, this.index, false);
-@@ -42049,11 +42737,12 @@ class MidiPlaybackController {
+@@ -42049,11 +42804,12 @@ class MidiPlaybackController {
  		}
  		switch (this._state) {
  			case 0:
@@ -1279,7 +1430,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				this.index++;
  				return true;
  			case 2:
-@@ -42970,6 +43659,13 @@ class MidiFileGenerator {
+@@ -42970,6 +43726,13 @@ class MidiFileGenerator {
  		this.transpositionPitches.clear();
  		this._calculatedBeatTimers.clear();
  		this._currentTime = 0;
@@ -1293,7 +1444,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		for (const track of this._score.tracks) this._generateTrack(track);
  		Logger.debug("Midi", "Begin midi generation");
  		this.syncPoints = [];
-@@ -42992,6 +43688,83 @@ class MidiFileGenerator {
+@@ -42992,6 +43755,83 @@ class MidiFileGenerator {
  		tickShift = Math.abs(tickShift);
  		this._handler.addTickShift(tickShift);
  	}
@@ -1377,7 +1528,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	_generateTrack(track) {
  		this._generateChannel(track, track.playbackInfo.primaryChannel, track.playbackInfo);
  		if (track.playbackInfo.primaryChannel !== track.playbackInfo.secondaryChannel) this._generateChannel(track, track.playbackInfo.secondaryChannel, track.playbackInfo);
-@@ -43230,12 +44003,80 @@ class MidiFileGenerator {
+@@ -43230,12 +44070,80 @@ class MidiFileGenerator {
  			this._handler.addTempo(currentTick, masterBar.score.tempo);
  			masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, masterBar.score.tempo));
  		} else masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, currentTempo));
@@ -1458,7 +1609,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		const playbackBar = this._getPlaybackBar(bar);
  		const barStartTime = this._currentTime;
  		for (const v of playbackBar.voices) {
-@@ -43307,6 +44148,7 @@ class MidiFileGenerator {
+@@ -43307,6 +44215,7 @@ class MidiFileGenerator {
  		}
  		this._currentTime += MidiUtils.ticksToMillis(audioDuration, tempoOnBeatStart);
  		if (realBar === beat.voice.bar) this.tickLookup.addBeat(beat, beatStart, audioDuration);
@@ -1466,7 +1617,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		const track = beat.voice.bar.staff.track;
  		for (const automation of beat.automations) this._generateNonTempoAutomation(beat, automation, barStartTick);
  		if (beat.isRest) this._handler.addRest(track.index, barStartTick + beatStart, track.playbackInfo.primaryChannel);
-@@ -43316,6 +44158,7 @@ class MidiFileGenerator {
+@@ -43316,6 +44225,7 @@ class MidiFileGenerator {
  			const rasgueadoInfo = this._getRasgueadoInfo(beat, audioDuration);
  			for (const n of beat.notes) this._generateNote(n, barStartTick + beatStart, audioDuration, tempoOnBeatStart, brushInfo, rasgueadoInfo);
  		}
@@ -1474,7 +1625,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		if (beat.fade !== FadeType.None) this._generateFade(beat, barStartTick + beatStart, audioDuration);
  		if (beat.vibrato !== VibratoType.None) {
  			let phaseLength = 240;
-@@ -43393,6 +44236,20 @@ class MidiFileGenerator {
+@@ -43393,6 +44303,20 @@ class MidiFileGenerator {
  		return note.hasBend || note.beat.hasWhammyBar || note.beat.vibrato !== VibratoType.None;
  	}
  	_determineChannel(track, note) {
@@ -1495,7 +1646,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		if (this._needsSecondaryChannel(note)) return track.playbackInfo.secondaryChannel;
  		let currentNote = note;
  		while (currentNote.isTieDestination) {
-@@ -43420,8 +44277,10 @@ class MidiFileGenerator {
+@@ -43420,8 +44344,10 @@ class MidiFileGenerator {
  		noteDuration.untilTieOrSlideEnd -= brushOffset;
  		noteDuration.noteOnly -= brushOffset;
  		noteDuration.letRingEnd -= brushOffset;
@@ -1508,7 +1659,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		let initialBend = 0;
  		const noteSoundDuration = Math.max(noteDuration.untilTieOrSlideEnd, noteDuration.letRingEnd);
  		if (note.hasBend) initialBend = MidiFileGenerator.getPitchWheel(note.bendPoints[0].value);
-@@ -43492,17 +44351,31 @@ class MidiFileGenerator {
+@@ -43492,17 +44418,31 @@ class MidiFileGenerator {
  		-1,
  		-1
  	];
@@ -1543,7 +1694,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				];
  				ornamentNoteDurations = [
  					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
-@@ -43512,9 +44385,9 @@ class MidiFileGenerator {
+@@ -43512,9 +44452,9 @@ class MidiFileGenerator {
  				break;
  			case NoteOrnament.InvertedTurn:
  				ornamentNoteKeys = [
@@ -1555,7 +1706,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				];
  				ornamentNoteDurations = [
  					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
-@@ -43523,11 +44396,11 @@ class MidiFileGenerator {
+@@ -43523,11 +44463,11 @@ class MidiFileGenerator {
  				];
  				break;
  			case NoteOrnament.UpperMordent:
@@ -1569,7 +1720,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  				ornamentNoteDurations = [MidiUtils.toTicks(Duration.ThirtySecond), MidiUtils.toTicks(Duration.ThirtySecond)];
  				break;
  			default: return;
-@@ -43558,7 +44431,9 @@ class MidiFileGenerator {
+@@ -43558,7 +44498,9 @@ class MidiFileGenerator {
  			return durationWithEffects;
  		}
  		if (note.isPalmMute) {
@@ -1580,7 +1731,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			durationWithEffects.untilTieOrSlideEnd = durationWithEffects.noteOnly;
  			durationWithEffects.letRingEnd = durationWithEffects.noteOnly;
  			return durationWithEffects;
-@@ -43584,7 +44459,8 @@ class MidiFileGenerator {
+@@ -43584,7 +44526,8 @@ class MidiFileGenerator {
  				durationWithEffects.untilTieOrSlideEnd = endNote.beat.absolutePlaybackStart + slideTargetDuration.untilTieOrSlideEnd - startTick;
  			}
  		}
@@ -1590,7 +1741,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			let lastLetRingBeat = note.beat;
  			let letRingEnd = 0;
  			const maxDuration = note.beat.voice.bar.masterBar.calculateDuration();
-@@ -43608,9 +44484,56 @@ class MidiFileGenerator {
+@@ -43608,9 +44551,56 @@ class MidiFileGenerator {
  		const value = tempo * duration / BendPoint.MaxPosition | 0;
  		return Math.min(value, maximum);
  	}
@@ -1648,7 +1799,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		if (note.isGhost) adjustment--;
  		switch (note.accentuated) {
  			case AccentuationType.Normal:
-@@ -43637,6 +44560,13 @@ class MidiFileGenerator {
+@@ -43637,6 +44627,13 @@ class MidiFileGenerator {
  				this._generateFadeSteps(track, beatStart + half, half, MidiFileGenerator._toChannelShort(track.playbackInfo.volume), 0);
  				break;
  		}
@@ -1662,7 +1813,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	_generateFadeSteps(track, start, duration, startVolume, endVolume) {
  		const tickStep = 120;
-@@ -44003,7 +44933,8 @@ class MidiFileGenerator {
+@@ -44003,7 +45000,8 @@ class MidiFileGenerator {
  	_generateTremoloPicking(note, noteStart, noteDuration, noteKey, dynamicValue, channel) {
  		const track = note.beat.voice.bar.staff.track;
  		if (note.beat.tremoloPicking.marks === 0) return;
@@ -1672,7 +1823,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		let tick = noteStart;
  		const end = noteStart + noteDuration.untilTieOrSlideEnd;
  		while (tick + 10 < end) {
-@@ -44220,6 +45151,18 @@ class MidiFileGenerator {
+@@ -44220,6 +45218,18 @@ class MidiFileGenerator {
  	}
  	_getBrushInfo(beat) {
  		const brushInfo = new Int32Array(beat.voice.bar.staff.tuning.length);
@@ -1691,7 +1842,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  		if (beat.brushType) {
  			let stringUsed = 0;
  			let stringCount = 0;
-@@ -49793,7 +50736,8 @@ class SvgCanvas {
+@@ -49793,7 +50803,8 @@ class SvgCanvas {
  	}
  	measureText(text) {
  		if (!text) return new MeasuredText(0, 0);
@@ -1701,7 +1852,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	onRenderFinished() {
  		return null;
-@@ -51902,7 +52846,8 @@ class LetRingEffectInfo extends EffectInfo {
+@@ -51902,7 +52913,8 @@ class LetRingEffectInfo extends EffectInfo {
  		return EffectBarGlyphSizing.GroupedOnBeat;
  	}
  	createNewGlyph(_renderer, _beat) {
@@ -1711,7 +1862,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	canExpand(_from, _to) {
  		return true;
-@@ -51986,8 +52931,10 @@ class MarkerEffectInfo extends EffectInfo {
+@@ -51986,8 +52998,10 @@ class MarkerEffectInfo extends EffectInfo {
  	get hideOnMultiTrack() {
  		return true;
  	}
@@ -1723,7 +1874,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  	}
  	get sizingMode() {
  		return EffectBarGlyphSizing.SinglePreBeat;
-@@ -54018,13 +54965,15 @@ class BarCollisionHelper {
+@@ -54018,13 +55032,15 @@ class BarCollisionHelper {
  				let newRestTopY = oldRestTopY;
  				const reservedSlots = this.reservedLayoutAreasByDisplayTime.get(beat.playbackStart);
  				let hasCollision = false;
@@ -1742,7 +1893,60 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  					const newRestBottomY = newRestTopY + restSizes[0] + restSizes[1];
  					const staveSpace = linesToPixel * 2;
  					const distanceInLines = Math.ceil(Math.abs(newRestTopY - oldRestTopY) / staveSpace);
-@@ -59670,7 +60619,8 @@ class FlagGlyph extends MusicFontGlyph {
+@@ -55626,6 +56642,27 @@ class BarTempoGlyph extends EffectGlyph {
+ 		const res = this.renderer.resources;
+ 		this.height = this.renderer.smuflMetrics.glyphHeights.get(MusicFontSymbol.MetNoteQuarterUp) * res.engravingSettings.tempoNoteScale;
+ 	}
++	// OpenTabz patch 0025: the note of the tempo's beat unit (with its dots) and its value.
++	static _referenceSymbols(automation) {
++		let note = MusicFontSymbol.MetNoteQuarterUp;
++		switch (automation.referenceDuration) {
++			case Duration.Whole:
++				note = MusicFontSymbol.MetNoteWhole;
++				break;
++			case Duration.Half:
++				note = MusicFontSymbol.MetNoteHalfUp;
++				break;
++			case Duration.Eighth:
++				note = MusicFontSymbol.MetNote8thUp;
++				break;
++			case Duration.Sixteenth:
++				note = MusicFontSymbol.MetNote16thUp;
++				break;
++		}
++		const symbols = [note];
++		for (let i = 0; i < automation.referenceDots; i++) symbols.push(MusicFontSymbol.MetAugmentationDot);
++		return symbols;
++	}
+ 	paint(cx, cy, canvas) {
+ 		for (const automation of this._tempoAutomations) {
+ 			let x = cx + this.renderer.getRatioPositionX(automation.ratioPosition);
+@@ -55634,17 +56671,19 @@ class BarTempoGlyph extends EffectGlyph {
+ 			const notePosY = cy + this.y + this.height + this.renderer.smuflMetrics.glyphBottom.get(MusicFontSymbol.MetNoteQuarterUp) * res.engravingSettings.tempoNoteScale;
+ 			const b = canvas.textBaseline;
+ 			canvas.textBaseline = TextBaseline.Alphabetic;
++			const symbols = BarTempoGlyph._referenceSymbols(automation);
++			const symbolsWidth = symbols.reduce((sum, symbol) => sum + this.renderer.smuflMetrics.glyphWidths.get(symbol), 0);
+ 			if (automation.text) {
+ 				const text = `${automation.text} `;
+ 				const size = canvas.measureText(text);
+ 				canvas.fillText(text, x, notePosY);
+ 				x += size.width;
+-			} else x -= res.engravingSettings.glyphWidths.get(MusicFontSymbol.MetNoteQuarterUp) / 2;
+-			CanvasHelper.fillMusicFontSymbolSafe(canvas, x, notePosY, res.engravingSettings.tempoNoteScale, MusicFontSymbol.MetNoteQuarterUp);
+-			x += this.renderer.smuflMetrics.glyphWidths.get(MusicFontSymbol.MetNoteQuarterUp) * res.engravingSettings.tempoNoteScale;
+-			canvas.fillText(` = ${automation.value.toString()}`, x, notePosY);
++			} else x -= symbolsWidth * res.engravingSettings.tempoNoteScale / 2;
++			CanvasHelper.fillMusicFontSymbolsSafe(canvas, x, notePosY, res.engravingSettings.tempoNoteScale, symbols);
++			x += symbolsWidth * res.engravingSettings.tempoNoteScale;
++			canvas.fillText(` = ${automation.referenceValue.toString()}`, x, notePosY);
+ 			canvas.textBaseline = b;
+-			x += canvas.measureText(` = ${automation.value.toString()}`).width;
++			x += canvas.measureText(` = ${automation.referenceValue.toString()}`).width;
+ 		}
+ 	}
+ }
+@@ -59670,7 +60709,8 @@ class FlagGlyph extends MusicFontGlyph {
  			case Duration.ThirtySecond: return MusicFontSymbol.Flag32ndDown;
  			case Duration.SixtyFourth: return MusicFontSymbol.Flag64thDown;
  			case Duration.OneHundredTwentyEighth: return MusicFontSymbol.Flag128thDown;
@@ -1752,7 +1956,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			default: return MusicFontSymbol.Flag8thDown;
  		}
  	}
-@@ -65040,6 +65990,11 @@ class Environment {
+@@ -65040,6 +66080,11 @@ class Environment {
  				effect: new GolpeEffectInfo(GolpeType.Finger),
  				mode: EffectBandMode.OwnedTop
  			},
@@ -1764,7 +1968,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  			{
  				effect: new GolpeEffectInfo(GolpeType.Thumb),
  				mode: EffectBandMode.OwnedBottom
-@@ -65583,7 +66538,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +66628,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -1775,8 +1979,17 @@ index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a
  });
  //#endregion
  //#region src/exporter/ScoreExporter.ts
+@@ -67137,7 +68184,7 @@ class GpifWriter {
+ 				tempoAutomation.addElement("Bar").innerText = mb.index.toString();
+ 				tempoAutomation.addElement("Position").innerText = automation.ratioPosition.toString();
+ 				tempoAutomation.addElement("Visible").innerText = automation.isVisible ? "true" : "false";
+-				tempoAutomation.addElement("Value").innerText = `${automation.value} 2`;
++				tempoAutomation.addElement("Value").innerText = automation.gpReference === 2 ? `${automation.value} 2` : `${automation.referenceValue} ${automation.gpReference}`;
+ 				if (automation.text) tempoAutomation.addElement("Text").innerText = automation.text;
+ 			}
+ 			if (mb.syncPoints) for (const syncPoint of mb.syncPoints) {
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..e442b5e4cfa16c0b85a2a50e7b3cff25dc94f4bf 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..7abca113d653114f6194ec906bebc39293e1a893 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
 @@ -128,6 +128,34 @@ declare class AlphaSynthBase implements IAlphaSynth {
@@ -1837,7 +2050,35 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..e442b5e4cfa16c0b85a2a50e7b3cff25
      setChannelVolume(channel: number, volume: number): void;
      private _onSamplesPlayed;
      protected checkForFinish(): void;
-@@ -11332,6 +11376,21 @@ declare class MidiFileGenerator {
+@@ -4290,6 +4334,27 @@ declare class Automation {
+      * e.g. tempo changes shown in the score while volume changes are not).
+      */
+     isVisible: boolean;
++    /**
++     * The beat unit of a tempo, as a {@link Duration} (a quarter by default). `value` stays in
++     * quarter notes per minute. (OpenTabz patch 0025)
++     */
++    referenceDuration: Duration;
++    /**
++     * The dots of the beat unit of a tempo. (OpenTabz patch 0025)
++     */
++    referenceDots: number;
++    /**
++     * Quarter notes in one beat unit of this tempo. (OpenTabz patch 0025)
++     */
++    get referenceQuarters(): number;
++    /**
++     * The tempo as written: beat units per minute. (OpenTabz patch 0025)
++     */
++    get referenceValue(): number;
++    /**
++     * The Guitar Pro code of this tempo's beat unit. (OpenTabz patch 0025)
++     */
++    get gpReference(): number;
+     static buildTempoAutomation(isLinear: boolean, ratioPosition: number, value: number, reference: number, isVisible?: boolean): Automation;
+     static buildInstrumentAutomation(isLinear: boolean, ratioPosition: number, value: number): Automation;
+ }
+@@ -11332,6 +11397,21 @@ declare class MidiFileGenerator {
       * Gets the transposition pitches for the individual midi channels.
       */
      readonly transpositionPitches: Map<number, number>;
@@ -1859,3 +2100,16 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..e442b5e4cfa16c0b85a2a50e7b3cff25
      /**
       * Initializes a new instance of the {@link MidiFileGenerator} class.
       * @param score The score for which the midi file should be generated.
+@@ -11865,6 +11945,12 @@ declare enum MusicFontSymbol {
+     MetNoteQuarterUp = 60581,
+     MetNote8thUp = 60583,
+     MetAugmentationDot = 60599,
++    /** OpenTabz patch 0025 */
++    MetNoteWhole = 60578,
++    /** OpenTabz patch 0025 */
++    MetNoteHalfUp = 60579,
++    /** OpenTabz patch 0025 */
++    MetNote16thUp = 60585,
+     ArrowheadBlackUp = 60280,
+     ArrowheadBlackDown = 60284,
+     AugmentationDot = 57831,
