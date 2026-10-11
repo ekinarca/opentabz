@@ -285,27 +285,27 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-015 | Auto-scroll: off                                      | GP  | M1  | —                                                     | —    | planned |
 | PLAY-016 | Configurable auto-scroll offset                       | OT  | M1  | —                                                     | —    | planned |
 | PLAY-017 | Cursor and auto-scroll work in every layout           | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
-| PLAY-020 | Repeat traversal identical to Guitar Pro              | GP  | M1  | alphatab/guitarpro7/repeat-close-multi.gp             | —    | planned |
-| PLAY-021 | Alternate-ending traversal                            | GP  | M1  | alphatab/guitarpro7/repeat-close-alternate-endings.gp | —    | planned |
+| PLAY-020 | Repeat traversal identical to Guitar Pro              | GP  | M1  | alphatab/guitarpro7/repeat-close-multi.gp             | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-021 | Alternate-ending traversal                            | GP  | M1  | alphatab/guitarpro7/repeat-close-alternate-endings.gp | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-022 | Direction traversal (D.C., D.S., Coda, Fine variants) | GP  | M1  | alphatab/guitarpro8/directions.gp                     | —    | planned |
 | PLAY-023 | Full tempo map including ramps                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-024 | Dynamics affect velocity                              | GP  | M1  | —                                                     | —    | planned |
-| PLAY-025 | Volume and pan automation                             | GP  | M1  | —                                                     | —    | planned |
-| PLAY-030 | Audible bends as pitch-bend curves                    | GP  | M1  | alphatab/guitarpro7/bends.gp                          | —    | planned |
-| PLAY-031 | Audible vibrato                                       | GP  | M1  | —                                                     | —    | planned |
-| PLAY-032 | Audible slides                                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-033 | Audible hammer-ons / pull-offs                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-034 | Harmonics sound at the correct pitch                  | GP  | M1  | —                                                     | —    | planned |
-| PLAY-035 | Audible palm mute                                     | GP  | M1  | —                                                     | —    | planned |
-| PLAY-036 | Audible let ring                                      | GP  | M1  | —                                                     | —    | planned |
-| PLAY-037 | Audible dead notes                                    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-024 | Dynamics affect velocity                              | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts | done |
+| PLAY-025 | Volume and pan automation                             | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts | done |
+| PLAY-030 | Audible bends as pitch-bend curves                    | GP  | M1  | alphatab/guitarpro7/bends.gp                          | packages/core/test/playback-pitch-effects.test.ts | done |
+| PLAY-031 | Audible vibrato                                       | GP  | M1  | —                                                     | packages/core/test/playback-pitch-effects.test.ts | done |
+| PLAY-032 | Audible slides                                        | GP  | M1  | —                                                     | packages/core/test/playback-pitch-effects.test.ts | done |
+| PLAY-033 | Audible hammer-ons / pull-offs                        | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-034 | Harmonics sound at the correct pitch                  | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-035 | Audible palm mute                                     | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-036 | Audible let ring                                      | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-037 | Audible dead notes                                    | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-038 | Audible tremolo picking                               | GP  | M1  | —                                                     | —    | planned |
-| PLAY-039 | Audible trills                                        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-039 | Audible trills                                        | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-040 | Audible slap / pop                                    | GP  | M1  | —                                                     | —    | planned |
-| PLAY-041 | Audible grace notes                                   | GP  | M1  | —                                                     | —    | planned |
-| PLAY-042 | Audible staccato                                      | GP  | M1  | —                                                     | —    | planned |
+| PLAY-041 | Audible grace notes                                   | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-042 | Audible staccato                                      | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-043 | Audible fades and swells                              | GP  | M1  | —                                                     | —    | planned |
-| PLAY-044 | Audible whammy bar                                    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-044 | Audible whammy bar                                    | GP  | M1  | —                                                     | packages/core/test/playback-pitch-effects.test.ts | done |
 | PLAY-050 | Mixer: per-track volume                               | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-051 | Mixer: per-track pan                                  | GP  | M1  | —                                                     | —    | planned |
 | PLAY-052 | Mixer: mute                                           | GP  | M1  | — | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
@@ -331,42 +331,42 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-076 | Playback detune in cents                              | GP  | M1  | —                                                     | —    | planned |
 | PLAY-077 | Focus/unfocus: boost or duck the active track against the rest | GP  | M1  | —                                                     | —    | planned |
 | PLAY-078 | Master pan (balance)                                  | GP  | M1  | —                                                     | —    | planned |
-| PLAY-079 | Audible accents and heavy accents                     | GP  | M1  | —                                                     | —    | planned |
-| PLAY-080 | Audible ghost notes                                   | GP  | M1  | —                                                     | —    | planned |
+| PLAY-079 | Audible accents and heavy accents                     | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-080 | Audible ghost notes                                   | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
 | PLAY-081 | Fermatas (short, medium, long) hold time in playback  | GP  | M1  | —                                                     | —    | planned |
 | PLAY-082 | Hairpins ramp velocity toward the next dynamic        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-083 | Feel playback: 8th triplet feel                       | GP  | M1  | —                                                     | —    | planned |
-| PLAY-084 | Feel playback: 16th triplet feel                      | GP  | M1  | —                                                     | —    | planned |
-| PLAY-085 | Feel playback: dotted 8th feel                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-086 | Feel playback: dotted 16th feel                       | GP  | M1  | —                                                     | —    | planned |
-| PLAY-087 | Feel playback: Scottish (reverse-dotted) 8th feel     | GP  | M1  | —                                                     | —    | planned |
-| PLAY-088 | Feel playback: Scottish 16th feel                     | GP  | M1  | —                                                     | —    | planned |
-| PLAY-089 | Ottava lines and octave clefs sound at the right octave | GP  | M1  | —                                                     | —    | planned |
-| PLAY-090 | One- and two-bar simile marks play the repeated bars  | GP  | M1  | —                                                     | —    | planned |
-| PLAY-091 | Audible brush strokes and arpeggios honouring their duration and spread | GP  | M1  | —                                                     | —    | planned |
-| PLAY-092 | Audible rasgueado, all 18 patterns                    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-083 | Feel playback: 8th triplet feel                       | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-084 | Feel playback: 16th triplet feel                      | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-085 | Feel playback: dotted 8th feel                        | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-086 | Feel playback: dotted 16th feel                       | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-087 | Feel playback: Scottish (reverse-dotted) 8th feel     | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-088 | Feel playback: Scottish 16th feel                     | GP  | M1  | —                                                     | packages/core/test/playback-feel.test.ts | done |
+| PLAY-089 | Ottava lines and octave clefs sound at the right octave | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-090 | One- and two-bar simile marks play the repeated bars  | GP  | M1  | —                                                     | packages/core/test/playback-articulations.test.ts | done |
+| PLAY-091 | Audible brush strokes and arpeggios honouring their duration and spread | GP  | M1  | —                                                     | packages/core/test/playback-strokes.test.ts | done |
+| PLAY-092 | Audible rasgueado, all 18 patterns                    | GP  | M1  | —                                                     | packages/core/test/playback-strokes.test.ts | done |
 | PLAY-093 | Audible mordents and turns, following the key         | GP  | M1  | —                                                     | —    | planned |
 | PLAY-094 | Audible tapping (both hands) without a pick attack    | GP  | M1  | —                                                     | —    | planned |
 | PLAY-095 | Audible golpe (finger and thumb)                      | GP  | M1  | —                                                     | —    | planned |
 | PLAY-096 | Sustain pedal (down, hold, up) holds notes in playback | GP  | M1  | —                                                     | —    | planned |
-| PLAY-097 | Bend timing styles: as drawn, spread over the beat, fast before the next note | GP  | M1  | —                                                     | —    | planned |
+| PLAY-097 | Bend timing styles: as drawn, spread over the beat, fast before the next note | GP  | M1  | —                                                     | packages/core/test/playback-pitch-effects.test.ts | done |
 | PLAY-098 | Simultaneous bends on different strings play independently (one channel per string) | GP  | M1  | —                                                     | —    | planned |
-| PLAY-099 | Decimal tempos and tempos below 30 BPM                | GP  | M1  | —                                                     | —    | planned |
+| PLAY-099 | Decimal tempos and tempos below 30 BPM                | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts | done |
 | PLAY-100 | Traversal: Da Capo, landing after a pickup bar        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-101 | Traversal: D.C. al Coda                               | GP  | M1  | —                                                     | —    | planned |
-| PLAY-102 | Traversal: D.C. al Double Coda                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-103 | Traversal: D.C. al Fine                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-101 | Traversal: D.C. al Coda                               | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-102 | Traversal: D.C. al Double Coda                        | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-103 | Traversal: D.C. al Fine                               | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-104 | Traversal: Dal Segno, firing on the last pass inside a repeat | GP  | M1  | —                                                     | —    | planned |
-| PLAY-105 | Traversal: D.S. al Coda                               | GP  | M1  | —                                                     | —    | planned |
-| PLAY-106 | Traversal: D.S. al Double Coda                        | GP  | M1  | —                                                     | —    | planned |
-| PLAY-107 | Traversal: D.S. al Fine                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-105 | Traversal: D.S. al Coda                               | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-106 | Traversal: D.S. al Double Coda                        | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-107 | Traversal: D.S. al Fine                               | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-108 | Traversal: Dal Segno Segno                            | GP  | M1  | —                                                     | —    | planned |
-| PLAY-109 | Traversal: D.S.S. al Coda                             | GP  | M1  | —                                                     | —    | planned |
-| PLAY-110 | Traversal: D.S.S. al Double Coda                      | GP  | M1  | —                                                     | —    | planned |
-| PLAY-111 | Traversal: D.S.S. al Fine                             | GP  | M1  | —                                                     | —    | planned |
-| PLAY-112 | Traversal: To Coda, firing on the first pass inside a repeat and armed by an "al Coda" jump | GP  | M1  | —                                                     | —    | planned |
-| PLAY-113 | Traversal: To Double Coda                             | GP  | M1  | —                                                     | —    | planned |
-| PLAY-114 | Traversal: Fine ends playback only after a jump       | GP  | M1  | —                                                     | —    | planned |
+| PLAY-109 | Traversal: D.S.S. al Coda                             | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-110 | Traversal: D.S.S. al Double Coda                      | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-111 | Traversal: D.S.S. al Fine                             | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-112 | Traversal: To Coda, firing on the first pass inside a repeat and armed by an "al Coda" jump | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-113 | Traversal: To Double Coda                             | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
+| PLAY-114 | Traversal: Fine ends playback only after a jump       | GP  | M1  | —                                                     | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-115 | Track interpretation: automatic let ring              | GP  | M1  | —                                                     | —    | planned |
 | PLAY-116 | Track interpretation: automatic brush on chords       | GP  | M1  | —                                                     | —    | planned |
 | PLAY-117 | Track interpretation: palm-mute intensity             | GP  | M1  | —                                                     | —    | planned |
