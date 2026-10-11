@@ -3,11 +3,12 @@
  * through all staves, note values from quadruple whole to 256th, accidentals single and double
  * and how they carry through a bar and across ties, slash noteheads, stems forced by the file,
  * releases of bends begun earlier, whammy amounts in quarter tones, piano fingering, string
- * numbers, dead slaps and the extended dynamics.
+ * numbers, dead slaps and the extended dynamics; the capo (REND-033).
  */
 import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
-import { type Engraving, engraveFixture, engraveTex, glyphs, type Mark, texts } from './engraving.ts';
+import { openScore } from '../src/open/open.ts';
+import { Engraving, engraveFixture, engraveTex, glyphs, type Mark, texts } from './engraving.ts';
 
 const PIANO = '\\track "Piano"\n\\staff {score}';
 
@@ -286,5 +287,39 @@ describe('dynamics', () => {
       ['DynamicPF'],
       ['DynamicNiente'],
     ]);
+  });
+});
+
+describe('capo', () => {
+  /** Ten bars of a guitar capoed at the third fret, showing `staves`. */
+  const capoed = (staves: string, capo = '\\capo 3') =>
+    [
+      '\\track "Guitar"',
+      `\\staff {${staves}}`,
+      '\\tuning (E4 B3 G3 D3 A2 E2)',
+      capo,
+      `:1 ${Array.from({ length: 10 }, () => '0.6').join(' | ')} |`,
+    ].join('\n');
+
+  it('REND-033: the capo written once over the first bar, whatever staves the track shows', () => {
+    for (const staves of ['score tabs', 'tabs', 'score', 'slash', 'numbered']) {
+      const view = engraveTex(capoed(staves), { width: 500 });
+      const labels = view.find('text', 'Capo. fret 3');
+      expect(labels, staves).toHaveLength(1);
+      const [label] = labels;
+      expect(label === undefined ? -1 : view.systemOf(label), staves).toBe(0);
+      // Later systems start without it.
+      expect(Math.max(...view.bars.map(bar => bar.system)), staves).toBeGreaterThan(0);
+    }
+    const plain = texts(engraveTex(capoed('score tabs', '')).marks);
+    expect(plain.filter(text => text.startsWith('Capo'))).toEqual([]);
+  });
+
+  it('REND-033: a Guitar Pro file keeps its capo', () => {
+    const tex = engraveTex(capoed('score tabs'));
+    const saved = new alphaTab.exporter.Gp7Exporter().export(tex.score, new alphaTab.Settings());
+    const { score } = openScore(saved, 'capo.gp');
+    expect(score.tracks[0]?.staves[0]?.capo).toBe(3);
+    expect(new Engraving(score).find('text', 'Capo. fret 3')).toHaveLength(1);
   });
 });

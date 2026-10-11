@@ -207,7 +207,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   lyrics on several lines, drum noteheads, clefs, multi-bar rests, simile marks, golpe, wah,
   sustain pedal, barré, ornaments, slurs, bar numbers and beat timers; and pickup bars, every
   barline style, note values from quadruple whole to 256th, accidentals through bars and ties,
-  slash noteheads, forced stems, piano fingering, string numbers and extended dynamics.
+  slash noteheads, forced stems, piano fingering, string numbers and extended dynamics; and the
+  capo, written once over the first bar whatever staves a track shows.
 
 ### Changed
 
