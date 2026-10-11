@@ -1,6 +1,6 @@
 /** The metronome and the count-in: settings, the visual count-in, and the metronome on its own. */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, test, topBarTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -174,7 +174,7 @@ test.describe('loops and the speed trainer', () => {
 test.describe('the metronome on its own', () => {
   test('runs without a song: tempo, tap tempo, meter, start and stop', async ({ page, isMobile }) => {
     await openHome(page);
-    await page.getByRole('button', { name: 'Standalone metronome' }).click();
+    await topBarTool(page, 'Standalone metronome');
     const dialog = page.getByRole('dialog', { name: 'Metronome' });
     await expect(dialog).toBeVisible();
     const start = dialog.getByRole('button', { name: 'Start' });
@@ -229,7 +229,7 @@ test.describe('the metronome on its own', () => {
 
   test('pauses an open song and gives it back when closed', async ({ page }) => {
     await openShuffle(page);
-    await page.getByRole('button', { name: 'Standalone metronome' }).click();
+    await topBarTool(page, 'Standalone metronome');
     const dialog = page.getByRole('dialog', { name: 'Metronome' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Start' })).toBeEnabled({ timeout: 20_000 });

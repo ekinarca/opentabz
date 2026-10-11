@@ -241,6 +241,18 @@ the next notes to play and the rest of the bar, and spells note names in the bar
 panel reads it through `useSyncExternalStore` with a snapshot that only changes when the notes
 shown change, so playback re-renders the neck once per new beat at most.
 
+The keyboard (`app/KeyboardPanel.tsx`, `app/PianoKeys.tsx`) draws piano keys as SVG from the same
+notes: the engine sends every staff with pitches, each beat tagged with its staff, so a piano's
+upper and lower staves are its right and left hands, shown together in two colours or apart.
+Its model (`instrument-view/keyboard.ts`) knows each instrument's range: a stringed staff's open
+strings to its 24th fret, otherwise the usual range of its General MIDI sound. Keys outside the
+range are greyed, and the keyboard spans the range and every note played. Both views read their
+notes through one reader (`instrument-view/use-view-notes.ts`), which re-renders them only when
+the notes shown change. The chords panel (`app/ChordsPanel.tsx`) asks the engine for a track's
+chords (`trackChords`: each chord once, and the beats that carry them), places them in playing
+order on the timeline (`instrument-view/chords.ts`) and shows the chord sounding, the next one
+and the beats left until it.
+
 ## 6. Opening files
 
 1. **Intake (main thread):** drag-and-drop anywhere, file picker, clipboard paste (files),

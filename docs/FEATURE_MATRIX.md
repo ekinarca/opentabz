@@ -520,9 +520,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-002 | Fretboard: left-handed                                    | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-003 | Fretboard: current and upcoming notes                     | OT  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-004 | Fretboard: interval / scale / CAGED overlays              | OT  | M5  | —       | —    | planned |
-| VIEW-005 | Piano keyboard view                                       | GP  | M2  | —       | —    | planned |
+| VIEW-005 | Piano keyboard view                                       | GP  | M2  | —       | packages/core/test/track-notes.test.ts, apps/web/src/instrument-view/keyboard.test.ts, apps/web/e2e/keyboard.spec.ts | done |
 | VIEW-006 | Drum pad view                                             | GP  | M2  | —       | —    | planned |
-| VIEW-007 | Chord diagram panel                                       | GP  | M2  | —       | —    | planned |
+| VIEW-007 | Chord diagram panel                                       | GP  | M2  | —       | packages/core/test/track-chords.test.ts, apps/web/src/instrument-view/chords.test.ts, apps/web/e2e/chords.spec.ts | done |
 | VIEW-008 | Scale diagrams                                            | GP  | M5  | —       | —    | planned |
 | VIEW-009 | Note-name view                                            | OT  | M2  | —       | —    | planned |
 | VIEW-010 | Lyrics pane                                               | GP  | M2  | —       | —    | planned |
@@ -534,15 +534,15 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-016 | Active-track switcher (dropdown, next/previous-track keys) | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
-| VIEW-019 | Keyboard view greys keys outside the instrument's range   | GP  | M2  | —       | —    | planned |
+| VIEW-019 | Keyboard view greys keys outside the instrument's range   | GP  | M2  | —       | packages/core/test/track-notes.test.ts, apps/web/src/instrument-view/keyboard.test.ts, apps/web/e2e/keyboard.spec.ts | done |
 | VIEW-020 | Drum view MIDI mode listing every kit sound, with a GM-only filter | GP  | M2  | —       | —    | planned |
 | VIEW-021 | Drum view labels: never, on hover or always, with MIDI numbers; large labels | GP  | M2  | —       | —    | planned |
 | VIEW-022 | Lyrics-only view with karaoke highlighting; click a word to seek | OT  | M2  | —       | —    | planned |
-| VIEW-023 | Keyboard view split by hand (left, right, both)           | OT  | M2  | —       | —    | planned |
+| VIEW-023 | Keyboard view split by hand (left, right, both)           | OT  | M2  | —       | packages/core/test/track-notes.test.ts, apps/web/src/instrument-view/keyboard.test.ts, apps/web/e2e/keyboard.spec.ts | done |
 | VIEW-024 | Orchestral views: violin-family fingerboard, trumpet valves, trombone positions | OT  | S   | —       | —    | planned |
 | VIEW-025 | Note highway (game-style scrolling lanes)                 | OT  | S   | —       | —    | planned |
 | VIEW-026 | Bouncing-ball timing guide                                | OT  | M6  | —       | —    | planned |
-| VIEW-027 | Next-chord preview with countdown                         | OT  | M2  | —       | —    | planned |
+| VIEW-027 | Next-chord preview with countdown                         | OT  | M2  | —       | packages/core/test/track-chords.test.ts, apps/web/src/instrument-view/chords.test.ts, apps/web/e2e/chords.spec.ts | done |
 
 ## Editor
 

@@ -10,3 +10,4 @@ export * from './score-colors.ts';
 export * from './protocol.ts';
 export * from './playback.ts';
 export * from './notes.ts';
+export * from './chords.ts';

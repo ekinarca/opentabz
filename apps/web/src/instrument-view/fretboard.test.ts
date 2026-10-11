@@ -81,7 +81,7 @@ const TIMELINE: PlaybackTimeline = {
 const NOTES: TrackNotes = {
   trackIndex: 0,
   staffIndex: 0,
-  beats: Int32Array.from([101, 0, 1, -1, 102, 1, 2, -1, 103, 3, 1, -1, 104, 4, 1, 2]),
+  beats: Int32Array.from([101, 0, 1, -1, 0, 102, 1, 2, -1, 0, 103, 3, 1, -1, 0, 104, 4, 1, 2, 0]),
   notes: Int32Array.from([5, 0, 45, 0, 4, 2, 52, 0, 3, 2, 57, 0, 1, 3, 67, 0, 1, 3, 67, NOTE_TIED]),
 };
 const ROWS = indexTrackNotes(NOTES);
@@ -90,7 +90,7 @@ describe('the fretboard model', () => {
   it('shows the notes sounding at a tick, held ones included', () => {
     const first = fretboardNotes(TIMELINE, NOTES, ROWS, 0, 'beat', 0);
     const held = fretboardNotes(TIMELINE, NOTES, ROWS, Q + 10, 'beat', 0);
-    expect(first.current).toEqual([{ string: 5, fret: 0, pitch: 45, flags: 0 }]);
+    expect(first.current).toEqual([{ string: 5, fret: 0, pitch: 45, flags: 0, staff: 0 }]);
     expect(held.current).toEqual(first.current);
     expect(held.next).toEqual([]);
     expect(held.bar).toEqual([]);
@@ -99,11 +99,11 @@ describe('the fretboard model', () => {
 
   it('adds the next notes to play, across a bar line too', () => {
     expect(fretboardNotes(TIMELINE, NOTES, ROWS, Q, 'next', 0).next).toEqual([
-      { string: 4, fret: 2, pitch: 52, flags: 0 },
-      { string: 3, fret: 2, pitch: 57, flags: 0 },
+      { string: 4, fret: 2, pitch: 52, flags: 0, staff: 0 },
+      { string: 3, fret: 2, pitch: 57, flags: 0, staff: 0 },
     ]);
     expect(fretboardNotes(TIMELINE, NOTES, ROWS, 3 * Q, 'next', 0).next).toEqual([
-      { string: 1, fret: 3, pitch: 67, flags: NOTE_TIED },
+      { string: 1, fret: 3, pitch: 67, flags: NOTE_TIED, staff: 0 },
     ]);
     expect(fretboardNotes(TIMELINE, NOTES, ROWS, 5 * Q, 'next', 0).next).toEqual([]);
   });

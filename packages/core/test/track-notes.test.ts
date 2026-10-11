@@ -83,4 +83,32 @@ describe('track notes for instrument views', () => {
     expect(drums.beats).toHaveLength(0);
     expect(collectTrackNotes(score, 9)).toMatchObject({ staffIndex: null });
   });
+
+  it('reads every staff with pitches, telling them apart (the hands of a piano)', () => {
+    const keyboard = openScore(readFixture('alphatex/views/keyboard.atex'), 'keyboard.atex').score;
+    const piano = collectTrackNotes(keyboard, 0);
+    expect(piano.staffIndex).toBeNull();
+    const staves: number[] = [];
+    const pitches: number[][] = [];
+    for (let index = 0; index < piano.beats.length; index += TRACK_BEAT_STRIDE) {
+      staves.push(piano.beats[index + 4] ?? -1);
+      const first = piano.beats[index + 1] ?? 0;
+      const count = piano.beats[index + 2] ?? 0;
+      const beat: number[] = [];
+      for (let note = first; note < first + count; note++) {
+        // No strings or frets off the fretboard's staff.
+        expect([piano.notes[note * TRACK_NOTE_STRIDE], piano.notes[note * TRACK_NOTE_STRIDE + 1]]).toEqual([
+          0, 0,
+        ]);
+        beat.push(piano.notes[note * TRACK_NOTE_STRIDE + 2] ?? 0);
+      }
+      pitches.push(beat.sort((a, b) => a - b));
+    }
+    expect(staves).toEqual([0, 0, 0, 1, 1, 1]);
+    expect(pitches).toEqual([[72, 76, 79], [74, 77, 81], [76, 79, 84], [48], [43], [36]]);
+    // A guitar keeps its strings and frets.
+    expect(read(collectTrackNotes(keyboard, 2))[0]?.notes).toEqual([
+      { string: 6, fret: 0, pitch: 40, flags: 0 },
+    ]);
+  });
 });

@@ -248,6 +248,7 @@ export const strings = {
     about: 'About OpenTabz',
     export: 'Export',
     print: 'Print',
+    more: 'More',
   },
 
   print: {
@@ -494,6 +495,51 @@ export const strings = {
     playing: (notes: readonly string[]) =>
       notes.length === 0 ? 'Nothing playing.' : `Playing ${notes.join(', ')}.`,
     next: (notes: readonly string[]) => (notes.length === 0 ? '' : ` Next: ${notes.join(', ')}.`),
+  },
+
+  keyboard: {
+    open: 'Keyboard',
+    title: 'Keyboard',
+    settings: 'Keyboard settings',
+    close: 'Close the keyboard',
+    hand: 'Hands',
+    hands: { both: 'Both', right: 'Right', left: 'Left' },
+    handHints: {
+      both: 'The right hand in the cursor colour, the left hand in blue.',
+      right: 'The upper staff only.',
+      left: 'The lower staves only.',
+    },
+    showHints: {
+      beat: 'The keys being played.',
+      next: 'The keys being played, and the next ones to play outlined.',
+      bar: 'The keys being played, and the rest of the bar in a lighter colour.',
+    },
+    labelHints: {
+      off: 'No names, to practise finding the notes from memory.',
+      hover: 'Point at a key to see its name.',
+      always: 'Every white key carries its name; black keys theirs when played.',
+    },
+    range: (low: string, high: string) => `Range ${low}–${high}`,
+    noPitches: (track: string) => `${track} has no pitched notes to show on a keyboard.`,
+    keys: (track: string) => `Keyboard of ${track}`,
+    playing: (notes: readonly string[]) =>
+      notes.length === 0 ? 'Nothing playing.' : `Playing ${notes.join(', ')}.`,
+    next: (notes: readonly string[]) => (notes.length === 0 ? '' : ` Next: ${notes.join(', ')}.`),
+  },
+
+  chords: {
+    open: 'Chords',
+    title: 'Chords',
+    close: 'Close the chords',
+    now: 'Now',
+    next: 'Next',
+    inBeats: (beats: number) => (beats === 0 ? 'now' : beats === 1 ? 'in 1 beat' : `in ${beats} beats`),
+    all: 'Chords of the track',
+    goTo: (name: string) => `Play from the next ${name}`,
+    none: (track: string) => `${track} has no chords.`,
+    mutedString: 'not played',
+    openString: 'open',
+    diagram: (name: string, frets: string) => `${name}: ${frets}, from the lowest string`,
   },
 
   songMap: {

@@ -12,7 +12,7 @@ import {
   MenuTrigger,
   SegmentedControl,
 } from '@opentabz/ui';
-import { ChevronDown, Columns3, FileText, Guitar, Info, Minus, Plus, Rows3 } from 'lucide-react';
+import { ChevronDown, Columns3, FileText, Guitar, Info, Minus, Piano, Plus, Rows3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PAPER_IDS, type PaperId } from '../score-view/pagination.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
@@ -21,6 +21,9 @@ import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
 import { FretboardPanel } from './FretboardPanel.tsx';
+import { ChordsPanel } from './ChordsPanel.tsx';
+import { ChordIcon } from './icons.tsx';
+import { KeyboardPanel } from './KeyboardPanel.tsx';
 import { shortcutHint, zoomStep } from './keymap.ts';
 import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { modKey } from './platform.ts';
@@ -53,6 +56,8 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
   const updateView = useDocuments(state => state.updateView);
   const setPreferences = usePreferences(state => state.set);
   const fretboard = usePreferences(state => state.fretboard);
+  const keyboard = usePreferences(state => state.keyboard);
+  const chords = usePreferences(state => state.chords);
   const { view, summary } = doc;
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
@@ -243,6 +248,22 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
             setPreferences({ fretboard: !fretboard });
           }}
         />
+        <IconButton
+          label={strings.keyboard.open}
+          icon={<Piano size={18} aria-hidden />}
+          pressed={keyboard}
+          onClick={() => {
+            setPreferences({ keyboard: !keyboard });
+          }}
+        />
+        <IconButton
+          label={strings.chords.open}
+          icon={<ChordIcon />}
+          pressed={chords}
+          onClick={() => {
+            setPreferences({ chords: !chords });
+          }}
+        />
         <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
       </div>
@@ -272,6 +293,8 @@ export function Workspace() {
   const active = docs.find(doc => doc.key === activeKey) ?? null;
   const [infoOpen, setInfoOpen] = useState(false);
   const fretboard = usePreferences(state => state.fretboard);
+  const keyboard = usePreferences(state => state.keyboard);
+  const chords = usePreferences(state => state.chords);
   usePlaybackForActiveDocument(active);
 
   return (
@@ -288,6 +311,8 @@ export function Workspace() {
         <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey} />
       ))}
       {active !== null && fretboard && <FretboardPanel doc={active} />}
+      {active !== null && keyboard && <KeyboardPanel doc={active} />}
+      {active !== null && chords && <ChordsPanel doc={active} />}
       {active !== null && <SongMap doc={active} />}
       {active !== null && <Transport />}
       {active !== null && <PracticeDialog />}

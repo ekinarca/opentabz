@@ -3,7 +3,7 @@
  * what the output reports while playing (no audio skipped), and the other settings.
  */
 import type { Page } from '@playwright/test';
-import { elapsedSeconds, expect, expectScore, openHome, test } from './support.ts';
+import { elapsedSeconds, expect, expectScore, openHome, test, topBarTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -19,7 +19,7 @@ async function playFor(page: Page, seconds: number): Promise<void> {
 }
 
 async function openSettings(page: Page) {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await topBarTool(page, 'Settings');
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   await expect(dialog).toBeVisible();
   return dialog;

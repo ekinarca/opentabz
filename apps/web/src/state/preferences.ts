@@ -10,6 +10,7 @@ import {
   type FretboardShow,
   type NoteLabels,
 } from '../instrument-view/fretboard.ts';
+import { HANDS, type Hand } from '../instrument-view/keyboard.ts';
 import type { PaperId } from '../score-view/pagination.ts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark', 'sepia', 'stage'] as const;
@@ -48,6 +49,12 @@ export interface Preferences {
   readonly noteHighlight: boolean;
   /** The fretboard panel is open. */
   readonly fretboard: boolean;
+  /** The keyboard panel is open. */
+  readonly keyboard: boolean;
+  /** The chords panel is open. */
+  readonly chords: boolean;
+  /** The hands the keyboard shows. */
+  readonly keyboardHand: Hand;
   readonly fretboardShow: FretboardShow;
   readonly noteLabels: NoteLabels;
   /** Instrument views mirrored for left-handed players. */
@@ -81,6 +88,9 @@ export function defaultPreferences(locale: string): Preferences {
     barHighlight: true,
     noteHighlight: true,
     fretboard: false,
+    keyboard: false,
+    chords: false,
+    keyboardHand: 'both',
     fretboardShow: 'next',
     noteLabels: 'hover',
     leftHanded: false,
@@ -129,6 +139,9 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
       noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
       fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
+      keyboard: typeof value.keyboard === 'boolean' ? value.keyboard : fallback.keyboard,
+      chords: typeof value.chords === 'boolean' ? value.chords : fallback.chords,
+      keyboardHand: oneOf(value.keyboardHand, HANDS, fallback.keyboardHand),
       fretboardShow: oneOf(value.fretboardShow, FRETBOARD_SHOWS, fallback.fretboardShow),
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
@@ -182,6 +195,9 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       barHighlight: state.barHighlight,
       noteHighlight: state.noteHighlight,
       fretboard: state.fretboard,
+      keyboard: state.keyboard,
+      chords: state.chords,
+      keyboardHand: state.keyboardHand,
       fretboardShow: state.fretboardShow,
       noteLabels: state.noteLabels,
       leftHanded: state.leftHanded,

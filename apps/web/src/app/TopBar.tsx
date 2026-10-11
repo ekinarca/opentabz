@@ -3,13 +3,26 @@ import {
   LogoMark,
   Menu,
   MenuContent,
+  MenuItem,
+  MenuLabel,
   MenuRadioGroup,
   MenuRadioItem,
+  MenuSeparator,
   MenuTrigger,
   Tooltip,
   Wordmark,
 } from '@opentabz/ui';
-import { CircleHelp, Download, FolderOpen, Keyboard, Palette, Printer, Settings, X } from 'lucide-react';
+import {
+  CircleHelp,
+  Download,
+  Ellipsis,
+  FolderOpen,
+  Keyboard,
+  Palette,
+  Printer,
+  Settings,
+  X,
+} from 'lucide-react';
 import { useDocuments } from '../state/documents.ts';
 import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
@@ -121,6 +134,7 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             onClick={() => {
               useUi.getState().requestPrint();
             }}
+            className="max-md:hidden"
           />
         )}
         <Menu>
@@ -129,7 +143,7 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
               <button
                 type="button"
                 aria-label={strings.topBar.theme}
-                className="inline-flex size-9 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink"
+                className="inline-flex size-9 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink max-md:hidden"
               >
                 <Palette size={18} aria-hidden />
               </button>
@@ -150,8 +164,18 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             </MenuRadioGroup>
           </MenuContent>
         </Menu>
-        <IconButton label={strings.metronomeTool.open} icon={<MetronomeIcon />} onClick={openMetronomeTool} />
-        <IconButton label={strings.tuner.open} icon={<TuningForkIcon />} onClick={openTuner} />
+        <IconButton
+          label={strings.metronomeTool.open}
+          icon={<MetronomeIcon />}
+          onClick={openMetronomeTool}
+          className="max-md:hidden"
+        />
+        <IconButton
+          label={strings.tuner.open}
+          icon={<TuningForkIcon />}
+          onClick={openTuner}
+          className="max-md:hidden"
+        />
         <IconButton
           label={strings.shortcuts.title}
           shortcut={shortcutHint('shortcuts')}
@@ -167,12 +191,72 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
           onClick={() => {
             useUi.getState().openPanel('settings');
           }}
+          className="max-md:hidden"
         />
         <IconButton
           label={strings.topBar.about}
           icon={<CircleHelp size={18} aria-hidden />}
           onClick={onAbout}
+          className="max-md:hidden"
         />
+        {/* On narrow screens the tools fold into one menu, leaving room for the open scores. */}
+        <Menu>
+          <Tooltip label={strings.topBar.more}>
+            <MenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={strings.topBar.more}
+                className="inline-flex size-9 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink md:hidden"
+              >
+                <Ellipsis size={18} aria-hidden />
+              </button>
+            </MenuTrigger>
+          </Tooltip>
+          <MenuContent align="end">
+            {!home && activeKey !== null && (
+              <MenuItem
+                icon={<Printer size={16} aria-hidden />}
+                onSelect={() => {
+                  useUi.getState().requestPrint();
+                }}
+              >
+                {strings.topBar.print}
+              </MenuItem>
+            )}
+            <MenuItem icon={<MetronomeIcon size={16} />} onSelect={openMetronomeTool}>
+              {strings.metronomeTool.open}
+            </MenuItem>
+            <MenuItem icon={<TuningForkIcon size={16} />} onSelect={openTuner}>
+              {strings.tuner.open}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuLabel>{strings.topBar.theme}</MenuLabel>
+            <MenuRadioGroup<ThemePreference>
+              value={theme}
+              onValueChange={value => {
+                setPreferences({ theme: value });
+              }}
+            >
+              {THEME_PREFERENCES.map(option => (
+                <MenuRadioItem key={option} value={option}>
+                  {strings.themes[option]}
+                </MenuRadioItem>
+              ))}
+            </MenuRadioGroup>
+            <MenuSeparator />
+            <MenuItem
+              icon={<Settings size={16} aria-hidden />}
+              onSelect={() => {
+                useUi.getState().openPanel('settings');
+              }}
+            >
+              {strings.topBar.settings}
+            </MenuItem>
+            <MenuItem icon={<CircleHelp size={16} aria-hidden />} onSelect={onAbout}>
+              {strings.topBar.about}
+            </MenuItem>
+          </MenuContent>
+        </Menu>
       </div>
     </header>
   );

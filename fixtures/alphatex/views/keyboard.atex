@@ -1,0 +1,29 @@
+// Keyboard views — original music written for OpenTabz (AGPL-3.0-or-later).
+// A piano on two staves (right hand and left hand), a flute whose range is shorter than the
+// keyboard's, and a guitar.
+\title "Keyboard Views"
+\subtitle "OpenTabz test score"
+\tempo 90
+
+\track ("Piano" "Pno.") {instrument acousticgrandpiano}
+\staff {score}
+\ts (4 4) \ks C
+(C5 E5 G5).2 (D5 F5 A5).2 |
+(E5 G5 C6).1 |
+\staff {score}
+\clef F4
+C3.2 G2.2 |
+C2.1 |
+
+\track ("Flute" "Fl.") {instrument flute}
+\staff {score}
+\ts (4 4)
+C4.4 G5.4 C7.2 |
+r.1 |
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+0.6.2 3.5.2 |
+(0.1 1.2 0.3).1 |

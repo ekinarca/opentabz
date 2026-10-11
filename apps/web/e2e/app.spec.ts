@@ -1,5 +1,5 @@
 /** The shell around the score: themes, zoom, page furniture, privacy and legal notices. */
-import { dropFiles, expect, expectScore, fixture, openFiles, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openFiles, openHome, openThemes, test } from './support.ts';
 
 test.describe('the app', () => {
   test('themes apply instantly and are remembered', async ({ page }) => {
@@ -11,7 +11,7 @@ test.describe('the app', () => {
       ['Studio (light)', 'light'],
       ['Night (dark)', 'dark'],
     ] as const) {
-      await page.getByRole('button', { name: 'Theme' }).click();
+      await openThemes(page);
       await page.getByRole('menuitemradio', { name }).click();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     }

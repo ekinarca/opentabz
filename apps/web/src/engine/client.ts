@@ -24,6 +24,7 @@ const DEADLINES: Readonly<Record<EngineMethod, number>> = {
   preparePlayback: 20_000,
   previewBeats: 5_000,
   trackNotes: 10_000,
+  trackChords: 10_000,
   exportAudioSong: 30_000,
   exportMidi: 30_000,
 };

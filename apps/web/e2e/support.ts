@@ -131,3 +131,35 @@ export async function elapsedSeconds(page: Page): Promise<number> {
   if (match === null) throw new Error(`No time in the transport: ${text}`);
   return Number(match[1]) * 60 + Number(match[2]);
 }
+
+/**
+ * The top bar's button for a tool, or on narrow screens the More menu that holds it, whichever
+ * shows (waiting for the bar to be drawn).
+ */
+async function toolOrMore(page: Page, name: string): Promise<'button' | 'more'> {
+  const header = page.locator('header');
+  const button = header.getByRole('button', { name, exact: true });
+  const more = header.getByRole('button', { name: 'More', exact: true });
+  await expect(button.or(more).filter({ visible: true })).toHaveCount(1);
+  return (await button.isVisible()) ? 'button' : 'more';
+}
+
+/** Clicks a tool of the top bar: its button, or on narrow screens its item in the More menu. */
+export async function topBarTool(page: Page, name: string): Promise<void> {
+  const header = page.locator('header');
+  if ((await toolOrMore(page, name)) === 'button') {
+    await header.getByRole('button', { name, exact: true }).click();
+    return;
+  }
+  await header.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name, exact: true }).click();
+}
+
+/** Opens the theme choices: the Theme menu, or on narrow screens the More menu that holds them. */
+export async function openThemes(page: Page): Promise<void> {
+  const shown = await toolOrMore(page, 'Theme');
+  await page
+    .locator('header')
+    .getByRole('button', { name: shown === 'button' ? 'Theme' : 'More', exact: true })
+    .click();
+}

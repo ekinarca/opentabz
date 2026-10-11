@@ -1,6 +1,7 @@
 /**
- * The fretboard's model, free of the DOM: which notes of a track sound at a tick (and, as asked,
- * which come next or fill the rest of the bar), where frets sit along the neck, and note names.
+ * The instrument views' model, free of the DOM: which notes of a track sound at a tick (and, as
+ * asked, which come next or fill the rest of the bar), where frets sit along the neck, and note
+ * names.
  */
 import {
   TIMELINE_ITEM_STRIDE,
@@ -30,22 +31,30 @@ export const MIN_FRETS = 24;
 export const SINGLE_INLAYS: readonly number[] = [3, 5, 7, 9, 15, 17, 19, 21];
 export const DOUBLE_INLAYS: readonly number[] = [12, 24];
 
-/** A note on the neck. Strings count from the highest (1); the fret counts from the nut. */
-export interface FretNote {
+/**
+ * A note an instrument view shows. On the track's staff with strings: its string (1 is the
+ * highest) and fret counted from the nut; on other staves both are 0.
+ */
+export interface ViewNote {
   readonly string: number;
   readonly fret: number;
   /** The MIDI note that sounds. */
   readonly pitch: number;
   readonly flags: number;
+  /** The staff of the track it is written on (on a piano, 0 is the right hand). */
+  readonly staff: number;
 }
+
+/** A note on the neck. */
+export type FretNote = ViewNote;
 
 export interface FretboardNotes {
   /** Sounding now (including notes held from an earlier beat). */
-  readonly current: readonly FretNote[];
+  readonly current: readonly ViewNote[];
   /** The next notes to play, when asked for. */
-  readonly next: readonly FretNote[];
+  readonly next: readonly ViewNote[];
   /** The other notes of the bar, when asked for. */
-  readonly bar: readonly FretNote[];
+  readonly bar: readonly ViewNote[];
   /** Names are spelled with flats (the key has flats). */
   readonly flats: boolean;
 }
@@ -61,20 +70,23 @@ export function indexTrackNotes(notes: TrackNotes): Map<number, number> {
   return index;
 }
 
-function notesOfBeat(notes: TrackNotes, rows: Map<number, number>, beatId: number, capo: number): FretNote[] {
+function notesOfBeat(notes: TrackNotes, rows: Map<number, number>, beatId: number, capo: number): ViewNote[] {
   const row = rows.get(beatId);
   if (row === undefined) return [];
   const first = notes.beats[row * TRACK_BEAT_STRIDE + 1] ?? 0;
   const count = notes.beats[row * TRACK_BEAT_STRIDE + 2] ?? 0;
-  const result: FretNote[] = [];
+  const staff = notes.beats[row * TRACK_BEAT_STRIDE + 4] ?? 0;
+  const result: ViewNote[] = [];
   for (let note = first; note < first + count; note++) {
     const base = note * TRACK_NOTE_STRIDE;
+    const string = notes.notes[base] ?? 0;
     result.push({
-      string: notes.notes[base] ?? 0,
+      string,
       // Frets are written from the capo; on the neck they count from the nut.
-      fret: capo + (notes.notes[base + 1] ?? 0),
+      fret: string > 0 ? capo + (notes.notes[base + 1] ?? 0) : 0,
       pitch: notes.notes[base + 2] ?? 0,
       flags: notes.notes[base + 3] ?? 0,
+      staff,
     });
   }
   return result;
@@ -95,29 +107,37 @@ function beatsOf(timeline: PlaybackTimeline, target: Slice, track: number, start
 /** How far ahead to look for the next notes (a long rest ends the preview). */
 const LOOKAHEAD_SLICES = 64;
 
-/** The notes of the track to show at `tick`. */
-export function fretboardNotes(
+/** Which notes a view shows, and where it draws each (one note per place in the rest of the bar). */
+export interface NoteFilter {
+  readonly capo: number;
+  readonly accepts: (note: ViewNote) => boolean;
+  readonly place: (note: ViewNote) => string;
+}
+
+/** The notes of the track a view shows at `tick`. */
+export function instrumentNotes(
   timeline: PlaybackTimeline,
   notes: TrackNotes,
   rows: Map<number, number>,
   tick: number,
   show: FretboardShow,
-  capo: number,
+  filter: NoteFilter,
 ): FretboardNotes {
   const bar = occurrence(timeline, findBarOccurrence(timeline, tick));
   const at = bar === null ? null : findSlice(timeline, bar, tick);
   if (bar === null || at === null) return NO_NOTES;
   const track = notes.trackIndex;
+  const notesOf = (beat: number) => notesOfBeat(notes, rows, beat, filter.capo).filter(filter.accepts);
   const sounding = beatsOf(timeline, at, track, false);
-  const current = sounding.flatMap(beat => notesOfBeat(notes, rows, beat, capo));
+  const current = sounding.flatMap(notesOf);
 
-  let next: FretNote[] = [];
+  let next: ViewNote[] = [];
   if (show === 'next') {
     let candidate = nextSlice(timeline, at);
     for (let guard = 0; candidate !== null && guard < LOOKAHEAD_SLICES; guard++) {
-      const starting = beatsOf(timeline, candidate, track, true).filter(beat => rows.has(beat));
+      const starting = beatsOf(timeline, candidate, track, true).flatMap(notesOf);
       if (starting.length > 0) {
-        next = starting.flatMap(beat => notesOfBeat(notes, rows, beat, capo));
+        next = starting;
         break;
       }
       candidate = nextSlice(timeline, candidate);
@@ -136,14 +156,14 @@ export function fretboardNotes(
     }
   }
   // The rest of the bar: each place once, and not where a note is sounding already.
-  const taken = new Set(current.map(note => `${note.string}:${note.fret}`));
-  const rest: FretNote[] = [];
+  const taken = new Set(current.map(filter.place));
+  const rest: ViewNote[] = [];
   if (show === 'bar') {
     const playing = new Set(sounding);
     for (const beat of barBeats) {
       if (playing.has(beat)) continue;
-      for (const note of notesOfBeat(notes, rows, beat, capo)) {
-        const place = `${note.string}:${note.fret}`;
+      for (const note of notesOf(beat)) {
+        const place = filter.place(note);
         if (taken.has(place)) continue;
         taken.add(place);
         rest.push(note);
@@ -154,6 +174,22 @@ export function fretboardNotes(
   const keyRow = keyBeat === undefined ? undefined : rows.get(keyBeat);
   const key = keyRow === undefined ? 0 : (notes.beats[keyRow * TRACK_BEAT_STRIDE + 3] ?? 0);
   return { current, next, bar: rest, flats: key < 0 };
+}
+
+/** The notes of the track to show on the neck at `tick`: those of the staff with strings. */
+export function fretboardNotes(
+  timeline: PlaybackTimeline,
+  notes: TrackNotes,
+  rows: Map<number, number>,
+  tick: number,
+  show: FretboardShow,
+  capo: number,
+): FretboardNotes {
+  return instrumentNotes(timeline, notes, rows, tick, show, {
+    capo,
+    accepts: note => note.string > 0,
+    place: note => `${note.string}:${note.fret}`,
+  });
 }
 
 /** Frets to draw: at least {@link MIN_FRETS}, more if the music goes higher. */

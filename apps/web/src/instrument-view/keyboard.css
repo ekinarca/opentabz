@@ -1,0 +1,38 @@
+/* Keyboard: keys that stay a keyboard's in every theme; the instrument's range in full colour. */
+
+.ot-keyboard {
+  --kb-white: #f7f5f0;
+  --kb-white-out: color-mix(in oklab, #f7f5f0 45%, var(--ot-surface-sunken));
+  --kb-black: #1f1d1b;
+  --kb-black-out: color-mix(in oklab, #1f1d1b 45%, var(--ot-surface-sunken));
+  --kb-edge: color-mix(in oklab, #1f1d1b 35%, transparent);
+  --kb-on-dark: #ffffff;
+  --kb-left: #2f7cf6;
+}
+
+.ot-keyboard-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.ot-keys text {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  user-select: none;
+  pointer-events: none;
+}
+
+.ot-key-name {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.ot-key:hover .ot-key-name {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-key-name {
+    transition: none;
+  }
+}

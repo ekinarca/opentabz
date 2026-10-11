@@ -109,6 +109,18 @@ All notable changes to OpenTabz are recorded here. The format follows
   Files are named from a template with Guitar Pro's tokens (title, track name, number and
   count, date, time), previewed as it is typed and remembered.
 
+- **Keyboard view.** The piano button opens a keyboard under the score for the active track,
+  following the music like the fretboard: the keys being played, the next ones outlined or the
+  rest of the bar lighter, and note names on demand. A piano's two staves are its two hands,
+  shown in two colours or one at a time. Keys outside the instrument's range are greyed: a
+  guitar's strings and frets, or the usual range of its sound (a flute's C4 to C7), and the
+  keyboard scrolls on phones to keep the music in view.
+- **Chords panel.** The chord-diagram button shows the active track's chords under the score:
+  the chord sounding, the next one with the beats left until it, and every chord of the track
+  as a diagram (open and unplayed strings, the first fret, barres). Clicking a chord plays
+  from where it comes next.
+- **Phones.** The top bar folds the print, metronome, tuner, theme, settings and help buttons
+  into a More menu on narrow screens, so the open scores' tabs keep their room.
 - **Tuner.** The tuning-fork button listens through the microphone, on this device only (nothing
   is recorded or sent). It shows the note and how many cents off it is, on a needle or on a
   strobe that stands still in tune. It aims at the strings of the active track's tuning (drop,

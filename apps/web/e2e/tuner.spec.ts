@@ -5,7 +5,7 @@
  * reference pitch set, and releases the microphone when it closes.
  */
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, test, topBarTool } from './support.ts';
 
 interface FakeMicrophone {
   setTone: (frequency: number) => void;
@@ -63,7 +63,7 @@ test('hears a string, aims at the track tuning and shows the cents on a needle o
 }) => {
   await fakeMicrophone(page, 110);
   await openShuffle(page);
-  await page.getByRole('button', { name: 'Tuner', exact: true }).click();
+  await topBarTool(page, 'Tuner');
   const tuner = page.getByRole('dialog', { name: 'Tuner' });
 
   // A2, in tune, on the needle; aimed at the A string of the guitar's standard tuning.
@@ -135,7 +135,7 @@ test('says when the microphone is blocked, and tries again on request', async ({
       Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
   });
   await openShuffle(page);
-  await page.getByRole('button', { name: 'Tuner', exact: true }).click();
+  await topBarTool(page, 'Tuner');
   const tuner = page.getByRole('dialog', { name: 'Tuner' });
   await expect(tuner.getByRole('alert')).toHaveText(/The microphone is blocked/);
   await tuner.getByRole('button', { name: 'Start listening' }).click();

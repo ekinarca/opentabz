@@ -4,6 +4,7 @@
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
 import type { OpenError } from './open-error.ts';
+import type { TrackChords } from './chords.ts';
 import type { TrackNotes } from './notes.ts';
 import type { MidiDelivery, PlaybackTimeline, ScoreBounds, TrackInterpretation } from './playback.ts';
 import type { DocSummary } from './summary.ts';
@@ -68,6 +69,8 @@ export interface EngineMethods {
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
   /** The notes of one track, beat by beat, for instrument views. */
   trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
+  /** The chords of one track and the beats that carry them, for the chords panel. */
+  trackChords(args: { readonly docId: string; readonly trackIndex: number }): TrackChords;
   /**
    * The song for an audio export: the MIDI playback would send the synthesizer (with a silent
    * tail for the last notes to die away) and its timeline, returned rather than sent.
