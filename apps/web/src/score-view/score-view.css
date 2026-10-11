@@ -90,6 +90,27 @@
 
 /* Playback cursor ---------------------------------------------------------------------------- */
 
+/* The cursor colour, also used for the notes being played. */
+.ot-scroll {
+  --ot-cursor: var(--ot-accent);
+}
+
+.ot-scroll[data-cursor-color='blue'] {
+  --ot-cursor: #2f7cf6;
+}
+
+.ot-scroll[data-cursor-color='green'] {
+  --ot-cursor: #16a34a;
+}
+
+.ot-scroll[data-cursor-color='violet'] {
+  --ot-cursor: #8b5cf6;
+}
+
+.ot-scroll[data-cursor-color='rose'] {
+  --ot-cursor: #e11d63;
+}
+
 .ot-overlay {
   position: absolute;
   inset: 0;
@@ -105,7 +126,7 @@
 }
 
 .ot-cursor-bar {
-  background: color-mix(in oklab, var(--ot-accent) 9%, transparent);
+  background: color-mix(in oklab, var(--ot-cursor) 9%, transparent);
   border-radius: 3px;
 }
 
@@ -113,8 +134,8 @@
   width: 2px;
   margin-left: -1px;
   border-radius: 2px;
-  background: var(--ot-accent);
-  box-shadow: 0 0 10px color-mix(in oklab, var(--ot-accent) 60%, transparent);
+  background: var(--ot-cursor);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--ot-cursor) 60%, transparent);
   opacity: 0.9;
 }
 

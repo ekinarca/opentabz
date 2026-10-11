@@ -281,11 +281,11 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-009 | A sound engine that cannot start or load says why and can be retried (never loads forever) | OT | M1 | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-010 | Beat cursor                                           | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-011 | Bar highlight                                         | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
-| PLAY-012 | Note highlighting                                     | OT  | M1  | —                                                     | —    | planned |
+| PLAY-012 | Note highlighting                                     | OT  | M1  | —                                                     | apps/web/src/state/preferences.test.ts, apps/web/e2e/follow.spec.ts | done |
 | PLAY-013 | Auto-scroll: continuous                               | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
-| PLAY-014 | Auto-scroll: page flip                                | GP  | M1  | —                                                     | —    | planned |
-| PLAY-015 | Auto-scroll: off                                      | GP  | M1  | —                                                     | —    | planned |
-| PLAY-016 | Configurable auto-scroll offset                       | OT  | M1  | —                                                     | —    | planned |
+| PLAY-014 | Auto-scroll: page flip                                | GP  | M1  | —                                                     | apps/web/e2e/follow.spec.ts | done |
+| PLAY-015 | Auto-scroll: off                                      | GP  | M1  | —                                                     | apps/web/e2e/follow.spec.ts | done |
+| PLAY-016 | Configurable auto-scroll offset                       | OT  | M1  | —                                                     | apps/web/e2e/follow.spec.ts | done |
 | PLAY-017 | Cursor and auto-scroll work in every layout           | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-020 | Repeat traversal identical to Guitar Pro              | GP  | M1  | alphatab/guitarpro7/repeat-close-multi.gp             | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-021 | Alternate-ending traversal                            | GP  | M1  | alphatab/guitarpro7/repeat-close-alternate-endings.gp | packages/core/test/playback-traversal.test.ts | done |
@@ -326,9 +326,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-066 | Groove templates                                      | OT  | M7  | —                                                     | —    | planned |
 | PLAY-070 | Web MIDI output to external synths                    | OT  | M7  | —                                                     | —    | planned |
 | PLAY-071 | Position display: bar, beat, time signature and live tempo including automation | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
-| PLAY-072 | Manual scrolling pauses auto-scroll; a Resume button re-attaches the view to the cursor | GP  | M1  | —                                                     | —    | planned |
+| PLAY-072 | Manual scrolling pauses auto-scroll; a Resume button re-attaches the view to the cursor | GP  | M1  | —                                                     | apps/web/e2e/follow.spec.ts | done |
 | PLAY-073 | Audible stepping: move beat by beat and hear each one without starting playback | GP  | M1  | — | packages/core/test/engine-host.test.ts, packages/audio/test/render-offline.test.ts, apps/web/e2e/practice.spec.ts | done |
-| PLAY-074 | Cursor styles: none, smooth, jump per note, jump per metronome beat | GP  | M1  | —                                                     | —    | planned |
+| PLAY-074 | Cursor styles: none, smooth, jump per note, jump per metronome beat | GP  | M1  | —                                                     | apps/web/e2e/follow.spec.ts | done |
 | PLAY-075 | Elapsed and total time display in score time, unaffected by practice speed | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PLAY-076 | Playback detune in cents                              | GP  | M1  | —                                                     | packages/audio/test/render-offline.test.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-077 | Focus/unfocus: boost or duck the active track against the rest | GP  | M1  | —                                                     | apps/web/src/state/mixer-memory.test.ts, apps/web/e2e/playback.spec.ts | done |
@@ -390,7 +390,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-133 | Play a connected MIDI keyboard live through the built-in sounds | GP  | M7  | —                                                     | —    | planned |
 | PLAY-134 | Audible pick scrape and dead slap                     | OT  | M7  | —                                                     | —    | planned |
 | PLAY-135 | Wah open/closed marks drive an auto-wah sweep         | OT  | M7  | —                                                     | —    | planned |
-| PLAY-136 | Choice of colour and style for the cursor and bar highlight | OT  | M1  | —                                                     | —    | planned |
+| PLAY-136 | Choice of colour and style for the cursor and bar highlight | OT  | M1  | —                                                     | apps/web/src/state/preferences.test.ts, apps/web/e2e/follow.spec.ts | done |
 | PLAY-137 | Track autoswitch: the view follows another part while yours rests | OT  | M6  | —                                                     | —    | planned |
 
 ## Practice and performance

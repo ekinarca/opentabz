@@ -40,6 +40,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   start to a target speed in steps after a set number of passes at each speed, exactly at the
   start of a pass; a loop can also repeat a set number of times and stop. Loops can be set by
   typing bar numbers. Speed changes while playing no longer stutter.
+- **Following the music.** Scrolling that moves along continuously (with the playing line set
+  anywhere from 5 % to 60 % down the view), turns page by page, or stays where it is left; a
+  cursor that glides, steps from note to note or beat to beat, or hides; five cursor colours;
+  the bar highlight and the notes being played coloured, each switchable. Scrolling by hand
+  while playing pauses the following until "Back to the music" or play is pressed again, and
+  playback that starts with the music out of view brings it back. Settings are remembered.
 - **Standalone metronome.** Tempo from 10 to 400 BPM by typing, buttons, slider or tap tempo
   (button or T), any meter up to 16 beats, with the beat display and the same sounds and
   patterns; the open song waits and comes back when it closes.

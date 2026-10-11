@@ -1,17 +1,33 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { LocateFixed } from 'lucide-react';
 import { getEngine } from '../engine/instance.ts';
 import { pageGeometry } from '../score-view/pagination.ts';
-import { PlaybackCursor } from '../score-view/playback-cursor.ts';
+import { PlaybackCursor, type CursorOptions } from '../score-view/playback-cursor.ts';
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
 import { usePlayer } from '../state/player.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
+import { usePreferences, type Preferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
+
+function cursorOptions(preferences: Preferences): CursorOptions {
+  return {
+    scrollMode: preferences.scrollMode,
+    scrollOffset: preferences.scrollOffset,
+    cursorStyle: preferences.cursorStyle,
+    barHighlight: preferences.barHighlight,
+    noteHighlight: preferences.noteHighlight,
+  };
+}
 
 /** Hosts the framework-free ScoreView for one document. */
 export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonly hidden: boolean }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<ScoreView | null>(null);
+  const cursorRef = useRef<PlaybackCursor | null>(null);
+  /** The user scrolled away while playing: the view waits until they come back to the cursor. */
+  const [followPaused, setFollowPaused] = useState(false);
+  const cursorColor = usePreferences(state => state.cursorColor);
   const intakeMark = useRef(doc.intakeMark);
   const title = doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
   const key = doc.key;
@@ -84,8 +100,16 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       },
     );
     viewRef.current = view;
-    cursor = new PlaybackCursor(view);
+    cursor = new PlaybackCursor(view, setFollowPaused);
+    cursorRef.current = cursor;
     const playbackCursor = cursor;
+    playbackCursor.setMeters(
+      useDocuments.getState().docs.find(candidate => candidate.key === key)?.summary.masterBars ?? [],
+    );
+    playbackCursor.setOptions(cursorOptions(usePreferences.getState()));
+    const unsubscribePreferences = usePreferences.subscribe(state => {
+      playbackCursor.setOptions(cursorOptions(state));
+    });
     const selectionOverlay = new SelectionOverlay(view, {
       onChange: (range, final) => {
         if (usePlayer.getState().docKey === key) usePlayer.getState().setSelection(range, final);
@@ -116,10 +140,12 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     sync(usePlayer.getState());
     return () => {
       unsubscribe();
+      unsubscribePreferences();
       selectionOverlay.dispose();
       playbackCursor.dispose();
       view.dispose();
       viewRef.current = null;
+      cursorRef.current = null;
     };
   }, [key]);
 
@@ -153,14 +179,29 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   }, [doc.engineId, doc.view, title]);
 
   return (
-    <div
-      ref={scrollerRef}
-      hidden={hidden}
-      role="region"
-      aria-label={strings.score.region(title)}
-      tabIndex={0}
-      className="ot-scroll min-h-0 flex-1"
-      data-doc={key}
-    />
+    <div hidden={hidden} className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        ref={scrollerRef}
+        hidden={hidden}
+        role="region"
+        aria-label={strings.score.region(title)}
+        tabIndex={0}
+        className="ot-scroll min-h-0 flex-1"
+        data-doc={key}
+        data-cursor-color={cursorColor}
+      />
+      {followPaused && (
+        <button
+          type="button"
+          onClick={() => {
+            cursorRef.current?.resume();
+          }}
+          className="ot-pop-in absolute bottom-4 left-1/2 inline-flex h-10 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-4 text-[13px] font-semibold text-canvas shadow-[var(--shadow-popover)] hover:scale-[1.02] active:scale-95"
+        >
+          <LocateFixed size={16} aria-hidden />
+          {strings.score.backToCursor}
+        </button>
+      )}
+    </div>
   );
 }

@@ -184,7 +184,13 @@ lookups over the timeline and bounds (`timeline-lookup.ts`): ranges snap to beat
 highlighted edge to edge, and passes through repeats are chosen near the playback position. Its
 two handles are separate elements with `touch-action: none` and zoom-independent size, so they
 can be dragged with a finger. `PlaybackCursor` animates the beat line with the Web Animations API
-between position reports and scrolls the playing system into view.
+between position reports (or jumps it from note to note, or to each beat of the meter, placed
+between the notes around it) and scrolls the playing system into view: continuously, to a set
+share of the view, or page by page, only when the music leaves it. The notes being played are
+coloured by one scoped `<style>` rule naming their beat groups (`.b<id>`), so highlighting costs
+one style change per beat and never touches the SVG. Wheel, touch, scroll keys and the
+scrollbar pause the following while playing; `resume()` and pressing play bring the music back
+into view.
 
 ### 5.4 Theming rendered notation
 

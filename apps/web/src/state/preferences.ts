@@ -10,6 +10,18 @@ export const THEME_PREFERENCES = ['system', 'light', 'dark', 'sepia', 'stage'] a
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type ResolvedTheme = Exclude<ThemePreference, 'system'>;
 
+/** How the view follows playback: keeping the playing system in place, page by page, or not. */
+export const SCROLL_MODES = ['continuous', 'page', 'off'] as const;
+export type ScrollMode = (typeof SCROLL_MODES)[number];
+/** The beat line: gliding, jumping from note to note or beat to beat, or hidden. */
+export const CURSOR_STYLES = ['smooth', 'note', 'beat', 'hidden'] as const;
+export type CursorStyle = (typeof CURSOR_STYLES)[number];
+export const CURSOR_COLORS = ['accent', 'blue', 'green', 'violet', 'rose'] as const;
+export type CursorColor = (typeof CURSOR_COLORS)[number];
+/** Where the playing system sits, as a share of the view's height from the top. */
+export const MIN_SCROLL_OFFSET = 0.05;
+export const MAX_SCROLL_OFFSET = 0.6;
+
 export interface Preferences {
   readonly theme: ThemePreference;
   readonly layout: LayoutKind;
@@ -17,6 +29,14 @@ export interface Preferences {
   readonly staffDisplay: StaffDisplay;
   /** Shortcuts on a single character key (−, =, ?): can be turned off (WCAG 2.2 SC 2.1.4). */
   readonly singleKeyShortcuts: boolean;
+  readonly scrollMode: ScrollMode;
+  readonly scrollOffset: number;
+  readonly cursorStyle: CursorStyle;
+  readonly cursorColor: CursorColor;
+  /** A tint on the bar being played. */
+  readonly barHighlight: boolean;
+  /** The notes being played drawn in the cursor colour. */
+  readonly noteHighlight: boolean;
 }
 
 export const STORAGE_KEY = 'opentabz.preferences.v1';
@@ -33,7 +53,17 @@ export function defaultPreferences(locale: string): Preferences {
     paper: defaultPaper(locale),
     staffDisplay: 'default',
     singleKeyShortcuts: true,
+    scrollMode: 'continuous',
+    scrollOffset: 0.18,
+    cursorStyle: 'smooth',
+    cursorColor: 'accent',
+    barHighlight: true,
+    noteHighlight: true,
   };
+}
+
+function oneOf<T>(value: unknown, options: readonly T[], fallback: T): T {
+  return options.includes(value as T) ? (value as T) : fallback;
 }
 
 export function parsePreferences(raw: string | null, fallback: Preferences): Preferences {
@@ -60,6 +90,17 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
         typeof value.singleKeyShortcuts === 'boolean'
           ? value.singleKeyShortcuts
           : fallback.singleKeyShortcuts,
+      scrollMode: oneOf(value.scrollMode, SCROLL_MODES, fallback.scrollMode),
+      scrollOffset:
+        typeof value.scrollOffset === 'number' &&
+        value.scrollOffset >= MIN_SCROLL_OFFSET &&
+        value.scrollOffset <= MAX_SCROLL_OFFSET
+          ? value.scrollOffset
+          : fallback.scrollOffset,
+      cursorStyle: oneOf(value.cursorStyle, CURSOR_STYLES, fallback.cursorStyle),
+      cursorColor: oneOf(value.cursorColor, CURSOR_COLORS, fallback.cursorColor),
+      barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
+      noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
     };
   } catch {
     return fallback;
@@ -91,8 +132,20 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
   ...load(),
   set: patch => {
     set(patch);
-    const { theme, layout, paper, staffDisplay, singleKeyShortcuts } = get();
-    save({ theme, layout, paper, staffDisplay, singleKeyShortcuts });
+    const state = get();
+    save({
+      theme: state.theme,
+      layout: state.layout,
+      paper: state.paper,
+      staffDisplay: state.staffDisplay,
+      singleKeyShortcuts: state.singleKeyShortcuts,
+      scrollMode: state.scrollMode,
+      scrollOffset: state.scrollOffset,
+      cursorStyle: state.cursorStyle,
+      cursorColor: state.cursorColor,
+      barHighlight: state.barHighlight,
+      noteHighlight: state.noteHighlight,
+    });
   },
 }));
 

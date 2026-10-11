@@ -21,6 +21,7 @@ import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
 import { zoomStep } from './keymap.ts';
+import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { modKey } from './platform.ts';
 import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
@@ -230,6 +231,7 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
           disabled={view.zoom >= 4}
         />
         <div className="mx-1 h-6 w-px bg-line" aria-hidden />
+        <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
       </div>
     </div>

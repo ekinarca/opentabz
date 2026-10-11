@@ -300,6 +300,7 @@ export const strings = {
     region: (title: string) => `Score: ${title}`,
     pageNumber: (page: number, pages: number) => `${page} / ${pages}`,
     untitled: 'Untitled',
+    backToCursor: 'Back to the music',
     renderFailed: 'The score couldn’t be displayed',
     renderFailedDetail:
       'The engine reported an error while laying out this score. Technical details are below.',
@@ -360,6 +361,26 @@ export const strings = {
     volume: 'Volume',
     mute: 'Mute',
     unmute: 'Unmute',
+  },
+
+  playbackView: {
+    open: 'Following the music',
+    title: 'Following the music',
+    scrolling: 'Scrolling',
+    scrollModes: { continuous: 'Continuous', page: 'Page by page', off: 'Off' },
+    scrollHints: {
+      continuous: 'The view moves along so the music being played stays in the same place.',
+      page: 'The view turns to the next page when the music gets there.',
+      off: 'The view stays where you leave it.',
+    },
+    offset: 'Playing line',
+    offsetValue: (offset: number) => `${Math.round(offset * 100)} % from the top`,
+    cursor: 'Cursor',
+    cursorStyles: { smooth: 'Smooth', note: 'Per note', beat: 'Per beat', hidden: 'Hidden' },
+    barHighlight: 'Highlight the bar',
+    noteHighlight: 'Colour the notes being played',
+    colour: 'Colour',
+    colours: { accent: 'Orange', blue: 'Blue', green: 'Green', violet: 'Violet', rose: 'Rose' },
   },
 
   practice: {
