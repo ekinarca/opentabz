@@ -1,14 +1,34 @@
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { headersFor, parseHeadersFile } from './build/netlify-headers.ts';
 
-/** Same isolation headers as production (netlify.toml) so dev behaves identically. */
+/**
+ * The dev server sends the isolation headers only: the production CSP would block Vite's
+ * inline hot-reload scripts.
+ */
 const isolationHeaders = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
+
+/** `vite preview` serves public/_headers exactly like Netlify, CSP included (ADR-0008). */
+function productionHeaders(): Plugin {
+  return {
+    name: 'opentabz:production-headers',
+    configurePreviewServer(server) {
+      const rules = parseHeadersFile(readFileSync(join(import.meta.dirname, 'public', '_headers'), 'utf8'));
+      server.middlewares.use((request, response, next) => {
+        const path = new URL(request.url ?? '/', 'http://localhost').pathname;
+        for (const [name, value] of headersFor(rules, path)) response.setHeader(name, value);
+        next();
+      });
+    },
+  };
+}
 
 /**
  * alphaTab's package entry auto-initializes its own worker message handlers when imported inside
@@ -19,7 +39,7 @@ const require = createRequire(import.meta.url);
 const alphaTabCore = join(dirname(require.resolve('@coderline/alphatab')), 'alphaTab.core.mjs');
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), productionHeaders()],
   resolve: {
     alias: [{ find: /^@coderline\/alphatab$/, replacement: alphaTabCore }],
   },
@@ -30,6 +50,8 @@ export default defineConfig({
     target: 'es2023',
     sourcemap: true,
     modulePreload: { polyfill: false },
+    // Never inline assets as data: URLs; the CSP only allows fonts and scripts from 'self'.
+    assetsInlineLimit: 0,
     reportCompressedSize: false,
   },
   server: {
@@ -40,6 +62,5 @@ export default defineConfig({
   preview: {
     port: 4173,
     strictPort: true,
-    headers: isolationHeaders,
   },
 });
