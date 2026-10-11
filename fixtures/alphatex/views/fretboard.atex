@@ -1,0 +1,30 @@
+// Fretboard views — original music written for OpenTabz (AGPL-3.0-or-later).
+// A seven-string guitar with a capo, a four-string bass and drums: open, fretted, dead, ghost,
+// harmonic and tied notes, in a key with flats.
+\title "Fretboard Views"
+\subtitle "OpenTabz test score"
+\tempo 90
+
+\track ("Seven Strings" "7str.") {instrument electricGuitarClean}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2 B1)
+\capo 2
+\ts (4 4) \ks Bb
+(0.7 2.6).4 x.5.4 12.3{nh}.4 3.2{g}.4 |
+5.1.2 -.1.2 |
+17.1.1 |
+
+\track ("Bass" "B.") {instrument electricBassFinger}
+\staff {score tabs}
+\tuning (G2 D2 A1 E1)
+\ts (4 4) \ks Bb
+0.4.2 3.3.2 |
+5.2.1 |
+r.1 |
+
+\track ("Drums" "Dr.") {instrument percussion}
+\articulation defaults
+\ts (4 4)
+KickHit.2 SnareHit.2 |
+KickHit.1 |
+KickHit.1 |

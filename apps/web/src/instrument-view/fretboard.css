@@ -1,0 +1,32 @@
+/* Fretboard: a neck drawn from theme colours, so every theme (and print) stays readable. */
+
+.ot-fretboard {
+  --fb-wood: color-mix(in oklab, var(--ot-surface-sunken) 78%, #b07a45);
+  --fb-wood-edge: color-mix(in oklab, var(--ot-text) 22%, transparent);
+  --fb-fret: color-mix(in oklab, var(--ot-text) 38%, transparent);
+  --fb-nut: color-mix(in oklab, var(--ot-text) 72%, transparent);
+  --fb-string: color-mix(in oklab, var(--ot-text) 58%, transparent);
+  --fb-inlay: color-mix(in oklab, var(--ot-text) 16%, transparent);
+  --fb-capo: color-mix(in oklab, var(--ot-text) 80%, transparent);
+}
+
+.ot-fretboard-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.ot-fretboard text {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  user-select: none;
+}
+
+.ot-fret-note {
+  transition: opacity 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-fret-note {
+    transition: none;
+  }
+}

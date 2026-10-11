@@ -37,8 +37,9 @@ the music.
 **Play and practise.** Playback with a SoundFont synthesizer running off the main thread, a
 cursor that follows the music the way you like it (scrolling continuously at the line you choose,
 page by page or not at all; gliding, stepping note by note or beat by beat, in your colour, with
-the notes being played lit up), click-to-seek, and speed from 10 % to 300 % without changing the
-pitch (or tap the tempo you want). A metronome with six sounds, one to
+the notes being played lit up), a fretboard that shows them on the neck of any instrument with
+strings (with the next notes or the whole bar, note names, a capo, left-handed), click-to-seek,
+and speed from 10 % to 300 % without changing the pitch (or tap the tempo you want). A metronome with six sounds, one to
 four clicks per beat, swing, half time, accents you set beat by beat, polyrhythms and silent bars
 to practise keeping time; a count-in of one or two bars, shown large on screen, fitted to where
 you start and, if you like, before every pass of a loop; and a standalone metronome with tap

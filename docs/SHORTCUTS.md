@@ -67,11 +67,14 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## View
 
-| Action        | Windows and Linux    | macOS          |
-| ------------- | -------------------- | -------------- |
-| Zoom in       | `Ctrl =` or `Ctrl +` | `⌘ =` or `⌘ +` |
-| Zoom out      | `Ctrl -` or `Ctrl _` | `⌘ -` or `⌘ _` |
-| Zoom to 100 % | `Ctrl 0`             | `⌘ 0`          |
+| Action              | Windows and Linux    | macOS          |
+| ------------------- | -------------------- | -------------- |
+| Zoom in             | `Ctrl =` or `Ctrl +` | `⌘ =` or `⌘ +` |
+| Zoom out            | `Ctrl -` or `Ctrl _` | `⌘ -` or `⌘ _` |
+| Zoom to 100 %       | `Ctrl 0`             | `⌘ 0`          |
+| Fretboard on or off | `Ctrl F6`            | `⌘ F6`         |
+| Previous track      | `Ctrl ↑`             | `⌘ ↑`          |
+| Next track          | `Ctrl ↓`             | `⌘ ↓`          |
 
 ## Files
 

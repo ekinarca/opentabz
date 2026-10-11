@@ -40,6 +40,13 @@ All notable changes to OpenTabz are recorded here. The format follows
   start to a target speed in steps after a set number of passes at each speed, exactly at the
   start of a pass; a loop can also repeat a set number of times and stop. Loops can be set by
   typing bar numbers. Speed changes while playing no longer stutter.
+- **Fretboard.** The active track's neck under the score: any number of strings (3 to 10) and
+  tunings, a capo, the notes being played lit in the cursor colour, with the next notes to play
+  as rings or the rest of the bar in a lighter colour; dead notes, harmonics and ghost notes
+  drawn as such; note names with their octave always, on hover or never (to practise from
+  memory), spelled in the key; left-handed. It follows playback, stepping and seeking; on phones
+  the neck scrolls to the notes. ⌘/Ctrl+F6 opens it; ⌘/Ctrl+↑ and ↓ switch the active track
+  (the score follows while one track is shown). Settings are remembered.
 - **Following the music.** Scrolling that moves along continuously (with the playing line set
   anywhere from 5 % to 60 % down the view), turns page by page, or stays where it is left; a
   cursor that glides, steps from note to note or beat to beat, or hides; five cursor colours;

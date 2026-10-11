@@ -50,6 +50,33 @@ describe('preferences', () => {
     });
   });
 
+  it('read back the fretboard settings, keeping valid values only', () => {
+    const stored = JSON.stringify({
+      fretboard: true,
+      fretboardShow: 'bar',
+      noteLabels: 'always',
+      leftHanded: true,
+    });
+    expect(parsePreferences(stored, FALLBACK)).toMatchObject({
+      fretboard: true,
+      fretboardShow: 'bar',
+      noteLabels: 'always',
+      leftHanded: true,
+    });
+    const invalid = JSON.stringify({
+      fretboard: 1,
+      fretboardShow: 'song',
+      noteLabels: 'sometimes',
+      leftHanded: 'yes',
+    });
+    expect(parsePreferences(invalid, FALLBACK)).toMatchObject({
+      fretboard: false,
+      fretboardShow: 'next',
+      noteLabels: 'hover',
+      leftHanded: false,
+    });
+  });
+
   it('resolve the system theme from the colour scheme', () => {
     expect(resolveTheme('system', true)).toBe('dark');
     expect(resolveTheme('system', false)).toBe('light');

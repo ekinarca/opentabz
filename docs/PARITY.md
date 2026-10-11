@@ -207,7 +207,7 @@ Pro 7 and older features that GP8 still has.
 | GP-UI-009 | UI | Click-to-edit | Clicking a score element opens its editor. This works for the title and other info, tempo, tuning, capo, sections, swing (triplet feel), chords, text, time and key signatures, fermatas, markers, alternate endings and repeat counts. | 7.5 | EDIT-080 |
 | GP-UI-010 | UI | Hover highlight | Editable score elements turn blue under the mouse. | 7.5 (unverified) | EDIT-080 |
 | GP-UI-011 | UI | Cursor navigation | Arrow keys move by beat and by line. Home/End go to the start or end of the bar, and Ctrl+Home/End to the first or last bar. Tab and Shift+Tab move between staves and notations. | ≤7 | EDIT-004, EDIT-005 |
-| GP-UI-012 | UI | Track switching | Change the active track from the toolbar track-name dropdown, with Ctrl/Cmd+Up/Down, or from the global view. | ≤7 | VIEW-016 |
+| GP-UI-012 | UI | Track switching | Change the active track from the toolbar track-name dropdown, with Ctrl/Cmd+Up/Down, or from the global view. | ≤7 | VIEW-016, VIEW-015 |
 | GP-UI-013 | UI | Section navigation | The Sections menu lists every section to jump to. Ctrl+Alt (Option+Cmd) with Left/Right moves to the previous or next section. | ≤7 | PLAY-004, VIEW-012 |
 | GP-UI-014 | UI | Go to bar | A dialog jumps to a bar number (Ctrl/Cmd+G). The command palette ":" prefix does the same. | ≤7 | PLAY-005, UX-038 |
 | GP-UI-015 | UI | Free scrolling | Wheel, trackpad or scrollbars move the view without moving the cursor. Alt+wheel scrolls sideways. The global view can be made taller. | ≤7 | REND-013, REND-014, PLAT-011 |

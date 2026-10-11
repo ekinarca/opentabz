@@ -36,6 +36,8 @@ export interface OpenDocument {
   readonly mix: readonly TrackMix[];
   /** The track the others are ducked against (the mixer's focus), if any. */
   readonly focus: number | null;
+  /** The track instrument views (the fretboard) follow. */
+  readonly activeTrack: number;
   /** SHA-256 of the file, once known: the mixer is remembered under it. */
   readonly fingerprint: string | null;
   readonly source: { readonly name: string; readonly bytes: ArrayBuffer };
@@ -75,6 +77,8 @@ interface DocumentsState {
   readonly updateView: (key: string, patch: Partial<DocViewState>) => void;
   readonly updateMix: (key: string, trackIndex: number, patch: Partial<TrackMix>) => void;
   readonly setFocus: (key: string, trackIndex: number | null) => void;
+  /** Makes a track the active one; while one track is shown, the score shows the new one. */
+  readonly setActiveTrack: (key: string, trackIndex: number) => void;
   /** Back to the mixer stored in the file. */
   readonly resetMix: (key: string) => void;
   readonly reportFailure: (error: OpenError) => void;
@@ -216,6 +220,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           view: initialView(summary),
           mix: initialMix(summary),
           focus: null,
+          activeTrack: 0,
           fingerprint: null,
           source: { name: loaded.name, bytes },
           intakeMark,
@@ -261,7 +266,16 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
 
   updateView: (key, patch) => {
     set(state => ({
-      docs: state.docs.map(doc => (doc.key === key ? { ...doc, view: { ...doc.view, ...patch } } : doc)),
+      docs: state.docs.map(doc => {
+        if (doc.key !== key) return doc;
+        const shown = patch.trackIndexes;
+        // Hiding the active track hands the role to the first track shown.
+        const activeTrack =
+          shown === undefined || shown.includes(doc.activeTrack)
+            ? doc.activeTrack
+            : (shown[0] ?? doc.activeTrack);
+        return { ...doc, activeTrack, view: { ...doc.view, ...patch } };
+      }),
     }));
   },
 
@@ -281,6 +295,23 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
       docs: state.docs.map(doc => (doc.key === key ? { ...doc, focus: trackIndex } : doc)),
     }));
     remembered(get().docs.find(doc => doc.key === key));
+  },
+
+  setActiveTrack: (key, trackIndex) => {
+    set(state => ({
+      docs: state.docs.map(doc => {
+        if (doc.key !== key || trackIndex < 0 || trackIndex >= doc.summary.tracks.length) return doc;
+        const single = doc.view.trackIndexes.length === 1;
+        return {
+          ...doc,
+          activeTrack: trackIndex,
+          view:
+            single && doc.view.trackIndexes[0] !== trackIndex
+              ? { ...doc.view, trackIndexes: [trackIndex] }
+              : doc.view,
+        };
+      }),
+    }));
   },
 
   resetMix: key => {

@@ -363,6 +363,39 @@ export const strings = {
     unmute: 'Unmute',
   },
 
+  fretboard: {
+    open: 'Fretboard',
+    title: 'Fretboard',
+    track: 'Track',
+    trackOption: (number: number, name: string) => `${number}. ${name}`,
+    tuning: (name: string, capo: number) =>
+      [name.trim().length > 0 ? name : null, capo > 0 ? `Capo ${capo}` : null].filter(Boolean).join(' · '),
+    settings: 'Fretboard settings',
+    close: 'Close the fretboard',
+    show: 'Show',
+    shows: { beat: 'Now', next: 'Now and next', bar: 'Whole bar' },
+    showHints: {
+      beat: 'The notes being played.',
+      next: 'The notes being played, and the next ones to play as rings.',
+      bar: 'The notes being played, and the rest of the bar in a lighter colour.',
+    },
+    labels: 'Note names',
+    labelModes: { off: 'Off', hover: 'On hover', always: 'Always' },
+    labelHints: {
+      off: 'No names, to practise finding the notes from memory.',
+      hover: 'Point at the neck to see the name of a note.',
+      always: 'Every note shown carries its name.',
+    },
+    leftHanded: 'Left-handed',
+    noStrings: (track: string) => `${track} has no strings to show on a fretboard.`,
+    neck: (track: string) => `Fretboard of ${track}`,
+    place: (string: number, fret: number) =>
+      fret === 0 ? `string ${string}, open` : `string ${string}, fret ${fret}`,
+    playing: (notes: readonly string[]) =>
+      notes.length === 0 ? 'Nothing playing.' : `Playing ${notes.join(', ')}.`,
+    next: (notes: readonly string[]) => (notes.length === 0 ? '' : ` Next: ${notes.join(', ')}.`),
+  },
+
   playbackView: {
     open: 'Following the music',
     title: 'Following the music',
@@ -529,6 +562,9 @@ export const strings = {
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
       zoomReset: 'Zoom to 100 %',
+      fretboard: 'Fretboard on or off',
+      trackPrevious: 'Previous track',
+      trackNext: 'Next track',
       open: 'Open files',
       shortcuts: 'Show keyboard shortcuts',
     },

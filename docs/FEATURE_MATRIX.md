@@ -516,9 +516,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                   | Src | M   | Fixture | Test | Status  |
 | -------- | --------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
-| VIEW-001 | Virtual fretboard per track (any string count and tuning) | GP  | M1  | —       | —    | planned |
-| VIEW-002 | Fretboard: left-handed                                    | GP  | M1  | —       | —    | planned |
-| VIEW-003 | Fretboard: current and upcoming notes                     | OT  | M1  | —       | —    | planned |
+| VIEW-001 | Virtual fretboard per track (any string count and tuning) | GP  | M1  | —       | packages/core/test/track-notes.test.ts, apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
+| VIEW-002 | Fretboard: left-handed                                    | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
+| VIEW-003 | Fretboard: current and upcoming notes                     | OT  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-004 | Fretboard: interval / scale / CAGED overlays              | OT  | M5  | —       | —    | planned |
 | VIEW-005 | Piano keyboard view                                       | GP  | M2  | —       | —    | planned |
 | VIEW-006 | Drum pad view                                             | GP  | M2  | —       | —    | planned |
@@ -530,10 +530,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-012 | Section navigator                                         | OT  | M2  | —       | —    | planned |
 | VIEW-013 | Fullscreen / presentation mode                            | GP  | M2  | —       | —    | planned |
 | VIEW-014 | Shortcut cheat sheet                                      | OT  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/shortcuts-doc.test.ts | done |
-| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select | GP  | M2  | —       | —    | planned |
-| VIEW-016 | Active-track switcher (dropdown, next/previous-track keys, overview) | GP  | M1  | —       | —    | planned |
-| VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | —    | planned |
-| VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | —    | planned |
+| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select, click a track to make it the active one | GP  | M2  | —       | —    | planned |
+| VIEW-016 | Active-track switcher (dropdown, next/previous-track keys) | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
+| VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
+| VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-019 | Keyboard view greys keys outside the instrument's range   | GP  | M2  | —       | —    | planned |
 | VIEW-020 | Drum view MIDI mode listing every kit sound, with a GM-only filter | GP  | M2  | —       | —    | planned |
 | VIEW-021 | Drum view labels: never, on hover or always, with MIDI numbers; large labels | GP  | M2  | —       | —    | planned |
@@ -854,7 +854,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-032 | Settings: notation preferences                              | GP  | M2  | —       | —    | planned |
 | PLAT-033 | Settings: synth and sound-pack selection                    | GP  | M7  | —       | —    | planned |
 | PLAT-034 | Settings: audio latency hint                                | OT  | M1  | —       | —    | planned |
-| PLAT-035 | Settings: left-handed                                       | GP  | M1  | —       | —    | planned |
+| PLAT-035 | Settings: left-handed                                       | GP  | M1  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | PLAT-036 | Settings: rebindable shortcuts                              | GP  | M3  | —       | —    | planned |
 | PLAT-040 | Sandboxed scripting API that reads and transforms the score | OT  | M8  | —       | —    | planned |
 | PLAT-041 | Scripts add commands and panels                             | OT  | M8  | —       | —    | planned |

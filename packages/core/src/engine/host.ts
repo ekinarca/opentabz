@@ -5,8 +5,10 @@
 import { summarizeScore } from '../document/summary.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
+import { collectTrackNotes } from '../playback/track-notes.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
+import type { TrackNotes } from '../shared/notes.ts';
 import type { PlaybackTimeline, SynthDelivery } from '../shared/playback.ts';
 import type {
   EngineArgs,
@@ -181,6 +183,12 @@ export class EngineHost implements EngineMethods {
       midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
     });
     return null;
+  }
+
+  public trackNotes(args: EngineArgs<'trackNotes'>): TrackNotes {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    return collectTrackNotes(document.score, args.trackIndex);
   }
 
   /** Number of open documents (for tests and diagnostics). */

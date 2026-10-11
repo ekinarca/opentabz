@@ -43,6 +43,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.preparePlayback(message.args as EngineRequestMessage<'preparePlayback'>['args']);
     case 'previewBeats':
       return host.previewBeats(message.args as EngineRequestMessage<'previewBeats'>['args']);
+    case 'trackNotes':
+      return host.trackNotes(message.args as EngineRequestMessage<'trackNotes'>['args']);
   }
 }
 

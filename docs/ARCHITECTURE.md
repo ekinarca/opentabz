@@ -105,6 +105,8 @@ and a worker that fails three times while starting is reported as unavailable.
 | `closeView`       | dispose a render session                                                          |
 | `connectSynth`    | receive a `MessagePort` to the synth worker                                       |
 | `preparePlayback` | generate MIDI (sent straight to the synth worker) and the playback timeline       |
+| `previewBeats`    | sound the given beats once (audible stepping)                                     |
+| `trackNotes`      | one track's notes per beat (string, fret, pitch, flags) for instrument views      |
 
 Layouts also return `ScoreBounds`: compact typed arrays with every system, bar and beat
 rectangle, which the main thread uses for the cursor, hit testing and selections without
@@ -210,6 +212,18 @@ zoom. Vertical scroll re-fits systems to the new effective width through the wor
 path; during continuous gestures (pinch, ctrl+wheel) the old layout is shown scaled until the
 new one arrives.
 
+### 5.7 Instrument views
+
+The fretboard (`app/FretboardPanel.tsx`, `app/FretboardNeck.tsx`) draws the active track's neck
+as SVG: any number of strings with the highest on top as in tablature, real fret spacing blended
+half-way with even spacing, inlays, a capo, left-handed mirroring. Its notes come from the
+engine once per track (`trackNotes`: typed arrays of string, fret from the capo, sounding pitch
+and flags per beat), cached on the main thread. A pure model (`instrument-view/fretboard.ts`)
+looks up what sounds at the playback tick in the timeline the cursor uses (held notes included),
+the next notes to play and the rest of the bar, and spells note names in the bar's key. The
+panel reads it through `useSyncExternalStore` with a snapshot that only changes when the notes
+shown change, so playback re-renders the neck once per new beat at most.
+
 ## 6. Opening files
 
 1. **Intake (main thread):** drag-and-drop anywhere, file picker, clipboard paste (files),
@@ -240,8 +254,9 @@ as needed) plus `opentabz.json`; every `.otz` opens in Guitar Pro minus the extr
 ## 8. State
 
 Zustand stores, each small and serializable: `documents` (open docs, active doc, per-doc view
-options and mixer state), `preferences` (theme, default layout/zoom/staff display/paper,
-persisted to `localStorage` until the library lands in M3), `practice` (metronome and count-in
+options, mixer state and active track), `preferences` (theme, default layout/zoom/staff
+display/paper, how the view follows playback, the fretboard's settings, persisted to
+`localStorage` until the library lands in M3), `practice` (metronome and count-in
 settings and the standalone metronome's tempo and meter, persisted the same way; changes go to
 the synth worker as they happen) and `player` (transport, timeline, position, speed, count-in
 progress, the standalone metronome, loop, selection, volume). The transport is an explicit,

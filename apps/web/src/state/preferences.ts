@@ -4,6 +4,12 @@
  */
 import type { LayoutKind, StaffDisplay } from '@opentabz/core/shared';
 import { create } from 'zustand';
+import {
+  FRETBOARD_SHOWS,
+  NOTE_LABELS,
+  type FretboardShow,
+  type NoteLabels,
+} from '../instrument-view/fretboard.ts';
 import type { PaperId } from '../score-view/pagination.ts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark', 'sepia', 'stage'] as const;
@@ -37,6 +43,12 @@ export interface Preferences {
   readonly barHighlight: boolean;
   /** The notes being played drawn in the cursor colour. */
   readonly noteHighlight: boolean;
+  /** The fretboard panel is open. */
+  readonly fretboard: boolean;
+  readonly fretboardShow: FretboardShow;
+  readonly noteLabels: NoteLabels;
+  /** Instrument views mirrored for left-handed players. */
+  readonly leftHanded: boolean;
 }
 
 export const STORAGE_KEY = 'opentabz.preferences.v1';
@@ -59,6 +71,10 @@ export function defaultPreferences(locale: string): Preferences {
     cursorColor: 'accent',
     barHighlight: true,
     noteHighlight: true,
+    fretboard: false,
+    fretboardShow: 'next',
+    noteLabels: 'hover',
+    leftHanded: false,
   };
 }
 
@@ -101,6 +117,10 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       cursorColor: oneOf(value.cursorColor, CURSOR_COLORS, fallback.cursorColor),
       barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
       noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
+      fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
+      fretboardShow: oneOf(value.fretboardShow, FRETBOARD_SHOWS, fallback.fretboardShow),
+      noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
+      leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
     };
   } catch {
     return fallback;
@@ -145,6 +165,10 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       cursorColor: state.cursorColor,
       barHighlight: state.barHighlight,
       noteHighlight: state.noteHighlight,
+      fretboard: state.fretboard,
+      fretboardShow: state.fretboardShow,
+      noteLabels: state.noteLabels,
+      leftHanded: state.leftHanded,
     });
   },
 }));

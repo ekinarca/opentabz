@@ -16,6 +16,7 @@ import {
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { usePractice } from '../state/practice.ts';
+import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { pickFiles } from './open-actions.ts';
@@ -247,6 +248,16 @@ function zoomActive(change: (zoom: number) => number): boolean {
   const doc = activeDocument();
   if (doc === null) return false;
   useDocuments.getState().updateView(doc.key, { zoom: clampZoom(change(doc.view.zoom)) });
+  return true;
+}
+
+/** Makes the previous or next track the active one (and shows it, while one track is shown). */
+function stepTrack(step: number): boolean {
+  const doc = activeDocument();
+  if (doc === null) return false;
+  const target = doc.activeTrack + step;
+  if (target >= 0 && target < doc.summary.tracks.length)
+    useDocuments.getState().setActiveTrack(doc.key, target);
   return true;
 }
 
@@ -569,6 +580,34 @@ export const SHORTCUTS: readonly Shortcut[] = [
     bindings: [{ key: '0', mod: true }],
     needsScore: true,
     run: () => zoomActive(() => 1),
+  },
+  {
+    id: 'fretboard',
+    group: 'view',
+    label: s.fretboard,
+    bindings: [{ key: 'F6', mod: true }],
+    needsScore: true,
+    run: () => {
+      const preferences = usePreferences.getState();
+      preferences.set({ fretboard: !preferences.fretboard });
+      return true;
+    },
+  },
+  {
+    id: 'track-previous',
+    group: 'view',
+    label: s.trackPrevious,
+    bindings: [{ key: 'ArrowUp', mod: true }],
+    needsScore: true,
+    run: () => stepTrack(-1),
+  },
+  {
+    id: 'track-next',
+    group: 'view',
+    label: s.trackNext,
+    bindings: [{ key: 'ArrowDown', mod: true }],
+    needsScore: true,
+    run: () => stepTrack(1),
   },
   {
     id: 'open',

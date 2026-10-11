@@ -4,6 +4,7 @@
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
 import type { OpenError } from './open-error.ts';
+import type { TrackNotes } from './notes.ts';
 import type { PlaybackTimeline, ScoreBounds } from './playback.ts';
 import type { DocSummary } from './summary.ts';
 import type { PartialLayout, ViewOptions } from './view.ts';
@@ -58,6 +59,8 @@ export interface EngineMethods {
   preparePlayback(args: { readonly docId: string; readonly playbackId: string }): PlaybackTimeline;
   /** Sends the given beats to the synth to sound once, as if struck together (audible stepping). */
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
+  /** The notes of one track, beat by beat, for instrument views. */
+  trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
 }
 
 export type EngineMethod = keyof EngineMethods;
