@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  resolveScoreColors,
+  PRINT_PALETTE,
+  resolveScoreColor,
   SCORE_COLOR_ROLES,
   SCORE_COLOR_SENTINELS,
   scoreThemeCss,
@@ -35,11 +36,17 @@ describe('score colour theming', () => {
       'bar-number': '#aa0000',
       info: '#333333',
     };
-    const svg =
-      '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#020202"/><path stroke="#000000"/></svg>';
-    const resolved = resolveScoreColors(svg, palette);
-    expect(resolved).toBe(
-      '<svg fill="#111111" xmlns="http://www.w3.org/2000/svg"><rect fill="#999999"/><path stroke="#111111"/></svg>',
-    );
+    expect(resolveScoreColor('#020202', palette)).toBe('#999999');
+    expect(resolveScoreColor('#000000', palette)).toBe('#111111');
+    // No colour: drawn in the main colour.
+    expect(resolveScoreColor(null, palette)).toBe('#111111');
+    // Colours from the file are kept.
+    expect(resolveScoreColor('#FF0000', palette)).toBe('#FF0000');
+    expect(resolveScoreColor('rgba(255,0,0,0.5)', palette)).toBe('rgba(255,0,0,0.5)');
+  });
+
+  it('prints black on white', () => {
+    for (const role of SCORE_COLOR_ROLES) expect(PRINT_PALETTE[role]).toMatch(/^#[0-9A-F]{6}$/);
+    expect(PRINT_PALETTE.ink).toBe('#000000');
   });
 });

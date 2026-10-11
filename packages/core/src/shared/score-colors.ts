@@ -48,16 +48,29 @@ export function scoreThemeCss(scope: string): string {
   return rules.join('\n');
 }
 
+export type ScorePalette = Readonly<Record<ScoreColorRole, string>>;
+
+/** The colours of printed and exported scores: black on white, as engraved music is. */
+export const PRINT_PALETTE: ScorePalette = {
+  ink: '#000000',
+  'ink-secondary': '#7A7A7A',
+  'staff-line': '#3C3C3C',
+  barline: '#000000',
+  'bar-number': '#3C3C3C',
+  info: '#000000',
+};
+
+const ROLE_OF_SENTINEL = new Map<string, ScoreColorRole>(
+  SCORE_COLOR_ROLES.map(role => [SCORE_COLOR_SENTINELS[role], role]),
+);
+
 /**
- * Replaces sentinel colours in SVG markup with concrete colours, for exports and print where
- * CSS variables are not available. Glyphs without a fill attribute inherit the root's fill,
- * which is set to the ink colour.
+ * The concrete colour of a colour in rendered SVG, for exports and print where CSS variables are
+ * not available: sentinels become their role's colour, no colour (glyphs drawn in the main
+ * colour) becomes the ink, and colours from the file stay as they are.
  */
-export function resolveScoreColors(svg: string, palette: Readonly<Record<ScoreColorRole, string>>): string {
-  let result = svg;
-  for (const role of SCORE_COLOR_ROLES) {
-    const sentinel = SCORE_COLOR_SENTINELS[role];
-    result = result.replaceAll(`"${sentinel}"`, `"${palette[role]}"`);
-  }
-  return result.replace(/<svg\b(?![^>]*\sfill=)/, `<svg fill="${palette.ink}"`);
+export function resolveScoreColor(value: string | null, palette: ScorePalette): string {
+  if (value === null) return palette.ink;
+  const role = ROLE_OF_SENTINEL.get(value.toUpperCase());
+  return role === undefined ? value : palette[role];
 }

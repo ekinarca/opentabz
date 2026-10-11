@@ -3,6 +3,7 @@
  * UI text lives anywhere else.
  */
 import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
+import type { PngResolution } from './export/page-files.ts';
 import type { PaperId } from './score-view/pagination.ts';
 import type { ThemePreference } from './state/preferences.ts';
 
@@ -246,12 +247,51 @@ export const strings = {
     settings: 'Settings',
     about: 'About OpenTabz',
     export: 'Export',
+    print: 'Print',
+  },
+
+  print: {
+    useAppCommand:
+      'To print the score, use Print in OpenTabz (the printer button, or Ctrl+P / ⌘P): it draws every page first.',
   },
 
   exportDialog: {
     title: 'Export',
     description: 'Save the score as a file for other programs. It is made on this device and sent nowhere.',
     close: 'Close',
+    pages: 'Pages',
+    pagesHint: 'The score on paper, as the page view shows it: the same tracks, staves and paper.',
+    format: 'Format',
+    formats: { pdf: 'PDF', png: 'PNG', svg: 'SVG' },
+    formatHints: {
+      pdf: 'One document of the pages, vector and with searchable text: to print, share or read anywhere.',
+      png: 'An image of each page, for documents, messages and the web.',
+      svg: 'Each page as vector graphics, for vector editors and the web.',
+    },
+    pdfCreator: 'OpenTabz',
+    pdfProducer: 'OpenTabz, with the alphaTab notation engine',
+    pageChoice: 'Which pages',
+    pageChoices: { all: 'All', range: 'Range' },
+    pageCount: (pages: number) =>
+      pages === 1 ? 'The score fills one page.' : `The score fills ${pages} pages.`,
+    countingPages: 'Counting the pages…',
+    fromPage: 'From page',
+    toPage: 'To page',
+    resolution: 'Resolution',
+    dpi: (dpi: number) => `${dpi} dpi`,
+    resolutionHints: {
+      72: 'Screen size: small files.',
+      150: 'For screens with fine pixels and draft prints.',
+      300: 'Print quality.',
+    } satisfies Record<PngResolution, string>,
+    transparent: 'Transparent background',
+    exportPages: (format: string) => `Export ${format}`,
+    severalFiles: 'More than one page is saved as a ZIP archive of one file per page.',
+    print: 'Print…',
+    printNow: 'Print now',
+    printReady: 'The pages are ready.',
+    preparing: (percent: number) => `Drawing pages… ${percent} %`,
+    preparingLabel: 'Drawing the pages',
     midi: 'MIDI file',
     midiHint: 'Every track as it is played, with the tempo map and a marker at each section.',
     leaveOutMuted: 'Leave out muted tracks',
@@ -627,6 +667,7 @@ export const strings = {
       trackPrevious: 'Previous track',
       trackNext: 'Next track',
       open: 'Open files',
+      print: 'Print the score',
       shortcuts: 'Show keyboard shortcuts',
     },
     or: 'or',

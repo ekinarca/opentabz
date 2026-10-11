@@ -1,6 +1,6 @@
 import { trainerSpeeds } from '@opentabz/audio/trainer';
 import { Dialog, SegmentedControl, Slider, Switch } from '@opentabz/ui';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { usePlayer } from '../state/player.ts';
 import {
   LOOP_PASSES,
@@ -13,7 +13,7 @@ import {
 } from '../state/practice.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
-import { Field, MetronomeSettingsForm, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
+import { Field, MetronomeSettingsForm, NumberField, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
 const s = strings.practice;
 
@@ -69,53 +69,6 @@ function CountInSettings() {
         />
       </Field>
     </section>
-  );
-}
-
-/** A whole number typed in a field; values outside `min`–`max` are not taken. */
-function NumberField({
-  label,
-  value,
-  min,
-  max,
-  unit,
-  onCommit,
-}: {
-  readonly label: string;
-  readonly value: number;
-  readonly min: number;
-  readonly max: number;
-  readonly unit?: string;
-  readonly onCommit: (value: number) => void;
-}) {
-  const id = useId();
-  const [text, setText] = useState<string | null>(null);
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-[12px] font-medium text-ink-muted">
-        {label}
-      </label>
-      <div className="flex items-center gap-1">
-        <input
-          id={id}
-          type="number"
-          inputMode="numeric"
-          min={min}
-          max={max}
-          value={text ?? String(value)}
-          onChange={event => {
-            setText(event.target.value);
-            const number = Number.parseInt(event.target.value, 10);
-            if (Number.isInteger(number) && number >= min && number <= max) onCommit(number);
-          }}
-          onBlur={() => {
-            setText(null);
-          }}
-          className={`${SELECT_CLASS} w-full min-w-0 font-mono tabular-nums`}
-        />
-        {unit !== undefined && <span className="text-[13px] text-ink-muted">{unit}</span>}
-      </div>
-    </div>
   );
 }
 

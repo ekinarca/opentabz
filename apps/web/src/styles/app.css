@@ -58,3 +58,51 @@
   accent-color: var(--ot-accent);
   height: 4px;
 }
+
+/* Printing (export/print.ts): only the prepared pages print, one sheet of paper each. */
+#ot-print {
+  display: none;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  body > :not(#ot-print) {
+    display: none !important;
+  }
+
+  #ot-print {
+    display: block;
+    color: #000000;
+  }
+
+  /* Printed from the browser's menu, without the pages: say how to print them. */
+  #ot-print:empty::before {
+    content: attr(data-note);
+    display: block;
+    padding: 2rem;
+    font: 14px/1.5 var(--font-sans);
+  }
+
+  .ot-print-page {
+    overflow: hidden;
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .ot-print-page:last-child {
+    break-after: auto;
+  }
+
+  .ot-print-page > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}

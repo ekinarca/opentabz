@@ -78,9 +78,10 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Files
 
-| Action     | Windows and Linux | macOS |
-| ---------- | ----------------- | ----- |
-| Open files | `Ctrl O`          | `⌘ O` |
+| Action          | Windows and Linux | macOS |
+| --------------- | ----------------- | ----- |
+| Open files      | `Ctrl O`          | `⌘ O` |
+| Print the score | `Ctrl P`          | `⌘ P` |
 
 ## Help
 

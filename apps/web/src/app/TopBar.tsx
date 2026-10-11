@@ -9,7 +9,7 @@ import {
   Tooltip,
   Wordmark,
 } from '@opentabz/ui';
-import { CircleHelp, Download, FolderOpen, Keyboard, Palette, Settings, X } from 'lucide-react';
+import { CircleHelp, Download, FolderOpen, Keyboard, Palette, Printer, Settings, X } from 'lucide-react';
 import { useDocuments } from '../state/documents.ts';
 import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
@@ -109,6 +109,16 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             icon={<Download size={18} aria-hidden />}
             onClick={() => {
               useUi.getState().openPanel('export');
+            }}
+          />
+        )}
+        {!home && activeKey !== null && (
+          <IconButton
+            label={strings.topBar.print}
+            shortcut={`${modKey()}+P`}
+            icon={<Printer size={18} aria-hidden />}
+            onClick={() => {
+              useUi.getState().requestPrint();
             }}
           />
         )}

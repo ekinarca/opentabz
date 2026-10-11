@@ -1,7 +1,7 @@
 import { METRONOME_SOUND_NAMES, type MetronomeLevel, type MetronomeSound } from '@opentabz/audio/metronome';
 import { IconButton, SegmentedControl, Slider, Switch } from '@opentabz/ui';
 import { Minus, Plus } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { MAX_BEAT_DROP, MAX_PATTERN, nextLevel, POLYRHYTHMS, usePractice } from '../state/practice.ts';
 import { strings } from '../strings.ts';
 
@@ -44,6 +44,53 @@ export function Field({
 
 export const SELECT_CLASS =
   'h-9 rounded-[var(--radius-control)] border border-line bg-surface px-2 text-[14px] text-ink outline-none focus-visible:border-accent';
+
+/** A whole number typed in a field; values outside `min`–`max` are not taken. */
+export function NumberField({
+  label,
+  value,
+  min,
+  max,
+  unit,
+  onCommit,
+}: {
+  readonly label: string;
+  readonly value: number;
+  readonly min: number;
+  readonly max: number;
+  readonly unit?: string;
+  readonly onCommit: (value: number) => void;
+}) {
+  const id = useId();
+  const [text, setText] = useState<string | null>(null);
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-[12px] font-medium text-ink-muted">
+        {label}
+      </label>
+      <div className="flex items-center gap-1">
+        <input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          value={text ?? String(value)}
+          onChange={event => {
+            setText(event.target.value);
+            const number = Number.parseInt(event.target.value, 10);
+            if (Number.isInteger(number) && number >= min && number <= max) onCommit(number);
+          }}
+          onBlur={() => {
+            setText(null);
+          }}
+          className={`${SELECT_CLASS} w-full min-w-0 font-mono tabular-nums`}
+        />
+        {unit !== undefined && <span className="text-[13px] text-ink-muted">{unit}</span>}
+      </div>
+    </div>
+  );
+}
 
 /** Glyphs of the accent levels in the pattern editor. */
 const LEVEL_GLYPHS: Readonly<Record<MetronomeLevel, string>> = {

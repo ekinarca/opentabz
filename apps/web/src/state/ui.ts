@@ -7,16 +7,30 @@ export type Panel = 'speed' | 'goto' | 'shortcuts' | 'practice' | 'metronome' | 
 
 interface UiState {
   readonly panel: Panel | null;
+  /** Printing was asked for (the Print command): the export panel prints and closes again. */
+  readonly printRequested: boolean;
   readonly openPanel: (panel: Panel) => void;
   readonly setPanelOpen: (panel: Panel, open: boolean) => void;
+  readonly requestPrint: () => void;
+  /** Whether printing was asked for, clearing the request. */
+  readonly takePrintRequest: () => boolean;
 }
 
-export const useUi = create<UiState>(set => ({
+export const useUi = create<UiState>((set, get) => ({
   panel: null,
+  printRequested: false,
   openPanel: panel => {
     set({ panel });
   },
   setPanelOpen: (panel, open) => {
     set(state => ({ panel: open ? panel : state.panel === panel ? null : state.panel }));
+  },
+  requestPrint: () => {
+    set({ panel: 'export', printRequested: true });
+  },
+  takePrintRequest: () => {
+    const requested = get().printRequested;
+    if (requested) set({ printRequested: false });
+    return requested;
   },
 }));

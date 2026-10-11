@@ -78,6 +78,8 @@ describe('repository', () => {
       '@coderline/alphatab': 'alphaTab',
       '@fontsource-variable/instrument-sans': 'Instrument Sans',
       '@fontsource-variable/jetbrains-mono': 'JetBrains Mono',
+      '@fontsource/arimo': 'Arimo',
+      '@fontsource/gelasio': 'Gelasio',
       '@fontsource/instrument-serif': 'Instrument Serif',
       fflate: 'fflate',
       'lucide-react': 'Lucide',

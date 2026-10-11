@@ -79,7 +79,7 @@ Keyboard shortcuts and gestures are listed in [docs/SHORTCUTS.md](docs/SHORTCUTS
 | Fretboard and keyboard views                        | Yes                         | Planned (M1–M2)                                                  |
 | Writing and editing scores                          | Yes                         | Planned (M4–M5)                                                  |
 | Realistic instrument sound engine                   | Yes (RSE)                   | SoundFont playback now; a full sound engine is planned (M7)      |
-| Export to PDF, MIDI, MusicXML, audio                | Yes                         | Planned (M2–M7)                                                  |
+| Export to PDF, MIDI, MusicXML, audio                | Yes                         | PDF, PNG, SVG, MIDI, WAV and printing; MusicXML and more (M4–M7) |
 | Works offline                                       | Yes                         | Planned (M3)                                                     |
 | Your files stay on your device                      | Yes                         | Yes: nothing is ever uploaded; no analytics, cookies or tracking |
 

@@ -173,6 +173,19 @@ records `(sourceY, sheetY)`; a per-system offset table maps alphaTab coordinates
 cursor, hit testing) to sheet coordinates and back. Page geometry (A4, Letter, custom size,
 margins, header/footer text, page numbers) is pure data in `pagination.ts` with unit tests.
 
+Exports and print use the same page model (ADR-0005). The UI lays the score out again in an
+engine view of its own, paginates it with `pagination.ts` and has the engine paint one page at
+a time. The sheets worker (`export/sheets.worker.ts`) reads each painted partial with
+`@opentabz/core/print` (alphaTab-free): its rectangles, paths, texts and music symbols. It writes
+the page out again as a standalone SVG in the print palette. Music symbols are drawn from
+Bravura's outlines (`print/music-glyphs.ts`, generated from the font alphaTab ships), so files
+need no font. PNG pages are that SVG drawn by the browser at the chosen resolution. Printing
+places the SVG pages in a print-only element sized with CSS paged media. PDFs are written from
+the same reading (`print/pdf.ts`): one reusable form per music symbol, and text in embedded
+TrueType subsets of Arimo and Gelasio (read from WOFF, `print/truetype.ts`), which are as wide as
+Arial and Georgia, so text lands where alphaTab laid it out. Text in scripts those fonts lack is
+drawn as an image with the device's fonts.
+
 ### 5.3 Virtualization
 
 An `IntersectionObserver` on the scroll container (root margin ≈ one viewport) requests

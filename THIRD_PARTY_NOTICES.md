@@ -13,7 +13,7 @@ or sponsored by Arobas Music; the name is used only to say which files OpenTabz 
 | Component                                                                                                         | Version | Licence    | Used for                                                         |
 | ----------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------------------------------------------------------------- |
 | [alphaTab](https://github.com/CoderLine/alphaTab)                                                                 | 1.8.4   | MPL-2.0    | Import, layout, SVG rendering, MIDI, synthesizer                 |
-| [Bravura](https://github.com/steinbergmedia/bravura) (font)                                                       | —       | OFL-1.1    | Music symbols (shipped with alphaTab)                            |
+| [Bravura](https://github.com/steinbergmedia/bravura) (font)                                                       | —       | OFL-1.1    | Music symbols (shipped with alphaTab), drawn in exported pages   |
 | SONiVOX EAS sound bank (`sonivox.sf2`)                                                                            | —       | Apache-2.0 | Default playback sounds (shipped with alphaTab)                  |
 | [React](https://react.dev), React DOM, scheduler                                                                  | 19.3.0  | MIT        | User interface                                                   |
 | [Radix UI](https://www.radix-ui.com/primitives)                                                                   | 1.7.0   | MIT        | Accessible menus, dialogs, popovers, sliders, tooltips           |
@@ -22,10 +22,12 @@ or sponsored by Arobas Music; the name is used only to say which files OpenTabz 
 | [tslib](https://github.com/microsoft/tslib)                                                                       | 2.8.1   | 0BSD       | Helpers (used by Radix UI)                                       |
 | [Zustand](https://github.com/pmndrs/zustand)                                                                      | 5.0.15  | MIT        | Application state                                                |
 | [Lucide](https://lucide.dev) icons                                                                                | 1.55.0  | ISC        | Icons                                                            |
-| [fflate](https://github.com/101arrowz/fflate)                                                                     | 0.8.3   | MIT        | Reading ZIP containers while detecting file formats              |
+| [fflate](https://github.com/101arrowz/fflate)                                                                     | 0.8.3   | MIT        | Reading ZIP containers; compressing PDF and ZIP exports          |
 | [Instrument Sans](https://github.com/Instrument/instrument-sans) (via Fontsource)                                 | 5.3.0   | OFL-1.1    | Interface text; the OpenTabz wordmark is drawn from its outlines |
 | [Instrument Serif](https://github.com/Instrument/instrument-serif) (via Fontsource)                               | 5.3.0   | OFL-1.1    | Display text                                                     |
 | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (via Fontsource)                                     | 5.3.0   | OFL-1.1    | Times, tempos and other numbers                                  |
+| [Arimo](https://github.com/googlefonts/arimo) (via Fontsource)                                                    | 5.3.0   | OFL-1.1    | Sans-serif text of exported PDFs (subsets embedded)              |
+| [Gelasio](https://github.com/SorkinType/Gelasio) (via Fontsource)                                                 | 5.3.0   | OFL-1.1    | Serif text of exported PDFs (subsets embedded)                   |
 
 ### alphaTab and its integrated libraries
 
@@ -48,6 +50,12 @@ modified source is that patch applied to the published package, and each change 
 
 Copyright © 2015, Steinberg Media Technologies GmbH, with Reserved Font Name "Bravura". Licensed
 under the SIL Open Font License 1.1.
+
+### Arimo and Gelasio
+
+Arimo: Copyright 2020 The Arimo Project Authors. Gelasio: Copyright 2022 The Gelasio Project
+Authors. Both licensed under the SIL Open Font License 1.1. Exported PDFs embed subsets of them:
+their widths match Arial's and Georgia's, the fonts the score is laid out with.
 
 ### SONiVOX EAS sound bank
 

@@ -787,9 +787,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID      | Feature                                                               | Src | M   | Fixture | Test | Status  |
 | ------- | --------------------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
-| EXP-001 | PDF (vector, fonts embedded, correct pagination)                      | GP  | M2  | —       | —    | planned |
-| EXP-002 | PNG                                                                   | GP  | M2  | —       | —    | planned |
-| EXP-003 | SVG                                                                   | OT  | M2  | —       | —    | planned |
+| EXP-001 | PDF (vector, fonts embedded, correct pagination)                      | GP  | M2  | —       | packages/core/test/print-pdf.test.ts, apps/web/e2e/export.spec.ts | done |
+| EXP-002 | PNG                                                                   | GP  | M2  | —       | packages/core/test/print-sheet.test.ts, apps/web/e2e/export.spec.ts | done |
+| EXP-003 | SVG                                                                   | OT  | M2  | —       | packages/core/test/print-sheet.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-004 | MIDI (effects as pitch bend / CC, tempo map, markers)                 | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-005 | WAV                                                                   | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-006 | MP3                                                                   | GP  | M7  | —       | —    | planned |
@@ -802,7 +802,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-013 | ASCII tab                                                             | GP  | M5  | —       | —    | planned |
 | EXP-014 | ChordPro                                                              | OT  | M5  | —       | —    | planned |
 | EXP-015 | MusicXML                                                              | GP  | M5  | —       | —    | planned |
-| EXP-016 | Print via CSS with proper pagination                                  | GP  | M2  | —       | —    | planned |
+| EXP-016 | Print via CSS with proper pagination                                  | GP  | M2  | —       | apps/web/e2e/export.spec.ts | done |
 | EXP-017 | Batch export of a folder                                              | OT  | M8  | —       | —    | planned |
 | EXP-018 | Video: scrolling score with cursor and audio → MP4 / WebM (WebCodecs) | OT  | M7  | —       | —    | planned |
 | EXP-019 | GIF of a selected lick                                                | OT  | M7  | —       | —    | planned |
@@ -812,8 +812,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-023 | AIFF                                                                  | GP  | M7  | —       | —    | planned |
 | EXP-024 | MIDI options: muted tracks left out, one or two channels per track    | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-025 | MIDI round trip keeps decimal tempos and note-level audio settings    | GP  | M5  | —       | —    | planned |
-| EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | —    | planned |
-| EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | —    | planned |
+| EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | apps/web/e2e/export.spec.ts | in progress |
+| EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | packages/core/test/print-sheet.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-028 | File-name templates with tokens (title, track name, number and count, date, time) and a preview | GP  | M2  | —       | —    | planned |
 | EXP-029 | Audio export of the selected bars only                                | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-030 | Metronome click and count-in in audio export                          | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |

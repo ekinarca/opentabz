@@ -622,6 +622,18 @@ export const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    id: 'print',
+    group: 'files',
+    label: s.print,
+    bindings: [{ key: 'p', mod: true }],
+    needsScore: true,
+    inTextFields: true,
+    run: () => {
+      useUi.getState().requestPrint();
+      return true;
+    },
+  },
+  {
     id: 'shortcuts',
     group: 'help',
     label: s.shortcuts,
