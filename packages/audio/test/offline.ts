@@ -22,7 +22,7 @@ function soundFont(): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 }
 
-export type Command = Exclude<SynthCommand, { type: 'init' }>;
+export type Command = Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>;
 
 export interface RenderOptions {
   /** Sent after the MIDI is loaded, before playing. */
@@ -66,6 +66,7 @@ export async function renderOffline(
       transpositionPitches: playback.transpositionPitches,
       bars: playback.bars,
       endTick: playback.timeline.endTick,
+      centeredChannels: [],
     });
   }
   await Promise.resolve();

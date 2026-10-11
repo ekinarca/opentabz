@@ -1,9 +1,9 @@
 /**
  * Proof that note-level techniques and articulations change what is played (FEATURE_MATRIX
  * PLAY-033…PLAY-043, PLAY-079, PLAY-080, PLAY-089, PLAY-090): pitches, lengths, velocities and
- * re-attacks in the generated MIDI. Not covered because alphaTab 1.8.4 gets them wrong: slap and
- * pop, tapping and golpe play like plain notes (PLAY-040, PLAY-094, PLAY-095), mordents and turns
- * ignore the key (PLAY-093), and the sustain pedal is never sent (PLAY-096).
+ * re-attacks in the generated MIDI. Techniques alphaTab 1.8.4 got wrong are proved where they are
+ * fixed: tremolo speeds, fades, ornaments in key, tapping and the sustain pedal in
+ * playback-realism.test.ts (patch 0015), slap, pop and golpe in playback-channels.test.ts (0017).
  */
 import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
@@ -146,9 +146,7 @@ describe('PLAY-037 dead notes', () => {
   });
 });
 
-// PLAY-038 is only partly covered: alphaTab 1.8.4 computes the tremolo speed as the beat's own
-// note value halved once per mark, which is right for quarter notes only; a half note with an
-// eighth-note tremolo (`{tp 1}`) plays two quarters instead of four eighths.
+// Other note values: playback-realism.test.ts (PLAY-038, patch 0015).
 describe('tremolo picking on quarter notes', () => {
   it('repeats a quarter note in eighths, sixteenths and thirty-seconds for one, two and three marks', () => {
     const notes = soundingNotes(guitar(120, ':4 3.3{tp 1} 3.3{tp 2} 3.3{tp 3} r').events);
@@ -209,8 +207,7 @@ describe('PLAY-042 staccato', () => {
   });
 });
 
-// PLAY-043 is only partly covered: in alphaTab 1.8.4 a fade-out or volume swell ends at channel
-// volume 0 and nothing restores it, so every later note of the track is silent.
+// Fade-outs and swells: playback-realism.test.ts (PLAY-043, patch 0015).
 describe('fade in', () => {
   it('raises the channel volume from silence to the track volume over the note, then leaves it there', () => {
     const played = guitar(120, '(0.1 2.2 2.3).2{f} (0.1 2.2 2.3).2', '(0.1 2.2 2.3).1');

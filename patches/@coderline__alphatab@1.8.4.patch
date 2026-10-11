@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313b8ab95c3 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..a931a675edb91a8d0cb459048d7aabc6b808540e 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -298,7 +298,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  			state.synthData.push(metronome);
  			metronome.time = metronomeTime;
  			metronomeTick += metronomeLengthInTicks;
-@@ -37963,6 +38138,10 @@ class Channel {
+@@ -37963,6 +38138,12 @@ class Channel {
  	mixVolume = 0;
  	mute = false;
  	solo = false;
@@ -306,10 +306,12 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
 +	detune = 0;
 +	/** OpenTabz patch 0014: the program the song's own events selected. */
 +	songProgram = 0;
++	/** OpenTabz patch 0015: the sustain pedal is down. */
++	sustain = false;
  }
  //#endregion
  //#region src/synth/synthesis/Channels.ts
-@@ -37974,7 +38153,8 @@ class Channels {
+@@ -37974,7 +38155,8 @@ class Channels {
  	channelList = [];
  	setupVoice(tinySoundFont, voice) {
  		const c = this.channelList[this.activeChannel];
@@ -319,7 +321,12 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		voice.playingChannel = this.activeChannel;
  		voice.mixVolume = c.mixVolume;
  		voice.noteGainDb += c.gainDb;
-@@ -38613,7 +38793,7 @@ class Voice {
+@@ -38610,10 +38792,12 @@ class Voice {
+ 	vibLfo = new VoiceLfo();
+ 	mixVolume = 0;
+ 	mute = false;
++	/** OpenTabz patch 0015: released while the sustain pedal was down; ends when it comes up. */
++	sustained = false;
  	updatePitchRatio(c, outSampleRate) {
  		let pitchWheel = c.pitchWheel;
  		if (c.perNotePitchWheel.has(this.playingKey)) pitchWheel += c.perNotePitchWheel.get(this.playingKey) - 8192;
@@ -328,7 +335,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		this.calcPitchRatio(pitchShift, outSampleRate);
  	}
  	calcPitchRatio(pitchShift, outSampleRate) {
-@@ -38875,6 +39055,10 @@ class TinySoundFont {
+@@ -38875,6 +39059,10 @@ class TinySoundFont {
  	_midiEventQueue = new Queue();
  	_mutedChannels = /* @__PURE__ */ new Map();
  	_soloChannels = /* @__PURE__ */ new Map();
@@ -339,7 +346,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	_isAnySolo = false;
  	_transpositionPitches = /* @__PURE__ */ new Map();
  	_liveTranspositionPitches = /* @__PURE__ */ new Map();
-@@ -38903,6 +39087,45 @@ class TinySoundFont {
+@@ -38903,6 +39091,45 @@ class TinySoundFont {
  		if (mute) this._mutedChannels.set(channel, true);
  		else this._mutedChannels.delete(channel);
  	}
@@ -385,7 +392,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	channelSetSolo(channel, solo) {
  		if (solo) this._soloChannels.set(channel, true);
  		else this._soloChannels.delete(channel);
-@@ -38911,6 +39134,10 @@ class TinySoundFont {
+@@ -38911,6 +39138,10 @@ class TinySoundFont {
  	resetChannelStates() {
  		this._mutedChannels = /* @__PURE__ */ new Map();
  		this._soloChannels = /* @__PURE__ */ new Map();
@@ -396,7 +403,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
  		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
  		this._isAnySolo = false;
-@@ -38948,8 +39175,10 @@ class TinySoundFont {
+@@ -38948,8 +39179,10 @@ class TinySoundFont {
  		while (!this._midiEventQueue.isEmpty) {
  			const m = this._midiEventQueue.dequeue();
  			if (m.isMetronome && this.metronomeVolume > 0) {
@@ -408,7 +415,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  			} else if (m.event) this.processMidiMessage(m.event);
  			processedEvents.push(m);
  		}
-@@ -38982,7 +39211,14 @@ class TinySoundFont {
+@@ -38982,7 +39215,14 @@ class TinySoundFont {
  				break;
  			case MidiEventType.ProgramChange:
  				const programChange = e;
@@ -424,7 +431,18 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  				break;
  			case MidiEventType.TempoChange:
  				const tempoChange = e;
-@@ -39100,6 +39336,8 @@ class TinySoundFont {
+@@ -39044,7 +39284,10 @@ class TinySoundFont {
+ 			c.gainDb = 0;
+ 			c.pitchRange = 2;
+ 			c.tuning = 0;
++			// OpenTabz patch 0015: stopping or seeking lifts the sustain pedal.
++			c.sustain = false;
+ 		}
++		for (const v of this._voices) v.sustained = false;
+ 	}
+ 	presets = null;
+ 	_voices = [];
+@@ -39100,6 +39343,8 @@ class TinySoundFont {
  		const voicePlayIndex = this._voicePlayIndex++;
  		for (const region of this.presets[presetIndex].regions) {
  			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
@@ -433,7 +451,36 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  			let voice = null;
  			if (region.group !== 0) {
  				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
-@@ -39359,8 +39597,10 @@ class TinySoundFont {
+@@ -39117,6 +39362,7 @@ class TinySoundFont {
+ 			voice.playingPreset = presetIndex;
+ 			voice.playingKey = key;
+ 			voice.playIndex = voicePlayIndex;
++			voice.sustained = false;
+ 			voice.noteGainDb = this.globalGainDb - region.attenuation - SynthHelper.gainToDecibels(1 / vel);
+ 			if (this._channels) this._channels.setupVoice(this, voice);
+ 			else {
+@@ -39286,9 +39532,19 @@ class TinySoundFont {
+ 		}
+ 		this._channelInit(channel).perNotePitchWheel.delete(key);
+ 		if (!matchFirst) return;
++		// OpenTabz patch 0015: while the sustain pedal is down, released notes keep sounding.
++		const sustain = this._channelInit(channel).sustain;
+ 		for (const v of matches) {
+ 			if (v !== matchFirst && v !== matchLast && (v.playIndex !== matchFirst.playIndex || v.playingPreset === -1 || v.playingChannel !== channel || v.playingKey !== key || v.ampEnv.segment >= VoiceEnvelopeSegment.Release)) continue;
+-			v.end(this.outSampleRate);
++			if (sustain) v.sustained = true;
++			else v.end(this.outSampleRate);
++		}
++	}
++	/** OpenTabz patch 0015: the pedal comes up, ending the notes it held. */
++	_releaseSustained(channel) {
++		for (const v of this._voices) if (v.sustained && v.playingChannel === channel) {
++			v.sustained = false;
++			if (v.playingPreset !== -1 && v.ampEnv.segment < VoiceEnvelopeSegment.Release) v.end(this.outSampleRate);
+ 		}
+ 	}
+ 	/**
+@@ -39359,8 +39615,10 @@ class TinySoundFont {
  	* @param pan stereo panning value from 0.0 (left) to 1.0 (right) (default 0.5 center)
  	*/
  	channelSetPan(channel, pan) {
@@ -445,7 +492,28 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39787,6 +40027,64 @@ class AlphaSynthBase {
+@@ -39492,6 +39750,11 @@ class TinySoundFont {
+ 			case ControllerType.NonRegisteredParameterCourse:
+ 				c.midiRpn = 65535;
+ 				return;
++			case ControllerType.HoldPedal:
++				// OpenTabz patch 0015: the sustain pedal.
++				c.sustain = controlValue >= 64;
++				if (!c.sustain) this._releaseSustained(channel);
++				return;
+ 			case ControllerType.AllSoundOff:
+ 				this.channelSoundsOffAll(channel);
+ 				return;
+@@ -39503,6 +39766,8 @@ class TinySoundFont {
+ 				c.midiExpression = 16383;
+ 				c.midiPan = 8192;
+ 				c.bank = 0;
++				c.sustain = false;
++				this._releaseSustained(channel);
+ 				this.channelSetVolume(channel, 1);
+ 				this.channelSetPan(channel, .5);
+ 				this.channelSetPitchRange(channel, 2);
+@@ -39787,6 +40052,64 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -510,7 +578,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	get output() {
  		return this._output;
  	}
-@@ -39841,8 +40139,24 @@ class AlphaSynthBase {
+@@ -39841,8 +40164,24 @@ class AlphaSynthBase {
  	}
  	updatePlaybackSpeed(value) {
  		const oldSpeed = this.sequencer.playbackSpeed;
@@ -535,7 +603,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	}
  	get loadedMidiInfo() {
  		return this._loadedMidiInfo;
-@@ -39861,11 +40175,14 @@ class AlphaSynthBase {
+@@ -39861,11 +40200,14 @@ class AlphaSynthBase {
  	}
  	set timePosition(value) {
  		Logger.debug("AlphaSynth", `Seeking to position ${value}ms (main)`);
@@ -550,7 +618,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40254,20 @@ class AlphaSynthBase {
+@@ -39937,10 +40279,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
@@ -572,7 +640,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40275,112 @@ class AlphaSynthBase {
+@@ -39948,15 +40300,112 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
@@ -685,7 +753,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		}
  		this.output.play();
  		return true;
-@@ -39990,8 +40414,14 @@ class AlphaSynthBase {
+@@ -39990,8 +40439,14 @@ class AlphaSynthBase {
  		this.state = PlayerState.Paused;
  		this.output.pause();
  		this._notPlayedSamples = 0;
@@ -700,7 +768,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40433,7 @@ class AlphaSynthBase {
+@@ -40003,6 +40458,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -708,7 +776,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +40513,95 @@ class AlphaSynthBase {
+@@ -40082,16 +40538,95 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
@@ -808,7 +876,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +40938,10 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +40963,10 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
@@ -819,7 +887,483 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -49793,7 +50307,8 @@ class SvgCanvas {
+@@ -41966,11 +42505,58 @@ class MidiPlaybackController {
+ 	shouldPlay = true;
+ 	index = 0;
+ 	currentTick = 0;
++	/** OpenTabz patch 0016: bars whose jump was taken; a jump is taken once. */
++	_takenJumps = /* @__PURE__ */ new Set();
++	/** OpenTabz patch 0016: a Dal Segno (of any kind) has jumped. */
++	_segnoJumped = false;
++	/** OpenTabz patch 0016: the score has a Dal Segno jump. */
++	_hasSegnoJump = false;
++	/** OpenTabz patch 0016: per bar, the alternate endings it belongs to, and the last ending of its set. */
++	_endings = [];
++	_lastEndings = [];
+ 	get finished() {
+ 		return this.index >= this._score.masterBars.length;
+ 	}
+ 	constructor(score) {
+ 		this._score = score;
++		const segnoJumps = [Direction.JumpDalSegno, Direction.JumpDalSegnoAlCoda, Direction.JumpDalSegnoAlDoubleCoda, Direction.JumpDalSegnoAlFine];
++		this._hasSegnoJump = score.masterBars.some((bar) => bar.directions !== null && segnoJumps.some((jump) => bar.directions.has(jump)));
++		this._findEndings();
++	}
++	/**
++	* OpenTabz patch 0016: groups bars into sets of alternate endings (a bar without endings of its
++	* own belongs to the ending before it, until a repeat starts or the endings start over) and
++	* notes the last ending of each set: the one played after a jump.
++	*/
++	_findEndings() {
++		const bars = this._score.masterBars;
++		let carried = 0;
++		let highest = 0;
++		let set = -1;
++		const lastOfSet = [];
++		const setOf = [];
++		for (let i = 0; i < bars.length; i++) {
++			const bar = bars[i];
++			if (bar.isRepeatStart && bar.alternateEndings === 0) carried = 0;
++			const own = bar.alternateEndings;
++			if (own !== 0) {
++				const lowest = own & -own;
++				if (set === -1 || carried === 0 || lowest <= highest) {
++					set = lastOfSet.length;
++					lastOfSet.push(0);
++					highest = 0;
++				}
++				carried = own;
++			}
++			this._endings.push(carried);
++			setOf.push(carried === 0 ? -1 : set);
++			if (carried !== 0) {
++				const top = 1 << 31 - Math.clz32(carried);
++				highest = Math.max(highest, top);
++				lastOfSet[set] = Math.max(lastOfSet[set], top);
++			}
++		}
++		for (let i = 0; i < bars.length; i++) this._lastEndings.push(setOf[i] === -1 ? 0 : lastOfSet[setOf[i]]);
+ 	}
+ 	processCurrent() {
+ 		const masterBar = this._score.masterBars[this.index];
+@@ -41994,7 +42580,12 @@ class MidiPlaybackController {
+ 				if ((masterBarAlternateEndings & 1 << iteration) === 0) this.shouldPlay = false;
+ 				else this.shouldPlay = true;
+ 			}
+-		} else this.shouldPlay = true;
++		} else {
++			// OpenTabz patch 0016: after a jump repeats are not taken again, so of a set of
++			// alternate endings only the last one plays.
++			const endings = this._endings[this.index];
++			this.shouldPlay = endings === 0 || (endings & this._lastEndings[this.index]) !== 0;
++		}
+ 		if (this.shouldPlay) this.currentTick += masterBar.calculateDuration();
+ 	}
+ 	moveNext() {
+@@ -42008,7 +42599,8 @@ class MidiPlaybackController {
+ 	}
+ 	_handleDaCapo(directions, daCapo, newState) {
+ 		if (directions.has(daCapo)) {
+-			this.index = 0;
++			// OpenTabz patch 0016: a Da Capo lands after a pickup bar.
++			this.index = this._score.masterBars.length > 1 && this._score.masterBars[0].isAnacrusis ? 1 : 0;
+ 			this._state = newState;
+ 			this._resetRepeats();
+ 			return true;
+@@ -42017,8 +42609,11 @@ class MidiPlaybackController {
+ 	}
+ 	_handleDalSegno(directions, dalSegno, newState, jumpTarget) {
+ 		if (directions.has(dalSegno)) {
++			// OpenTabz patch 0016: a Dal Segno Segno waits until a Dal Segno has jumped, if there is one.
++			if (jumpTarget === Direction.TargetSegnoSegno && this._hasSegnoJump && !this._segnoJumped) return false;
+ 			const segno = this._findJumpTarget(jumpTarget, this.index, true);
+ 			if (segno === -1) return false;
++			if (jumpTarget === Direction.TargetSegno) this._segnoJumped = true;
+ 			this.index = segno;
+ 			this._state = newState;
+ 			this._resetRepeats();
+@@ -42026,6 +42621,21 @@ class MidiPlaybackController {
+ 		}
+ 		return false;
+ 	}
++	/** OpenTabz patch 0016: takes the first jump of a bar, once. */
++	_takeJump(directions) {
++		const from = this.index;
++		if (this._takenJumps.has(from)) return false;
++		const taken = this._handleDaCapo(directions, Direction.JumpDaCapo, 1) || this._handleDaCapo(directions, Direction.JumpDaCapoAlCoda, 2) || this._handleDaCapo(directions, Direction.JumpDaCapoAlDoubleCoda, 3) || this._handleDaCapo(directions, Direction.JumpDaCapoAlFine, 4) || this._handleDalSegno(directions, Direction.JumpDalSegno, 1, Direction.TargetSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoAlCoda, 2, Direction.TargetSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoAlDoubleCoda, 3, Direction.TargetSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoAlFine, 4, Direction.TargetSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoSegno, 1, Direction.TargetSegnoSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoSegnoAlCoda, 2, Direction.TargetSegnoSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoSegnoAlDoubleCoda, 3, Direction.TargetSegnoSegno) || this._handleDalSegno(directions, Direction.JumpDalSegnoSegnoAlFine, 4, Direction.TargetSegnoSegno);
++		if (taken) this._takenJumps.add(from);
++		return taken;
++	}
++	/** OpenTabz patch 0016: playback is inside a repeat that will be played again. */
++	_beforeLastPass() {
++		if (this._repeatStack.length === 0) return false;
++		const repeat = this._repeatStack[this._repeatStack.length - 1];
++		const closing = repeat.group.closings[repeat.closingIndex];
++		return closing !== undefined && repeat.iterations[repeat.closingIndex] < closing.repeatCount - 1;
++	}
+ 	_handleDaCoda(directions, daCoda, jumpTarget) {
+ 		if (directions.has(daCoda)) {
+ 			const coda = this._findJumpTarget(jumpTarget, this.index, false);
+@@ -42049,11 +42659,12 @@ class MidiPlaybackController {
+ 		}
+ 		switch (this._state) {
+ 			case 0:
+-				if (this._handleDaCapo(masterBar.directions, Direction.JumpDaCapo, 1) || this._handleDaCapo(masterBar.directions, Direction.JumpDaCapoAlCoda, 2) || this._handleDaCapo(masterBar.directions, Direction.JumpDaCapoAlDoubleCoda, 3) || this._handleDaCapo(masterBar.directions, Direction.JumpDaCapoAlFine, 4)) return true;
+-				if (this._handleDalSegno(masterBar.directions, Direction.JumpDalSegno, 1, Direction.TargetSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoAlCoda, 2, Direction.TargetSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoAlDoubleCoda, 3, Direction.TargetSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoAlFine, 4, Direction.TargetSegno)) return true;
+-				if (this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoSegno, 1, Direction.TargetSegnoSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoSegnoAlCoda, 2, Direction.TargetSegnoSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoSegnoAlDoubleCoda, 3, Direction.TargetSegnoSegno) || this._handleDalSegno(masterBar.directions, Direction.JumpDalSegnoSegnoAlFine, 4, Direction.TargetSegnoSegno)) return true;
+-				return false;
++				// OpenTabz patch 0016: inside a repeat, a jump waits for the last pass.
++				if (this._beforeLastPass()) return false;
++				return this._takeJump(masterBar.directions);
+ 			case 1:
++				// OpenTabz patch 0016: a further jump (a D.S.S. after a D.S.) is still taken, once.
++				if (this._takeJump(masterBar.directions)) return true;
+ 				this.index++;
+ 				return true;
+ 			case 2:
+@@ -42970,6 +43581,13 @@ class MidiFileGenerator {
+ 		this.transpositionPitches.clear();
+ 		this._calculatedBeatTimers.clear();
+ 		this._currentTime = 0;
++		this._fermataTicks.clear();
++		this._hairpins.clear();
++		this._tempoAnchors = null;
++		this._extraChannelsByUse.clear();
++		this.extraChannels = [];
++		this._nextExtraChannel = 0;
++		for (const track of this._score.tracks) this._nextExtraChannel = Math.max(this._nextExtraChannel, track.playbackInfo.primaryChannel + 1, track.playbackInfo.secondaryChannel + 1);
+ 		for (const track of this._score.tracks) this._generateTrack(track);
+ 		Logger.debug("Midi", "Begin midi generation");
+ 		this.syncPoints = [];
+@@ -42992,6 +43610,66 @@ class MidiFileGenerator {
+ 		tickShift = Math.abs(tickShift);
+ 		this._handler.addTickShift(tickShift);
+ 	}
++	/** OpenTabz patch 0017: channels added for sounds a track needs besides its own, by track and use. */
++	_extraChannelsByUse = /* @__PURE__ */ new Map();
++	/**
++	* OpenTabz patch 0017: the channels added during generation, as [track, channel, kind] triples
++	* (kind 0: plays the track's notes with another sound; 1: a drum kit). Mixers apply a track's
++	* settings to them too.
++	*/
++	extraChannels = [];
++	_nextExtraChannel = 0;
++	/** OpenTabz patch 0017: General MIDI programs of the slap bass sounds. */
++	static _slapProgram = 36;
++	static _popProgram = 37;
++	/** OpenTabz patch 0017: General MIDI drum keys of a golpe: thumb (low wood block) and finger (side stick). */
++	static _golpeThumbKey = 77;
++	static _golpeFingerKey = 37;
++	/**
++	* OpenTabz patch 0017: a channel of the track for one use ("slap", "pop", "bend" or "golpe"),
++	* set up like the track's own on first use.
++	*/
++	_extraChannel(track, use) {
++		const id = `${track.index}:${use}`;
++		const known = this._extraChannelsByUse.get(id);
++		if (known !== void 0) return known;
++		let channel = this._nextExtraChannel++;
++		// Channel 10 is the drum channel of General MIDI.
++		if (channel === 9) channel = this._nextExtraChannel++;
++		this._extraChannelsByUse.set(id, channel);
++		const drums = use === "golpe";
++		this.extraChannels.push(track.index, channel, drums ? 1 : 0);
++		const info = track.playbackInfo;
++		this.transpositionPitches.set(channel, drums ? 0 : this.transpositionPitches.get(info.primaryChannel) ?? 0);
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.VolumeCoarse, MidiFileGenerator._toChannelShort(info.volume));
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.PanCoarse, MidiFileGenerator._toChannelShort(info.balance));
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.ExpressionControllerCoarse, 127);
++		if (drums) {
++			// Bank 127 selects a drum kit on any channel (patch 0007).
++			this._handler.addControlChange(track.index, 0, channel, ControllerType.BankSelectCoarse, 127);
++			this._handler.addControlChange(track.index, 0, channel, ControllerType.BankSelectFine, 0);
++			this._addProgramChange(track, 0, channel, 0);
++			return channel;
++		}
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.RegisteredParameterFine, 0);
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.RegisteredParameterCourse, 0);
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.DataEntryFine, 0);
++		this._handler.addControlChange(track.index, 0, channel, ControllerType.DataEntryCoarse, MidiFileGenerator._pitchBendRangeInSemitones);
++		this._addBankChange(track, 0, channel, info.bank);
++		this._addProgramChange(track, 0, channel, use === "slap" ? MidiFileGenerator._slapProgram : use === "pop" ? MidiFileGenerator._popProgram : info.program);
++		return channel;
++	}
++	/** OpenTabz patch 0017: the basses of General MIDI (programs 32 to 39, counted from 0). */
++	static _isBass(track) {
++		return track.playbackInfo.program >= 32 && track.playbackInfo.program <= 39;
++	}
++	/** OpenTabz patch 0017: a golpe knocks on the guitar's top, heard on a drum channel of the track. */
++	_generateGolpe(beat, start, duration) {
++		const track = beat.voice.bar.staff.track;
++		const channel = this._extraChannel(track, "golpe");
++		const key = beat.golpe === GolpeType.Thumb ? MidiFileGenerator._golpeThumbKey : MidiFileGenerator._golpeFingerKey;
++		this._handler.addNote(track.index, start, Math.min(duration, MidiUtils.toTicks(Duration.Sixteenth)), key, MidiUtils.dynamicToVelocity(beat.dynamics), channel);
++	}
+ 	_generateTrack(track) {
+ 		this._generateChannel(track, track.playbackInfo.primaryChannel, track.playbackInfo);
+ 		if (track.playbackInfo.primaryChannel !== track.playbackInfo.secondaryChannel) this._generateChannel(track, track.playbackInfo.secondaryChannel, track.playbackInfo);
+@@ -43230,12 +43908,80 @@ class MidiFileGenerator {
+ 			this._handler.addTempo(currentTick, masterBar.score.tempo);
+ 			masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, masterBar.score.tempo));
+ 		} else masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, currentTempo));
++		this._generateTempoRamps(masterBar, currentTick, masterBarDuration);
+ 		masterBarLookup.masterBar = masterBar;
+ 		masterBarLookup.start = currentTick;
+ 		masterBarLookup.end = masterBarLookup.start + masterBarDuration;
+ 		this.tickLookup.addMasterBar(masterBarLookup);
+ 	}
++	/** OpenTabz patch 0015: ticks between the tempo steps of a ramp (a sixteenth note). */
++	static _tempoRampStep = 240;
++	/** OpenTabz patch 0015: the tempo automations of the score, in score order. */
++	_tempoAnchors = null;
++	/**
++	* OpenTabz patch 0015: a linear tempo automation (Guitar Pro's ramp) changes the tempo
++	* gradually up to the next tempo automation. Positions are taken in score order, so a ramp
++	* plays again with every repeat of its bars.
++	*/
++	_generateTempoRamps(masterBar, currentTick, masterBarDuration) {
++		if (this._tempoAnchors === null) {
++			this._tempoAnchors = [];
++			for (const bar of this._score.masterBars) {
++				const duration = bar.calculateDuration();
++				for (const automation of bar.tempoAutomations) this._tempoAnchors.push({
++					position: bar.start + automation.ratioPosition * duration,
++					value: automation.value,
++					isLinear: automation.isLinear
++				});
++			}
++		}
++		const anchors = this._tempoAnchors;
++		const barStart = masterBar.start;
++		const barEnd = barStart + masterBarDuration;
++		for (let i = 0; i + 1 < anchors.length; i++) {
++			const from = anchors[i];
++			const to = anchors[i + 1];
++			if (!from.isLinear || to.position <= from.position || to.position <= barStart || from.position >= barEnd) continue;
++			const step = MidiFileGenerator._tempoRampStep;
++			let position = Math.max(barStart, from.position + step);
++			const offset = (position - from.position) % step;
++			if (offset !== 0) position += step - offset;
++			for (; position < Math.min(barEnd, to.position); position += step) {
++				const value = from.value + (to.value - from.value) * (position - from.position) / (to.position - from.position);
++				this._handler.addTempo(currentTick + (position - barStart), value);
++			}
++		}
++	}
++	/** OpenTabz patch 0015: ticks where a fermata already holds the music. */
++	_fermataTicks = /* @__PURE__ */ new Set();
++	/** OpenTabz patch 0015: how much longer a fermata holds its beat when the file does not say. */
++	static _fermataHolds = [.5, 1, 2];
++	/**
++	* OpenTabz patch 0015: a fermata holds its beat (by its length, or half as long again, twice
++	* or three times for short, medium and long ones) by slowing the tempo for the beat, so ticks
++	* and every track stay in step.
++	*/
++	_generateFermata(beat, start, duration, tempo) {
++		if (duration <= 0 || this._fermataTicks.has(start)) return;
++		this._fermataTicks.add(start);
++		const hold = beat.fermata.length > 0 ? beat.fermata.length : MidiFileGenerator._fermataHolds[beat.fermata.type] ?? 1;
++		this._handler.addTempo(start, tempo / (1 + hold));
++		this._handler.addTempo(start + duration, tempo);
++	}
++	/** OpenTabz patch 0015: the sustain pedal markers of a bar, on both channels of its track. */
++	_generateSustainPedals(bar, barStartTick) {
++		if (bar.sustainPedals.length === 0) return;
++		const track = bar.staff.track;
++		const duration = bar.masterBar.calculateDuration();
++		for (const marker of bar.sustainPedals) {
++			const tick = barStartTick + marker.ratioPosition * duration | 0;
++			const value = marker.pedalType === SustainPedalMarkerType.Up ? 0 : 127;
++			this._handler.addControlChange(track.index, tick, track.playbackInfo.primaryChannel, ControllerType.HoldPedal, value);
++			if (track.playbackInfo.secondaryChannel !== track.playbackInfo.primaryChannel) this._handler.addControlChange(track.index, tick, track.playbackInfo.secondaryChannel, ControllerType.HoldPedal, value);
++		}
++	}
+ 	_generateBar(bar, barStartTick, tempoOnBarStart) {
++		this._generateSustainPedals(bar, barStartTick);
+ 		const playbackBar = this._getPlaybackBar(bar);
+ 		const barStartTime = this._currentTime;
+ 		for (const v of playbackBar.voices) {
+@@ -43307,6 +44053,7 @@ class MidiFileGenerator {
+ 		}
+ 		this._currentTime += MidiUtils.ticksToMillis(audioDuration, tempoOnBeatStart);
+ 		if (realBar === beat.voice.bar) this.tickLookup.addBeat(beat, beatStart, audioDuration);
++		if (beat.fermata && realBar === beat.voice.bar) this._generateFermata(beat, barStartTick + beatStart, audioDuration, tempoOnBeatStart);
+ 		const track = beat.voice.bar.staff.track;
+ 		for (const automation of beat.automations) this._generateNonTempoAutomation(beat, automation, barStartTick);
+ 		if (beat.isRest) this._handler.addRest(track.index, barStartTick + beatStart, track.playbackInfo.primaryChannel);
+@@ -43316,6 +44063,7 @@ class MidiFileGenerator {
+ 			const rasgueadoInfo = this._getRasgueadoInfo(beat, audioDuration);
+ 			for (const n of beat.notes) this._generateNote(n, barStartTick + beatStart, audioDuration, tempoOnBeatStart, brushInfo, rasgueadoInfo);
+ 		}
++		if (beat.golpe !== GolpeType.None) this._generateGolpe(beat, barStartTick + beatStart, audioDuration);
+ 		if (beat.fade !== FadeType.None) this._generateFade(beat, barStartTick + beatStart, audioDuration);
+ 		if (beat.vibrato !== VibratoType.None) {
+ 			let phaseLength = 240;
+@@ -43393,6 +44141,20 @@ class MidiFileGenerator {
+ 		return note.hasBend || note.beat.hasWhammyBar || note.beat.vibrato !== VibratoType.None;
+ 	}
+ 	_determineChannel(track, note) {
++		const channel = this._determineChannelOfTrack(track, note);
++		if (channel !== track.playbackInfo.secondaryChannel || channel === track.playbackInfo.primaryChannel) return channel;
++		// OpenTabz patch 0017: per-note bends are keyed by pitch, so two strings bent from the same
++		// pitch would share one curve; the second bends on a channel of its own.
++		let first = note;
++		while (first.isTieDestination && first.tieOrigin) first = first.tieOrigin;
++		const key = first.calculateRealValue(this.applyTranspositionPitches, true);
++		for (const other of first.beat.notes) {
++			if (other === first) break;
++			if (this._needsSecondaryChannel(other) && other.calculateRealValue(this.applyTranspositionPitches, true) === key) return this._extraChannel(track, "bend");
++		}
++		return channel;
++	}
++	_determineChannelOfTrack(track, note) {
+ 		if (this._needsSecondaryChannel(note)) return track.playbackInfo.secondaryChannel;
+ 		let currentNote = note;
+ 		while (currentNote.isTieDestination) {
+@@ -43420,8 +44182,10 @@ class MidiFileGenerator {
+ 		noteDuration.untilTieOrSlideEnd -= brushOffset;
+ 		noteDuration.noteOnly -= brushOffset;
+ 		noteDuration.letRingEnd -= brushOffset;
+-		const velocity = MidiFileGenerator._getNoteVelocity(note);
+-		const channel = this._determineChannel(track, note);
++		const velocity = this._hairpinVelocity(note, MidiFileGenerator._getNoteVelocity(note));
++		let channel = this._determineChannel(track, note);
++		// OpenTabz patch 0017: slapped and popped bass notes play the slap bass sounds.
++		if ((note.beat.slap || note.beat.pop) && MidiFileGenerator._isBass(track) && channel === track.playbackInfo.primaryChannel) channel = this._extraChannel(track, note.beat.slap ? "slap" : "pop");
+ 		let initialBend = 0;
+ 		const noteSoundDuration = Math.max(noteDuration.untilTieOrSlideEnd, noteDuration.letRingEnd);
+ 		if (note.hasBend) initialBend = MidiFileGenerator.getPitchWheel(note.bendPoints[0].value);
+@@ -43492,17 +44256,31 @@ class MidiFileGenerator {
+ 		-1,
+ 		-1
+ 	];
++	/**
++	* OpenTabz patch 0015: semitones to the next note of the key above (direction 1) or below
++	* (direction -1). The key signature belongs to the notation, so the note is taken as written.
++	*/
++	static _ornamentStep(note, noteKey, direction) {
++		const bar = note.beat.voice.bar;
++		const written = noteKey - bar.staff.transpositionPitch - bar.staff.displayTranspositionPitch;
++		const shift = 7 * bar.keySignature;
++		const inKey = (key) => [0, 2, 4, 5, 7, 9, 11].includes(((key - shift) % 12 + 12) % 12);
++		for (let step = 1; step <= 2; step++) if (inKey(written + direction * step)) return direction * step;
++		return direction * 2;
++	}
+ 	_generateOrnament(track, note, noteStart, noteDuration, noteKey, velocity, channel) {
+ 		let ornamentNoteKeys;
+ 		let ornamentNoteDurations;
+-		const index = noteKey % 12;
+ 		const triplet = 1 / 3;
++		// OpenTabz patch 0015: the neighbouring notes come from the key, not a C major table.
++		const up = MidiFileGenerator._ornamentStep(note, noteKey, 1);
++		const down = MidiFileGenerator._ornamentStep(note, noteKey, -1);
+ 		switch (note.ornament) {
+ 			case NoteOrnament.Turn:
+ 				ornamentNoteKeys = [
+-					noteKey + MidiFileGenerator._ornamentKeysUp[index],
++					noteKey + up,
+ 					noteKey,
+-					noteKey + MidiFileGenerator.ornamentKeysDown[index]
++					noteKey + down
+ 				];
+ 				ornamentNoteDurations = [
+ 					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
+@@ -43512,9 +44290,9 @@ class MidiFileGenerator {
+ 				break;
+ 			case NoteOrnament.InvertedTurn:
+ 				ornamentNoteKeys = [
+-					noteKey + MidiFileGenerator.ornamentKeysDown[index],
++					noteKey + down,
+ 					noteKey,
+-					noteKey + MidiFileGenerator._ornamentKeysUp[index]
++					noteKey + up
+ 				];
+ 				ornamentNoteDurations = [
+ 					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
+@@ -43523,11 +44301,11 @@ class MidiFileGenerator {
+ 				];
+ 				break;
+ 			case NoteOrnament.UpperMordent:
+-				ornamentNoteKeys = [noteKey, noteKey + MidiFileGenerator._ornamentKeysUp[index]];
++				ornamentNoteKeys = [noteKey, noteKey + up];
+ 				ornamentNoteDurations = [MidiUtils.toTicks(Duration.ThirtySecond), MidiUtils.toTicks(Duration.ThirtySecond)];
+ 				break;
+ 			case NoteOrnament.LowerMordent:
+-				ornamentNoteKeys = [noteKey, noteKey + MidiFileGenerator.ornamentKeysDown[index]];
++				ornamentNoteKeys = [noteKey, noteKey + down];
+ 				ornamentNoteDurations = [MidiUtils.toTicks(Duration.ThirtySecond), MidiUtils.toTicks(Duration.ThirtySecond)];
+ 				break;
+ 			default: return;
+@@ -43608,9 +44386,43 @@ class MidiFileGenerator {
+ 		const value = tempo * duration / BendPoint.MaxPosition | 0;
+ 		return Math.min(value, maximum);
+ 	}
++	/** OpenTabz patch 0015: hairpin spans by their first beat. */
++	_hairpins = /* @__PURE__ */ new Map();
++	/**
++	* OpenTabz patch 0015: inside a crescendo or diminuendo the velocity moves from the dynamic
++	* where it starts to the next dynamic after it (one step when none follows that way).
++	*/
++	_hairpinVelocity(note, velocity) {
++		const beat = note.beat;
++		if (beat.crescendo === CrescendoType.None || beat.voice.bar.staff.isPercussion) return velocity;
++		let first = beat;
++		while (first.previousBeat && first.previousBeat.crescendo === beat.crescendo && first.previousBeat.voice.index === beat.voice.index) first = first.previousBeat;
++		let span = this._hairpins.get(first);
++		if (!span) {
++			let last = first;
++			while (last.nextBeat && last.nextBeat.crescendo === beat.crescendo && last.nextBeat.voice.index === beat.voice.index) last = last.nextBeat;
++			const louder = beat.crescendo === CrescendoType.Crescendo;
++			const start = MidiUtils.dynamicToVelocity(first.dynamics);
++			const following = last.nextBeat ? MidiUtils.dynamicToVelocity(last.nextBeat.dynamics) : start;
++			const target = louder ? following > start ? following : start + MidiUtils.VelocityIncrement : following < start ? following : start - MidiUtils.VelocityIncrement;
++			span = {
++				begin: first.absolutePlaybackStart,
++				length: last.absolutePlaybackStart + last.playbackDuration - first.absolutePlaybackStart,
++				start,
++				target: Math.max(1, Math.min(127, target))
++			};
++			this._hairpins.set(first, span);
++		}
++		const fraction = span.length > 0 ? (beat.absolutePlaybackStart - span.begin) / span.length : 0;
++		const own = velocity - MidiUtils.dynamicToVelocity(note.dynamics);
++		return Math.max(1, Math.min(127, Math.round(span.start + (span.target - span.start) * fraction) + own));
++	}
+ 	static _getNoteVelocity(note) {
+ 		let adjustment = 0;
+-		if (!note.beat.voice.bar.staff.isPercussion && note.hammerPullOrigin) adjustment--;
++		// OpenTabz patch 0015: tapped notes, like hammer-ons, have no pick attack.
++		if (!note.beat.voice.bar.staff.isPercussion && (note.hammerPullOrigin || note.beat.tap || note.isLeftHandTapped)) adjustment--;
++		// OpenTabz patch 0017: slapped and popped notes are struck hard (basses also change sound).
++		if ((note.beat.slap || note.beat.pop) && !note.beat.voice.bar.staff.isPercussion && !MidiFileGenerator._isBass(note.beat.voice.bar.staff.track)) adjustment += 2;
+ 		if (note.isGhost) adjustment--;
+ 		switch (note.accentuated) {
+ 			case AccentuationType.Normal:
+@@ -43637,6 +44449,13 @@ class MidiFileGenerator {
+ 				this._generateFadeSteps(track, beatStart + half, half, MidiFileGenerator._toChannelShort(track.playbackInfo.volume), 0);
+ 				break;
+ 		}
++		// OpenTabz patch 0015: a fade ends with its note; the next notes play at the track volume.
++		if (beat.fade !== FadeType.FadeIn) {
++			const volume = MidiFileGenerator._toChannelShort(track.playbackInfo.volume);
++			const end = beatStart + beatDuration;
++			this._handler.addControlChange(track.index, end, track.playbackInfo.primaryChannel, ControllerType.VolumeCoarse, volume);
++			this._handler.addControlChange(track.index, end, track.playbackInfo.secondaryChannel, ControllerType.VolumeCoarse, volume);
++		}
+ 	}
+ 	_generateFadeSteps(track, start, duration, startVolume, endVolume) {
+ 		const tickStep = 120;
+@@ -44003,7 +44822,8 @@ class MidiFileGenerator {
+ 	_generateTremoloPicking(note, noteStart, noteDuration, noteKey, dynamicValue, channel) {
+ 		const track = note.beat.voice.bar.staff.track;
+ 		if (note.beat.tremoloPicking.marks === 0) return;
+-		let tpLength = note.beat.tremoloPicking.getDurationAsTicks(note.beat.duration) * noteDuration.beatDurationFactor;
++		// OpenTabz patch 0015: marks give the picking speed (eighths, sixteenths…) for any note value.
++		let tpLength = MidiUtils.QuarterTime / Math.pow(2, note.beat.tremoloPicking.marks) * noteDuration.beatDurationFactor;
+ 		let tick = noteStart;
+ 		const end = noteStart + noteDuration.untilTieOrSlideEnd;
+ 		while (tick + 10 < end) {
+@@ -49793,7 +50613,8 @@ class SvgCanvas {
  	}
  	measureText(text) {
  		if (!text) return new MeasuredText(0, 0);
@@ -829,7 +1373,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	}
  	onRenderFinished() {
  		return null;
-@@ -51986,8 +52501,10 @@ class MarkerEffectInfo extends EffectInfo {
+@@ -51986,8 +52807,10 @@ class MarkerEffectInfo extends EffectInfo {
  	get hideOnMultiTrack() {
  		return true;
  	}
@@ -841,7 +1385,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  	}
  	get sizingMode() {
  		return EffectBarGlyphSizing.SinglePreBeat;
-@@ -65583,7 +66100,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +66406,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -853,7 +1397,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..6d21e570c79f57481b2df962f701d313
  //#endregion
  //#region src/exporter/ScoreExporter.ts
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..31001bfe33238b173155419eefd5d352f1cfd108 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..5c82d242462aba55316547190864fa6515741679 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
 @@ -128,6 +128,34 @@ declare class AlphaSynthBase implements IAlphaSynth {
@@ -914,3 +1458,15 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..31001bfe33238b173155419eefd5d352
      setChannelVolume(channel: number, volume: number): void;
      private _onSamplesPlayed;
      protected checkForFinish(): void;
+@@ -11332,6 +11376,11 @@ declare class MidiFileGenerator {
+      * Gets the transposition pitches for the individual midi channels.
+      */
+     readonly transpositionPitches: Map<number, number>;
++    /**
++     * OpenTabz patch 0017: channels added for techniques that need a sound of their own, as
++     * [track, channel, kind] triples (kind 0: the track's notes with another sound; 1: a drum kit).
++     */
++    extraChannels: number[];
+     /**
+      * Initializes a new instance of the {@link MidiFileGenerator} class.
+      * @param score The score for which the midi file should be generated.

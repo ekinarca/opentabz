@@ -111,9 +111,9 @@ describe('PLAY-021 alternate endings', () => {
   });
 });
 
-// PLAY-022 is only partly covered. alphaTab 1.8.4 gets single jumps right, but a D.C. lands on a
-// pickup bar (PLAY-100), a D.S. inside a repeat fires on the first pass (PLAY-104), a D.S.S. is
-// never taken after a plain D.S. (PLAY-108), and after any jump every alternate ending is played.
+// alphaTab 1.8.4 got single jumps right, but a D.C. landed on a pickup bar (PLAY-100), a D.S.
+// inside a repeat fired on the first pass (PLAY-104), a D.S.S. was never taken after a plain D.S.
+// (PLAY-108) and every alternate ending played again after a jump. Patch 0016 fixes all four.
 describe('Da Capo and Dal Segno', () => {
   it('Da Capo goes back to the first bar and plays on to the end', () => {
     expectFormOrder(form('', '', '\\jump daCapo', ''), [0, 1, 2, 0, 1, 2, 3]);
@@ -146,6 +146,55 @@ describe('Da Capo and Dal Segno', () => {
     // Intro twice, verse (Segno) with To Coda, bridge with D.S. al Coda, verse again, coda.
     expect(barOrder(played)).toEqual([0, 0, 1, 2, 3, 4, 5, 1, 2, 3, 6, 7]);
     expectPassesSoundAlike(played);
+  });
+});
+
+describe('PLAY-022 jumps after repeats and endings', () => {
+  it('PLAY-022 after a jump the repeat is not taken again: only the last ending plays', () => {
+    expectFormOrder(
+      form('\\ro', '\\ae 1 \\rc 2', '\\ae 2', '', '\\jump daCapo'),
+      [0, 1, 0, 2, 3, 4, 0, 2, 3, 4],
+    );
+    // A first ending of two bars is passed by whole.
+    expectFormOrder(
+      form('\\jump segno \\ro', '\\ae 1', '\\rc 2', '\\ae 2', '\\jump dalSegnoAlFine \\jump fine'),
+      [0, 1, 2, 0, 3, 4, 0, 3, 4],
+    );
+  });
+});
+
+describe('PLAY-100 Da Capo after a pickup bar', () => {
+  it('PLAY-100 lands on the bar after the pickup', () => {
+    expectFormOrder(form('\\ac', '', '\\jump daCapo', ''), [0, 1, 2, 1, 2, 3]);
+    expectFormOrder(form('\\ac', '\\jump fine', '\\jump daCapoAlFine'), [0, 1, 2, 1]);
+  });
+});
+
+describe('PLAY-104 Dal Segno inside a repeat', () => {
+  it('PLAY-104 fires on the last pass of the repeat, not the first', () => {
+    expectFormOrder(form('\\jump segno', '\\ro', '\\rc 2 \\jump dalSegno', ''), [0, 1, 2, 1, 2, 0, 1, 2, 3]);
+    // Three passes: the jump waits for the third.
+    expectFormOrder(form('\\ro \\jump segno', '\\rc 3 \\jump dalSegno', ''), [0, 1, 0, 1, 0, 1, 0, 1, 2]);
+  });
+
+  it('PLAY-104 a Da Capo inside a repeat waits for the last pass too', () => {
+    expectFormOrder(form('', '\\ro', '\\rc 2 \\jump daCapo', ''), [0, 1, 2, 1, 2, 0, 1, 2, 3]);
+  });
+});
+
+describe('PLAY-108 Dal Segno Segno', () => {
+  it('PLAY-108 is taken once a Dal Segno has jumped', () => {
+    expectFormOrder(
+      form('\\jump segno', '\\jump segnoSegno', '\\jump dalSegno', '', '\\jump dalSegnoSegno', ''),
+      [0, 1, 2, 0, 1, 2, 3, 4, 1, 2, 3, 4, 5],
+    );
+  });
+
+  it('PLAY-108 is passed by while a Dal Segno is still to come', () => {
+    expectFormOrder(
+      form('\\jump segnoSegno', '\\jump dalSegnoSegno', '\\jump segno', '\\jump dalSegno', ''),
+      [0, 1, 2, 3, 2, 3, 4],
+    );
   });
 });
 

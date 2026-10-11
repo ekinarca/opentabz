@@ -23,8 +23,8 @@ function ms(beats: number, bpm: number): number {
   return (beats * 60_000) / bpm;
 }
 
-// PLAY-023 is only partly covered: alphaTab plays every tempo automation as a step. Ramps (Guitar
-// Pro's linear tempo automation, `Automation.isLinear`) are ignored, and alphaTex cannot write them.
+// Ramps (Guitar Pro's linear tempo automations, which alphaTex cannot write) are proved in
+// playback-realism.test.ts (PLAY-023, patch 0015).
 describe('tempo map', () => {
   it('changes tempo at bar starts, at positions inside a bar and on beats', () => {
     const played = playTex(

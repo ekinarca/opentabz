@@ -77,6 +77,15 @@ describe('preferences', () => {
     });
   });
 
+  it('read back the audio latency, keeping valid values only', () => {
+    expect(parsePreferences(JSON.stringify({ audioLatency: 'playback' }), FALLBACK).audioLatency).toBe(
+      'playback',
+    );
+    expect(parsePreferences(JSON.stringify({ audioLatency: 'fast' }), FALLBACK).audioLatency).toBe(
+      'interactive',
+    );
+  });
+
   it('resolve the system theme from the colour scheme', () => {
     expect(resolveTheme('system', true)).toBe('dark');
     expect(resolveTheme('system', false)).toBe('light');

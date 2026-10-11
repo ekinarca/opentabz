@@ -24,6 +24,9 @@ export const CURSOR_STYLES = ['smooth', 'note', 'beat', 'hidden'] as const;
 export type CursorStyle = (typeof CURSOR_STYLES)[number];
 export const CURSOR_COLORS = ['accent', 'blue', 'green', 'violet', 'rose'] as const;
 export type CursorColor = (typeof CURSOR_COLORS)[number];
+/** How much the audio output buffers: the least delay, a balance, or the steadiest sound. */
+export const AUDIO_LATENCIES = ['interactive', 'balanced', 'playback'] as const;
+export type AudioLatency = (typeof AUDIO_LATENCIES)[number];
 /** Where the playing system sits, as a share of the view's height from the top. */
 export const MIN_SCROLL_OFFSET = 0.05;
 export const MAX_SCROLL_OFFSET = 0.6;
@@ -49,6 +52,7 @@ export interface Preferences {
   readonly noteLabels: NoteLabels;
   /** Instrument views mirrored for left-handed players. */
   readonly leftHanded: boolean;
+  readonly audioLatency: AudioLatency;
 }
 
 export const STORAGE_KEY = 'opentabz.preferences.v1';
@@ -75,6 +79,7 @@ export function defaultPreferences(locale: string): Preferences {
     fretboardShow: 'next',
     noteLabels: 'hover',
     leftHanded: false,
+    audioLatency: 'interactive',
   };
 }
 
@@ -121,6 +126,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       fretboardShow: oneOf(value.fretboardShow, FRETBOARD_SHOWS, fallback.fretboardShow),
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
+      audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
     };
   } catch {
     return fallback;
@@ -169,6 +175,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       fretboardShow: state.fretboardShow,
       noteLabels: state.noteLabels,
       leftHanded: state.leftHanded,
+      audioLatency: state.audioLatency,
     });
   },
 }));

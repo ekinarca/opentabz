@@ -306,6 +306,20 @@ part of a 64-sample block that ran past the end, so passes last exactly their le
 synth worker fits the count-in to the start point (a start on beat 3 counts 1 2 3 4 1 2) and
 reports each click as it is heard, for the visual count-in.
 
+**What is written plays.** The MIDI generator is patched (0015–0017) so fermatas hold (a
+slower tempo for the held beat, so ticks never move), hairpins ramp the velocity, linear tempo
+automations ramp the tempo, the sustain pedal is controller 64 (which the synthesizer honours),
+jumps follow Guitar Pro's rules, and techniques that need a sound of their own get a channel of
+their own: slap bass sounds, a drum kit for golpe, a second channel for strings bent from the
+same pitch. Those channels travel with the timeline (`extraChannels`), so the mixer applies a
+track's settings to all of its channels; drum kits are centred so the track's pan places them.
+
+**Output delay.** The `AudioContext` keeps the latency hint it is made with. Settings offer the
+shortest, a balanced or the steadiest output; a change pauses playback and closes the output,
+and the next start (a user gesture) opens one with the new hint and a new port for the
+AudioWorklet's pings. The dialog shows the output's delay and how much audio the ring could not
+supply (its underrun counter, in shared memory).
+
 ## 10. Performance practice
 
 - The engine worker is spawned and warmed (JIT, including the Guitar Pro 7+ zip and XML path)

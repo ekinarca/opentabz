@@ -1,6 +1,6 @@
 /** Practice controls: speed, position, going to bars and sections, stepping, the shortcut sheet. */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, test, transportText } from './support.ts';
 
 const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
 
@@ -30,8 +30,8 @@ test.describe('practice controls', () => {
     await speed.click();
     await page.getByRole('button', { name: '50 %', exact: true }).click();
     await expect(speed).toHaveText('50 %');
-    // Total time is score time: it does not change with the practice speed.
-    await expect(position(page)).toContainText('/ 0:27');
+    // Total time is score time (with the final fermata held): it does not change with the speed.
+    await expect(position(page)).toContainText('/ 0:30');
     // Closing the panel puts focus back on its button; the speed keys work from there too.
     await page.keyboard.press('Escape');
     await expect(speed).toBeFocused();
@@ -124,9 +124,18 @@ test.describe('practice controls', () => {
     await position(page).click();
     await page
       .getByRole('dialog', { name: 'Go to' })
-      .getByRole('button', { name: /Turnaround/ })
+      .getByRole('button', { name: /^Turnaround/ })
       .click();
     await expect(position(page)).toHaveAccessibleName(/Bar 9, beat 1,/);
+    // A section can be selected whole (EDIT-086), ready to loop.
+    await position(page).click();
+    await page
+      .getByRole('dialog', { name: 'Go to' })
+      .getByRole('button', { name: 'Select Turnaround (bars 9–12)' })
+      .click();
+    await expect.poll(() => transportText(page)).toMatch(/Bars 9–12 selected/);
+    await page.getByRole('button', { name: 'Clear selection', exact: true }).click();
+    await expect.poll(() => transportText(page)).not.toMatch(/selected/);
     await page.locator('.ot-scroll:not([hidden])').focus();
     await page.keyboard.press('Alt+PageDown');
     await expect(position(page)).toHaveAccessibleName(/Bar 13, beat 1,/);

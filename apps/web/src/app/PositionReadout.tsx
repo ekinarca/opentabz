@@ -1,4 +1,5 @@
-import { Button, Popover, PopoverContent, PopoverTrigger, Tooltip } from '@opentabz/ui';
+import { Button, IconButton, Popover, PopoverContent, PopoverTrigger, Tooltip } from '@opentabz/ui';
+import { TextSelect } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 import {
   barNumberRange,
@@ -225,27 +226,43 @@ export function PositionReadout({
           <div className="mt-3">
             <h3 className="mb-1 text-[12px] font-medium text-ink-muted">{strings.transport.sections}</h3>
             <ul className="flex max-h-[40vh] flex-col overflow-y-auto">
-              {sections.map(section => (
-                <li key={section.index}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      goToMasterBar(section.index);
-                    }}
-                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-[13px] text-ink hover:bg-sunken"
-                  >
-                    {section.marker.length > 0 && (
-                      <span className="inline-flex min-w-6 justify-center rounded-md bg-sunken px-1 font-mono text-[11px] font-semibold">
-                        {section.marker}
+              {sections.map((section, position) => {
+                const last = (sections[position + 1]?.index ?? barCount) - 1;
+                const name = section.text.trim().length > 0 ? section.text : section.marker;
+                return (
+                  <li key={section.index} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        goToMasterBar(section.index);
+                      }}
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-[13px] text-ink hover:bg-sunken"
+                    >
+                      {section.marker.length > 0 && (
+                        <span className="inline-flex min-w-6 justify-center rounded-md bg-sunken px-1 font-mono text-[11px] font-semibold">
+                          {section.marker}
+                        </span>
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{section.text}</span>
+                      <span className="text-[11px] text-ink-faint tabular-nums">
+                        {strings.transport.sectionAt(section.index + 1)}
                       </span>
-                    )}
-                    <span className="min-w-0 flex-1 truncate">{section.text}</span>
-                    <span className="text-[11px] text-ink-faint tabular-nums">
-                      {strings.transport.sectionAt(section.index + 1)}
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                    <IconButton
+                      size="sm"
+                      label={strings.transport.selectSection(name, section.index + 1, last + 1)}
+                      icon={<TextSelect size={15} aria-hidden />}
+                      onClick={() => {
+                        if (timeline === null) return;
+                        const range = barNumberRange(timeline, section.index, last);
+                        if (range === null) return;
+                        setSelection(range);
+                        setPanelOpen('goto', false);
+                      }}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

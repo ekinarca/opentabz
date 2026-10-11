@@ -9,7 +9,7 @@ import {
   Tooltip,
   Wordmark,
 } from '@opentabz/ui';
-import { CircleHelp, FolderOpen, Keyboard, Palette, X } from 'lucide-react';
+import { CircleHelp, FolderOpen, Keyboard, Palette, Settings, X } from 'lucide-react';
 import { useDocuments } from '../state/documents.ts';
 import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
@@ -139,6 +139,13 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             useUi.getState().openPanel('shortcuts');
           }}
           className="max-md:hidden"
+        />
+        <IconButton
+          label={strings.topBar.settings}
+          icon={<Settings size={18} aria-hidden />}
+          onClick={() => {
+            useUi.getState().openPanel('settings');
+          }}
         />
         <IconButton
           label={strings.topBar.about}

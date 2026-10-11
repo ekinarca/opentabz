@@ -21,6 +21,8 @@ export type SynthCommand =
       /** MIDI arriving directly from the engine worker. */
       readonly enginePort: MessagePort;
     }
+  /** A new AudioWorklet (a new audio output) pings on this port from now on. */
+  | { readonly type: 'connectWorklet'; readonly port: MessagePort }
   | { readonly type: 'loadSoundFont'; readonly bytes: ArrayBuffer }
   | { readonly type: 'play' }
   | { readonly type: 'pause' }

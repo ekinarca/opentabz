@@ -16,7 +16,9 @@ import {
 import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from './documents.ts';
 import { effectiveVolume } from './mixer-memory.ts';
+import { trackChannels } from './track-channels.ts';
 import { usePractice, type PracticeSettings } from './practice.ts';
+import { usePreferences } from './preferences.ts';
 
 export const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
 /** Guitar Pro's practice range: 10 % to 300 % (alphaTab patch 0005 lowers its floor to 10 %). */
@@ -112,7 +114,7 @@ const PLAY_REQUEST = 'ot:play-request';
  * what changed since `before`. Pan and instrument go as overrides only when they differ from the
  * file, so the song's own pan and program changes play as written otherwise.
  */
-function applyMix(doc: OpenDocument, before?: OpenDocument): void {
+function applyMix(doc: OpenDocument, timeline: PlaybackTimeline | null, before?: OpenDocument): void {
   const engine = getAudioEngine();
   doc.summary.tracks.forEach((track, index) => {
     const mix = doc.mix[index];
@@ -121,14 +123,14 @@ function applyMix(doc: OpenDocument, before?: OpenDocument): void {
     const volume = effectiveVolume(doc.mix, doc.focus, index);
     const oldVolume = before === undefined ? null : effectiveVolume(before.mix, before.focus, index);
     const filePan = Math.min(1, Math.max(-1, (track.mix.balance - 8) / 8));
-    for (const channel of track.channels) {
+    for (const { channel, drums } of trackChannels(index, track.channels, timeline)) {
       if (old?.mute !== mix.mute) engine.send({ type: 'setChannelMute', channel, value: mix.mute });
       if (old?.solo !== mix.solo) engine.send({ type: 'setChannelSolo', channel, value: mix.solo });
       if (oldVolume !== volume) engine.send({ type: 'setChannelVolume', channel, value: volume });
       if (old?.pan !== mix.pan) {
         engine.send({ type: 'setChannelPan', channel, value: mix.pan === filePan ? null : mix.pan });
       }
-      if (track.isPercussion) continue;
+      if (track.isPercussion || drums) continue;
       if (old?.program !== mix.program) {
         engine.send({
           type: 'setChannelProgram',
@@ -215,6 +217,14 @@ usePractice.subscribe((state, previous) => {
   }
 });
 
+// The audio delay preference: playback pauses, and the next start opens the output anew.
+getAudioEngine().setLatencyHint(usePreferences.getState().audioLatency);
+usePreferences.subscribe((state, previous) => {
+  if (state.audioLatency === previous.audioLatency) return;
+  if (usePlayer.getState().transport.status === 'playing') usePlayer.getState().toggle();
+  getAudioEngine().setLatencyHint(state.audioLatency);
+});
+
 // Keep the synthesizer in step with mixer changes of the loaded document.
 useDocuments.subscribe((state, previous) => {
   const key = usePlayer.getState().docKey;
@@ -222,7 +232,7 @@ useDocuments.subscribe((state, previous) => {
   const doc = state.docs.find(candidate => candidate.key === key);
   const before = previous.docs.find(candidate => candidate.key === key);
   if (doc !== undefined && before !== undefined && (doc.mix !== before.mix || doc.focus !== before.focus)) {
-    applyMix(doc, before);
+    applyMix(doc, usePlayer.getState().timeline, before);
   }
 });
 
@@ -359,7 +369,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         engine.send({ type: 'setLoop', enabled: loop, range: null, id: nextMove() });
         sendTrainer(engine, practice);
         engine.send({ type: 'setMasterVolume', value: volume });
-        applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc);
+        applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc, timeline);
         set({ timeline, endTime: result.type === 'midiLoaded' ? result.endTime : 0 });
         dispatch({ type: 'loaded' });
       } catch (error) {

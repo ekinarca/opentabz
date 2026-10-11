@@ -1,0 +1,85 @@
+/**
+ * Settings and the audio output: the audio delay (the output opens again with the chosen hint),
+ * what the output reports while playing (no audio skipped), and the other settings.
+ */
+import type { Page } from '@playwright/test';
+import { elapsedSeconds, expect, expectScore, openHome, test } from './support.ts';
+
+async function openShuffle(page: Page): Promise<void> {
+  await openHome(page);
+  await page.getByRole('button', { name: 'a blues shuffle' }).click();
+  await expectScore(page);
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
+}
+
+async function playFor(page: Page, seconds: number): Promise<void> {
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  const start = await elapsedSeconds(page);
+  await expect.poll(() => elapsedSeconds(page), { timeout: 20_000 }).toBeGreaterThanOrEqual(start + seconds);
+}
+
+async function openSettings(page: Page) {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+test.describe('settings', () => {
+  test('the audio delay opens the output again with its hint, and plays without skipping', async ({
+    page,
+    browserName,
+  }) => {
+    // Record the latency hint of every audio output the app opens (silent, as in every test).
+    await page.addInitScript(() => {
+      const Base = window.AudioContext;
+      const hints: unknown[] = [];
+      class RecordingAudioContext extends Base {
+        public constructor(options?: AudioContextOptions) {
+          super(options);
+          hints.push(options?.latencyHint);
+        }
+      }
+      Object.assign(window, { AudioContext: RecordingAudioContext, latencyHints: hints });
+    });
+    const hints = () => page.evaluate(() => (window as unknown as { latencyHints: unknown[] }).latencyHints);
+    await openShuffle(page);
+    await playFor(page, 2);
+    expect(await hints()).toEqual(['interactive']);
+
+    let dialog = await openSettings(page);
+    // Playing for two seconds skipped no audio (AUD-001); the output reports its delay.
+    const status = dialog.getByRole('status');
+    await expect(status).toContainText(/Output delay \d+ ms/);
+    if (browserName === 'chromium') await expect(status).toContainText('audio skipped 0 ms');
+    await dialog.getByRole('radio', { name: 'Steadiest' }).click();
+    await page.keyboard.press('Escape');
+    // Changing the delay paused playback; the next start opens an output with the new hint.
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+    await playFor(page, 1);
+    expect(await hints()).toEqual(['interactive', 'playback']);
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+
+    // Remembered.
+    await page.reload();
+    dialog = await openSettings(page);
+    await expect(dialog.getByRole('radio', { name: 'Steadiest' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('the left-handed fretboard and single-key shortcuts are settings too', async ({ page }) => {
+    await openShuffle(page);
+    const dialog = await openSettings(page);
+    await dialog.getByRole('switch', { name: 'Left-handed fretboard' }).click();
+    await dialog.getByRole('switch', { name: 'Single-key shortcuts (−, =, ?)' }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Fretboard', exact: true }).click();
+    await expect(page.getByRole('img', { name: /^Fretboard of / })).toHaveAttribute(
+      'data-left-handed',
+      'true',
+    );
+    // With single-key shortcuts off, "-" no longer slows playback down.
+    await page.locator('.ot-scroll:not([hidden])').focus();
+    await page.keyboard.press('-');
+    await expect(page.getByRole('button', { name: /^Playback speed: / })).toHaveText('100 %');
+  });
+});

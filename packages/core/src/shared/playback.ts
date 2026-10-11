@@ -15,11 +15,21 @@ export interface PlaybackTimeline {
   readonly slices: Int32Array;
   /** Per beat sounding in a slice: [beatId, trackIndex, playbackStartTick]. */
   readonly items: Int32Array;
+  /**
+   * Channels playback added for a track's techniques (slap bass sounds, a golpe's drum kit, a
+   * second bend channel): [trackIndex, channel, kind]. The track's mixer settings apply to them.
+   */
+  readonly extraChannels: Int32Array;
 }
 
 export const TIMELINE_BAR_STRIDE = 5;
 export const TIMELINE_SLICE_STRIDE = 4;
 export const TIMELINE_ITEM_STRIDE = 3;
+export const TIMELINE_EXTRA_CHANNEL_STRIDE = 3;
+/** An extra channel that plays the track's notes with another sound. */
+export const EXTRA_CHANNEL_MELODIC = 0;
+/** An extra channel that is a drum kit: only mute, solo, level and pan apply. */
+export const EXTRA_CHANNEL_DRUMS = 1;
 
 /**
  * Where things are on the rendered score, in engine layout coordinates (the same space as
@@ -74,4 +84,9 @@ export interface MidiDelivery {
   readonly bars: Int32Array;
   /** End of the song in score ticks. */
   readonly endTick: number;
+  /**
+   * Drum kits playback added for a track's techniques (a golpe): played centered, so the track's
+   * pan places them, not the kit's own spread (alphaTab patch 0008).
+   */
+  readonly centeredChannels: readonly number[];
 }

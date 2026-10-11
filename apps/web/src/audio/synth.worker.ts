@@ -42,6 +42,12 @@ scope.addEventListener('message', event => {
       };
       return;
     }
+    if (command.type === 'connectWorklet') {
+      command.port.onmessage = () => {
+        host.progress();
+      };
+      return;
+    }
     host.handle(command);
   } catch (error) {
     scope.postMessage({

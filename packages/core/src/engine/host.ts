@@ -9,7 +9,12 @@ import { collectTrackNotes } from '../playback/track-notes.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackNotes } from '../shared/notes.ts';
-import type { PlaybackTimeline, SynthDelivery } from '../shared/playback.ts';
+import {
+  EXTRA_CHANNEL_DRUMS,
+  TIMELINE_EXTRA_CHANNEL_STRIDE,
+  type PlaybackTimeline,
+  type SynthDelivery,
+} from '../shared/playback.ts';
 import type {
   EngineArgs,
   EngineInfo,
@@ -158,6 +163,7 @@ export class EngineHost implements EngineMethods {
       transpositionPitches: playback.transpositionPitches,
       bars: playback.bars,
       endTick: playback.timeline.endTick,
+      centeredChannels: drumChannels(playback.timeline.extraChannels),
     });
     return playback.timeline;
   }
@@ -195,6 +201,15 @@ export class EngineHost implements EngineMethods {
   public get documentCount(): number {
     return this.documents.size;
   }
+}
+
+/** The drum kits among the channels playback added. */
+function drumChannels(extraChannels: Int32Array): number[] {
+  const channels: number[] = [];
+  for (let index = 0; index < extraChannels.length; index += TIMELINE_EXTRA_CHANNEL_STRIDE) {
+    if (extraChannels[index + 2] === EXTRA_CHANNEL_DRUMS) channels.push(extraChannels[index + 1] ?? -1);
+  }
+  return channels;
 }
 
 function indexBeats(score: alphaTab.model.Score): Map<number, alphaTab.model.Beat> {

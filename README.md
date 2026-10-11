@@ -34,7 +34,9 @@ the music.
 
 ![A score in page layout](docs/screenshots/score.png)
 
-**Play and practise.** Playback with a SoundFont synthesizer running off the main thread, a
+**Play and practise.** Playback with a SoundFont synthesizer running off the main thread that
+plays what is written: repeats, endings and D.C. / D.S. / Coda / Fine in Guitar Pro's order,
+fermatas, hairpins, tempo ramps, the sustain pedal and the guitar's techniques. A
 cursor that follows the music the way you like it (scrolling continuously at the line you choose,
 page by page or not at all; gliding, stepping note by note or beat by beat, in your colour, with
 the notes being played lit up), a fretboard that shows them on the neck of any instrument with

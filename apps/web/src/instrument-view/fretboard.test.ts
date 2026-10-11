@@ -19,6 +19,7 @@ const Q = 960;
  */
 const TIMELINE: PlaybackTimeline = {
   playbackId: 'test',
+  extraChannels: new Int32Array(0),
   endTick: 8 * Q,
   bars: Int32Array.from([0, 4 * Q, 0, 0, 4, 4 * Q, 8 * Q, 1, 4, 1]),
   slices: Int32Array.from([

@@ -132,10 +132,10 @@ describe('PLAY-097 bend timing styles', () => {
   });
 });
 
-// PLAY-098 is only partly covered: alphaTab bends notes with per-note (MIDI 2.0) pitch bend on one
-// shared channel, keyed by MIDI key, so two bent strings that start on the same pitch share one
-// curve. Strings that start on different pitches bend independently, as proved here.
-describe('simultaneous bends on different pitches', () => {
+// alphaTab bends notes with per-note (MIDI 2.0) pitch bend keyed by MIDI key: strings that start on
+// different pitches bend independently on one channel, as proved here. Two strings bent from the
+// same pitch get a channel each (patch 0017, playback-channels.test.ts).
+describe('PLAY-098 simultaneous bends on different pitches', () => {
   // A3 (G string) bent a whole tone and D4 (B string) a semitone, while E4 rings unbent.
   const chord = '(2.3{be (bend 0 0 20 0 40 4)} 3.2{be (bend 0 0 20 0 40 2)} 0.1).1';
 

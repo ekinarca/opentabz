@@ -31,7 +31,7 @@ export function generatePlayback(
     midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
     tickShift: handler.tickShift,
     transpositionPitches: [...generator.transpositionPitches.entries()],
-    timeline: buildTimeline(generator.tickLookup, playbackId),
+    timeline: buildTimeline(generator.tickLookup, playbackId, generator.extraChannels),
     bars: Int32Array.from(
       generator.tickLookup.masterBars.flatMap(bar => [
         bar.start,
@@ -42,7 +42,11 @@ export function generatePlayback(
   };
 }
 
-function buildTimeline(lookup: alphaTab.midi.MidiTickLookup, playbackId: string): PlaybackTimeline {
+function buildTimeline(
+  lookup: alphaTab.midi.MidiTickLookup,
+  playbackId: string,
+  extraChannels: readonly number[],
+): PlaybackTimeline {
   const bars: number[] = [];
   const slices: number[] = [];
   const items: number[] = [];
@@ -68,5 +72,6 @@ function buildTimeline(lookup: alphaTab.midi.MidiTickLookup, playbackId: string)
     bars: Int32Array.from(bars),
     slices: Int32Array.from(slices),
     items: Int32Array.from(items),
+    extraChannels: Int32Array.from(extraChannels),
   };
 }

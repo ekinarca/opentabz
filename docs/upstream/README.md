@@ -23,6 +23,9 @@ available as source: the patch file is that source.
 | [0012](0012-exact-text-measurement.md)      | Measure text exactly, in its font, where a canvas exists                           | Tempo marks and names came out narrower than drawn and overlapped          | not yet  |
 | [0013](0013-section-markers-own-row.md)     | Section names on an effect row of their own                                        | Section names ran through effects starting on the next beat                | not yet  |
 | [0014](0014-mixer-overrides.md)             | Mixer pan and instrument that the song's events do not undo; detune in cents       | A seek undid the mixer; an unused instrument was silent                    | not yet  |
+| [0015](0015-playback-techniques.md)         | Tremolo speed, fades, ornaments in key, tapping, hairpins, fermatas, ramps, pedal  | These techniques were drawn but played wrongly or not at all               | not yet  |
+| [0016](0016-jumps-after-repeats.md)         | Jumps after pickups, inside repeats, D.S.S. after D.S., last ending after a jump   | The form was played in the wrong order                                     | not yet  |
+| [0017](0017-extra-channels.md)              | Channels of their own for slap and pop, golpe and unison bends                     | Slap and pop sounded plain, golpe was silent, unison bends shared a curve  | not yet  |
 
 ## Working on a patch
 

@@ -82,7 +82,7 @@ export class SynthHost {
     this.emit = emit;
   }
 
-  public handle(command: Exclude<SynthCommand, { type: 'init' }>): void {
+  public handle(command: Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>): void {
     const synth = this.synth;
     if (synth === null) {
       this.emit({ type: 'error', context: command.type, message: 'The synthesizer is not initialized.' });
@@ -308,6 +308,7 @@ export class SynthHost {
       // A new document starts with the mixer the UI sends next.
       this.mixer.clear();
       synth.resetChannelStates();
+      for (const channel of delivery.centeredChannels) synth.setChannelCentered(channel, true);
       this.load(synth, delivery);
       this.applyLoop(null);
     } catch (error) {
@@ -592,6 +593,7 @@ function clickTrackDelivery(
     transpositionPitches: [],
     bars,
     endTick,
+    centeredChannels: [],
   };
 }
 

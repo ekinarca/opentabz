@@ -243,7 +243,30 @@ export const strings = {
     close: (name: string) => `Close ${name}`,
     openFile: 'Open file',
     theme: 'Theme',
+    settings: 'Settings',
     about: 'About OpenTabz',
+  },
+
+  settings: {
+    title: 'Settings',
+    description: 'Sound, instrument views and the keyboard. Remembered on this device.',
+    close: 'Close',
+    sound: 'Sound',
+    latency: 'Audio delay',
+    latencies: { interactive: 'Shortest', balanced: 'Balanced', playback: 'Steadiest' },
+    latencyHints: {
+      interactive: 'Sound follows Play and the metronome as fast as this device allows.',
+      balanced: 'A little more delay, for fewer dropouts on busy devices.',
+      playback: 'The most buffering: for slow devices, or when the sound breaks up.',
+    },
+    latencyApplies: 'A change takes effect the next time playback starts.',
+    output: (latency: number | null, missed: number) =>
+      latency === null
+        ? 'Not started yet: press Play.'
+        : `Output delay ${Math.round(latency)} ms · audio skipped ${Math.round(missed)} ms`,
+    views: 'Instrument views',
+    leftHanded: 'Left-handed fretboard',
+    keyboard: 'Keyboard',
   },
 
   themes: {
@@ -353,6 +376,8 @@ export const strings = {
     loopBarsSubmit: 'Loop',
     sections: 'Sections',
     sectionAt: (bar: number) => `Bar ${bar}`,
+    selectSection: (name: string, first: number, last: number) =>
+      first === last ? `Select ${name} (bar ${first})` : `Select ${name} (bars ${first}–${last})`,
     metronome: 'Metronome',
     countIn: 'Count-in',
     practiceSettings: 'Practice settings…',

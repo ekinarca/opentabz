@@ -40,6 +40,19 @@ All notable changes to OpenTabz are recorded here. The format follows
   start to a target speed in steps after a set number of passes at each speed, exactly at the
   start of a pass; a loop can also repeat a set number of times and stop. Loops can be set by
   typing bar numbers. Speed changes while playing no longer stutter.
+- **Playback that follows the notation further.** Fermatas hold the music (short, medium, long
+  or the length the file gives); crescendo and diminuendo hairpins swell towards the next
+  dynamic; Guitar Pro's tempo ramps accelerate and slow down gradually; the sustain pedal holds
+  notes until it comes up; tremolo picking keeps its speed on notes of any length; fade-outs and
+  swells no longer silence the rest of the track; mordents and turns take their neighbouring
+  notes from the key; tapped notes sound without a pick attack. Jumps follow Guitar Pro's rules:
+  a Da Capo lands after a pickup bar, a jump inside a repeat waits for the last pass, a Dal Segno
+  Segno comes after the Dal Segno, and after a jump only the last alternate ending plays. Slapped
+  and popped bass notes play the slap bass sounds (other instruments strike them harder), a golpe
+  knocks on the guitar's top, and two strings bent from the same pitch bend independently.
+- **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
+  breaks up), with the output's delay and any audio it had to skip shown live; the left-handed
+  fretboard; single-key shortcuts.
 - **Fretboard.** The active track's neck under the score: any number of strings (3 to 10) and
   tunings, a capo, the notes being played lit in the cursor colour, with the next notes to play
   as rings or the rest of the bar in a lighter colour; dead notes, harmonics and ghost notes
@@ -58,7 +71,7 @@ All notable changes to OpenTabz are recorded here. The format follows
   patterns; the open song waits and comes back when it closes.
 - **Practice.** A mixer with mute, solo and level per track and a practice mode; selecting a
   range by dragging across the music, Shift+click or a long press on phones, with handles to
-  adjust it; looping the selection; Shift+arrow keys and Esc for selections
+  adjust it, or a whole section from the Go to list; looping the selection; Shift+arrow keys and Esc for selections
   ([docs/SHORTCUTS.md](docs/SHORTCUTS.md)).
 - **Phones.** Phone-first layouts: scroll layout by default, a compact playback bar with a menu
   for less frequent controls, touch-sized selection handles.
@@ -76,7 +89,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   switch while audio is generated, without gaps or drift (0006), drum kits on any channel and
   silence instead of `NaN` for unloaded samples (0007), centred channels (0008), replacing
   the song while it plays (0009), speed changes without a seek (0010), rests between loop
-  passes (0011), exact text measurement (0012) and section names on a row of their own (0013) and mixer overrides with detune (0014). See [docs/upstream/](docs/upstream/).
+  passes (0011), exact text measurement (0012), section names on a row of their own (0013),
+  mixer overrides with detune (0014), playback techniques that were drawn but not heard
+  (0015), jumps that follow Guitar Pro's rules (0016) and channels of their own for slap, pop,
+  golpe and unison bends (0017). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
 

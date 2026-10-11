@@ -9,7 +9,7 @@
  * so the first note sounds within a few tens of milliseconds of pressing play.
  */
 import type { SynthCommand, SynthEvent } from '@opentabz/audio/protocol';
-import { createRingBuffers, type RingBuffers } from '@opentabz/audio/ring';
+import { createRingBuffers, Slot, type RingBuffers } from '@opentabz/audio/ring';
 import sonivoxUrl from '@coderline/alphatab/soundfont/sonivox.sf2?url';
 import { getEngine } from '../engine/instance.ts';
 import workletUrl from './ring-player.worklet.ts?worker&url';
@@ -43,6 +43,7 @@ export class AudioEngine {
   /** Master balance, -1 (left) to 1 (right), applied on the main thread's audio graph. */
   private balance = 0;
   private panner: StereoPannerNode | null = null;
+  private latencyHint: AudioContextLatencyCategory = 'interactive';
 
   /** Subscribes to every event of the synth worker. */
   public subscribe(listener: Listener): () => void {
@@ -76,14 +77,43 @@ export class AudioEngine {
     // iOS mutes Web Audio with the ring/silent switch unless the session is declared as playback.
     const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
     if (session !== undefined) session.type = 'playback';
-    const context = new AudioContext({ sampleRate: SYNTH_SAMPLE_RATE, latencyHint: 'interactive' });
+    const context = new AudioContext({ sampleRate: SYNTH_SAMPLE_RATE, latencyHint: this.latencyHint });
     this.context = context;
     this.outputPromise = this.connectOutput(context);
     return this.outputPromise;
   }
 
-  public send(command: Exclude<SynthCommand, { type: 'init' }>): void {
+  public send(command: Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>): void {
     this.worker?.postMessage(command);
+  }
+
+  /**
+   * How much the output buffers. An AudioContext keeps the hint it was made with, so a change
+   * closes the output; the next start (a user gesture) opens one with the new hint. Pause first.
+   */
+  public setLatencyHint(hint: AudioContextLatencyCategory): void {
+    if (hint === this.latencyHint) return;
+    this.latencyHint = hint;
+    const context = this.context;
+    const worker = this.worker;
+    if (context === null || worker === null) return;
+    this.context = null;
+    this.outputPromise = null;
+    this.panner = null;
+    void context.close();
+    // The next AudioWorklet pings the synth worker on a port of its own.
+    const channel = new MessageChannel();
+    this.workletPort = channel.port1;
+    const command: SynthCommand = { type: 'connectWorklet', port: channel.port2 };
+    worker.postMessage(command, [channel.port2]);
+  }
+
+  /** What the output adds up to: its delay, and the audio it had to skip for lack of samples. */
+  public get stats(): { readonly latencyMs: number | null; readonly missedMs: number } {
+    const context = this.context;
+    const latency = context === null ? null : (context.baseLatency + (context.outputLatency || 0)) * 1000;
+    const missed = this.ring === null ? 0 : Atomics.load(new Int32Array(this.ring.control), Slot.Underruns);
+    return { latencyMs: latency, missedMs: (missed / SYNTH_SAMPLE_RATE) * 1000 };
   }
 
   /** Master balance (pan of the whole mix), -1 (left) to 1 (right). */
