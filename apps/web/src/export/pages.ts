@@ -42,6 +42,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       staffDisplay: doc.view.staffDisplay,
       width: contentWidth(geometry),
       notationScale: 1,
+      style: doc.view.style,
       ...(bars === null ? {} : { bars }),
     },
   });

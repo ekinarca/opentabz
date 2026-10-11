@@ -4,7 +4,7 @@
 import { create } from 'zustand';
 
 export type Panel =
-  'speed' | 'goto' | 'shortcuts' | 'practice' | 'metronome' | 'settings' | 'export' | 'tuner';
+  'speed' | 'goto' | 'shortcuts' | 'practice' | 'metronome' | 'settings' | 'export' | 'tuner' | 'stylesheet';
 
 interface UiState {
   readonly panel: Panel | null;

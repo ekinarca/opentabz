@@ -617,6 +617,18 @@ export const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    id: 'stylesheet',
+    group: 'view',
+    label: s.stylesheet,
+    // Guitar Pro's key for its stylesheet.
+    bindings: [{ key: 'F7' }],
+    needsScore: true,
+    run: () => {
+      useUi.getState().openPanel('stylesheet');
+      return true;
+    },
+  },
+  {
     id: 'full-screen',
     group: 'view',
     label: s.fullScreen,

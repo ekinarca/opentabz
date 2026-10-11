@@ -4,13 +4,15 @@
  * Framework-free on purpose: layout, scrolling and painting never go through React. Geometry is
  * computed from data and written to the DOM; nothing is read back from layout in hot paths.
  */
-import type {
-  LayoutKind,
-  ScoreBounds,
-  StaffDisplay,
-  SystemsLayout,
-  ViewLayout,
-  ViewOptions,
+import {
+  sameScoreStyle,
+  type LayoutKind,
+  type ScoreBounds,
+  type ScoreStyle,
+  type StaffDisplay,
+  type SystemsLayout,
+  type ViewLayout,
+  type ViewOptions,
 } from '@opentabz/core/shared';
 import type { EngineClient } from '../engine/client.ts';
 import { EdgeScroller } from './edge-scroll.ts';
@@ -36,6 +38,8 @@ export interface ScoreViewState {
   readonly page: PageSetup;
   /** How the pages sit on screen, in the page layout. */
   readonly arrangement: PageArrangement;
+  /** How the score is engraved (the stylesheet). */
+  readonly style: ScoreStyle;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
   readonly trackIndexes: readonly number[];
@@ -564,6 +568,7 @@ export class ScoreView {
       staffDisplay: state.staffDisplay,
       width,
       notationScale: 1,
+      style: state.style,
     };
   }
 
@@ -851,6 +856,8 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     a.staffDisplay === b.staffDisplay &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
+    (a.style === b.style ||
+      (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );
@@ -861,6 +868,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     a.docId === b.docId &&
     a.layout === b.layout &&
     samePageSetup(a.page, b.page) &&
+    sameScoreStyle(a.style, b.style) &&
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     a.trackIndexes.length === b.trackIndexes.length &&

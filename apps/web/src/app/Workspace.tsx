@@ -24,6 +24,7 @@ import {
   MicVocal,
   Piano,
   Rows3,
+  SwatchBook,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -56,6 +57,7 @@ import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
 import { SongMap } from './SongMap.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
+import { StylesheetDialog } from './StylesheetDialog.tsx';
 import { Transport } from './Transport.tsx';
 import { ZoomControls } from './ZoomControls.tsx';
 
@@ -329,6 +331,14 @@ function ViewToolbar({
         <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
         <IconButton
+          label={strings.stylesheet.open}
+          shortcut={shortcutHint('stylesheet')}
+          icon={<SwatchBook size={18} aria-hidden />}
+          onClick={() => {
+            useUi.getState().openPanel('stylesheet');
+          }}
+        />
+        <IconButton
           label={strings.toolbar.fullScreen}
           shortcut={shortcutHint('full-screen')}
           icon={<Maximize size={18} aria-hidden />}
@@ -405,6 +415,7 @@ export function Workspace() {
       {active !== null && (
         <PageSetupDialog doc={active} open={pageSetupOpen} onOpenChange={setPageSetupOpen} />
       )}
+      {active !== null && <StylesheetDialog doc={active} />}
     </main>
   );
 }

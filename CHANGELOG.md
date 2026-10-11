@@ -132,6 +132,13 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
+  (keeping the text's size if asked), the rhythmic spacing, brackets (none, a track's staves,
+  similar instruments, around single staves too), barlines through all staves, the // separator
+  between systems, multi-bar rests, staves left out while they rest, track names (where, full or
+  short, which way up), dynamics, the tuning legend and where chord diagrams go. It starts as the
+  file asks (Guitar Pro stylesheets are honoured, the tuning legend included), applies as it is
+  changed, prints and exports the same, and is remembered for the file.
 - **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
   Executive, Statement, Folio, Quarto) or a size of one's own, portrait or landscape, and the
   four margins, from the Paper menu and its Page setup dialog. The page on screen, the PDF and

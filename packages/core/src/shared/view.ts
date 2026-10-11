@@ -1,4 +1,5 @@
 /** Options shared between the UI and the engine for one rendered view of a document. */
+import type { ScoreStyle } from './style.ts';
 
 export const LAYOUT_KINDS = ['page', 'scroll', 'horizontal'] as const;
 /** page: physical pages · scroll: endless vertical · horizontal: one endless system. */
@@ -32,6 +33,8 @@ export interface ViewOptions {
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */
   readonly notationScale: number;
+  /** How the score is engraved; as the file says when absent. */
+  readonly style?: ScoreStyle;
 }
 
 /** What a laid-out partial contains. */

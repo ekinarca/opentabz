@@ -1,4 +1,5 @@
 import type { FormatId } from './formats.ts';
+import type { ScoreStyle } from './style.ts';
 
 /** Plain, cloneable description of an opened document, sent from the engine to the UI. */
 export interface DocSummary {
@@ -31,6 +32,8 @@ export interface DocSummary {
   /** Whether the file carries its own systems layout (bars per system), e.g. Guitar Pro 6–8. */
   readonly hasModelLayout: boolean;
   readonly hasBackingTrack: boolean;
+  /** How the file asks for the score to be engraved (its stylesheet). */
+  readonly style: ScoreStyle;
 }
 
 export interface MasterBarSummary {

@@ -1,6 +1,7 @@
 import * as alphaTab from '@coderline/alphatab';
 import { SCORE_COLOR_SENTINELS } from '../shared/score-colors.ts';
 import type { LayoutKind, SystemsLayout, ViewOptions } from '../shared/view.ts';
+import { applyStyleSettings } from './style.ts';
 
 /** Padding around the notation in layout units, per layout: [left, top, right, bottom]. */
 const PADDING: Readonly<Record<LayoutKind, readonly [number, number, number, number]>> = {
@@ -40,6 +41,7 @@ export function createRenderSettings(options: ViewOptions): alphaTab.Settings {
   resources.barSeparatorColor = color(SCORE_COLOR_SENTINELS.barline);
   resources.barNumberColor = color(SCORE_COLOR_SENTINELS['bar-number']);
   resources.scoreInfoColor = color(SCORE_COLOR_SENTINELS.info);
+  if (options.style !== undefined) applyStyleSettings(settings, options.style);
   return settings;
 }
 

@@ -6,10 +6,12 @@
  * the UI asks for the partials that approach the viewport via `paint()`.
  */
 import * as alphaTab from '@coderline/alphatab';
+import { sameScoreStyle, type ScoreStyle } from '../shared/style.ts';
 import type { PartialKind, PartialLayout, ViewOptions } from '../shared/view.ts';
 import type { ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
+import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
@@ -44,10 +46,13 @@ export class RenderSession {
   private finished: alphaTab.rendering.RenderFinishedEventArgs | null = null;
   private failure: Error | null = null;
   private disposed = false;
+  /** The style the file brought: a view's style changes the stylesheet only where it differs. */
+  private readonly fileStyle: ScoreStyle;
 
   public constructor(score: alphaTab.model.Score, options: ViewOptions) {
     this.score = score;
     this.options = options;
+    this.fileStyle = readScoreStyle(score);
     this.renderer = new alphaTab.rendering.ScoreRenderer(createRenderSettings(options));
     this.renderer.partialLayoutFinished.on(args => this.collected.push(args));
     this.renderer.partialRenderFinished.on(args => {
@@ -148,9 +153,12 @@ export class RenderSession {
       tracksFor(this.score, this.options.trackIndexes),
       this.options.staffDisplay,
     );
+    const { style } = this.options;
+    const restoreStyle = style === undefined ? null : applyScoreStyle(this.score, style, this.fileStyle);
     try {
       action();
     } finally {
+      restoreStyle?.();
       restore();
     }
   }
@@ -195,6 +203,8 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     a.notationScale === b.notationScale &&
+    (a.style === b.style ||
+      (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&
     a.bars?.first === b.bars?.first &&
     a.bars?.last === b.bars?.last &&
     a.trackIndexes.length === b.trackIndexes.length &&

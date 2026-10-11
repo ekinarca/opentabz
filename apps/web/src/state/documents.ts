@@ -3,7 +3,14 @@
  * notices. The engine holds the scores; this store holds summaries, view state and the original
  * bytes (so documents can be reopened if the engine worker has to be restarted).
  */
-import type { DocSummary, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
+import type {
+  DocSummary,
+  LayoutKind,
+  OpenError,
+  ScoreStyle,
+  StaffDisplay,
+  SystemsLayout,
+} from '@opentabz/core/shared';
 import { create } from 'zustand';
 import { getEngine } from '../engine/instance.ts';
 import { EngineTimeoutError } from '../engine/client.ts';
@@ -12,6 +19,7 @@ import type { PageArrangement, PageSetup } from '../score-view/pagination.ts';
 import { describeFormat, strings } from '../strings.ts';
 import { fingerprint, recallMix, rememberMix, STYLE_DEFAULTS, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
+import { recallStyle, rememberStyle } from './style-memory.ts';
 
 export type { TrackMix } from './mixer-memory.ts';
 
@@ -22,6 +30,8 @@ export interface DocViewState {
   readonly page: PageSetup;
   /** How the pages sit on screen in the page layout (REND-212…REND-214). */
   readonly arrangement: PageArrangement;
+  /** How the score is engraved: the file's stylesheet, as changed (REND-218). */
+  readonly style: ScoreStyle;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
   readonly zoom: number;
@@ -128,6 +138,7 @@ async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): 
     return;
   }
   const stored = recallMix(hash, trackCount);
+  const style = recallStyle(hash);
   useDocuments.setState(state => ({
     docs: state.docs.map(doc =>
       doc.key === key
@@ -135,6 +146,7 @@ async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): 
             ...doc,
             fingerprint: hash,
             ...(stored === null ? {} : { mix: stored.tracks, focus: stored.focus }),
+            ...(style === null ? {} : { view: { ...doc.view, style } }),
           }
         : doc,
     ),
@@ -166,6 +178,7 @@ function initialView(summary: DocSummary): DocViewState {
     layout: narrow && preferences.layout === 'page' ? 'scroll' : preferences.layout,
     page: preferences.page,
     arrangement: preferences.pageArrangement,
+    style: summary.style,
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,
     zoom: 1,
@@ -288,6 +301,9 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
             : (shown[0] ?? doc.activeTrack);
         // A zoom chosen by hand ends fitting the page to the window.
         const fit = patch.fit !== undefined ? patch.fit : patch.zoom !== undefined ? null : doc.view.fit;
+        // A style chosen for the song comes back when it is opened again.
+        if (patch.style !== undefined && doc.fingerprint !== null)
+          rememberStyle(doc.fingerprint, patch.style);
         return { ...doc, activeTrack, view: { ...doc.view, ...patch, fit } };
       }),
     }));

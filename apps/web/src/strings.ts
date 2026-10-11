@@ -2,7 +2,17 @@
  * Every user-facing string in OpenTabz (English only). Components import from here; no literal
  * UI text lives anywhere else.
  */
-import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
+import type {
+  BracketMode,
+  FormatId,
+  LayoutKind,
+  OpenError,
+  StaffDisplay,
+  SystemsLayout,
+  TextOrientation,
+  TrackNamePlace,
+  TrackNameText,
+} from '@opentabz/core/shared';
 import type { PngResolution } from './export/page-files.ts';
 import type { Orientation, PageArrangement, PaperId } from './score-view/pagination.ts';
 import type { ZoomFit } from './state/documents.ts';
@@ -373,6 +383,53 @@ export const strings = {
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
     fullScreen: 'Full screen',
+  },
+
+  stylesheet: {
+    open: 'Stylesheet',
+    title: 'Stylesheet',
+    description: 'How this score is engraved. It starts as the file asks, and is remembered for the file.',
+    close: 'Close',
+    reset: 'As in the file',
+    sections: {
+      page: 'Size and spacing',
+      systems: 'Systems',
+      names: 'Track names',
+      notation: 'Notation',
+    },
+    scale: 'Scale',
+    scaleValue: (scale: number) => `${Math.round(scale * 100)} %`,
+    keepTextSize: 'Keep the text’s size',
+    keepTextSizeHint: 'Only the music grows or shrinks; titles and labels stay as they are.',
+    spacing: 'Rhythmic spacing',
+    spacingValue: (spacing: number) => `× ${spacing.toFixed(1)}`,
+    spacingHint: 'How much room the durations take across the page.',
+    brackets: 'Brackets',
+    bracketModes: {
+      none: 'None',
+      staves: 'Track',
+      similar: 'Similar instruments',
+    } satisfies Record<BracketMode, string>,
+    singleStaffBrackets: 'Brackets around a single staff',
+    extendBarLines: 'Barlines through all staves',
+    systemSeparator: 'Separator between systems (//)',
+    hideEmptyStaves: 'Leave out staves that rest for a whole system',
+    hideEmptyStavesInFirstSystem: 'On the first system too',
+    multiBarRests: 'Multi-bar rests',
+    oneTrack: 'One track shown',
+    severalTracks: 'Several tracks shown',
+    places: { hidden: 'Hidden', first: 'First system', all: 'Every system' } satisfies Record<
+      TrackNamePlace,
+      string
+    >,
+    firstSystem: 'First system',
+    otherSystems: 'Other systems',
+    texts: { full: 'Full name', short: 'Short name' } satisfies Record<TrackNameText, string>,
+    orientations: { horizontal: 'Across', vertical: 'Upright' } satisfies Record<TextOrientation, string>,
+    dynamics: 'Dynamics',
+    tuning: 'Tuning legend',
+    chordDiagramsOnTop: 'Chord diagrams above the music',
+    chordDiagramsInScore: 'Chord diagrams above their beats',
   },
 
   zoom: {
@@ -863,6 +920,7 @@ export const strings = {
       fretboard: 'Fretboard on or off',
       fullScreen: 'Full screen on or off',
       overview: 'Song overview on or off',
+      stylesheet: 'Stylesheet…',
       trackPrevious: 'Previous track',
       trackNext: 'Next track',
       open: 'Open files',

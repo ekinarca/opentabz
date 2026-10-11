@@ -221,23 +221,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-216 | Zoom to fit the page width                                                        | GP  | M2  | —                                                           | apps/web/e2e/zoom.spec.ts | done |
 | REND-217 | Zoom to fit a whole page                                                          | GP  | M2  | —                                                           | apps/web/e2e/zoom.spec.ts | done |
 | REND-218 | Stylesheet panel: per-document engraving options (page, systems, header/footer, text, notation), saved with the document | GP  | M2  | —                                                           | —    | planned |
-| REND-219 | Stylesheet settings stored in Guitar Pro files are honoured                       | GP  | M2  | —                                                           | —    | planned |
+| REND-219 | Stylesheet settings stored in Guitar Pro files are honoured                       | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 | REND-220 | Stylesheet presets: bundled looks, user stylesheets, one chosen as the default for new documents | GP  | M2  | —                                                           | —    | planned |
 | REND-221 | Stylesheet: paper-size presets (twelve formats) and custom sizes                  | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-222 | Stylesheet: portrait or landscape                                                 | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-223 | Stylesheet: overall score scale, optionally keeping text and diagram sizes        | GP  | M2  | —                                                           | —    | planned |
-| REND-224 | Stylesheet: rhythmic spacing factor                                               | GP  | M2  | —                                                           | —    | planned |
+| REND-224 | Stylesheet: rhythmic spacing factor                                               | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 | REND-225 | Stylesheet: tuning legend (show, position, detail level, layout, frame)           | GP  | M2  | —                                                           | —    | planned |
 | REND-226 | Stylesheet: chord-symbol spelling (classic, jazz, rock)                           | GP  | M2  | —                                                           | —    | planned |
 | REND-227 | Stylesheet: chord-diagram placement (top grid, in score, both), size and spacing  | GP  | M2  | —                                                           | —    | planned |
 | REND-228 | Stylesheet: staff-line thickness, system spacing, first-system indent             | GP  | M2  | —                                                           | —    | planned |
 | REND-229 | Stylesheet: slash-notation staff lines, barlines, and fret/string for single notes | GP  | M2  | —                                                           | —    | planned |
-| REND-230 | Stylesheet: barlines drawn through all staves of a system                         | GP  | M2  | —                                                           | —    | planned |
+| REND-230 | Stylesheet: barlines drawn through all staves of a system                         | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 | REND-231 | Stylesheet: repeat clef and time signature on every system or at sections         | GP  | M2  | —                                                           | —    | planned |
 | REND-232 | Stylesheet: capo and tuning reflected in standard notation (sounding pitch) or not | GP  | M2  | —                                                           | —    | planned |
-| REND-233 | Stylesheet: staff brackets (none, tab with its staff, similar instruments)        | GP  | M2  | —                                                           | —    | planned |
-| REND-234 | Stylesheet: system separator mark                                                 | GP  | M2  | —                                                           | —    | planned |
-| REND-235 | Stylesheet: track names (placement, single/multi-track, full or short, orientation) | GP  | M2  | —                                                           | —    | planned |
+| REND-233 | Stylesheet: staff brackets (none, tab with its staff, similar instruments)        | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
+| REND-234 | Stylesheet: system separator mark                                                 | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
+| REND-235 | Stylesheet: track names (placement, single/multi-track, full or short, orientation) | GP  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 | REND-236 | Stylesheet: header/footer tokens for every score field, page number and page count | GP  | M2  | —                                                           | —    | planned |
 | REND-237 | Stylesheet: header/footer element formatting (visibility, prefix label, font, size, style, alignment), separate set for later pages | GP  | M2  | —                                                           | —    | planned |
 | REND-238 | Stylesheet: font, size and style for every text element                           | GP  | M2  | —                                                           | —    | planned |
@@ -255,7 +255,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-250 | Stylesheet: tablature toggles (repeat tied frets, dashed quarter rests, coloured frets for voices 2–4) | GP  | M2  | —                                                           | —    | planned |
 | REND-251 | Stylesheet: hammer-on/pull-off display (H/P letters, collision avoidance, outer-note slurs, one slur per group) | GP  | M2  | —                                                           | —    | planned |
 | REND-252 | Stylesheet: fingering display (left- and right-hand label sets, position on staff and tab, size) | GP  | M2  | —                                                           | —    | planned |
-| REND-311 | Multi-bar rests in multi-track views and per-part printing                        | OT  | M2  | —                                                           | —    | planned |
+| REND-311 | Multi-bar rests in multi-track views and per-part printing                        | OT  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 | REND-312 | Extended dynamics: pppp–ffffff, sf, sfz, sffz, fp, rf, rfz, niente                | OT  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-313 | Lyrics on any staff, any number of verses, per-verse styling                      | OT  | M5  | —                                                           | —    | planned |
 | REND-314 | Left-handed (mirrored) chord and scale diagrams                                   | OT  | M2  | —                                                           | —    | planned |
@@ -264,7 +264,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | —    | planned |
 | REND-318 | Percussion legend for drum staves                                                 | OT  | M2  | —                                                           | —    | planned |
 | REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | —                                                           | —    | planned |
-| REND-320 | Hide staves that rest for a whole system                                          | OT  | M2  | —                                                           | —    | planned |
+| REND-320 | Hide staves that rest for a whole system                                          | OT  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 
 ## Playback
 
