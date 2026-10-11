@@ -3,7 +3,10 @@ import {
   CHORD_SPELLINGS,
   sameScoreStyle,
   STYLE_SCALE,
+  STYLE_INDENT_MM,
+  STYLE_LINE_THICKNESS,
   STYLE_SPACING,
+  STYLE_SYSTEM_SPACING,
   TEXT_ORIENTATIONS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
@@ -118,6 +121,45 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               step={0.1}
               onValueChange={spacing => {
                 set({ spacing: Math.round(spacing * 10) / 10 });
+              }}
+            />
+          </Field>
+          <Field label={s.lineThickness} value={s.lineThicknessValue(style.staffLineThickness)}>
+            <Slider
+              label={s.lineThickness}
+              valueText={s.lineThicknessValue(style.staffLineThickness)}
+              value={style.staffLineThickness}
+              min={STYLE_LINE_THICKNESS.min}
+              max={STYLE_LINE_THICKNESS.max}
+              step={0.1}
+              onValueChange={staffLineThickness => {
+                set({ staffLineThickness: Math.round(staffLineThickness * 10) / 10 });
+              }}
+            />
+          </Field>
+          <Field label={s.systemSpacing} value={s.systemSpacingValue(style.systemSpacing)}>
+            <Slider
+              label={s.systemSpacing}
+              valueText={s.systemSpacingValue(style.systemSpacing)}
+              value={style.systemSpacing}
+              min={STYLE_SYSTEM_SPACING.min}
+              max={STYLE_SYSTEM_SPACING.max}
+              step={0.1}
+              onValueChange={systemSpacing => {
+                set({ systemSpacing: Math.round(systemSpacing * 10) / 10 });
+              }}
+            />
+          </Field>
+          <Field label={s.firstSystemIndent} value={s.firstSystemIndentValue(style.firstSystemIndent)}>
+            <Slider
+              label={s.firstSystemIndent}
+              valueText={s.firstSystemIndentValue(style.firstSystemIndent)}
+              value={style.firstSystemIndent}
+              min={STYLE_INDENT_MM.min}
+              max={STYLE_INDENT_MM.max}
+              step={1}
+              onValueChange={firstSystemIndent => {
+                set({ firstSystemIndent: Math.round(firstSystemIndent) });
               }}
             />
           </Field>

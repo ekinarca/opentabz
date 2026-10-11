@@ -592,6 +592,12 @@ export const strings = {
     spacing: 'Rhythmic spacing',
     spacingValue: (spacing: number) => `× ${spacing.toFixed(1)}`,
     spacingHint: 'How much room the durations take across the page.',
+    lineThickness: 'Staff line thickness',
+    lineThicknessValue: (factor: number) => `× ${factor.toFixed(1)}`,
+    systemSpacing: 'Space between systems',
+    systemSpacingValue: (factor: number) => `× ${factor.toFixed(1)}`,
+    firstSystemIndent: 'First system indent',
+    firstSystemIndentValue: (mm: number) => `${mm} mm`,
     brackets: 'Brackets',
     bracketModes: {
       none: 'None',

@@ -170,7 +170,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
   one another; one choice in the menu applies to every track again. Exports print the same.
 - **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
-  (keeping the text's size if asked), the rhythmic spacing, brackets (none, a track's staves,
+  (keeping the text's size if asked), the rhythmic spacing, the staff lines' thickness, the space
+  between systems, the first system's indent, brackets (none, a track's staves,
   similar instruments, around single staves too), barlines through all staves, the // separator
   between systems, multi-bar rests, staves left out while they rest, track names (where, full or
   short, which way up), dynamics, the tuning legend and where chord diagrams go. It starts as the
@@ -232,8 +233,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
   first voice (0023), 256th flags on down stems (0024), tempo marks that keep their beat unit
   (0025), staccatissimo (0026), lyrics kept as written (0027), the percussion mapper exported
-  (0028), "let ring throughout" (0029) and tempo marks rounded on request (0030). See
-  [docs/upstream/](docs/upstream/).
+  (0028), "let ring throughout" (0029), tempo marks rounded on request (0030) and the first
+  system indented (0031). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

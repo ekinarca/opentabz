@@ -37,6 +37,12 @@ export interface ScoreStyle {
   readonly keepTextSize: boolean;
   /** How much room the durations take across the page (rhythmic spacing), 1 = as usual. */
   readonly spacing: number;
+  /** How thick the staff lines are drawn, 1 = as usual (REND-228). */
+  readonly staffLineThickness: number;
+  /** The space between systems, 1 = as usual, 0 = none (REND-228). */
+  readonly systemSpacing: number;
+  /** How far the first system is indented, in millimetres (REND-228). */
+  readonly firstSystemIndent: number;
   readonly hideDynamics: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
@@ -84,12 +90,18 @@ export interface ScoreStyle {
 
 export const STYLE_SCALE = { min: 0.5, max: 2 } as const;
 export const STYLE_SPACING = { min: 0.5, max: 2 } as const;
+export const STYLE_LINE_THICKNESS = { min: 0.5, max: 3 } as const;
+export const STYLE_SYSTEM_SPACING = { min: 0, max: 4 } as const;
+export const STYLE_INDENT_MM = { min: 0, max: 50 } as const;
 
 /** alphaTab's own defaults, for scores that bring no stylesheet. */
 export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   scale: 1,
   keepTextSize: false,
   spacing: 1,
+  staffLineThickness: 1,
+  systemSpacing: 1,
+  firstSystemIndent: 0,
   hideDynamics: false,
   tempoMarks: true,
   tempoDecimals: true,

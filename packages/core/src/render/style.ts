@@ -57,6 +57,10 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     scale: 1,
     keepTextSize: false,
     spacing: 1,
+    // alphaTab reads none of these from Guitar Pro's stylesheet: they start as usual.
+    staffLineThickness: 1,
+    systemSpacing: 1,
+    firstSystemIndent: 0,
     hideDynamics: sheet.hideDynamics,
     tempoMarks: true,
     tempoDecimals: true,
@@ -188,6 +192,9 @@ export function applyScoreStyle(
       case 'scale':
       case 'keepTextSize':
       case 'spacing':
+      case 'staffLineThickness':
+      case 'systemSpacing':
+      case 'firstSystemIndent':
       case 'titleBlock':
       case 'textBlocks':
       case 'pages':
@@ -226,10 +233,32 @@ function respellChords(score: alphaTab.model.Score, spelling: ChordSpelling): ()
 }
 
 /** What the style asks of the renderer's settings: size, spacing, and the tuning legend. */
+/** alphaTab's space above and below each system, which the system spacing multiplies. */
+const SYSTEM_PADDING = 10;
+const PX_PER_MM = 96 / 25.4;
+
+/** Bravura's engraving with its staff lines `factor` times as thick, made once per factor. */
+const ENGRAVINGS = new Map<number, alphaTab.EngravingSettings>();
+function engravingWithLines(factor: number): alphaTab.EngravingSettings {
+  let engraving = ENGRAVINGS.get(factor);
+  if (engraving === undefined) {
+    engraving = new alphaTab.EngravingSettings();
+    engraving.fillFromSmufl(alphaTab.EngravingSettings.bravuraMetadata);
+    engraving.staffLineThickness *= factor;
+    ENGRAVINGS.set(factor, engraving);
+  }
+  return engraving;
+}
+
 export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyle): void {
   const display = settings.display;
   display.scale *= style.scale;
   display.stretchForce = style.spacing;
+  display.systemPaddingTop = SYSTEM_PADDING * style.systemSpacing;
+  display.systemPaddingBottom = SYSTEM_PADDING * style.systemSpacing;
+  display.firstSystemIndent = style.firstSystemIndent * PX_PER_MM;
+  if (style.staffLineThickness !== 1)
+    display.resources.engravingSettings = engravingWithLines(style.staffLineThickness);
   const { elements } = settings.notation;
   elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);

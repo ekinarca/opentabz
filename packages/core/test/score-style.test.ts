@@ -3,11 +3,15 @@
  * each setting changed for a view shows in the engraving: brackets (REND-233), barlines through
  * the staves (REND-230), the system separator (REND-234), track names (REND-235), multi-bar rests
  * (REND-311), staves left out while they rest (REND-320), dynamics, the tuning legend, chord
- * diagrams, the overall scale and the rhythmic spacing (REND-223, REND-224).
+ * diagrams, the overall scale and the rhythmic spacing (REND-223, REND-224), the staff lines'
+ * thickness, the space between systems and the first system's indent (REND-228).
  */
+import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
 import { openScore } from '../src/open/open.ts';
+import { RenderSession } from '../src/render/session.ts';
 import { readScoreStyle } from '../src/render/style.ts';
+import { BOUNDS_SYSTEM_STRIDE } from '../src/shared/playback.ts';
 import { DEFAULT_SCORE_STYLE, type ScoreStyle } from '../src/shared/style.ts';
 import { engraveFixture, engraveTex, glyphs, GUITAR, texts, type Engraving } from './engraving.ts';
 import { readFixture } from './helpers.ts';
@@ -190,6 +194,78 @@ describe('settings changed for a view (REND-218)', () => {
     expect(titleHeight(big)).toBeCloseTo(titleHeight(plain) * 1.5, 0);
     expect(clefSize(bigNotes)).toBeCloseTo(clefSize(plain) * 1.5, 0);
     expect(titleHeight(bigNotes)).toBeCloseTo(titleHeight(plain), 0);
+  });
+
+  it('draws the staff lines thinner or thicker (REND-228)', () => {
+    const tex = `${GUITAR}\n:4 0.6 0.6 0.6 0.6 |`;
+    const lines = (view: Engraving) =>
+      view.marks
+        .filter(mark => mark.kind === 'rect' && mark.width > 100 && mark.height < 10)
+        .map(mark => mark.height);
+    const usual = lines(engraveTex(tex));
+    const thick = lines(engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, staffLineThickness: 2 } }));
+    // The staff's five lines, and the tablature's but where fret numbers break one.
+    expect(usual.length).toBeGreaterThanOrEqual(10);
+    expect(thick).toHaveLength(usual.length);
+    thick.forEach((height, index) => {
+      expect(height).toBeCloseTo((usual[index] ?? 0) * 2, 5);
+    });
+    // Other views keep alphaTab's own.
+    expect(lines(engraveTex(tex))).toEqual(usual);
+    expect(alphaTab.EngravingSettings.bravuraDefaults.staffLineThickness).toBeCloseTo(usual[0] ?? 0, 5);
+  });
+
+  it('sets the systems closer together or further apart (REND-228)', () => {
+    const tex = `${GUITAR}\n${Array.from({ length: 24 }, () => ':4 0.6 0.6 0.6 0.6 |').join('\n')}`;
+    const { score } = openScore(new TextEncoder().encode(tex), 'spacing.atex');
+    const tops = (systemSpacing: number) => {
+      const session = new RenderSession(score, {
+        trackIndexes: [0],
+        layout: 'page',
+        systemsLayout: 'auto',
+        staffDisplay: 'default',
+        width: 700,
+        notationScale: 1,
+        style: { ...DEFAULT_SCORE_STYLE, systemSpacing },
+      });
+      try {
+        const { systems: bounds } = session.layout().bounds;
+        return Array.from(bounds).filter((_, index) => index % BOUNDS_SYSTEM_STRIDE === 1);
+      } finally {
+        session.dispose();
+      }
+    };
+    const gaps = (values: number[]) => values.slice(1).map((top, index) => top - (values[index] ?? 0));
+    const usual = gaps(tops(1));
+    expect(usual.length).toBeGreaterThan(2);
+    // alphaTab keeps 10 px above and below each system: twice as much, or none.
+    gaps(tops(2)).forEach((gap, index) => {
+      expect(gap).toBeCloseTo((usual[index] ?? 0) + 20, 5);
+    });
+    gaps(tops(0)).forEach((gap, index) => {
+      expect(gap).toBeCloseTo((usual[index] ?? 0) - 20, 5);
+    });
+  });
+
+  it('indents the first system, narrowing it (REND-228)', () => {
+    const tex = `${GUITAR}\n${Array.from({ length: 24 }, () => ':4 0.6 0.6 0.6 0.6 |').join('\n')}`;
+    const firstBars = (view: Engraving) =>
+      [0, 1].map(system => view.bars.find(bar => bar.system === system)?.left ?? NaN);
+    const lastRight = (view: Engraving, system: number) =>
+      Math.max(...view.bars.filter(bar => bar.system === system).map(bar => bar.right));
+    const usual = engraveTex(tex, { width: 700 });
+    const indented = engraveTex(tex, {
+      width: 700,
+      style: { ...DEFAULT_SCORE_STYLE, firstSystemIndent: 20 },
+    });
+    const indent = (20 * 96) / 25.4;
+    const [usualFirst = 0, usualSecond = 0] = firstBars(usual);
+    const [first = 0, second = 0] = firstBars(indented);
+    expect(first - usualFirst).toBeCloseTo(indent, 0);
+    expect(second).toBeCloseTo(usualSecond, 5);
+    // The first system ends where the others do: it is narrower, not pushed out.
+    expect(lastRight(indented, 0)).toBeCloseTo(lastRight(usual, 0), 0);
+    expect(lastRight(indented, 1)).toBeCloseTo(lastRight(usual, 1), 0);
   });
 
   it('gives the durations more or less room across the page (REND-224)', () => {

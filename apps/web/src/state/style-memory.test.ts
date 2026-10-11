@@ -45,6 +45,35 @@ describe('styles remembered per song', () => {
     expect(parseStyle({ ...stored, pages: { laterFooter: { template: 1 } } })).toBeNull();
   });
 
+  it('reads the staff lines, space between systems and indent (REND-228), in range', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        staffLineThickness: 2,
+        systemSpacing: 0,
+        firstSystemIndent: 15,
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({
+      staffLineThickness: 2,
+      systemSpacing: 0,
+      firstSystemIndent: 15,
+    });
+    expect(parseStyle({ ...stored, staffLineThickness: 9 })).toBeNull();
+    expect(parseStyle({ ...stored, firstSystemIndent: -1 })).toBeNull();
+    const {
+      staffLineThickness: _lines,
+      systemSpacing: _spacing,
+      firstSystemIndent: _indent,
+      ...older
+    } = stored;
+    expect(parseStyle(older)).toMatchObject({
+      staffLineThickness: 1,
+      systemSpacing: 1,
+      firstSystemIndent: 0,
+    });
+  });
+
   it('reads tempo decimals shown or not (REND-240), older styles taking the file’s', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, tempoDecimals: false })) as Record<
       string,

@@ -9,8 +9,11 @@ import {
   DEFAULT_SCORE_STYLE,
   FONT_SIZE,
   PAGE_LINES,
+  STYLE_INDENT_MM,
+  STYLE_LINE_THICKNESS,
   STYLE_SCALE,
   STYLE_SPACING,
+  STYLE_SYSTEM_SPACING,
   TEXT_ALIGNS,
   TEXT_BLOCKS,
   TEXT_ELEMENTS,
@@ -133,6 +136,19 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   // Switches added later: what an older version did not keep comes from the file's style.
   const laterFlags = ['tempoMarks', 'tempoDecimals', 'lyrics'] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
+  // Measures added later, likewise.
+  const laterMeasures = {
+    staffLineThickness: STYLE_LINE_THICKNESS,
+    systemSpacing: STYLE_SYSTEM_SPACING,
+    firstSystemIndent: STYLE_INDENT_MM,
+  } as const;
+  const measures = Object.fromEntries(
+    (Object.keys(laterMeasures) as (keyof typeof laterMeasures)[]).map(key => [
+      key,
+      raw[key] === undefined ? fallback[key] : within(raw[key], laterMeasures[key]),
+    ]),
+  );
+  if (Object.values(measures).some(measure => measure === null)) return null;
   const style = {
     scale: within(raw.scale, STYLE_SCALE),
     spacing: within(raw.spacing, STYLE_SPACING),
@@ -168,6 +184,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
       laterFlags.map(flag => [flag, typeof raw[flag] === 'boolean' ? raw[flag] : fallback[flag]]),
     ),
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
+    ...(measures as Record<keyof typeof laterMeasures, number>),
     titleBlock,
     textBlocks,
     pages,
