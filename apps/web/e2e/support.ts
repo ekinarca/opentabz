@@ -17,7 +17,32 @@ interface ConsoleProblem {
  * Every test fails on a console error or warning, or an uncaught exception, in the page or its
  * workers (budget: zero console messages of either kind in production).
  */
-export const test = base.extend<{ consoleProblems: ConsoleProblem[] }>({
+export const test = base.extend<{ consoleProblems: ConsoleProblem[]; silence: undefined }>({
+  /**
+   * Tests run on developers' machines: everything an AudioContext plays goes through a gain of
+   * zero. The whole audio path still runs (worker, ring, worklet); nothing reaches the speakers.
+   */
+  silence: [
+    async ({ context }, use) => {
+      await context.addInitScript(() => {
+        class SilentAudioContext extends AudioContext {
+          private readonly silent: GainNode;
+          public constructor(options?: AudioContextOptions) {
+            super(options);
+            this.silent = this.createGain();
+            this.silent.gain.value = 0;
+            this.silent.connect(super.destination);
+          }
+          public override get destination(): AudioDestinationNode {
+            return this.silent as unknown as AudioDestinationNode;
+          }
+        }
+        window.AudioContext = SilentAudioContext;
+      });
+      await use(undefined);
+    },
+    { auto: true },
+  ],
   consoleProblems: [
     async ({ page }, use) => {
       const problems: ConsoleProblem[] = [];

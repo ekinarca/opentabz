@@ -67,6 +67,10 @@ export class SynthHost {
   private pass = 1;
   /** The last of a counted number of passes is under way: looping is off until playback stops. */
   private lastPass = false;
+  /** Quarter-note BPM for the whole song instead of its tempo map (null: the score's tempos). */
+  private fixedTempo: number | null = null;
+  /** Bars of rest between loop passes. */
+  private loopRest = 0;
 
   public constructor(emit: (event: SynthEvent) => void) {
     this.emit = emit;
@@ -124,6 +128,16 @@ export class SynthHost {
       case 'setLoopPasses':
         this.loopPasses = command.passes;
         this.restartPasses();
+        break;
+      case 'setLoopRest':
+        this.loopRest = Math.max(0, Math.round(command.bars));
+        this.applyLoopRest();
+        break;
+      case 'setFixedTempo':
+        if (command.bpm === this.fixedTempo) break;
+        this.fixedTempo = command.bpm;
+        // Swapped in while playing: the position carries over by tick.
+        if (this.song !== null && this.clickTrack === null) synth.replaceMidiFile(this.buildMidi(this.song));
         break;
       case 'setCountIn':
         this.countIn = {
@@ -213,6 +227,9 @@ export class SynthHost {
     });
     synth.heardSpeedChanged.on(speed => {
       if (this.trainer.enabled) this.emit({ type: 'speed', value: speed });
+    });
+    synth.restProgress.on(({ beat, beats }) => {
+      this.emit({ type: 'rest', beat, beats, numerator: this.countInNumerator });
     });
     synth.countInProgress.on(({ beat, beats }) => {
       this.emit({ type: 'countIn', beat, beats, numerator: this.countInNumerator });
@@ -393,6 +410,12 @@ export class SynthHost {
     synth.metronomeVolume = 0;
     this.applyMetronomeChannel();
     this.applyCountIn();
+    this.applyLoopRest();
+  }
+
+  /** The metronome on its own clicks on without rests. */
+  private applyLoopRest(): void {
+    if (this.synth !== null) this.synth.loopRestBars = this.clickTrack === null ? this.loopRest : 0;
   }
 
   /** The song's MIDI plus the metronome's clicks. */
@@ -422,19 +445,26 @@ export class SynthHost {
       events.push(new NoteOnEvent(track, tick, this.metronomeChannel, click.key, click.velocity));
       events.push(new NoteOffEvent(track, tick + CLICK_TICKS, this.metronomeChannel, click.key, 0));
     }
-    events.sort((a, b) => a.tick - b.tick);
-    const single = midi.tracks.length === 1 ? midi.tracks[0] : undefined;
-    if (single === undefined) {
-      // Several tracks: the clicks get one of their own, appended in order.
-      const own = midi.tracks.length;
-      for (const event of events) {
-        event.track = own;
-        midi.addEvent(event);
+    // Fixed-tempo practice: one tempo for the whole song instead of the score's tempo map.
+    const fixedTempo = this.clickTrack === null ? this.fixedTempo : null;
+    if (fixedTempo !== null) {
+      for (const track of midi.tracks) {
+        for (let index = track.events.length - 1; index >= 0; index--) {
+          if (track.events[index]?.type === alphaTab.midi.MidiEventType.TempoChange)
+            track.events.splice(index, 1);
+        }
       }
+      events.push(new alphaTab.midi.TempoChangeEvent(0, Math.round(60_000_000 / fixedTempo)));
+    }
+    events.sort((a, b) => a.tick - b.tick);
+    // The engine writes one track (format 0): one merge and a stable sort instead of thousands
+    // of sorted inserts.
+    const songTrack = midi.tracks[0];
+    if (songTrack === undefined) {
+      for (const event of events) midi.addEvent(event);
     } else {
-      // One merge and a stable sort instead of thousands of sorted inserts.
-      single.events.push(...events);
-      single.events.sort((a, b) => a.tick - b.tick);
+      songTrack.events.push(...events);
+      songTrack.events.sort((a, b) => a.tick - b.tick);
     }
     this.builtMetronome = this.metronome.settings;
     return midi;

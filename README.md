@@ -43,8 +43,8 @@ you start and, if you like, before every pass of a loop; and a standalone metron
 tempo for practising without a song. A mixer with mute, solo and level per track, plus a
 practice mode that mutes the parts you are playing yourself. Drag across the music (or
 long-press a bar on a phone, or type bar numbers) to select a range, then loop it seamlessly, a
-set number of times or endlessly, with a speed trainer that brings it up to tempo step by
-step.
+set number of times or endlessly, with rests between passes if you like and a speed trainer
+that brings it up to tempo step by step; or play the whole song at one fixed tempo.
 
 ![Looping two bars with the mixer open](docs/screenshots/practice.png)
 

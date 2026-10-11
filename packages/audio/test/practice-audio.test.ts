@@ -352,3 +352,73 @@ describe('speed changes, the speed trainer and counted loops', () => {
     expect(states.slice(-3)).toEqual([true, false, true]);
   });
 });
+
+describe('fixed-tempo practice', () => {
+  // 120 BPM, then 60 BPM from bar 2: the metronome clicks follow the tempo map.
+  const TEMPO_CHANGE = marimba('r.1 | \\tempo 60 r.1 | r.1');
+
+  it('follows the tempo map, or one fixed tempo for the whole song', async () => {
+    const mapped = await renderOffline(TEMPO_CHANGE, 4.6, { before: [metronome(true)] });
+    expectOnsets(clickTimes(mapped.left), [0, 0.5, 1, 1.5, 2, 3, 4]);
+    const fixed = await renderOffline(TEMPO_CHANGE, 4.6, {
+      before: [metronome(true), { type: 'setFixedTempo', bpm: 90 }],
+    });
+    expectOnsets(
+      clickTimes(fixed.left),
+      Array.from({ length: 7 }, (_, index) => (index * 2) / 3),
+    );
+  });
+
+  it('switches to a fixed tempo while playing without a break, in step with the beat', async () => {
+    const { left, events } = await renderOffline(TEMPO_CHANGE, 4.2, {
+      before: [metronome(true)],
+      schedule: [{ at: 0.6, command: { type: 'setFixedTempo', bpm: 40 } }],
+    });
+    const times = clickTimes(left);
+    const gaps = times.slice(1).map((time, index) => time - (times[index] ?? 0));
+    // 0.5 s apart, then 1.5 s apart at 40 BPM; the change lands between beats.
+    expect(Math.abs((gaps[0] ?? 0) - 0.5)).toBeLessThan(TOLERANCE);
+    expect(Math.abs((gaps.at(-1) ?? 0) - 1.5)).toBeLessThan(TOLERANCE);
+    for (const gap of gaps) {
+      expect(gap).toBeGreaterThan(0.5 - TOLERANCE);
+      expect(gap).toBeLessThan(1.5 + TOLERANCE);
+    }
+    const started = events.findIndex(event => event.type === 'state' && event.playing);
+    expect(events.slice(started + 1).some(event => event.type === 'state')).toBe(false);
+    const tempos = events.flatMap(event => (event.type === 'position' ? [event.tempo] : []));
+    expect(tempos.at(-1)).toBeCloseTo(40, 5);
+  });
+});
+
+describe('rests between loop passes', () => {
+  const ONE_BAR = marimba('C5.4 r.4 r.2 | E5.1');
+
+  it('leaves bars of silence before every pass after the first', async () => {
+    const { left, events } = await renderOffline(ONE_BAR, 8.5, {
+      before: [loop(0, 1), { type: 'setLoopRest', bars: 1 }],
+    });
+    // A pass of two seconds, a bar of rest, the next pass.
+    expectOnsets(onsets(left, 0.002), [0, 4, 8]);
+    expect(rms(window(left, 2.6, 3.95))).toBe(0);
+    const rests = events.flatMap(event => (event.type === 'rest' ? [[event.beat, event.beats]] : []));
+    expect(rests.slice(0, 5)).toEqual([
+      [0, 4],
+      [1, 4],
+      [2, 4],
+      [3, 4],
+      [-1, 0],
+    ]);
+    // The position waits at the loop start during the rest: it is the last one reported.
+    const end = events.findIndex(event => event.type === 'rest' && event.beat === -1);
+    const before = events.slice(0, end).flatMap(event => (event.type === 'position' ? [event.tick] : []));
+    // (alphaTab's time-to-tick conversion may round up by a tick.)
+    expect(before.at(-1) ?? Infinity).toBeLessThanOrEqual(2);
+  });
+
+  it('rests, then counts in, before every later pass', async () => {
+    const { left } = await renderOffline(ONE_BAR, 8.5, {
+      before: [loop(0, 1), { type: 'setLoopRest', bars: 1 }, countIn(1, true)],
+    });
+    expectOnsets(onsets(left, 0.002), [0, 0.5, 1, 1.5, 2, 6, 6.5, 7, 7.5, 8]);
+  });
+});

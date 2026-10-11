@@ -134,6 +134,25 @@ test.describe('loops and the speed trainer', () => {
     await expect(again.getByRole('switch', { name: 'Speed trainer' })).not.toBeChecked();
   });
 
+  test('rests between passes of a loop, shown on screen', async ({ page }) => {
+    await loopFirstBar(page);
+    const dialog = await openSettings(page, false);
+    await dialog.getByLabel('Rest between passes').selectOption({ label: '1 bar' });
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Loop the selection' }).click();
+    const speed = page.getByRole('button', { name: /^Playback speed: / });
+    await speed.click();
+    await page.getByRole('button', { name: '200 %', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    // After the first pass (about a second), a bar of rest before the next.
+    const rest = page.getByTestId('rest');
+    await expect(rest).toBeVisible({ timeout: 10_000 });
+    await expect(rest).toContainText('Rest');
+    await expect(rest).toBeHidden({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  });
+
   test('a loop can repeat a set number of times, then stop', async ({ page }) => {
     await loopFirstBar(page);
     const dialog = await openSettings(page, false);

@@ -29,6 +29,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   count-in of one or two bars with its own volume, shown large on screen, fitted to where
   playback starts (mid-bar starts count the beats before them), optionally before every loop
   pass. Changing the pattern while playing never interrupts it. Settings are remembered.
+- **Fixed-tempo practice and rests in loops.** One tempo for the whole song, ignoring its tempo
+  changes (typed or from presets), switched on and off without stopping; bars of rest between
+  loop passes, shown on screen.
 - **Speed trainer and counted loops.** While a loop repeats, the speed trainer moves from a
   start to a target speed in steps after a set number of passes at each speed, exactly at the
   start of a pass; a loop can also repeat a set number of times and stop. Loops can be set by
@@ -55,9 +58,15 @@ All notable changes to OpenTabz are recorded here. The format follows
   Capella files open at all (0004), 10 % playback speed (0005), count-ins and loop passes that
   switch while audio is generated, without gaps or drift (0006), drum kits on any channel and
   silence instead of `NaN` for unloaded samples (0007), centred channels (0008), replacing
-  the song while it plays (0009) and speed changes without a seek (0010). See [docs/upstream/](docs/upstream/).
+  the song while it plays (0009), speed changes without a seek (0010), rests between loop
+  passes (0011), exact text measurement (0012) and section names on a row of their own (0013). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
 
+- The playback cursor no longer steps back and starts over during long notes when other tracks
+  are hidden (each of their notes restarted its glide).
+- Tempo marks, section names and effect texts no longer run into each other.
+- When the sound engine cannot start or load, playback says why and offers to try again instead
+  of showing "Loading sounds…" forever.
 - A font subset inlined as a `data:` URL was blocked by the Content Security Policy.
 - Opening the mixer no longer covers its first row with a tooltip.

@@ -41,6 +41,10 @@ export type SynthCommand =
   | ({ readonly type: 'setTrainer' } & TrainerSettings)
   /** Passes of a loop to play before playback stops; null repeats endlessly. */
   | { readonly type: 'setLoopPasses'; readonly passes: number | null }
+  /** Bars of rest before every pass of a loop after the first (0: none). */
+  | { readonly type: 'setLoopRest'; readonly bars: number }
+  /** One tempo (quarter notes per minute) for the whole song, ignoring its tempo changes; null follows the score. */
+  | { readonly type: 'setFixedTempo'; readonly bpm: number | null }
   /**
    * The metronome without a score: a song of clicks in one meter, played in a loop. Sent again
    * with the same id and meter it changes the tempo without interrupting the clicks.
@@ -109,4 +113,9 @@ export type SynthEvent =
   | { readonly type: 'finished' }
   /** The speed trainer moved the speed on, and the new speed is now heard. */
   | { readonly type: 'speed'; readonly value: number }
+  /**
+   * The beat being heard (0-based) of a rest of `beats` between loop passes, in a meter of
+   * `numerator` beats; -1 when the rest is over.
+   */
+  | { readonly type: 'rest'; readonly beat: number; readonly beats: number; readonly numerator: number }
   | { readonly type: 'error'; readonly context: string; readonly message: string };

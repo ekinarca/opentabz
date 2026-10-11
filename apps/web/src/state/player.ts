@@ -21,6 +21,10 @@ export const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
 /** Guitar Pro's practice range: 10 % to 300 % (alphaTab patch 0005 lowers its floor to 10 %). */
 export const MIN_SPEED = 0.1;
 export const MAX_SPEED = 3;
+/** Fixed-tempo practice range, in quarter notes per minute. */
+export const MIN_FIXED_TEMPO = 10;
+export const MAX_FIXED_TEMPO = 300;
+export const FIXED_TEMPO_PRESETS = [60, 80, 100, 120] as const;
 
 export interface PlayerState {
   readonly transport: TransportState;
@@ -34,8 +38,12 @@ export interface PlayerState {
   /** BPM including the speed factor. */
   readonly tempo: number;
   readonly speed: number;
+  /** One tempo for the whole song instead of its tempo map (quarter notes per minute), if set. */
+  readonly fixedTempo: number | null;
   /** The count-in click being heard, while counting in. */
   readonly countInBeat: CountInBeat | null;
+  /** The beat of a rest between loop passes being heard, while resting. */
+  readonly restBeat: CountInBeat | null;
   /** The metronome plays on its own (its song of clicks is loaded instead of a document). */
   readonly clickTrack: boolean;
   readonly loop: boolean;
@@ -53,6 +61,7 @@ export interface PlayerState {
   /** Moves playback to `tick`; a tick outside the selection clears the selection. */
   readonly seek: (tick: number) => void;
   readonly setSpeed: (speed: number) => void;
+  readonly setFixedTempo: (bpm: number | null) => void;
   readonly setLoop: (on: boolean) => void;
   /** Loads the metronome's own song of clicks (tempo and meter from the practice settings). */
   readonly openClickTrack: () => Promise<void>;
@@ -133,6 +142,7 @@ function sendTrainer(engine: AudioEngine, practice: PracticeSettings): void {
 
 function sendLoopPasses(engine: AudioEngine, practice: PracticeSettings): void {
   engine.send({ type: 'setLoopPasses', passes: practice.loopPasses });
+  engine.send({ type: 'setLoopRest', bars: practice.loopRest });
 }
 
 function sendClickTrack(engine: AudioEngine, playbackId: string, practice: PracticeSettings): void {
@@ -165,7 +175,9 @@ usePractice.subscribe((state, previous) => {
     sendCountIn(engine, state);
   }
   if (state.trainer !== previous.trainer) sendTrainer(engine, state);
-  if (state.loopPasses !== previous.loopPasses) sendLoopPasses(engine, state);
+  if (state.loopPasses !== previous.loopPasses || state.loopRest !== previous.loopRest) {
+    sendLoopPasses(engine, state);
+  }
   if (
     clickTrackId !== null &&
     (state.toolBpm !== previous.toolBpm ||
@@ -203,11 +215,17 @@ export const usePlayer = create<PlayerState>((set, get) => {
           performance.clearMarks(PLAY_REQUEST);
         }
         dispatch(event.playing ? { type: 'play' } : { type: 'pause' });
-        if (!event.playing) set({ countInBeat: null });
+        if (!event.playing) set({ countInBeat: null, restBeat: null });
         break;
       case 'speed':
         // The speed trainer moved on: the new speed is being heard.
         set(state => ({ speed: event.value, tempo: (state.tempo / state.speed) * event.value }));
+        break;
+      case 'rest':
+        set({
+          restBeat:
+            event.beat < 0 ? null : { beat: event.beat, beats: event.beats, numerator: event.numerator },
+        });
         break;
       case 'countIn':
         set({
@@ -260,7 +278,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
     endTime: 0,
     tempo: 120,
     speed: 1,
+    fixedTempo: null,
     countInBeat: null,
+    restBeat: null,
     clickTrack: false,
     loop: false,
     selection: null,
@@ -281,6 +301,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         selection: null,
         countInBeat: null,
         clickTrack: false,
+        fixedTempo: null,
         tempo: doc.summary.tempo * get().speed,
       });
       try {
@@ -304,6 +325,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         sendMetronome(engine, practice);
         sendCountIn(engine, practice);
         sendLoopPasses(engine, practice);
+        engine.send({ type: 'setFixedTempo', bpm: null });
         engine.send({ type: 'setLoop', enabled: loop, range: null, id: nextMove() });
         sendTrainer(engine, practice);
         engine.send({ type: 'setMasterVolume', value: volume });
@@ -433,6 +455,18 @@ export const usePlayer = create<PlayerState>((set, get) => {
       audio().send({ type: 'setSpeed', value });
       // The live tempo includes the speed; it follows at once, not with the next position.
       set(state => ({ speed: value, tempo: (state.tempo / state.speed) * value }));
+    },
+
+    setFixedTempo: bpm => {
+      const value =
+        bpm === null ? null : Math.min(MAX_FIXED_TEMPO, Math.max(MIN_FIXED_TEMPO, Math.round(bpm)));
+      if (value === get().fixedTempo) return;
+      audio().send({ type: 'setFixedTempo', bpm: value });
+      set(state => ({ fixedTempo: value, tempo: value === null ? state.tempo : value * state.speed }));
+      // Paused, no position arrives to show the tempo here again: ask for one.
+      if (value === null && get().transport.status !== 'playing') {
+        audio().send({ type: 'seek', tick: get().tick, id: nextMove() });
+      }
     },
 
     setLoop: on => {

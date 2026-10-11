@@ -67,6 +67,27 @@ test.describe('practice controls', () => {
     expect(percent).toBeLessThanOrEqual(138);
   });
 
+  test('plays at one fixed tempo, ignoring the tempo map, and back', async ({ page }) => {
+    await openShuffle(page);
+    const speed = page.getByRole('button', { name: /^Playback speed: / });
+    await speed.click();
+    const fixed = page.getByRole('switch', { name: 'Fixed tempo' });
+    await fixed.click();
+    // It starts at the score's tempo here.
+    await expect(page.getByLabel('Fixed tempo, quarter notes per minute')).toHaveValue('112');
+    await page.getByRole('group', { name: 'Tempo presets' }).getByRole('button', { name: '80' }).click();
+    await page.keyboard.press('Escape');
+    await expect(position(page)).toHaveAccessibleName(/80 beats per minute, fixed tempo$/);
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(position(page)).toHaveAccessibleName(/Bar 1, beat [2-4],|Bar [2-9],/, { timeout: 10_000 });
+    await expect(position(page)).toHaveAccessibleName(/80 beats per minute, fixed tempo$/);
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    await speed.click();
+    await fixed.click();
+    await page.keyboard.press('Escape');
+    await expect(position(page)).toHaveAccessibleName(/112 beats per minute$/);
+  });
+
   test('shows bar, beat, meter and tempo, and steps beat by beat', async ({ page }) => {
     await openShuffle(page);
     await expect(position(page)).toHaveAccessibleName('Go to: Bar 1, beat 1, 4/4, 112 beats per minute');

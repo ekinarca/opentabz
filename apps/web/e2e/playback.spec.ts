@@ -144,6 +144,90 @@ test.describe('playback cursor, seeking and selection gestures', () => {
   });
 });
 
+test.describe('when the sound engine cannot start', () => {
+  test('playback says so instead of loading forever, and can be retried', async ({
+    page,
+    consoleProblems,
+  }) => {
+    const worker = '**/assets/synth.worker-*.js';
+    await page.route(worker, route => route.fulfill({ status: 404, body: '' }));
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    await expect(page.getByRole('img', { name: 'Playback unavailable' })).toBeVisible({ timeout: 20_000 });
+    await page.unroute(worker);
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
+    await expect(page.getByRole('img', { name: 'Playback unavailable' })).toBeHidden();
+    // The missing worker script was the point of the test: only its errors may remain.
+    const unexpected = consoleProblems.filter(
+      problem => !/404|Failed to load|synth\.worker/i.test(problem.text),
+    );
+    consoleProblems.splice(0, consoleProblems.length, ...unexpected);
+  });
+});
+
+test.describe('the cursor never steps back', () => {
+  test('glides through beats of hidden tracks', async ({ page }) => {
+    // Record where every cursor glide starts and ends, to compare with where the cursor was.
+    await page.addInitScript(() => {
+      const seen = new WeakSet<Animation>();
+      const log: { t: number; from: number; to: number; y: number; duration: number }[] = [];
+      Object.assign(window, { cursorGlides: log });
+      const position = (frame: ComputedKeyframe | undefined) =>
+        /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(String(frame?.['transform'] ?? '')) ?? [];
+      setInterval(() => {
+        const cursor = document.querySelector('.ot-scroll:not([hidden]) .ot-cursor-beat');
+        for (const animation of cursor?.getAnimations() ?? []) {
+          if (seen.has(animation)) continue;
+          seen.add(animation);
+          const effect = animation.effect;
+          if (!(effect instanceof KeyframeEffect)) continue;
+          const frames = effect.getKeyframes();
+          const [, fromX, y] = position(frames[0]);
+          const [, toX] = position(frames[1]);
+          log.push({
+            t: Number(animation.startTime ?? document.timeline.currentTime ?? 0),
+            from: Number(fromX),
+            to: Number(toX),
+            y: Number(y),
+            duration: Number(effect.getTiming().duration ?? 0),
+          });
+        }
+      }, 4);
+    });
+    await openHome(page);
+    await dropFiles(page, [fixture('alphatex/playback/hidden-pulse.atex')]);
+    await expectScore(page);
+    // Only the melody is shown; the pulse plays sixteenths under it.
+    await expect(page.getByRole('button', { name: /1 of 2 tracks/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect.poll(() => elapsedSeconds(page), { timeout: 10_000 }).toBeGreaterThanOrEqual(4);
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    const backward = await page.evaluate(() => {
+      const log = (
+        window as unknown as {
+          cursorGlides: { t: number; from: number; to: number; y: number; duration: number }[];
+        }
+      ).cursorGlides;
+      let count = 0;
+      log.forEach((current, index) => {
+        const previous = log[index - 1];
+        if (previous?.y !== current.y) return;
+        const progress = Math.min(1, (current.t - previous.t) / Math.max(1, previous.duration));
+        const was = previous.from + (previous.to - previous.from) * progress;
+        if (current.from < was - 1) count++;
+      });
+      return { glides: log.length, count };
+    });
+    // One glide per melody note: the hidden sixteenths start none.
+    expect(backward.glides).toBeGreaterThanOrEqual(6);
+    expect(backward.glides).toBeLessThanOrEqual(12);
+    expect(backward.count).toBe(0);
+  });
+});
+
 test.describe('the cursor follows playback in every layout', () => {
   test.skip(({ isMobile }) => isMobile, 'Desktop layouts.');
 

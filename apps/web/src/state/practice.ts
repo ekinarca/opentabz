@@ -31,6 +31,9 @@ export const MAX_BEAT_DROP = 0.9;
 /** Choices for how many times a loop plays (null: endlessly). */
 export const LOOP_PASSES = [null, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20] as const;
 export type LoopPasses = (typeof LOOP_PASSES)[number];
+/** Choices for the bars of rest between loop passes. */
+export const LOOP_RESTS = [0, 1, 2, 4] as const;
+export type LoopRest = (typeof LOOP_RESTS)[number];
 /** Speed trainer limits, in speed (1 = 100 %). */
 export const TRAINER_MIN = 0.1;
 export const TRAINER_MAX = 3;
@@ -52,6 +55,8 @@ export interface PracticeSettings {
   readonly toolDenominator: Denominator;
   /** How many times a loop plays before playback stops (null: endlessly). */
   readonly loopPasses: LoopPasses;
+  /** Bars of rest before every pass of a loop after the first. */
+  readonly loopRest: LoopRest;
   /** The speed trainer; it always starts off (only its numbers are kept). */
   readonly trainer: TrainerSettings;
 }
@@ -68,6 +73,7 @@ export const DEFAULT_PRACTICE: PracticeSettings = {
   toolNumerator: 4,
   toolDenominator: 4,
   loopPasses: null,
+  loopRest: 0,
   trainer: DEFAULT_TRAINER,
 };
 
@@ -145,6 +151,7 @@ export function parsePractice(raw: string | null): PracticeSettings {
       toolNumerator: integer(value.toolNumerator, fallback.toolNumerator, 1, MAX_NUMERATOR),
       toolDenominator: oneOf(value.toolDenominator, DENOMINATORS, fallback.toolDenominator),
       loopPasses: oneOf(value.loopPasses, LOOP_PASSES, fallback.loopPasses),
+      loopRest: oneOf(value.loopRest, LOOP_RESTS, fallback.loopRest),
       trainer: parseTrainer(value.trainer),
     };
   } catch {
@@ -206,6 +213,7 @@ function settingsOf(state: PracticeSettings): PracticeSettings {
     toolNumerator: state.toolNumerator,
     toolDenominator: state.toolDenominator,
     loopPasses: state.loopPasses,
+    loopRest: state.loopRest,
     trainer: state.trainer,
   };
 }

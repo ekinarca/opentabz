@@ -246,9 +246,18 @@ export function MetronomeTool() {
           {playing ? s.stop : s.start}
         </button>
         {transport.status === 'error' && (
-          <p role="alert" className="text-center text-[13px] text-danger">
-            {transport.error ?? s.unavailable}
-          </p>
+          <div role="alert" className="flex flex-col items-center gap-2 text-center text-[13px] text-danger">
+            <p>{transport.error ?? s.unavailable}</p>
+            <button
+              type="button"
+              onClick={() => {
+                void usePlayer.getState().openClickTrack();
+              }}
+              className="h-8 rounded-full border border-line-strong px-3 text-[12px] font-semibold text-ink hover:bg-sunken"
+            >
+              {strings.transport.retry}
+            </button>
+          </div>
         )}
         <details className="group rounded-[10px] border border-line">
           <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[14px] font-medium text-ink [&::-webkit-details-marker]:hidden">

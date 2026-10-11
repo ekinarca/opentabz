@@ -1,0 +1,16 @@
+// Hidden Pulse — original music written for OpenTabz (AGPL-3.0-or-later).
+// Cursor fixture: a melody in quarter notes over a second track in sixteenths. With only the
+// melody shown, the cursor must glide through the hidden sixteenths without stepping back.
+\title "Hidden Pulse"
+\subtitle "OpenTabz playback fixture"
+\tempo 90
+\track ("Melody" "Mel.") {instrument flute}
+\staff {score}
+\ts (4 4) \ks C
+:4 C5 D5 E5 F5 | G5 F5 E5 D5 | C5 E5 G5 E5 | C5.1
+\track ("Pulse" "Pls.") {instrument marimba}
+\staff {score}
+:16 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 |
+:16 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 |
+:16 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 |
+:16 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4

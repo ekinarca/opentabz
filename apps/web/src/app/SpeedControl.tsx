@@ -1,11 +1,88 @@
-import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Tooltip } from '@opentabz/ui';
+import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Switch, Tooltip } from '@opentabz/ui';
 import { Minus, Plus } from 'lucide-react';
-import { useRef } from 'react';
-import { clampSpeed, MAX_SPEED, MIN_SPEED, SPEED_PRESETS, usePlayer } from '../state/player.ts';
+import { useId, useRef, useState } from 'react';
+import {
+  clampSpeed,
+  FIXED_TEMPO_PRESETS,
+  MAX_FIXED_TEMPO,
+  MAX_SPEED,
+  MIN_FIXED_TEMPO,
+  MIN_SPEED,
+  SPEED_PRESETS,
+  usePlayer,
+} from '../state/player.ts';
 import { TAP_RESET_MS, tapTempo, usePractice } from '../state/practice.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { shortcutHint, SPEED_STEP } from './keymap.ts';
+
+/** One tempo for the whole song: on or off, typed in or picked from presets. */
+function FixedTempo() {
+  const fixedTempo = usePlayer(state => state.fixedTempo);
+  const setFixedTempo = usePlayer(state => state.setFixedTempo);
+  const [text, setText] = useState<string | null>(null);
+  const inputId = useId();
+  const scoreTempo = () => {
+    const player = usePlayer.getState();
+    return Math.round(player.tempo / player.speed);
+  };
+  return (
+    <div className="mt-4 border-t border-line pt-3">
+      <Switch
+        label={strings.transport.fixedTempo}
+        hint={strings.transport.fixedTempoHint}
+        checked={fixedTempo !== null}
+        onCheckedChange={checked => {
+          setFixedTempo(checked ? scoreTempo() : null);
+        }}
+      />
+      {fixedTempo !== null && (
+        <div className="mt-3 flex items-center gap-2">
+          <label htmlFor={inputId} className="sr-only">
+            {strings.transport.fixedTempoBpm}
+          </label>
+          <span aria-hidden className="text-[15px] text-ink-muted">
+            ♩
+          </span>
+          <input
+            id={inputId}
+            type="number"
+            inputMode="numeric"
+            min={MIN_FIXED_TEMPO}
+            max={MAX_FIXED_TEMPO}
+            value={text ?? String(fixedTempo)}
+            onChange={event => {
+              setText(event.target.value);
+              const value = Number.parseInt(event.target.value, 10);
+              if (Number.isInteger(value) && value >= MIN_FIXED_TEMPO && value <= MAX_FIXED_TEMPO) {
+                setFixedTempo(value);
+              }
+            }}
+            onBlur={() => {
+              setText(null);
+            }}
+            className="h-9 w-20 rounded-[var(--radius-control)] border border-line bg-surface px-2 font-mono text-[14px] text-ink tabular-nums outline-none focus-visible:border-accent"
+          />
+          <div role="group" aria-label={strings.transport.fixedTempoPresets} className="flex gap-1">
+            {FIXED_TEMPO_PRESETS.map(preset => (
+              <button
+                key={preset}
+                type="button"
+                aria-pressed={fixedTempo === preset}
+                onClick={() => {
+                  setFixedTempo(preset);
+                }}
+                className="h-8 rounded-[var(--radius-control)] px-2 font-mono text-[12px] text-ink-muted tabular-nums hover:bg-sunken hover:text-ink aria-pressed:bg-accent-soft aria-pressed:text-accent"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Playback speed from 10 % to 300 %: a slider, ±5 % steps and presets. */
 export function SpeedControl() {
@@ -113,6 +190,7 @@ export function SpeedControl() {
           <p className="text-[12px] text-ink-faint">{strings.transport.speedTapHint}</p>
         </div>
         <p className="mt-3 text-[12px] text-ink-faint">{strings.transport.speedHint}</p>
+        <FixedTempo />
       </PopoverContent>
     </Popover>
   );

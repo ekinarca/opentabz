@@ -16,6 +16,10 @@ import workletUrl from './ring-player.worklet.ts?worker&url';
 
 /** The synthesizer renders at this rate; the AudioContext resamples if the device differs. */
 export const SYNTH_SAMPLE_RATE = 48_000;
+/** The synth worker answers its first message well within this. */
+const START_TIMEOUT_MS = 15_000;
+/** Loading the sound bank (1.3 MB) may take this long on a slow connection. */
+const SOUND_BANK_TIMEOUT_MS = 120_000;
 /** About 0.68 s of stereo audio. */
 const RING_CAPACITY = 1 << 15;
 
@@ -45,10 +49,15 @@ export class AudioEngine {
 
   /**
    * Starts the synth worker, connects it to the engine and loads the SoundFont. Needs no user
-   * gesture; call it as soon as a document is open.
+   * gesture; call it as soon as a document is open. A failed start can be retried.
    */
   public prepare(): Promise<void> {
-    this.preparePromise ??= this.prepareInternal();
+    this.preparePromise ??= this.prepareInternal().catch((error: unknown) => {
+      this.worker?.terminate();
+      this.worker = null;
+      this.preparePromise = null;
+      throw error;
+    });
     return this.preparePromise;
   }
 
@@ -95,13 +104,34 @@ export class AudioEngine {
     worker.addEventListener('message', (event: MessageEvent<SynthEvent>) => {
       for (const listener of [...this.listeners]) listener(event.data);
     });
+    // A worker that cannot load, or fails later, reports it here: while starting it fails the
+    // start, afterwards it reaches the listeners as an error event.
+    let starting = true;
+    let failStart: (error: AudioUnavailableError) => void = () => undefined;
+    const crashed = new Promise<never>((_, reject) => {
+      failStart = reject;
+    });
+    // The failure may come before anything awaits it (WebKit reports that as unhandled).
+    crashed.catch(() => undefined);
+    worker.addEventListener('error', event => {
+      event.preventDefault();
+      const message = event.message || 'unknown error';
+      if (starting) {
+        failStart(new AudioUnavailableError(`The sound engine could not start (${message}).`));
+        return;
+      }
+      const failure: SynthEvent = { type: 'error', context: 'worker', message };
+      for (const listener of [...this.listeners]) listener(failure);
+    });
 
     const workletChannel = new MessageChannel();
     const engineChannel = new MessageChannel();
     this.workletPort = workletChannel.port1;
     await getEngine().call('connectSynth', { port: engineChannel.port1 }, [engineChannel.port1]);
 
-    const ready = this.waitFor(event => event.type === 'ready');
+    const ready = this.waitFor(
+      event => event.type === 'ready' || (event.type === 'error' && event.context === 'init'),
+    );
     const init: SynthCommand = {
       type: 'init',
       sampleRate: SYNTH_SAMPLE_RATE,
@@ -110,17 +140,32 @@ export class AudioEngine {
       enginePort: engineChannel.port2,
     };
     worker.postMessage(init, [workletChannel.port2, engineChannel.port2]);
-    await ready;
-
-    const response = await fetch(sonivoxUrl);
-    if (!response.ok)
-      throw new AudioUnavailableError(`Loading the sound bank failed (HTTP ${response.status}).`);
-    const bytes = await response.arrayBuffer();
-    const loaded = this.waitFor(
-      event => event.type === 'soundFontLoaded' || (event.type === 'error' && event.context === 'soundFont'),
+    const started = await withTimeout(
+      Promise.race([ready, crashed]),
+      START_TIMEOUT_MS,
+      'The sound engine did not start.',
     );
-    this.send({ type: 'loadSoundFont', bytes });
-    const result = await loaded;
+    if (started.type === 'error')
+      throw new AudioUnavailableError(`The sound engine could not start: ${started.message}`);
+
+    const loadSoundBank = async () => {
+      const response = await fetch(sonivoxUrl);
+      if (!response.ok)
+        throw new AudioUnavailableError(`Loading the sound bank failed (HTTP ${response.status}).`);
+      const bytes = await response.arrayBuffer();
+      const loaded = this.waitFor(
+        event =>
+          event.type === 'soundFontLoaded' || (event.type === 'error' && event.context === 'soundFont'),
+      );
+      this.send({ type: 'loadSoundFont', bytes });
+      return loaded;
+    };
+    const result = await withTimeout(
+      Promise.race([loadSoundBank(), crashed]),
+      SOUND_BANK_TIMEOUT_MS,
+      'Loading the sounds took too long. Check the connection and try again.',
+    );
+    starting = false;
     if (result.type === 'error')
       throw new AudioUnavailableError(`The sound bank could not be read: ${result.message}`);
   }
@@ -152,6 +197,25 @@ export class AudioEngine {
       });
     });
   }
+}
+
+/** `promise`, or an error after `milliseconds`: a step that never answers fails instead of hanging. */
+function withTimeout<T>(promise: Promise<T>, milliseconds: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new AudioUnavailableError(message));
+    }, milliseconds);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error instanceof Error ? error : new AudioUnavailableError(String(error)));
+      },
+    );
+  });
 }
 
 let instance: AudioEngine | null = null;

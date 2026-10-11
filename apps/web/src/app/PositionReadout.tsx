@@ -35,6 +35,7 @@ export function PositionReadout({
   const tick = usePlayer(state => state.tick);
   const tempo = usePlayer(state => state.tempo);
   const speed = usePlayer(state => state.speed);
+  const fixedTempo = usePlayer(state => state.fixedTempo);
   const timeline = usePlayer(state => state.timeline);
   const selection = usePlayer(state => state.selection);
   const seek = usePlayer(state => state.seek);
@@ -73,13 +74,13 @@ export function PositionReadout({
   if (status !== null) detail = status;
   else if (bar === null) detail = ' ';
   else
-    detail = strings.transport.positionDetail(
+    detail = `${strings.transport.positionDetail(
       bar.masterBarIndex + 1,
       beat,
       meter.numerator,
       meter.denominator,
       bpm,
-    );
+    )}${fixedTempo === null ? '' : `, ${strings.transport.positionDetailFixed}`}`;
 
   return (
     <Popover
@@ -122,7 +123,7 @@ export function PositionReadout({
                     {strings.transport.meter(meter.numerator, meter.denominator)}
                   </span>
                   <span className={selected === null ? '' : 'max-sm:hidden'}>
-                    {strings.transport.tempo(bpm)}
+                    {fixedTempo === null ? strings.transport.tempo(bpm) : strings.transport.tempoFixed(bpm)}
                   </span>
                 </>
               )}

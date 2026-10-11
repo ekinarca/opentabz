@@ -269,6 +269,10 @@ the buffered audio plays out and nothing stops or repeats. The standalone metron
 machinery with a song of its own: sixteen bars of clicks in the chosen meter, looped, whose
 tempo changes in place keeping the position in the bar.
 
+**Fixed tempo** replaces the song's tempo events with one (swapped in while playing, patch 0009),
+and **rests between loop passes** are a silent state of the sequencer, like the count-in (patch
+0011).
+
 **Speed** changes while playing apply from the sample being generated, with no seek (patch
 0010); the buffered audio plays out at its own speed and positions stay continuous. The speed
 trainer and counted loops live in the synth worker: a generation-time event at each new loop

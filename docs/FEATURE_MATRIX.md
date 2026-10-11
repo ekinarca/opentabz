@@ -80,6 +80,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-019 | Virtualized rendering: only visible systems are painted and attached              | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/score-view/svg-cache.test.ts | done |
 | REND-020 | Notation layout and rendering in a Web Worker                                     | OT  | M0  | — | packages/core/test/shared-isolation.test.ts, scripts/check-budgets.ts | done |
 | REND-021 | Instant theme switch of rendered notation (no re-render)                          | OT  | M0  | — | packages/core/test/score-colors.test.ts, packages/core/test/render-session.test.ts | done |
+| REND-022 | Text marks (tempo, section names, effect texts) never run into other text | OT | M0 | alphatex/rendering/text-collisions.atex | apps/web/e2e/engraving.spec.ts | done |
 | REND-030 | Show all tracks or any subset of tracks                                           | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
 | REND-031 | Per-track staff visibility (standard / tab / slash / numbered)                    | GP  | M2  | —                                                           | —    | planned |
 | REND-032 | Transposing instruments: concert vs written pitch display                         | GP  | M2  | alphatab/guitarpro8/transposition-tonality-a.gp             | —    | planned |
@@ -277,6 +278,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-006 | Mini-map / timeline scrubber                          | OT  | M1  | —                                                     | —    | planned |
 | PLAY-007 | Tap tempo                                             | OT  | M1  | —                                                     | apps/web/e2e/practice.spec.ts, apps/web/e2e/metronome.spec.ts, apps/web/src/state/practice.test.ts | done |
 | PLAY-008 | Keyboard shortcuts for every transport action         | GP  | M1  | — | apps/web/src/app/keymap.test.ts, apps/web/src/app/shortcuts-doc.test.ts, apps/web/e2e/practice.spec.ts, apps/web/e2e/playback.spec.ts | done |
+| PLAY-009 | A sound engine that cannot start or load says why and can be retried (never loads forever) | OT | M1 | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-010 | Beat cursor                                           | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-011 | Bar highlight                                         | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-012 | Note highlighting                                     | OT  | M1  | —                                                     | —    | planned |
@@ -416,7 +418,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-032 | Multiple named saved loops per song                             | OT  | M6  | —                                     | —    | planned |
 | PRAC-033 | Loop playlists with auto-advance                                | OT  | M6  | —                                     | —    | planned |
 | PRAC-034 | Loop count                                                      | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
-| PRAC-035 | Rest bars between loops                                         | OT  | M1  | —                                     | —    | planned |
+| PRAC-035 | Rest bars between loops                                         | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
 | PRAC-040 | Play-along with microphone / audio interface input              | OT  | M6  | —                                     | —    | planned |
 | PRAC-041 | Real-time pitch detection                                       | OT  | M6  | —                                     | —    | planned |
 | PRAC-042 | Note-by-note feedback on fretboard and score                    | OT  | M6  | —                                     | —    | planned |
@@ -444,7 +446,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-100 | Tuner: microphone pitch detection (YIN / MPM)                   | GP  | M2  | —                                     | —    | planned |
 | PRAC-101 | Tuner: cents readout                                            | GP  | M2  | —                                     | —    | planned |
 | PRAC-102 | Tuner follows the track's tuning (drop / open / custom)         | GP+ | M2  | —                                     | —    | planned |
-| PRAC-103 | Fixed-tempo practice: one BPM ignoring tempo changes (presets, 10–300 BPM) | GP  | M1  | —                                     | —    | planned |
+| PRAC-103 | Fixed-tempo practice: one BPM ignoring tempo changes (presets, 10–300 BPM) | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/practice.spec.ts | done |
 | PRAC-104 | Speed presets (25–100 %) with one-tap half speed                | GP+ | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PRAC-105 | Speed trainer: number of passes at each step                    | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/trainer.test.ts, apps/web/e2e/metronome.spec.ts | done |
 | PRAC-106 | Metronome volume; zero gives a silent visual metronome          | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts | done |

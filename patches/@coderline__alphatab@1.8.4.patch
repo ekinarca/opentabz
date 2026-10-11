@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619adff1161 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..c3d3c6dd11e91d439cd7231832b4267d8ff80413 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -74,7 +74,86 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -35078,6 +35093,46 @@ class MidiFileSequencer {
+@@ -30468,6 +30483,35 @@ class FontSizes {
+ 			FontSizes.fontSizeLookupTables.set(family, data);
+ 		}
+ 	}
++	// OpenTabz patch 0012: where a canvas exists, text is measured as it will be drawn (its font,
++	// size, style and weight) instead of from 11 px width tables kept as whole pixels.
++	static _exactContext = void 0;
++	static _exactFont = "";
++	static _exactCache = /* @__PURE__ */ new Map();
++	static measureExact(s, font) {
++		if (FontSizes._exactContext === void 0) {
++			let context = null;
++			if (typeof OffscreenCanvas !== "undefined") context = new OffscreenCanvas(1, 1).getContext("2d");
++			else if (!Environment.isRunningInWorker && Environment.webPlatform !== WebPlatform.NodeJs) context = document.createElement("canvas").getContext("2d");
++			FontSizes._exactContext = context;
++		}
++		const context = FontSizes._exactContext;
++		if (!context) return null;
++		const css = font.toCssString(1);
++		const key = `${css}\n${s}`;
++		let size = FontSizes._exactCache.get(key);
++		if (size === void 0) {
++			if (FontSizes._exactFont !== css) {
++				context.font = css;
++				FontSizes._exactFont = css;
++			}
++			const metrics = context.measureText(s);
++			size = [metrics.width, metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent];
++			if (FontSizes._exactCache.size >= 2e4) FontSizes._exactCache.clear();
++			FontSizes._exactCache.set(key, size);
++		}
++		return new MeasuredText(size[0], size[1]);
++	}
+ 	static measureString(s, families, size, style, weight) {
+ 		let data;
+ 		const dataSize = 11;
+@@ -34988,6 +35032,42 @@ class MidiFileSequencer {
+ 	get isPlayingCountIn() {
+ 		return this._currentState === this._countInState;
+ 	}
++	// OpenTabz patch 0011: silent bars between loop passes, in the meter and tempo of the loop start.
++	_restState = null;
++	/** Bars of rest before every pass of a loop after the first (0: none). */
++	loopRestBars = 0;
++	get isPlayingRest() {
++		return this._restState !== null && this._currentState === this._restState;
++	}
++	/** Real-time length of the rest, and its beats. */
++	get restEndTime() {
++		return this._restState ? this._restState.endTime / this.playbackSpeed : 0;
++	}
++	get restBeats() {
++		return this._restState ? this._restState.restBeats : 0;
++	}
++	startRest() {
++		const state = new MidiSequencerState();
++		state.division = this._mainState.division;
++		const bpm = this._synthesizer.currentTempo;
++		const numerator = this._synthesizer.timeSignatureNumerator;
++		const denominator = this._synthesizer.timeSignatureDenominator;
++		state.tempoChanges.push(new MidiFileSequencerTempoChange(bpm, 0, 0));
++		const beatTicks = state.division * (4 / denominator) | 0;
++		const beatMillis = beatTicks * (6e4 / (bpm * state.division));
++		const beats = Math.max(1, this.loopRestBars | 0) * numerator;
++		state.endTime = beats * beatMillis;
++		state.endTick = beats * beatTicks;
++		state.currentTempo = bpm;
++		state.syncPointTempo = bpm;
++		state.restBeats = beats;
++		this._restState = state;
++		this._currentState = state;
++	}
++	resetRest() {
++		this._restState = null;
++		this._currentState = this._mainState;
++	}
+ 	constructor(synthesizer) {
+ 		this._synthesizer = synthesizer;
+ 		this._mainState = new MidiSequencerState();
+@@ -35078,6 +35158,46 @@ class MidiFileSequencer {
  		this._mainState = this.createStateFromFile(midiFile);
  		this._currentState = this._mainState;
  	}
@@ -121,7 +200,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	createStateFromFile(midiFile) {
  		const state = new MidiSequencerState();
  		this.percussionKeys.add(SynthConstants.MetronomeKey);
-@@ -35096,6 +35151,8 @@ class MidiFileSequencer {
+@@ -35096,6 +35216,8 @@ class MidiFileSequencer {
  		let metronomeTime = 0;
  		let maxChannel = 0;
  		let previousTick = 0;
@@ -130,7 +209,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		for (const mEvent of midiFile.events) {
  			const synthData = new SynthEvent(state.synthData.length, mEvent);
  			state.synthData.push(synthData);
-@@ -35126,15 +35183,21 @@ class MidiFileSequencer {
+@@ -35126,15 +35248,21 @@ class MidiFileSequencer {
  					state.firstTimeSignatureNumerator = meta.numerator;
  					state.firstTimeSignatureDenominator = timeSignatureDenominator;
  				}
@@ -154,7 +233,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  				if (noteOn.channel > maxChannel) maxChannel = noteOn.channel;
  			}
  		}
-@@ -35351,6 +35414,52 @@ class MidiFileSequencer {
+@@ -35351,6 +35479,52 @@ class MidiFileSequencer {
  		this._countInState = null;
  		this._currentState = this._mainState;
  	}
@@ -207,7 +286,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	startCountIn() {
  		this.generateCountInMidi();
  		this._currentState = this._countInState;
-@@ -35377,8 +35486,9 @@ class MidiFileSequencer {
+@@ -35377,8 +35551,9 @@ class MidiFileSequencer {
  		const metronomeLengthInMillis = metronomeLengthInTicks * (6e4 / (bpm * this._mainState.division));
  		let metronomeTick = 0;
  		let metronomeTime = 0;
@@ -219,7 +298,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			state.synthData.push(metronome);
  			metronome.time = metronomeTime;
  			metronomeTick += metronomeLengthInTicks;
-@@ -37974,7 +38084,8 @@ class Channels {
+@@ -37974,7 +38149,8 @@ class Channels {
  	channelList = [];
  	setupVoice(tinySoundFont, voice) {
  		const c = this.channelList[this.activeChannel];
@@ -229,7 +308,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		voice.playingChannel = this.activeChannel;
  		voice.mixVolume = c.mixVolume;
  		voice.noteGainDb += c.gainDb;
-@@ -38875,6 +38986,7 @@ class TinySoundFont {
+@@ -38875,6 +39051,7 @@ class TinySoundFont {
  	_midiEventQueue = new Queue();
  	_mutedChannels = /* @__PURE__ */ new Map();
  	_soloChannels = /* @__PURE__ */ new Map();
@@ -237,7 +316,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	_isAnySolo = false;
  	_transpositionPitches = /* @__PURE__ */ new Map();
  	_liveTranspositionPitches = /* @__PURE__ */ new Map();
-@@ -38903,6 +39015,19 @@ class TinySoundFont {
+@@ -38903,6 +39080,19 @@ class TinySoundFont {
  		if (mute) this._mutedChannels.set(channel, true);
  		else this._mutedChannels.delete(channel);
  	}
@@ -257,7 +336,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	channelSetSolo(channel, solo) {
  		if (solo) this._soloChannels.set(channel, true);
  		else this._soloChannels.delete(channel);
-@@ -38911,6 +39036,7 @@ class TinySoundFont {
+@@ -38911,6 +39101,7 @@ class TinySoundFont {
  	resetChannelStates() {
  		this._mutedChannels = /* @__PURE__ */ new Map();
  		this._soloChannels = /* @__PURE__ */ new Map();
@@ -265,7 +344,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
  		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
  		this._isAnySolo = false;
-@@ -38948,8 +39074,10 @@ class TinySoundFont {
+@@ -38948,8 +39139,10 @@ class TinySoundFont {
  		while (!this._midiEventQueue.isEmpty) {
  			const m = this._midiEventQueue.dequeue();
  			if (m.isMetronome && this.metronomeVolume > 0) {
@@ -277,7 +356,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			} else if (m.event) this.processMidiMessage(m.event);
  			processedEvents.push(m);
  		}
-@@ -38982,7 +39110,11 @@ class TinySoundFont {
+@@ -38982,7 +39175,11 @@ class TinySoundFont {
  				break;
  			case MidiEventType.ProgramChange:
  				const programChange = e;
@@ -290,7 +369,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  				break;
  			case MidiEventType.TempoChange:
  				const tempoChange = e;
-@@ -39100,6 +39232,8 @@ class TinySoundFont {
+@@ -39100,6 +39297,8 @@ class TinySoundFont {
  		const voicePlayIndex = this._voicePlayIndex++;
  		for (const region of this.presets[presetIndex].regions) {
  			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
@@ -299,7 +378,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			let voice = null;
  			if (region.group !== 0) {
  				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
-@@ -39360,7 +39494,7 @@ class TinySoundFont {
+@@ -39360,7 +39559,7 @@ class TinySoundFont {
  	*/
  	channelSetPan(channel, pan) {
  		for (const v of this._voices) if (v.playingChannel === channel && v.playingPreset !== -1) {
@@ -308,7 +387,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39787,6 +39921,50 @@ class AlphaSynthBase {
+@@ -39787,6 +39986,64 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -328,6 +407,17 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +	passGenerated = new EventEmitter();
 +	/** OpenTabz patch 0010: fires when audio made at a new playback speed starts to be heard. */
 +	heardSpeedChanged = new EventEmitterOfT();
++	// OpenTabz patch 0011: rests between loop passes.
++	_playingRest = false;
++	_restPlayedMillis = 0;
++	/** Fires while a rest between loop passes is heard: the beat (0-based) of the rest's beats; -1 when it ends. */
++	restProgress = new EventEmitterOfT();
++	get loopRestBars() {
++		return this.sequencer.loopRestBars;
++	}
++	set loopRestBars(value) {
++		this.sequencer.loopRestBars = value;
++	}
 +	/** Play the count-in again before every pass of a loop. */
 +	countInEveryLoop = false;
 +	/** Fires while a count-in plays: the click being heard (0-based) and the number of clicks; -1 when it ends. */
@@ -350,6 +440,9 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +		this._playedSamples = 0;
 +		this._playingCountIn = this.sequencer.isPlayingCountIn;
 +		this._countInPlayedMillis = 0;
++		if (this._playingRest) this.restProgress.trigger({ beat: -1, beats: 0 });
++		this._playingRest = this.sequencer.isPlayingRest;
++		this._restPlayedMillis = 0;
 +		this._speedChanges = [];
 +		if (this._heardSpeed !== this.sequencer.playbackSpeed) {
 +			this._heardSpeed = this.sequencer.playbackSpeed;
@@ -359,7 +452,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	get output() {
  		return this._output;
  	}
-@@ -39841,8 +40019,23 @@ class AlphaSynthBase {
+@@ -39841,8 +40098,24 @@ class AlphaSynthBase {
  	}
  	updatePlaybackSpeed(value) {
  		const oldSpeed = this.sequencer.playbackSpeed;
@@ -369,6 +462,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +			this.sequencer.playbackSpeed = value;
 +			this._timePosition = this._timePosition * (oldSpeed / value);
 +			this._countInPlayedMillis = this._countInPlayedMillis * (oldSpeed / value);
++			this._restPlayedMillis = this._restPlayedMillis * (oldSpeed / value);
 +			const at = this._generationPoint >= 0 ? this._generationPoint : this._generatedSamples;
 +			this._speedChanges.push({ at, speed: value });
 +			return;
@@ -383,7 +477,14 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	}
  	get loadedMidiInfo() {
  		return this._loadedMidiInfo;
-@@ -39866,6 +40059,7 @@ class AlphaSynthBase {
+@@ -39861,11 +40134,14 @@ class AlphaSynthBase {
+ 	}
+ 	set timePosition(value) {
+ 		Logger.debug("AlphaSynth", `Seeking to position ${value}ms (main)`);
++		// OpenTabz patch 0011: a seek ends a rest between loop passes.
++		if (this.sequencer.isPlayingRest) this.sequencer.resetRest();
+ 		this.sequencer.mainSeek(value);
+ 		this.updateTimePosition(value, true);
  		if (this.sequencer.isPlayingMain) {
  			this._notPlayedSamples = 0;
  			this.output.resetSamples();
@@ -391,7 +492,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40131,20 @@ class AlphaSynthBase {
+@@ -39937,10 +40213,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
@@ -413,12 +514,25 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40152,82 @@ class AlphaSynthBase {
+@@ -39948,15 +40234,112 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
 +	_continueSeamlessly(at) {
 +		const overshoot = this.sequencer.currentOvershoot;
++		if (this.sequencer.isPlayingRest) {
++			// OpenTabz patch 0011: after the rest, the count-in (if any) and the next pass.
++			this.sequencer.resetRest();
++			const countIn = this.countInEveryLoop && this._countInVolume > 0;
++			if (countIn) {
++				this.sequencer.startCountIn();
++				this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this._countInVolume);
++			}
++			const songTime = this.sequencer.mainCurrentTime * this.sequencer.playbackSpeed;
++			this.sequencer.advanceCurrent(overshoot);
++			this._segments.push({ at, countIn, rest: false, songTime, wrapped: false });
++			return true;
++		}
 +		if (this.sequencer.isPlayingCountIn) {
 +			this.sequencer.resetCountIn();
 +			this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this.metronomeVolume);
@@ -434,6 +548,13 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +			this.passGenerated.trigger();
 +			const startTime = this.sequencer.mainTickPositionToTimePosition(startTick);
 +			this.sequencer.mainSeek(startTime);
++			if (this.sequencer.loopRestBars > 0) {
++				// OpenTabz patch 0011: rest first, in the meter and tempo of the loop start.
++				this.sequencer.startRest();
++				this.sequencer.advanceCurrent(overshoot);
++				this._segments.push({ at, countIn: false, rest: true, songTime: startTime * this.sequencer.playbackSpeed, wrapped: true });
++				return true;
++			}
 +			const countIn = this.countInEveryLoop && this._countInVolume > 0;
 +			if (countIn) {
 +				this.sequencer.startCountIn();
@@ -464,6 +585,15 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +		this._currentPosition = args;
 +		this.positionChanged.trigger(args);
 +	}
++	_reportRest(playedMillis) {
++		const beats = this.sequencer.restBeats;
++		const total = this.sequencer.restEndTime;
++		if (beats <= 0 || total <= 0) return;
++		const before = Math.floor(this._restPlayedMillis / (total / beats));
++		this._restPlayedMillis += playedMillis;
++		const after = Math.min(beats - 1, Math.floor(this._restPlayedMillis / (total / beats)));
++		if (after !== before) this.restProgress.trigger({ beat: after, beats });
++	}
 +	_reportCountIn(playedMillis) {
 +		const clicks = this.sequencer.countInClicks;
 +		const total = this.sequencer.countInEndTime;
@@ -480,9 +610,10 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		if (this._countInVolume > 0) {
  			Logger.debug("AlphaSynth", "Starting countin");
 +			// Count in from where the listener is, not from where generation got to.
-+			const pending = this._segments.find((segment) => !segment.countIn);
-+			const resume = this._playingCountIn ? pending ? pending.songTime / this.sequencer.playbackSpeed : this.sequencer.mainCurrentTime : this._timePosition;
++			const pending = this._segments.find((segment) => !segment.countIn && !segment.rest);
++			const resume = this._playingCountIn || this._playingRest ? pending ? pending.songTime / this.sequencer.playbackSpeed : this.sequencer.mainCurrentTime : this._timePosition;
 +			this.sequencer.resetCountIn();
++			if (this.sequencer.isPlayingRest) this.sequencer.resetRest();
 +			this.sequencer.mainSeek(resume);
 +			this._notPlayedSamples = 0;
 +			this.output.resetSamples();
@@ -496,8 +627,13 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		}
  		this.output.play();
  		return true;
-@@ -39992,6 +40263,9 @@ class AlphaSynthBase {
+@@ -39990,8 +40373,14 @@ class AlphaSynthBase {
+ 		this.state = PlayerState.Paused;
+ 		this.output.pause();
  		this._notPlayedSamples = 0;
++		// OpenTabz patch 0011: stopping in a count-in or a rest goes back to the song.
++		if (this.sequencer.isPlayingCountIn) this.sequencer.resetCountIn();
++		if (this.sequencer.isPlayingRest) this.sequencer.resetRest();
  		this.sequencer.stop();
  		this.synthesizer.noteOffAll(true);
 +		if (this._playingCountIn) this.countInProgress.trigger({ beat: -1, beats: 0 });
@@ -506,7 +642,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40277,7 @@ class AlphaSynthBase {
+@@ -40003,6 +40392,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -514,7 +650,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +40357,65 @@ class AlphaSynthBase {
+@@ -40082,16 +40472,72 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
@@ -557,7 +693,8 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +				remaining -= chunk;
 +				// OpenTabz patch 0010: audio made at another speed than the current one moves the song on at its own rate.
 +				const millis = chunk / SynthConstants.AudioChannels / this.synthesizer.outSampleRate * 1e3 * (this._heardSpeed / this.sequencer.playbackSpeed);
-+				if (this._playingCountIn) this._reportCountIn(millis);
++				if (this._playingRest) this._reportRest(millis);
++				else if (this._playingCountIn) this._reportCountIn(millis);
 +				else this._reportPlayed(this._timePosition + millis, false);
 +			}
 +			if (change !== null && this._playedSamples >= change.at) {
@@ -570,10 +707,16 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
 +			if (next !== null && this._playedSamples >= next.at) {
 +				this._segments.shift();
 +				if (this._playingCountIn && !next.countIn) this.countInProgress.trigger({ beat: -1, beats: 0 });
++				if (this._playingRest && !next.rest) this.restProgress.trigger({ beat: -1, beats: 0 });
 +				this._playingCountIn = next.countIn;
++				this._playingRest = next.rest === true;
 +				if (next.wrapped) this.finished.trigger();
 +				const time = next.songTime / this.sequencer.playbackSpeed;
-+				if (next.countIn) {
++				if (next.rest) {
++					this._restPlayedMillis = 0;
++					this._reportPlayed(time, false);
++					this.restProgress.trigger({ beat: 0, beats: this.sequencer.restBeats });
++				} else if (next.countIn) {
 +					this._countInPlayedMillis = 0;
 +					this._timePosition = time;
 +					this.countInProgress.trigger({ beat: 0, beats: this.sequencer.countInClicks });
@@ -584,7 +727,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +40752,7 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +40874,7 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
@@ -592,7 +735,29 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -65583,7 +65908,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -49793,7 +50240,8 @@ class SvgCanvas {
+ 	}
+ 	measureText(text) {
+ 		if (!text) return new MeasuredText(0, 0);
+-		return FontSizes.measureString(text, this.font.families, this.font.size, this.font.style, this.font.weight);
++		// OpenTabz patch 0012: exact where a canvas can measure.
++		return FontSizes.measureExact(text, this.font) ?? FontSizes.measureString(text, this.font.families, this.font.size, this.font.style, this.font.weight);
+ 	}
+ 	onRenderFinished() {
+ 		return null;
+@@ -51986,8 +52434,10 @@ class MarkerEffectInfo extends EffectInfo {
+ 	get hideOnMultiTrack() {
+ 		return true;
+ 	}
++	// OpenTabz patch 0013: a section name runs past its beat, over the effects that start after
++	// it; bands share a row by beats, not by text width, so it keeps a row of its own.
+ 	get canShareBand() {
+-		return true;
++		return false;
+ 	}
+ 	get sizingMode() {
+ 		return EffectBarGlyphSizing.SinglePreBeat;
+@@ -65583,7 +66033,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -604,10 +769,10 @@ index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619
  //#endregion
  //#region src/exporter/ScoreExporter.ts
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..9663e6816d82d8312cabbf7b81df4d9a059a775d 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..3bf257ea3152b246ce27613825006c8c2eadb575 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
-@@ -128,6 +128,26 @@ declare class AlphaSynthBase implements IAlphaSynth {
+@@ -128,6 +128,34 @@ declare class AlphaSynthBase implements IAlphaSynth {
      protected updateMasterVolume(value: number): void;
      get metronomeVolume(): number;
      set metronomeVolume(value: number);
@@ -620,6 +785,14 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..9663e6816d82d8312cabbf7b81df4d9a
 +    readonly passGenerated: IEventEmitter;
 +    /** OpenTabz patch 0010: fires when audio made at a new playback speed starts to be heard. */
 +    readonly heardSpeedChanged: IEventEmitterOfT<number>;
++    /** OpenTabz patch 0011: bars of rest before every pass of a loop after the first (0: none). */
++    get loopRestBars(): number;
++    set loopRestBars(value: number);
++    /** OpenTabz patch 0011: the rest beat being heard (0-based) and the rest's beats; beat -1 when it ends. */
++    readonly restProgress: IEventEmitterOfT<{
++        beat: number;
++        beats: number;
++    }>;
 +    /** OpenTabz patch 0006: the count-in click being heard (0-based) and the number of clicks; beat -1 when it ends. */
 +    readonly countInProgress: IEventEmitterOfT<{
 +        beat: number;
@@ -634,7 +807,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..9663e6816d82d8312cabbf7b81df4d9a
      get countInVolume(): number;
      set countInVolume(value: number);
      get midiEventsPlayedFilter(): MidiEventType[];
-@@ -167,6 +187,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
+@@ -167,6 +195,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
      setChannelMute(channel: number, mute: boolean): void;
      resetChannelStates(): void;
      setChannelSolo(channel: number, solo: boolean): void;

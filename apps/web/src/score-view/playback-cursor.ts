@@ -16,8 +16,10 @@ import {
   indexBeats,
   nextSlice,
   occurrence,
+  slice,
   tickOfBeat,
   type BeatPlacement,
+  type Occurrence,
   type Slice,
 } from './timeline-lookup.ts';
 
@@ -123,7 +125,15 @@ export class PlaybackCursor {
       if (playing && this.animation?.playState === 'paused') this.animation.play();
       return;
     }
-    const placement = this.placementFor(timeline, current);
+    const started = this.placementFor(timeline, current);
+    if (started === null && this.currentBeat !== null && this.animation !== null) {
+      // Only hidden tracks have a beat here: the visible beat still sounds, and the cursor keeps
+      // gliding towards the next one instead of starting over from this beat.
+      this.currentSlice = current.index;
+      if (playing && this.animation.playState === 'paused') this.animation.play();
+      return;
+    }
+    const placement = started ?? this.soundingPlacement(timeline, bar, current);
     if (placement === null) return;
     this.currentSlice = current.index;
 
@@ -139,13 +149,31 @@ export class PlaybackCursor {
     this.currentSystem = placement.systemIndex;
   }
 
-  /** Placement of the first visible beat starting in `target`, or of the beat still sounding. */
+  /** Placement of the first visible beat starting in `target`, if any. */
   private placementFor(timeline: PlaybackTimeline, target: Slice): BeatPlacement | null {
     const bounds = this.view.bounds;
     if (bounds === null) return null;
     for (const beatId of beatsStartingAt(timeline, target, this.tracks)) {
       const index = this.beatIndex.get(beatId);
       if (index !== undefined) return beatPlacement(bounds, index);
+    }
+    return null;
+  }
+
+  /**
+   * The visible beat still sounding at `target` (it started in an earlier slice of the bar), for
+   * a position reached by seeking into a held note.
+   */
+  private soundingPlacement(
+    timeline: PlaybackTimeline,
+    bar: Occurrence,
+    target: Slice,
+  ): BeatPlacement | null {
+    for (let index = target.index - 1; index >= bar.firstSlice; index--) {
+      const earlier = slice(timeline, index);
+      if (earlier === null) break;
+      const placement = this.placementFor(timeline, earlier);
+      if (placement !== null) return placement;
     }
     return this.currentBeat;
   }
@@ -158,9 +186,7 @@ export class PlaybackCursor {
     let candidate = nextSlice(timeline, current);
     for (let guard = 0; candidate !== null && guard < 64; guard++) {
       const placement = this.placementFor(timeline, candidate);
-      if (placement !== null && placement !== this.currentBeat) {
-        return { tick: candidate.startTick, placement };
-      }
+      if (placement !== null) return { tick: candidate.startTick, placement };
       candidate = nextSlice(timeline, candidate);
     }
     return { tick: current.endTick, placement: null };

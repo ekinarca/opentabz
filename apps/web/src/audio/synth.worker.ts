@@ -20,17 +20,34 @@ const host = new SynthHost(event => {
   scope.postMessage(event);
 });
 
+function describe(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+}
+
 scope.addEventListener('message', event => {
   const command = event.data;
-  if (command.type === 'init') {
-    host.init(command.sampleRate, new RingWriter(command.ring));
-    command.workletPort.onmessage = () => {
-      host.progress();
-    };
-    command.enginePort.onmessage = (message: MessageEvent<SynthDelivery>) => {
-      host.receive(message.data);
-    };
-    return;
+  // A failure is reported, never left to hang the UI waiting for an answer.
+  try {
+    if (command.type === 'init') {
+      host.init(command.sampleRate, new RingWriter(command.ring));
+      command.workletPort.onmessage = () => {
+        host.progress();
+      };
+      command.enginePort.onmessage = (message: MessageEvent<SynthDelivery>) => {
+        try {
+          host.receive(message.data);
+        } catch (error) {
+          scope.postMessage({ type: 'error', context: 'midi', message: describe(error) });
+        }
+      };
+      return;
+    }
+    host.handle(command);
+  } catch (error) {
+    scope.postMessage({
+      type: 'error',
+      context: command.type === 'loadSoundFont' ? 'soundFont' : command.type,
+      message: describe(error),
+    });
   }
-  host.handle(command);
 });

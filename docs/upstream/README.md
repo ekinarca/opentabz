@@ -19,6 +19,9 @@ available as source: the patch file is that source.
 | [0008](0008-centered-channels.md)           | Channels that ignore the SoundFont's region pans                                   | Woodblock and hi-hat clicks came out of one ear                            | not yet  |
 | [0009](0009-replace-midi-while-playing.md)  | Replace the song while it plays, keeping the position by tick                      | A new metronome pattern or tempo stuttered and restarted                   | not yet  |
 | [0010](0010-speed-changes-while-playing.md) | Change the speed while playing without a seek; per-pass and heard-speed events     | Speed changes stuttered; a speed trainer could not step on pass boundaries | not yet  |
+| [0011](0011-rests-between-loop-passes.md)   | Rests between loop passes, reported beat by beat                                   | Players want silent bars between passes to reset their hands               | not yet  |
+| [0012](0012-exact-text-measurement.md)      | Measure text exactly, in its font, where a canvas exists                           | Tempo marks and names came out narrower than drawn and overlapped          | not yet  |
+| [0013](0013-section-markers-own-row.md)     | Section names on an effect row of their own                                        | Section names ran through effects starting on the next beat                | not yet  |
 
 ## Working on a patch
 

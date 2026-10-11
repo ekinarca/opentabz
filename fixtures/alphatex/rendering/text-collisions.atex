@@ -1,0 +1,13 @@
+// Text Collisions — original music written for OpenTabz (AGPL-3.0-or-later).
+// Rendering fixture: a tempo mark with a name, section names on the first beat, and effects that
+// start on the second beat (harmonics, palm mute, let ring), where the texts used to overlap.
+\title "Text Collisions"
+\subtitle "OpenTabz rendering fixture"
+\tempo (196 "Moderate")
+\track "Guitar"
+\staff {tabs}
+\ts (4 4)
+\section "Intro" :8 (9.4 7.5) 7.3{nh} 7.3{nh} 7.3{nh} 7.3{nh} 7.3{nh} 7.3{nh} 7.3{nh} |
+:8 7.4{nh} 7.3{nh} 7.3{nh} 7.2{nh} 7.3{nh} 7.3{nh} (9.4 7.5) (9.4 7.5) |
+\section "Verse with a long name" :8 (4.5 2.6) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) (4.5{pm} 2.6{pm}) |
+\section "Chorus" :4 (0.6 2.5 2.4) (0.6{lr} 2.5{lr} 2.4{lr}) (0.6{lr} 2.5{lr} 2.4{lr}) (0.6{lr} 2.5{lr} 2.4{lr})

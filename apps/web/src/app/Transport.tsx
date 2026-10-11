@@ -154,11 +154,24 @@ export function Transport() {
       )}
 
       {transport.status === 'error' && (
-        <Tooltip label={transport.error ?? strings.transport.unavailable}>
-          <span className="inline-flex text-danger" role="img" aria-label={strings.transport.unavailable}>
-            <TriangleAlert size={18} aria-hidden />
-          </span>
-        </Tooltip>
+        <>
+          <Tooltip label={transport.error ?? strings.transport.unavailable}>
+            <span className="inline-flex text-danger" role="img" aria-label={strings.transport.unavailable}>
+              <TriangleAlert size={18} aria-hidden />
+            </span>
+          </Tooltip>
+          {activeDoc !== null && (
+            <button
+              type="button"
+              onClick={() => {
+                void usePlayer.getState().load(activeDoc);
+              }}
+              className="h-8 shrink-0 rounded-full border border-line-strong px-3 text-[12px] font-semibold text-ink hover:bg-sunken"
+            >
+              {strings.transport.retry}
+            </button>
+          )}
+        </>
       )}
 
       <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">

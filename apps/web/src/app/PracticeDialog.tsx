@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { usePlayer } from '../state/player.ts';
 import {
   LOOP_PASSES,
+  LOOP_RESTS,
   MAX_TRAINER_PASSES,
   MAX_TRAINER_STEP,
   TRAINER_MAX,
@@ -118,11 +119,13 @@ function NumberField({
   );
 }
 
-/** How many times a loop plays before playback stops. */
+/** How many times a loop plays before playback stops, and the rest between passes. */
 function LoopSettings() {
   const passes = usePractice(state => state.loopPasses);
+  const rest = usePractice(state => state.loopRest);
   const set = usePractice(state => state.set);
   const id = useId();
+  const restId = useId();
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-[14px] font-medium text-ink">{s.loop}</h3>
@@ -140,6 +143,24 @@ function LoopSettings() {
           {LOOP_PASSES.map(option => (
             <option key={option ?? 'endless'} value={option === null ? '' : String(option)}>
               {s.loopPassesValue(option)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={s.loopRest} htmlFor={restId} hint={s.loopRestHint}>
+        <select
+          id={restId}
+          value={rest}
+          onChange={event => {
+            const value = Number(event.target.value);
+            const choice = LOOP_RESTS.find(option => option === value);
+            if (choice !== undefined) set({ loopRest: choice });
+          }}
+          className={SELECT_CLASS}
+        >
+          {LOOP_RESTS.map(option => (
+            <option key={option} value={option}>
+              {s.loopRestValue(option)}
             </option>
           ))}
         </select>

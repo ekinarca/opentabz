@@ -312,6 +312,7 @@ export const strings = {
     stop: 'Stop and go to the start',
     loading: 'Loading sounds…',
     unavailable: 'Playback unavailable',
+    retry: 'Try again',
     speed: 'Playback speed',
     speedValue: (speed: number) => `${Math.round(speed * 100)} %`,
     loop: 'Loop',
@@ -328,6 +329,12 @@ export const strings = {
     speedPresets: 'Speed presets',
     speedHint: 'Practise slowly without changing the pitch. Keys: − and =.',
     speedTap: 'Tap tempo',
+    fixedTempo: 'Fixed tempo',
+    fixedTempoHint: 'Plays the whole song at one tempo, ignoring its tempo changes.',
+    fixedTempoBpm: 'Fixed tempo, quarter notes per minute',
+    fixedTempoPresets: 'Tempo presets',
+    tempoFixed: (bpm: number) => `♩ ${bpm} fixed`,
+    positionDetailFixed: 'fixed tempo',
     speedTapHint: 'Tap along at the tempo you want: the speed follows.',
     position: 'Position',
     positionDetail: (bar: number, beat: number, numerator: number, denominator: number, tempo: number) =>
@@ -364,6 +371,10 @@ export const strings = {
     loopPassesValue: (passes: number | null) =>
       passes === null ? 'Endlessly' : `${passes} times, then stop`,
     loopPassesHint: 'Applies to every loop: the selection, or the whole song.',
+    loopRest: 'Rest between passes',
+    loopRestValue: (bars: number) => (bars === 0 ? 'None' : bars === 1 ? '1 bar' : `${bars} bars`),
+    loopRestHint: 'Silent bars before the loop starts again, to reset your hands.',
+    resting: 'Rest',
     trainer: 'Speed trainer',
     trainerHint:
       'Loops the selection (or the whole song) and changes the speed step by step, after the same number of passes at each speed.',
