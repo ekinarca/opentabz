@@ -7,6 +7,7 @@ import { DEFAULT_PAGE_FURNITURE, type BarRange } from '@opentabz/core/shared';
 import { getEngine } from '../engine/instance.ts';
 import { contentWidth, pageGeometry, paginate, type Size } from '../score-view/pagination.ts';
 import type { OpenDocument } from '../state/documents.ts';
+import { ringingTracks } from '../state/mixer-memory.ts';
 import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { pagesTexts, scoreFields } from '../state/score-fields.ts';
@@ -36,6 +37,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
   const geometry = pageGeometry(doc.view.page);
   const coloring = noteColoring(usePreferences.getState());
   const aids = readingAids(usePreferences.getState());
+  const letRing = ringingTracks(doc.mix);
   const layout = await engine.call('layoutView', {
     viewId,
     docId: doc.engineId,
@@ -49,6 +51,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       // Exports colour notes as the screen does.
       ...(coloring === undefined ? {} : { noteColors: coloring }),
       ...(aids === undefined ? {} : { readingAids: aids }),
+      ...(letRing.length === 0 ? {} : { letRing }),
       width: contentWidth(geometry),
       notationScale: 1,
       // The pages' header and footer are drawn on the sheets, not by the engine.

@@ -31,6 +31,11 @@ export interface TrackMix {
 /** The playing style when the file or the user says nothing. */
 export const STYLE_DEFAULTS = { letRing: false, brush: false, palmMute: 0.5, accent: false } as const;
 
+/** The tracks whose notes all ring on (their playing style), by index (REND-188). */
+export function ringingTracks(mix: readonly TrackMix[]): number[] {
+  return mix.flatMap((track, index) => (track.letRing ? [index] : []));
+}
+
 export interface RememberedMix {
   readonly tracks: readonly TrackMix[];
   /** The track the others are ducked against, if any. */

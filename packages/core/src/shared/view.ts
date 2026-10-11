@@ -43,6 +43,11 @@ export function sameTrackStaves(a: readonly TrackStaves[], b: readonly TrackStav
   );
 }
 
+/** Whether two lists of track indexes are the same, in the same order. */
+export function sameIndexes(a: readonly number[] = [], b: readonly number[] = []): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 /** A run of master bars, by index (inclusive). */
 export interface BarRange {
   readonly first: number;
@@ -64,6 +69,8 @@ export interface ViewOptions {
   readonly noteColors?: NoteColoring;
   /** Note names above the notes and beat counts under them (VIEW-009, REND-306, REND-317). */
   readonly readingAids?: ReadingAids;
+  /** Tracks whose notes all ring on (their playing style), marked "let ring throughout" (REND-188). */
+  readonly letRing?: readonly number[];
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

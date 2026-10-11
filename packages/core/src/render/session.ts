@@ -9,10 +9,17 @@ import * as alphaTab from '@coderline/alphatab';
 import { sameColoring } from '../shared/note-colors.ts';
 import { sameReadingAids } from '../shared/reading-aids.ts';
 import { sameScoreStyle, type ScoreStyle } from '../shared/style.ts';
-import { sameTrackStaves, type PartialKind, type PartialLayout, type ViewOptions } from '../shared/view.ts';
+import {
+  sameIndexes,
+  sameTrackStaves,
+  type PartialKind,
+  type PartialLayout,
+  type ViewOptions,
+} from '../shared/view.ts';
 import type { ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
+import { applyLetRingThroughout } from './let-ring.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyNoteColors } from './note-colors.ts';
 import { applyReadingAids } from './reading-aids.ts';
@@ -158,7 +165,9 @@ export class RenderSession {
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
     const restoreColors = applyNoteColors(tracks, this.options.noteColors);
     const restoreAids = applyReadingAids(tracks, this.options.readingAids);
+    const restoreLetRing = applyLetRingThroughout(tracks, this.options.letRing);
     const restore = () => {
+      restoreLetRing();
       restoreAids();
       restoreColors();
       restorePitch();
@@ -217,13 +226,13 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.concertPitch === b.concertPitch &&
     sameColoring(a.noteColors, b.noteColors) &&
     sameReadingAids(a.readingAids, b.readingAids) &&
+    sameIndexes(a.letRing, b.letRing) &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&
     a.bars?.first === b.bars?.first &&
     a.bars?.last === b.bars?.last &&
-    a.trackIndexes.length === b.trackIndexes.length &&
-    a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
+    sameIndexes(a.trackIndexes, b.trackIndexes)
   );
 }
 

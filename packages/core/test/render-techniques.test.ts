@@ -426,6 +426,39 @@ describe('muting, ringing and articulations', () => {
     expect(end).toBeLessThan(view.span(unmuted).notes);
   });
 
+  it('REND-188: "let ring throughout" over the first bar of a track whose notes all ring on', () => {
+    const bars = `:4 ${Array.from({ length: 6 }, () => '5.6 7.5 5.4 7.4').join(' | ')} |`;
+    const guitar = (staves: string) =>
+      [`\\track "Guitar"`, `\\staff {${staves}}`, '\\tuning (E4 B3 G3 D3 A2 E2)', bars].join('\n');
+    const labels = (view: Engraving) => view.find('text', 'let ring throughout');
+    expect(labels(engraveTex(bars, { width: 500 }))).toEqual([]);
+    for (const staves of ['score tabs', 'tabs', 'score']) {
+      const view = engraveTex(guitar(staves), { width: 500, letRing: [0] });
+      // Once, from the first beat on: later systems start without it.
+      const [label, ...more] = labels(view);
+      const [first, second] = view.beats();
+      expect(label === undefined || first === undefined || second === undefined, staves).toBe(false);
+      if (label === undefined || first === undefined || second === undefined) continue;
+      expect(more, staves).toEqual([]);
+      expect(Math.abs(label.x - view.span(first).left), staves).toBeLessThan(8);
+      expect(label.x, staves).toBeLessThan(view.span(second).left);
+      expect(view.systemOf(label), staves).toBe(0);
+      expect(Math.max(...view.bars.map(bar => bar.system)), staves).toBeGreaterThan(0);
+      // The score itself is left as it was.
+      expect(view.score.tracks[0]?.letRingThroughout, staves).toBe(false);
+    }
+    // Of two guitars, only the one that rings on says so, over its own staves.
+    const duet = `${guitar('tabs')}\n${guitar('tabs').replace('"Guitar"', '"Second"')}`;
+    const upper = labels(engraveTex(duet, { trackIndexes: [0, 1], letRing: [0] }));
+    const lower = labels(engraveTex(duet, { trackIndexes: [0, 1], letRing: [1] }));
+    expect([upper.length, lower.length]).toEqual([1, 1]);
+    expect((lower[0]?.y ?? 0) - (upper[0]?.y ?? 0)).toBeGreaterThan(40);
+    // Keyboards have no strings to ring on.
+    expect(
+      labels(engraveTex('\\track "Piano"\n\\staff {score}\n:4 C4 D4 E4 F4 |', { letRing: [0] })),
+    ).toEqual([]);
+  });
+
   it('REND-129: dead notes are an x on the tab and a cross notehead', () => {
     const view = engraveFixture('alphatab/guitarpro7/dead.gp');
     for (const beat of view.beats()) {

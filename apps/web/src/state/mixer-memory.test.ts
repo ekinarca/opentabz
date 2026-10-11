@@ -6,6 +6,7 @@ import {
   MAX_REMEMBERED_SONGS,
   parseMemory,
   remember,
+  ringingTracks,
   type RememberedMix,
   type TrackMix,
 } from './mixer-memory.ts';
@@ -77,6 +78,12 @@ describe('mixer memory', () => {
     const first = [...memory.keys()][0] ?? '';
     memory = remember(memory, first, mix);
     expect([...memory.keys()].at(-1)).toBe(first);
+  });
+
+  it('names the tracks whose notes all ring on, for the score to say so (REND-188)', () => {
+    const quiet = { ...TRACK, letRing: false };
+    expect(ringingTracks([quiet, TRACK, quiet, TRACK])).toEqual([1, 3]);
+    expect(ringingTracks([quiet])).toEqual([]);
   });
 
   it('ducks every track but the focused one', () => {

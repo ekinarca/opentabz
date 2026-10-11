@@ -59,7 +59,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   the bundled one), remembered for the file. Menus show the keys of their actions, like tooltips.
 - **A playing style per track.** In the mixer, each track can let its notes ring, strum its
   chords, damp palm mutes lightly or heavily, and stress the strong beats, as Guitar Pro's track
-  interpretation does; changes apply while playing and are remembered for the file.
+  interpretation does; changes apply while playing and are remembered for the file. A track whose
+  notes all ring on says "let ring throughout" over its first bar, on screen and on paper.
 - **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
   breaks up), with the output's delay and any audio it had to skip shown live; the left-handed
   fretboard; single-key shortcuts.
@@ -225,9 +226,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   (0019), Guitar Pro 7+ documents read as they close (0020), "let ring" written as Guitar Pro
   writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
   first voice (0023), 256th flags on down stems (0024), tempo marks that keep their beat unit
-  (0025), staccatissimo (0026), lyrics kept as written (0027) and the percussion mapper exported
-  (0028). See
-  [docs/upstream/](docs/upstream/).
+  (0025), staccatissimo (0026), lyrics kept as written (0027), the percussion mapper exported
+  (0028) and "let ring throughout" (0029). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
