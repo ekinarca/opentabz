@@ -15,11 +15,24 @@ createRoot(root).render(
   </StrictMode>,
 );
 
-// Warm up right after the first paint, so a file dropped a moment later renders immediately:
-// start the engine worker (JIT warm-up runs inside it) and fetch the music font.
-requestAnimationFrame(() => {
+/**
+ * Warm up as soon as the page has painted, so a file dropped a moment later renders at once: start
+ * the engine worker (its JIT warm-up runs inside it) and fetch the music font. Waiting for the
+ * first contentful paint keeps both off the critical path of the first frame on slow phones.
+ */
+function warmUp(): void {
   setTimeout(() => {
     void getEngine().ready.catch(() => undefined);
     void loadMusicFont();
   }, 0);
-});
+}
+
+if (PerformanceObserver.supportedEntryTypes.includes('paint')) {
+  new PerformanceObserver((list, observer) => {
+    if (list.getEntriesByName('first-contentful-paint').length === 0) return;
+    observer.disconnect();
+    warmUp();
+  }).observe({ type: 'paint', buffered: true });
+} else {
+  requestAnimationFrame(warmUp);
+}

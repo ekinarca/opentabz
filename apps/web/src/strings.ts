@@ -193,7 +193,7 @@ function articleFor(noun: string): string {
 export const strings = {
   appName: 'OpenTabz',
   documentTitle: (title: string | null) =>
-    title === null ? 'OpenTabz — open any tab, instantly' : `${title} · OpenTabz`,
+    title === null ? 'OpenTabz — guitar tabs, beautifully engraved' : `${title} · OpenTabz`,
 
   home: {
     eyebrow: 'Free and open source',

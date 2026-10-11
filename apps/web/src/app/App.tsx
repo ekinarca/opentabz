@@ -29,6 +29,11 @@ export function App() {
     onEngineRestart(() => void useDocuments.getState().reopenAll());
   }, []);
 
+  // The app is on screen and interactive: the "warm start" budget ends here.
+  useEffect(() => {
+    performance.mark('ot:app-ready');
+  }, []);
+
   useEffect(() => {
     const title =
       active === null
@@ -59,7 +64,8 @@ export function App() {
           )}
           {docs.length > 0 && <Workspace />}
         </div>
-        <DropOverlay visible={dragging} />
+        {/* The landing page answers a drag itself; the overlay is for open documents. */}
+        <DropOverlay visible={dragging && active !== null} />
         <OpenErrorsDialog />
         <UrlDialog open={urlOpen} onOpenChange={setUrlOpen} />
         <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
