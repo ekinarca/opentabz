@@ -128,6 +128,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   song plays. Clicking a syllable sings from there, and the lyrics can fill the window in large
   type with the score hidden. Line breaks and bracketed comments typed in Guitar Pro or
   alphaTex lyrics are kept (alphaTab patch 0027).
+- **Zoom from 10 % to 800 %.** The zoom level opens a panel with a slider, presets, and the
+  page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
+  the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
+  zooms the music rather than the page.
 - **Song overview.** The grid button or F8 (Guitar Pro's global view) shows every track as a row
   of squares, a square per bar filled in the track's colour where it plays, under the sections
   and bar numbers, with each track's mute and solo. A click goes to the bar and makes the track

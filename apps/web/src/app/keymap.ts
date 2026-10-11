@@ -13,7 +13,7 @@ import {
   stepBeat,
   type Occurrence,
 } from '../score-view/timeline-lookup.ts';
-import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
+import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { usePractice } from '../state/practice.ts';
 import { usePreferences } from '../state/preferences.ts';
@@ -269,12 +269,14 @@ function stepTrack(step: number): boolean {
   return true;
 }
 
-const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+const ZOOM_STEPS = [
+  0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 8,
+];
 
 /** The next zoom preset above or below `zoom`. */
 export function zoomStep(zoom: number, direction: 1 | -1): number {
-  if (direction > 0) return ZOOM_STEPS.find(step => step > zoom + 0.001) ?? 4;
-  return [...ZOOM_STEPS].reverse().find(step => step < zoom - 0.001) ?? 0.25;
+  if (direction > 0) return ZOOM_STEPS.find(step => step > zoom + 0.001) ?? MAX_ZOOM;
+  return [...ZOOM_STEPS].reverse().find(step => step < zoom - 0.001) ?? MIN_ZOOM;
 }
 
 const s = strings.shortcuts.actions;

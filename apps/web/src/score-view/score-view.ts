@@ -26,9 +26,6 @@ import {
   type SheetLayout,
 } from './pagination.ts';
 
-export const MIN_ZOOM = 0.25;
-export const MAX_ZOOM = 4;
-
 export interface ScoreViewState {
   readonly docId: string;
   readonly layout: LayoutKind;
@@ -79,6 +76,11 @@ export interface ScoreViewEvents {
   readonly onGesture?: (gesture: ScoreGesture) => void;
   readonly onFirstPaint?: () => void;
   readonly onError?: (error: unknown) => void;
+  /**
+   * A zoom gesture (⌘/Ctrl with the wheel, a trackpad pinch, two fingers on a touch screen): zoom
+   * by `factor` around a point of the viewport.
+   */
+  readonly onZoom?: (factor: number, clientX: number, clientY: number) => void;
 }
 
 /** Labels for page furniture; injected so all strings live in strings.ts. */
@@ -98,6 +100,8 @@ const LONG_PRESS_MS = 450;
 /** Taps closer than this in time and space count as a double or triple tap. */
 const MULTI_TAP_MS = 450;
 const MULTI_TAP_SLOP = 12;
+/** How fast ⌘/Ctrl with the wheel zooms: e^(−rate·pixels), about 20 % a notch of a mouse wheel. */
+const WHEEL_ZOOM_RATE = 0.002;
 
 interface PointerGesture {
   readonly pointerId: number;
@@ -139,6 +143,13 @@ export class ScoreView {
   private dragFrame = 0;
   private suppressContextMenuUntil = 0;
   private lastTap: { time: number; x: number; y: number; count: number } | null = null;
+  /** Fingers on the score, for a two-finger pinch, and how far apart they were last. */
+  private readonly touches = new Map<number, { x: number; y: number }>();
+  private pinchDistance: number | null = null;
+  /** The scale of Safari's trackpad pinch so far, while one goes on. */
+  private safariScale: number | null = null;
+  /** The point (client coordinates) the next zoom keeps still; the viewport's middle otherwise. */
+  private zoomAnchor: { x: number; y: number } | null = null;
   private readonly edgeScroller: EdgeScroller;
   private externalScroll: (() => void) | null = null;
   private readonly elements = new Map<string, HTMLDivElement>();
@@ -182,6 +193,10 @@ export class ScoreView {
     this.scroller.addEventListener('pointerup', this.onPointerUp);
     this.scroller.addEventListener('pointercancel', this.onPointerCancel);
     this.scroller.addEventListener('contextmenu', this.onContextMenu);
+    this.scroller.addEventListener('wheel', this.onWheel, { passive: false });
+    for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+      this.scroller.addEventListener(type, this.onSafariGesture);
+    }
     this.edgeScroller = new EdgeScroller(this.scroller, () => {
       this.emitDragMove();
     });
@@ -213,6 +228,7 @@ export class ScoreView {
     if (previous !== null && previous.docId !== state.docId) this.reset();
 
     if (previous?.zoom !== state.zoom) this.applyZoom(previous?.zoom ?? state.zoom, state.zoom);
+    this.zoomAnchor = null;
     if (previous !== null && previous.title !== state.title && this.sheetLayout !== null)
       this.renderPages(this.sheetLayout);
 
@@ -239,6 +255,10 @@ export class ScoreView {
     this.scroller.removeEventListener('pointerup', this.onPointerUp);
     this.scroller.removeEventListener('pointercancel', this.onPointerCancel);
     this.scroller.removeEventListener('contextmenu', this.onContextMenu);
+    this.scroller.removeEventListener('wheel', this.onWheel);
+    for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+      this.scroller.removeEventListener(type, this.onSafariGesture);
+    }
     this.sheet.remove();
     void this.engine.call('closeView', { viewId: this.viewId }).catch(() => undefined);
   }
@@ -283,6 +303,11 @@ export class ScoreView {
     return nearest ? sheetToEngineNearest(layout, x, y) : sheetToEngine(layout, x, y);
   }
 
+  /** Keeps a point of the viewport (client coordinates) still through the next zoom. */
+  public zoomAround(clientX: number, clientY: number): void {
+    this.zoomAnchor = { x: clientX, y: clientY };
+  }
+
   /**
    * Scrolls while a drag elsewhere (a selection handle) holds the pointer near an edge; `onScroll`
    * runs after each step. Pass null when the drag ends.
@@ -293,7 +318,58 @@ export class ScoreView {
     else this.edgeScroller.update(clientX, clientY);
   }
 
+  private readonly onWheel = (event: WheelEvent): void => {
+    // Browsers send a trackpad pinch as the wheel with Ctrl; Safari sends its own gesture too.
+    if ((!event.ctrlKey && !event.metaKey) || this.safariScale !== null) return;
+    event.preventDefault();
+    const unit =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? 400
+          : 1;
+    this.events.onZoom?.(Math.exp(-event.deltaY * unit * WHEEL_ZOOM_RATE), event.clientX, event.clientY);
+  };
+
+  /** Safari's pinch (`gesturestart`, `gesturechange`, `gestureend`, not in the DOM typings). */
+  private readonly onSafariGesture = (event: Event): void => {
+    if (!('scale' in event) || typeof event.scale !== 'number') return;
+    // The page itself never zooms over the score.
+    event.preventDefault();
+    // On a touch screen the fingers are followed instead.
+    if (this.touches.size > 0) return;
+    if (event.type === 'gestureend') {
+      this.safariScale = null;
+      return;
+    }
+    const previous = this.safariScale ?? 1;
+    this.safariScale = event.scale;
+    if (event.type === 'gesturestart' || previous <= 0) return;
+    const box = this.scroller.getBoundingClientRect();
+    const x =
+      'clientX' in event && typeof event.clientX === 'number' ? event.clientX : box.left + box.width / 2;
+    const y =
+      'clientY' in event && typeof event.clientY === 'number' ? event.clientY : box.top + box.height / 2;
+    this.events.onZoom?.(event.scale / previous, x, y);
+  };
+
+  /** How far apart the first two fingers on the score are, and the point between them. */
+  private pinch(): { distance: number; x: number; y: number } | null {
+    const [a, b] = [...this.touches.values()];
+    if (a === undefined || b === undefined) return null;
+    return { distance: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
   private readonly onPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch') {
+      this.touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (this.touches.size === 2) {
+        // A second finger: the score is pinched, not tapped or scrolled.
+        this.endGesture();
+        this.pinchDistance = this.pinch()?.distance ?? null;
+        return;
+      }
+    }
     if (!event.isPrimary || event.button !== 0) return;
     // Scrollbars and the margin around the pages are not music.
     if (!(event.target instanceof Node) || !this.sheet.contains(event.target)) return;
@@ -324,6 +400,19 @@ export class ScoreView {
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
+    const touch = this.touches.get(event.pointerId);
+    if (touch !== undefined) {
+      touch.x = event.clientX;
+      touch.y = event.clientY;
+      const pinch = this.pinchDistance === null ? null : this.pinch();
+      if (pinch !== null && this.pinchDistance !== null) {
+        if (this.pinchDistance > 0 && pinch.distance > 0) {
+          this.events.onZoom?.(pinch.distance / this.pinchDistance, pinch.x, pinch.y);
+        }
+        this.pinchDistance = pinch.distance;
+        return;
+      }
+    }
     const gesture = this.gesture;
     if (gesture?.pointerId !== event.pointerId) return;
     gesture.clientX = event.clientX;
@@ -352,6 +441,7 @@ export class ScoreView {
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
+    this.releaseTouch(event.pointerId);
     const gesture = this.gesture;
     if (gesture?.pointerId !== event.pointerId) return;
     gesture.clientX = event.clientX;
@@ -374,8 +464,14 @@ export class ScoreView {
   };
 
   private readonly onPointerCancel = (event: PointerEvent): void => {
+    this.releaseTouch(event.pointerId);
     if (this.gesture?.pointerId === event.pointerId) this.endGesture();
   };
+
+  private releaseTouch(pointerId: number): void {
+    this.touches.delete(pointerId);
+    if (this.touches.size < 2) this.pinchDistance = null;
+  }
 
   private countTap(clientX: number, clientY: number): number {
     const now = performance.now();
@@ -629,13 +725,18 @@ export class ScoreView {
   }
 
   private applyZoom(previous: number, zoom: number): void {
-    const center = (this.scroller.scrollTop + this.scroller.clientHeight / 2) / previous;
-    const middle = (this.scroller.scrollLeft + this.scroller.clientWidth / 2) / previous;
+    // The point under the pointer of a zoom gesture stays put; otherwise the viewport's middle.
+    const anchor = this.zoomAnchor;
+    const box = anchor === null ? null : this.scroller.getBoundingClientRect();
+    const x = anchor === null || box === null ? this.scroller.clientWidth / 2 : anchor.x - box.left;
+    const y = anchor === null || box === null ? this.scroller.clientHeight / 2 : anchor.y - box.top;
+    const left = (this.scroller.scrollLeft + x) / previous;
+    const top = (this.scroller.scrollTop + y) / previous;
     this.sheet.style.setProperty('zoom', String(zoom));
     // Overlays that must keep a constant on-screen size (touch targets) divide by this.
     this.sheet.style.setProperty('--ot-zoom', String(zoom));
-    this.scroller.scrollTop = center * zoom - this.scroller.clientHeight / 2;
-    this.scroller.scrollLeft = middle * zoom - this.scroller.clientWidth / 2;
+    this.scroller.scrollTop = top * zoom - y;
+    this.scroller.scrollLeft = left * zoom - x;
   }
 
   /** The bar at the top of the viewport, so a re-layout can keep the reader's place. */

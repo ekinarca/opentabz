@@ -5,6 +5,7 @@
 import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
 import type { PngResolution } from './export/page-files.ts';
 import type { PaperId } from './score-view/pagination.ts';
+import type { ZoomFit } from './state/documents.ts';
 import type { ThemePreference } from './state/preferences.ts';
 
 const SUPPORTED_SUMMARY =
@@ -371,6 +372,14 @@ export const strings = {
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
     fullScreen: 'Full screen',
+  },
+
+  zoom: {
+    slider: 'Zoom',
+    presets: 'Zoom presets',
+    fit: 'Fit to the window',
+    fits: { width: 'Page width', page: 'Whole page' } satisfies Record<ZoomFit, string>,
+    hint: (mod: string) => `${mod} with the wheel, or pinch, zooms the score too.`,
   },
 
   fullScreen: {

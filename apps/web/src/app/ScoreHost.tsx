@@ -7,7 +7,7 @@ import { PlaybackCursor, type CursorOptions } from '../score-view/playback-curso
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
 import { usePlayer } from '../state/player.ts';
-import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
+import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePreferences, type Preferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 
@@ -71,12 +71,27 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
           return;
       }
     };
+    // A zoom gesture's zoom, unrounded, so that slow pinches add up; forgotten once it ends.
+    let gestureZoom: number | null = null;
+    let gestureEnd: ReturnType<typeof setTimeout> | null = null;
+    const onZoom = (factor: number, clientX: number, clientY: number) => {
+      const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
+      if (doc === undefined || !Number.isFinite(factor)) return;
+      gestureZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, (gestureZoom ?? doc.view.zoom) * factor));
+      if (gestureEnd !== null) clearTimeout(gestureEnd);
+      gestureEnd = setTimeout(() => {
+        gestureZoom = null;
+      }, 300);
+      viewRef.current?.zoomAround(clientX, clientY);
+      useDocuments.getState().updateView(key, { zoom: clampZoom(gestureZoom) });
+    };
     const view = new ScoreView(
       scroller,
       getEngine(),
       key,
       { pageNumber: strings.score.pageNumber },
       {
+        onZoom,
         onFirstPaint: () => {
           markPainted(key);
           if (measured) return;
@@ -141,6 +156,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     });
     sync(usePlayer.getState());
     return () => {
+      if (gestureEnd !== null) clearTimeout(gestureEnd);
       unsubscribe();
       unsubscribePreferences();
       selectionOverlay.dispose();
@@ -151,6 +167,31 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       cursorRef.current = null;
     };
   }, [key]);
+
+  // Fitting the page's width or a whole page follows the window (REND-216, REND-217).
+  const fit = doc.view.layout === 'page' ? doc.view.fit : null;
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (scroller === null || fit === null || hidden) return undefined;
+    const geometry = pageGeometry(doc.view.paper);
+    const apply = () => {
+      if (scroller.clientWidth <= 0 || scroller.clientHeight <= 0) return;
+      const width = scroller.clientWidth / (geometry.paper.width + 2 * geometry.outer);
+      const height = scroller.clientHeight / (geometry.paper.height + 2 * geometry.outer);
+      // Round down so the fitted page never overflows by a fraction of a pixel.
+      const zoom = clampZoom(Math.floor((fit === 'page' ? Math.min(width, height) : width) * 100) / 100);
+      const current = useDocuments.getState().docs.find(candidate => candidate.key === key);
+      if (current !== undefined && current.view.zoom !== zoom) {
+        useDocuments.getState().updateView(key, { zoom, fit });
+      }
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(scroller);
+    return () => {
+      observer.disconnect();
+    };
+  }, [key, fit, doc.view.paper, hidden]);
 
   // Fit the page to narrow windows once, when the document first appears.
   useEffect(() => {

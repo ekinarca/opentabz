@@ -22,14 +22,12 @@ import {
   Info,
   Maximize,
   MicVocal,
-  Minus,
   Piano,
-  Plus,
   Rows3,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PAPER_IDS, type PaperId } from '../score-view/pagination.ts';
-import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
+import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
@@ -44,16 +42,15 @@ import { ChordIcon } from './icons.tsx';
 import { KeyboardPanel } from './KeyboardPanel.tsx';
 import { LyricsPanel } from './LyricsPanel.tsx';
 import { OverviewPanel } from './OverviewPanel.tsx';
-import { shortcutHint, zoomStep } from './keymap.ts';
+import { shortcutHint } from './keymap.ts';
 import { PlaybackViewControl } from './PlaybackViewControl.tsx';
-import { modKey } from './platform.ts';
 import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
 import { SongMap } from './SongMap.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
 import { Transport } from './Transport.tsx';
+import { ZoomControls } from './ZoomControls.tsx';
 
-const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 const STAFF_DISPLAYS: readonly StaffDisplay[] = ['default', 'score-tab', 'score', 'tab'];
 
 function ToolbarMenuButton({ label, value }: { readonly label: string; readonly value: string }) {
@@ -218,49 +215,7 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        <IconButton
-          label={strings.toolbar.zoomOut}
-          shortcut={`${modKey()}+−`}
-          icon={<Minus size={16} aria-hidden />}
-          onClick={() => {
-            update({ zoom: zoomStep(view.zoom, -1) });
-          }}
-          disabled={view.zoom <= 0.25}
-        />
-        <Menu>
-          <MenuTrigger asChild>
-            <button
-              type="button"
-              aria-label={strings.toolbar.zoomMenu}
-              className="h-9 min-w-[64px] rounded-[var(--radius-control)] px-2 font-mono text-[13px] text-ink tabular-nums hover:bg-sunken"
-            >
-              {strings.toolbar.zoomLevel(view.zoom)}
-            </button>
-          </MenuTrigger>
-          <MenuContent align="center">
-            <MenuRadioGroup<string>
-              value={String(view.zoom)}
-              onValueChange={value => {
-                update({ zoom: clampZoom(Number(value)) });
-              }}
-            >
-              {ZOOM_PRESETS.map(preset => (
-                <MenuRadioItem key={preset} value={String(preset)}>
-                  {strings.toolbar.zoomLevel(preset)}
-                </MenuRadioItem>
-              ))}
-            </MenuRadioGroup>
-          </MenuContent>
-        </Menu>
-        <IconButton
-          label={strings.toolbar.zoomIn}
-          shortcut={`${modKey()}+=`}
-          icon={<Plus size={16} aria-hidden />}
-          onClick={() => {
-            update({ zoom: zoomStep(view.zoom, 1) });
-          }}
-          disabled={view.zoom >= 4}
-        />
+        <ZoomControls doc={doc} />
         <div className="mx-1 h-6 w-px bg-line" aria-hidden />
         <IconButton
           label={strings.fretboard.open}

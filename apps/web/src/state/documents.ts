@@ -24,7 +24,12 @@ export interface DocViewState {
   readonly zoom: number;
   /** True until the view has fitted the zoom to the window once. */
   readonly autoFit: boolean;
+  /** The zoom follows the window to show the page's width or a whole page (REND-216, REND-217). */
+  readonly fit: ZoomFit | null;
 }
+
+export const ZOOM_FITS = ['width', 'page'] as const;
+export type ZoomFit = (typeof ZOOM_FITS)[number];
 
 export interface OpenDocument {
   /** Stable key for the UI; also the engine view id. */
@@ -139,11 +144,12 @@ function nextId(prefix: string): string {
   return `${prefix}-${counter.toString(36)}-${Date.now().toString(36)}`;
 }
 
-export const MIN_ZOOM = 0.25;
-export const MAX_ZOOM = 4;
+export const MIN_ZOOM = 0.1;
+export const MAX_ZOOM = 8;
 
+/** A zoom within the limits, to a tenth of a percent: fine enough for the smallest steps. */
 export function clampZoom(zoom: number): number {
-  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom * 100) / 100));
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom * 1000) / 1000));
 }
 
 /** Below this width a printed page cannot be read; scores reflow to the screen instead. */
@@ -160,6 +166,7 @@ function initialView(summary: DocSummary): DocViewState {
     staffDisplay: preferences.staffDisplay,
     zoom: 1,
     autoFit: true,
+    fit: null,
   };
 }
 
@@ -275,7 +282,9 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           shown === undefined || shown.includes(doc.activeTrack)
             ? doc.activeTrack
             : (shown[0] ?? doc.activeTrack);
-        return { ...doc, activeTrack, view: { ...doc.view, ...patch } };
+        // A zoom chosen by hand ends fitting the page to the window.
+        const fit = patch.fit !== undefined ? patch.fit : patch.zoom !== undefined ? null : doc.view.fit;
+        return { ...doc, activeTrack, view: { ...doc.view, ...patch, fit } };
       }),
     }));
   },

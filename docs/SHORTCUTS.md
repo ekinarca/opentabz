@@ -93,16 +93,19 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Pointer and touch gestures
 
-| Gesture                                   | Action                                                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Click or tap a note                       | Move playback to that beat. A beat outside the selection clears it.                                                             |
-| Drag across the music (mouse or trackpad) | Select from the beat where the drag starts to the beat under the pointer. Hold the pointer near the edge of the view to scroll. |
-| Shift-click                               | Extend the selection to the clicked beat. With no selection, select from the start of the playing bar.                          |
-| Double-click or double-tap                | Select that bar.                                                                                                                |
-| Triple-click or triple-tap                | Select everything.                                                                                                              |
-| Long-press a bar (finger or pen)          | Select that bar.                                                                                                                |
-| Drag a selection handle                   | Move the start or the end of the selection, with a mouse, a finger or a pen. The view scrolls near its edges.                   |
-| Drop files anywhere                       | Open them. A dropped folder is explained instead.                                                                               |
+| Gesture                                                      | Action                                                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Click or tap a note                                          | Move playback to that beat. A beat outside the selection clears it.                                                             |
+| Drag across the music (mouse or trackpad)                    | Select from the beat where the drag starts to the beat under the pointer. Hold the pointer near the edge of the view to scroll. |
+| Shift-click                                                  | Extend the selection to the clicked beat. With no selection, select from the start of the playing bar.                          |
+| Double-click or double-tap                                   | Select that bar.                                                                                                                |
+| Triple-click or triple-tap                                   | Select everything.                                                                                                              |
+| Long-press a bar (finger or pen)                             | Select that bar.                                                                                                                |
+| Drag a selection handle                                      | Move the start or the end of the selection, with a mouse, a finger or a pen. The view scrolls near its edges.                   |
+| ⌘/Ctrl with the wheel over the score                         | Zoom in or out around the pointer, from 10 % to 800 %.                                                                          |
+| Pinch the score (trackpad, or two fingers on a touch screen) | Zoom around the fingers; the page around the score keeps its size.                                                              |
+| Click a square of the song overview                          | Go to that bar and make its track the active one. Drag across squares (mouse or pen) to select bars.                            |
+| Drop files anywhere                                          | Open them. A dropped folder is explained instead.                                                                               |
 
 ## What the selection does
 

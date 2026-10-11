@@ -217,9 +217,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-212 | Page layout with pages side by side, scrolling horizontally                       | GP  | M2  | —                                                           | —    | planned |
 | REND-213 | Page grid: as many pages per row as the window fits                               | GP  | M2  | —                                                           | —    | planned |
 | REND-214 | Continuous page-width layout without page breaks                                  | GP  | M2  | —                                                           | —    | planned |
-| REND-215 | Zoom range 10–800 % (presets, slider, keyboard, Ctrl/Cmd+wheel, pinch)            | GP  | M2  | —                                                           | —    | planned |
-| REND-216 | Zoom to fit the page width                                                        | GP  | M2  | —                                                           | —    | planned |
-| REND-217 | Zoom to fit a whole page                                                          | GP  | M2  | —                                                           | —    | planned |
+| REND-215 | Zoom range 10–800 % (presets, slider, keyboard, Ctrl/Cmd+wheel, pinch)            | GP  | M2  | —                                                           | apps/web/e2e/zoom.spec.ts, apps/web/e2e/app.spec.ts | done |
+| REND-216 | Zoom to fit the page width                                                        | GP  | M2  | —                                                           | apps/web/e2e/zoom.spec.ts | done |
+| REND-217 | Zoom to fit a whole page                                                          | GP  | M2  | —                                                           | apps/web/e2e/zoom.spec.ts | done |
 | REND-218 | Stylesheet panel: per-document engraving options (page, systems, header/footer, text, notation), saved with the document | GP  | M2  | —                                                           | —    | planned |
 | REND-219 | Stylesheet settings stored in Guitar Pro files are honoured                       | GP  | M2  | —                                                           | —    | planned |
 | REND-220 | Stylesheet presets: bundled looks, user stylesheets, one chosen as the default for new documents | GP  | M2  | —                                                           | —    | planned |

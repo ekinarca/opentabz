@@ -19,7 +19,7 @@ test.describe('the app', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('zoom steps and stays between 25 % and 400 %', async ({ page, isMobile }) => {
+  test('zoom steps and stays between 10 % and 800 %', async ({ page, isMobile }) => {
     await openHome(page);
     await page.getByRole('button', { name: 'a blues shuffle' }).click();
     await expectScore(page);
@@ -31,12 +31,12 @@ test.describe('the app', () => {
     await zoomIn.click();
     await expect(level).toHaveText('110 %');
     for (let step = 0; step < 30 && (await zoomIn.isEnabled()); step++) await zoomIn.click();
-    await expect(level).toHaveText('400 %');
+    await expect(level).toHaveText('800 %');
     await expect(zoomIn).toBeDisabled();
     for (let step = 0; step < 30 && (await zoomOut.isEnabled()); step++) await zoomOut.click();
-    await expect(level).toHaveText('25 %');
+    await expect(level).toHaveText('10 %');
     await expect(zoomOut).toBeDisabled();
-    await expect(page.locator('.ot-sheet')).toHaveCSS('zoom', '0.25');
+    await expect(page.locator('.ot-sheet')).toHaveCSS('zoom', '0.1');
   });
 
   test('pages have numbers, and the title runs at the top of the following pages', async ({ page }) => {
