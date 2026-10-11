@@ -402,6 +402,7 @@ export const strings = {
       string
     >,
     counts: 'Beat counts',
+    drumKey: 'Drum key',
   },
 
   noteColors: {

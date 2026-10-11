@@ -133,9 +133,11 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
-- **Note names and beat counts.** The Staves menu writes the letter names of the notes above
-  them (A·E for a power chord, flats in flat keys, with octaves if asked) and the beat counts
-  under them (1 e & a, trip let), in the score, exports and print; remembered.
+- **Note names, beat counts and a drum key.** The Staves menu writes the letter names of the
+  notes above them (A·E for a power chord, flats in flat keys, with octaves if asked) and the
+  beat counts under them (1 e & a, trip let), and puts a key to the drums under the title block:
+  every sound a drum track plays on its line or space, in its notehead, named as Guitar Pro names
+  it. In the score, exports and print; remembered.
 - **Note colours.** The brush button colours notes, in the notation and the tablature, by the
   string they are played on, their interval above the key's tonic, their degree in the key, or
   their part in the chord over them (root, third, fifth, seventh); in standard colours, colour-blind

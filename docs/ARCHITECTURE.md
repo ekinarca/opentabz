@@ -129,10 +129,10 @@ Each visible view owns one alphaTab `ScoreRenderer` (SVG engine, lazy partials).
 synchronous inside the worker and emits one partial per staff system plus the header blocks;
 painting happens only when the main thread asks for a partial that is (nearly) visible.
 Width changes use alphaTab's resize path, which re-fits systems without rebuilding bar renderers.
-The session adds one partial of its own when the stylesheet shows the score's instructions and
-notice (REND-041): painted with alphaTab's SVG canvas, placed after the title block, with every
-later partial and the bounds of the systems and bars below it moved down by its height, so the
-paged view, the cursor and the exports need no special case.
+The session adds partials of its own for the score's instructions and notice (REND-041) and the
+drum key (REND-318): painted with alphaTab's SVG canvas, placed after the title block, with every
+later partial and the bounds of the systems and bars below them moved down by their height, so
+the paged view, the cursor and the exports need no special case.
 From M4, edits mutate the worker's `Score` and re-render with
 `renderHints.firstChangedMasterBar`, so only systems from the edit onward are laid out again.
 

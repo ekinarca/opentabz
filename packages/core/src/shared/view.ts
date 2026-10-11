@@ -71,6 +71,8 @@ export interface ViewOptions {
   readonly readingAids?: ReadingAids;
   /** Tracks whose notes all ring on (their playing style), marked "let ring throughout" (REND-188). */
   readonly letRing?: readonly number[];
+  /** A key to the drums of the drum tracks shown, under the title block (REND-318). */
+  readonly drumKey?: boolean;
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

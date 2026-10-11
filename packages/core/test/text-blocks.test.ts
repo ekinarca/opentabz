@@ -55,7 +55,7 @@ function render(style: ScoreStyle, options: Partial<ViewOptions> = {}, of = scor
       const partial = layout.partials.find(candidate => candidate.id === paint.id);
       return partial === undefined ? [] : readMarks(paint.svg, partial.x, partial.y, partial.kind);
     });
-    const block = layout.partials.find(partial => partial.id.startsWith('ot-text-blocks-'));
+    const block = layout.partials.find(partial => partial.id.startsWith('ot-block-'));
     const svg = painted.find(paint => paint.id === block?.id)?.svg ?? '';
     return { layout, marks, block, svg };
   } finally {

@@ -52,6 +52,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       ...(coloring === undefined ? {} : { noteColors: coloring }),
       ...(aids === undefined ? {} : { readingAids: aids }),
       ...(letRing.length === 0 ? {} : { letRing }),
+      ...(usePreferences.getState().drumKey ? { drumKey: true } : {}),
       width: contentWidth(geometry),
       notationScale: 1,
       // The pages' header and footer are drawn on the sheets, not by the engine.

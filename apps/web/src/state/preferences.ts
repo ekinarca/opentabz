@@ -77,6 +77,8 @@ export interface Preferences {
   /** Note names above the notes, and beat counts under them (VIEW-009, REND-317). */
   readonly noteNames: NoteNames;
   readonly beatCounts: boolean;
+  /** A key to the drums under the title block (REND-318). */
+  readonly drumKey: boolean;
   /** A tint on the bar being played. */
   readonly barHighlight: boolean;
   /** The notes being played drawn in the cursor colour. */
@@ -135,6 +137,7 @@ export function defaultPreferences(locale: string): Preferences {
     stringColors: STRING_COLORS.standard,
     noteNames: 'off',
     beatCounts: false,
+    drumKey: false,
     barHighlight: true,
     noteHighlight: true,
     fretboard: false,
@@ -241,6 +244,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
           : fallback.stringColors,
       noteNames: oneOf(value.noteNames, NOTE_NAMES, fallback.noteNames),
       beatCounts: typeof value.beatCounts === 'boolean' ? value.beatCounts : fallback.beatCounts,
+      drumKey: typeof value.drumKey === 'boolean' ? value.drumKey : fallback.drumKey,
       barHighlight: typeof value.barHighlight === 'boolean' ? value.barHighlight : fallback.barHighlight,
       noteHighlight: typeof value.noteHighlight === 'boolean' ? value.noteHighlight : fallback.noteHighlight,
       fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
@@ -310,6 +314,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       stringColors: state.stringColors,
       noteNames: state.noteNames,
       beatCounts: state.beatCounts,
+      drumKey: state.drumKey,
       barHighlight: state.barHighlight,
       noteHighlight: state.noteHighlight,
       fretboard: state.fretboard,

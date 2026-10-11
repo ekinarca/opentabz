@@ -108,6 +108,12 @@ describe('preferences', () => {
     });
   });
 
+  it('read back the drum key shown or not (REND-318), off at first', () => {
+    expect(FALLBACK.drumKey).toBe(false);
+    expect(parsePreferences(JSON.stringify({ drumKey: true }), FALLBACK).drumKey).toBe(true);
+    expect(parsePreferences(JSON.stringify({ drumKey: 'yes' }), FALLBACK).drumKey).toBe(false);
+  });
+
   it('read back the audio latency, keeping valid values only', () => {
     expect(parsePreferences(JSON.stringify({ audioLatency: 'playback' }), FALLBACK).audioLatency).toBe(
       'playback',

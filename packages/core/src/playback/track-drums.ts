@@ -14,7 +14,7 @@ const { PercussionMapper } = alphaTab.model;
  * (hit)" for "Bongo Low (hit)", some misspelt) and numbers others ("Snare (hit) 2"): the last
  * plain name is the one Guitar Pro shows in its kit.
  */
-function nameOf(articulation: alphaTab.model.InstrumentArticulation): string {
+export function articulationName(articulation: alphaTab.model.InstrumentArticulation): string {
   let plain: string | null = null;
   let numbered: string | null = null;
   for (const [name, key] of PercussionMapper.instrumentArticulationNames) {
@@ -26,7 +26,7 @@ function nameOf(articulation: alphaTab.model.InstrumentArticulation): string {
 }
 
 function soundOf(articulation: alphaTab.model.InstrumentArticulation): DrumSound {
-  const name = nameOf(articulation);
+  const name = articulationName(articulation);
   return {
     key: articulation.uniqueId,
     name,

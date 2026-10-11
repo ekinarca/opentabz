@@ -23,7 +23,8 @@ import { applyLetRingThroughout } from './let-ring.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyNoteColors } from './note-colors.ts';
 import { applyReadingAids } from './reading-aids.ts';
-import { layoutTextBlocks } from './text-blocks.ts';
+import { layoutDrumKey } from './drum-key.ts';
+import { layoutTextBlocks, type TextBlocksLayout } from './text-blocks.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
@@ -48,8 +49,8 @@ export class RenderSessionError extends Error {
   }
 }
 
-/** Ids of the text blocks' partials, unique across layouts and sessions. */
-let textBlockSerial = 0;
+/** Ids of the session's own partials, unique across layouts and sessions. */
+let blockSerial = 0;
 
 export class RenderSession {
   private readonly renderer: alphaTab.rendering.ScoreRenderer;
@@ -58,8 +59,11 @@ export class RenderSession {
   private generation = 0;
   private collected: alphaTab.rendering.RenderFinishedEventArgs[] = [];
   private painted: PaintedPartial[] = [];
-  /** The instructions and notice of the current layout, painted with it (REND-041). */
-  private textBlocks: PaintedPartial | null = null;
+  /**
+   * Partials of the session's own in the current layout, painted with it: the instructions and
+   * notice (REND-041) and the drum key (REND-318).
+   */
+  private blocks: PaintedPartial[] = [];
   private finished: alphaTab.rendering.RenderFinishedEventArgs | null = null;
   private failure: Error | null = null;
   private disposed = false;
@@ -119,7 +123,8 @@ export class RenderSession {
     this.failure = null;
     this.withStaffDisplay(() => {
       for (const id of ids) {
-        if (id === this.textBlocks?.id) this.painted.push(this.textBlocks);
+        const block = this.blocks.find(candidate => candidate.id === id);
+        if (block !== undefined) this.painted.push(block);
         else this.renderer.renderResult(id);
       }
     });
@@ -153,44 +158,62 @@ export class RenderSession {
     this.collected = [];
     const bounds = extractBounds(this.renderer.boundsLookup);
     const { style } = this.options;
-    const blocks =
-      style === undefined || this.options.layout === 'horizontal'
-        ? null
-        : layoutTextBlocks(this.score, style, this.renderer.settings, this.options.width);
-    this.textBlocks = null;
-    if (blocks === null)
+    const laidBlocks =
+      this.options.layout === 'horizontal'
+        ? []
+        : [
+            style === undefined
+              ? null
+              : layoutTextBlocks(this.score, style, this.renderer.settings, this.options.width),
+            this.options.drumKey === true
+              ? layoutDrumKey(
+                  tracksFor(this.score, this.options.trackIndexes),
+                  style ?? this.fileStyle,
+                  this.renderer.settings,
+                  this.options.width,
+                )
+              : null,
+          ].filter((block): block is TextBlocksLayout => block !== null);
+    this.blocks = [];
+    if (laidBlocks.length === 0)
       return { generation: this.generation, width, height, partials: laidOut, bounds, layoutMs };
 
-    // The blocks go under the title block, and what follows moves down to make room.
-    textBlockSerial += 1;
-    this.textBlocks = { id: `ot-text-blocks-${textBlockSerial}`, svg: blocks.svg };
+    // The blocks go under the title block, one after another, and what follows moves down.
+    const total = laidBlocks.reduce((sum, block) => sum + block.height, 0);
     const headers = laidOut.filter(partial => partial.kind === 'header');
     const top =
       headers.length > 0
         ? Math.max(...headers.map(partial => partial.y + partial.height))
         : (laidOut.find(partial => partial.kind === 'system')?.y ?? 0);
     const partials = laidOut.map(partial =>
-      partial.y >= top ? { ...partial, y: partial.y + blocks.height } : partial,
+      partial.y >= top ? { ...partial, y: partial.y + total } : partial,
     );
-    const block: PartialLayout = {
-      id: this.textBlocks.id,
-      kind: 'header',
-      x: 0,
-      y: top,
-      width: this.options.width,
-      height: blocks.height,
-      firstBar: -1,
-      lastBar: -1,
-    };
+    let y = top;
+    const placed = laidBlocks.map((block): PartialLayout => {
+      blockSerial += 1;
+      const id = `ot-block-${blockSerial}`;
+      this.blocks.push({ id, svg: block.svg });
+      const partial: PartialLayout = {
+        id,
+        kind: 'header',
+        x: 0,
+        y,
+        width: this.options.width,
+        height: block.height,
+        firstBar: -1,
+        lastBar: -1,
+      };
+      y += block.height;
+      return partial;
+    });
     // Right after the last header, or first of all.
-    const lastHeader = partials.findLastIndex(partial => partial.kind === 'header');
-    partials.splice(lastHeader + 1, 0, block);
+    partials.splice(partials.findLastIndex(partial => partial.kind === 'header') + 1, 0, ...placed);
     return {
       generation: this.generation,
       width,
-      height: height + blocks.height,
+      height: height + total,
       partials,
-      bounds: moveDown(bounds, top, blocks.height),
+      bounds: moveDown(bounds, top, total),
       layoutMs,
     };
   }
@@ -270,6 +293,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     sameColoring(a.noteColors, b.noteColors) &&
     sameReadingAids(a.readingAids, b.readingAids) &&
     sameIndexes(a.letRing, b.letRing) &&
+    a.drumKey === b.drumKey &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&

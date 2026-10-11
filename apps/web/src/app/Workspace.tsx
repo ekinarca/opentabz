@@ -108,6 +108,7 @@ function ViewToolbar({
   const overview = usePreferences(state => state.overview);
   const noteNames = usePreferences(state => state.noteNames);
   const beatCounts = usePreferences(state => state.beatCounts);
+  const drumKey = usePreferences(state => state.drumKey);
   const { view, summary } = doc;
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
@@ -219,6 +220,14 @@ function ViewToolbar({
             }}
           >
             {strings.readingAids.counts}
+          </MenuCheckboxItem>
+          <MenuCheckboxItem
+            checked={drumKey}
+            onCheckedChange={value => {
+              setPreferences({ drumKey: value });
+            }}
+          >
+            {strings.readingAids.drumKey}
           </MenuCheckboxItem>
         </MenuContent>
       </Menu>
