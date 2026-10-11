@@ -99,7 +99,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   fermatas, time and key signatures, tempo marks, triplet feel, free time, repeats, endings,
   segno and coda with every D.C. and D.S., sections and texts; and chord names and diagrams,
   lyrics on several lines, drum noteheads, clefs, multi-bar rests, simile marks, golpe, wah,
-  sustain pedal, barré, ornaments, slurs, bar numbers and beat timers.
+  sustain pedal, barré, ornaments, slurs, bar numbers and beat timers; and pickup bars, every
+  barline style, note values from quadruple whole to 256th, accidentals through bars and ties,
+  slash noteheads, forced stems, piano fingering, string numbers and extended dynamics.
 
 ### Changed
 
@@ -114,8 +116,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   (0015), jumps that follow Guitar Pro's rules (0016), channels of their own for slap, pop,
   golpe and unison bends (0017), a playing style per track (0018), sample-accurate events
   (0019), Guitar Pro 7+ documents read as they close (0020), "let ring" written as Guitar Pro
-  writes it (0021), octave lines below the staff (0022) and rests of lower voices placed below
-  the first voice (0023). See [docs/upstream/](docs/upstream/).
+  writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
+  first voice (0023) and 256th flags on down stems (0024). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
@@ -126,6 +128,7 @@ All notable changes to OpenTabz are recorded here. The format follows
 - 8vb and 15mb passages show their sign and line below the staff (they were not drawn at all).
 - In bars with two voices, a rest of the second voice moves below the first voice instead of
   above the staff, and no longer sits on a rest of the first voice of another length.
+- A 256th note with its stem down has a 256th flag, not a 128th's.
 - Beat timers are worked out when a score opens, as the player reaches each beat: alphaTex
   timers no longer all read 0:00, and Guitar Pro timers no longer change once playback is
   prepared (Guitar Pro's own stored times agree, to its rounding).

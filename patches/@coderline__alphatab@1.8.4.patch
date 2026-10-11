@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..d365af0d1aca28090747100525fbfb752a76f677 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..0728b8c3e075022e061fe1b801114b9a8fe2cf14 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -1742,7 +1742,17 @@ index b6203da6066c95efcf66298fe48a690f144597a5..d365af0d1aca28090747100525fbfb75
  					const newRestBottomY = newRestTopY + restSizes[0] + restSizes[1];
  					const staveSpace = linesToPixel * 2;
  					const distanceInLines = Math.ceil(Math.abs(newRestTopY - oldRestTopY) / staveSpace);
-@@ -65040,6 +65989,11 @@ class Environment {
+@@ -59670,7 +60619,8 @@ class FlagGlyph extends MusicFontGlyph {
+ 			case Duration.ThirtySecond: return MusicFontSymbol.Flag32ndDown;
+ 			case Duration.SixtyFourth: return MusicFontSymbol.Flag64thDown;
+ 			case Duration.OneHundredTwentyEighth: return MusicFontSymbol.Flag128thDown;
+-			case Duration.TwoHundredFiftySixth: return MusicFontSymbol.Flag128thDown;
++			// OpenTabz patch 0024: a 256th with its stem down has a 256th flag (it had a 128th's).
++			case Duration.TwoHundredFiftySixth: return MusicFontSymbol.Flag256thDown;
+ 			default: return MusicFontSymbol.Flag8thDown;
+ 		}
+ 	}
+@@ -65040,6 +65990,11 @@ class Environment {
  				effect: new GolpeEffectInfo(GolpeType.Finger),
  				mode: EffectBandMode.OwnedTop
  			},
@@ -1754,7 +1764,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..d365af0d1aca28090747100525fbfb75
  			{
  				effect: new GolpeEffectInfo(GolpeType.Thumb),
  				mode: EffectBandMode.OwnedBottom
-@@ -65583,7 +66537,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +66538,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,

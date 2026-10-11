@@ -32,6 +32,7 @@ available as source: the patch file is that source.
 | [0021](0021-let-ring-label.md)              | "let ring" as Guitar Pro writes it                                                 | Let-ring ranges were labelled "LetRing"                                    | not yet  |
 | [0022](0022-octaves-below.md)               | Octave lines below the staff (8vb, 15mb)                                           | 8vb and 15mb passages were drawn as written, without sign or line          | not yet  |
 | [0023](0023-rests-of-lower-voices.md)       | Rests of lower voices move below the first voice, on any overlap                   | Second-voice rests went above the staff, or over the first voice's rest    | not yet  |
+| [0024](0024-256th-flag-down.md)             | 256th notes with their stems down get their own flag                               | They were drawn with a 128th's flag                                        | not yet  |
 
 ## Working on a patch
 

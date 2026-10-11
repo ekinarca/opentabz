@@ -149,7 +149,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-155 | Tempo changes and tempo text                                                      | GP  | M2  | alphatab/guitarpro8/beat-tempo-change.gp                    | packages/core/test/render-notation.test.ts | done |
 | REND-156 | Tempo ramps (accelerando / ritardando)                                            | GP  | M2  | —                                                           | —    | planned |
 | REND-157 | Swing / triplet-feel indicators                                                   | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
-| REND-158 | Anacrusis (pickup bar)                                                            | GP  | M2  | alphatab/guitarpro7/anacrusis.gp                            | —    | planned |
+| REND-158 | Anacrusis (pickup bar)                                                            | GP  | M2  | alphatab/guitarpro7/anacrusis.gp                            | packages/core/test/render-details.test.ts | done |
 | REND-159 | Free time                                                                         | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
 | REND-160 | Repeats with play count                                                           | GP  | M2  | alphatab/guitarpro7/repeat-close-multi.gp                   | packages/core/test/render-notation.test.ts | done |
 | REND-161 | Alternate endings                                                                 | GP  | M2  | alphatab/guitarpro7/repeat-close-alternate-endings.gp       | packages/core/test/render-notation.test.ts | done |
@@ -158,7 +158,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-164 | Every D.C. variant (D.C., al Fine, al Coda, al Double Coda)                       | GP  | M2  | alphatab/guitarpro8/directions.gp                           | packages/core/test/render-notation.test.ts | done |
 | REND-165 | Every D.S. / D.S.S. variant (al Fine, al Coda, al Double Coda)                    | GP  | M2  | alphatab/guitarpro8/directions.gp                           | packages/core/test/render-notation.test.ts | done |
 | REND-166 | Markers / sections                                                                | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
-| REND-167 | Barline types (single, double, final, dashed, dotted, heavy, tick, short…)        | GP  | M2  | alphatab/guitarpro8/extended-barlines.gp                    | —    | planned |
+| REND-167 | Barline types (single, double, final, dashed, dotted, heavy, tick, short…)        | GP  | M2  | alphatab/guitarpro8/extended-barlines.gp                    | packages/core/test/render-details.test.ts | done |
 | REND-168 | Text annotations on beats                                                         | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |
 | REND-169 | Chord names above the staff                                                       | GP  | M2  | alphatab/guitarpro7/chords.gp                               | packages/core/test/render-symbols.test.ts | done |
 | REND-170 | Chord diagrams in the staff                                                       | GP  | M2  | alphatab/guitarpro8/show-diagrams-in-score.gp               | packages/core/test/render-symbols.test.ts | done |
@@ -191,23 +191,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-186 | Grand staff: two staves of one track joined by a brace                            | GP  | M2  | —                                                           | —    | planned |
 | REND-187 | Partial capo display                                                              | GP  | M2  | —                                                           | —    | planned |
 | REND-188 | "Let ring throughout" marking for tracks with automatic let ring                  | GP  | M2  | —                                                           | —    | planned |
-| REND-189 | Note values from quadruple whole down to 256th                                    | GP+ | M2  | —                                                           | —    | planned |
+| REND-189 | Note values from quadruple whole down to 256th                                    | GP+ | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-190 | Tablature for any pitched instrument (keyboards, voice, orchestral)               | GP  | M2  | —                                                           | —    | planned |
 | REND-191 | Drum tablature labelled with MIDI note numbers                                    | GP  | M2  | —                                                           | —    | planned |
-| REND-192 | Accidentals: sharp, flat, natural                                                 | GP  | M2  | —                                                           | —    | planned |
-| REND-193 | Double sharp and double flat                                                      | GP  | M2  | —                                                           | —    | planned |
+| REND-192 | Accidentals: sharp, flat, natural                                                 | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-193 | Double sharp and double flat                                                      | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-194 | Courtesy (bracketed) accidentals                                                  | GP  | M2  | —                                                           | —    | planned |
-| REND-195 | Automatic accidentals from the key and earlier notes in the bar, including across ties | GP  | M2  | —                                                           | —    | planned |
-| REND-196 | Slash noteheads inside standard and drum staves, keeping the underlying pitches   | GP  | M2  | —                                                           | —    | planned |
+| REND-195 | Automatic accidentals from the key and earlier notes in the bar, including across ties | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-196 | Slash noteheads inside standard and drum staves, keeping the underlying pitches   | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-197 | Forced grouping of consecutive identical tuplets                                  | GP  | M2  | —                                                           | —    | planned |
-| REND-198 | Stem directions forced in the file                                                | GP  | M2  | —                                                           | —    | planned |
+| REND-198 | Stem directions forced in the file                                                | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-199 | Forced and prevented system breaks from the file                                  | GP  | M2  | —                                                           | —    | planned |
 | REND-200 | Detached coda drawn apart from the main score, with a configurable gap            | GP  | M2  | —                                                           | —    | planned |
-| REND-201 | Release of a bend begun on an earlier note                                        | GP  | M2  | —                                                           | —    | planned |
-| REND-202 | Whammy-bar amounts in quarter tones                                               | GP  | M2  | —                                                           | —    | planned |
-| REND-203 | Piano fingering (1–5) with collision avoidance                                    | GP  | M2  | —                                                           | —    | planned |
-| REND-204 | Circled string numbers on the standard staff                                      | GP  | M2  | —                                                           | —    | planned |
-| REND-205 | Dead slap                                                                         | GP  | M2  | —                                                           | —    | planned |
+| REND-201 | Release of a bend begun on an earlier note                                        | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-202 | Whammy-bar amounts in quarter tones                                               | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-203 | Piano fingering (1–5) with collision avoidance                                    | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-204 | Circled string numbers on the standard staff                                      | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
+| REND-205 | Dead slap                                                                         | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-206 | Sound-change labels where sound automations fire (custom text)                    | GP  | M2  | —                                                           | —    | planned |
 | REND-207 | Bracketed comments in lyrics are hidden in the score                              | GP  | M2  | —                                                           | —    | planned |
 | REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | —                                                           | —    | planned |
@@ -256,7 +256,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-251 | Stylesheet: hammer-on/pull-off display (H/P letters, collision avoidance, outer-note slurs, one slur per group) | GP  | M2  | —                                                           | —    | planned |
 | REND-252 | Stylesheet: fingering display (left- and right-hand label sets, position on staff and tab, size) | GP  | M2  | —                                                           | —    | planned |
 | REND-311 | Multi-bar rests in multi-track views and per-part printing                        | OT  | M2  | —                                                           | —    | planned |
-| REND-312 | Extended dynamics: pppp–ffffff, sf, sfz, sffz, fp, rf, rfz, niente                | OT  | M2  | —                                                           | —    | planned |
+| REND-312 | Extended dynamics: pppp–ffffff, sf, sfz, sffz, fp, rf, rfz, niente                | OT  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-313 | Lyrics on any staff, any number of verses, per-verse styling                      | OT  | M5  | —                                                           | —    | planned |
 | REND-314 | Left-handed (mirrored) chord and scale diagrams                                   | OT  | M2  | —                                                           | —    | planned |
 | REND-315 | Inverted tablature string order (lowest string on top)                            | OT  | M2  | —                                                           | —    | planned |
