@@ -1,8 +1,47 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..fc9f111b082aac9758985d63068b6461c6c34741 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..f1026c7e5683d09ba373900ddca05ba2c8e3ffc3 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
-@@ -30449,8 +30449,10 @@ class FontSizes {
+@@ -16417,24 +16417,35 @@ var XmlNodeType = /* @__PURE__ */ function(XmlNodeType) {
+ /**
+ * @internal
+ */
++// OpenTabz patch 0003: child lists and attribute maps are allocated on first use. Large GPIF
++// documents have millions of nodes; most have no attributes and many have no children.
++const EMPTY_XML_NODES = Object.freeze([]);
+ class XmlNode {
+ 	nodeType = 0;
+ 	localName = null;
+ 	value = null;
+-	childNodes = [];
+-	attributes = /* @__PURE__ */ new Map();
++	childNodes = EMPTY_XML_NODES;
++	_attributes = null;
++	get attributes() {
++		return this._attributes ??= /* @__PURE__ */ new Map();
++	}
++	set attributes(value) {
++		this._attributes = value;
++	}
+ 	firstChild = null;
+ 	firstElement = null;
+ 	*childElements() {
+ 		for (const c of this.childNodes) if (c.nodeType === 1) yield c;
+ 	}
+ 	addChild(node) {
++		if (this.childNodes === EMPTY_XML_NODES) this.childNodes = [];
+ 		this.childNodes.push(node);
+ 		this.firstChild = node;
+ 		if (node.nodeType === 1 || node.nodeType === 3) this.firstElement = node;
+ 	}
+ 	getAttribute(name, defaultValue = "") {
+-		if (this.attributes.has(name)) return this.attributes.get(name);
++		const attributes = this._attributes;
++		if (attributes !== null && attributes.has(name)) return attributes.get(name);
+ 		return defaultValue;
+ 	}
+ 	getElementsByTagName(name, recursive = false) {
+@@ -30449,8 +30460,10 @@ class FontSizes {
  	*/
  	static generateFontLookup(family) {
  		if (FontSizes.fontSizeLookupTables.has(family)) return;
@@ -15,7 +54,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..fc9f111b082aac9758985d63068b6461
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -65583,7 +65585,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +65596,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,

@@ -20,7 +20,7 @@ import type { DocSummary } from '../shared/summary.ts';
 import type { ViewOptions } from '../shared/view.ts';
 import { ALPHATAB_VERSION } from './version.ts';
 import { WARMUP_SCORE } from './warmup.ts';
-import type * as alphaTab from '@coderline/alphatab';
+import * as alphaTab from '@coderline/alphatab';
 
 interface OpenDocument {
   readonly score: alphaTab.model.Score;
@@ -52,8 +52,10 @@ export class EngineHost implements EngineMethods {
 
   public init(_args: EngineArgs<'init'>): EngineInfo {
     const started = performance.now();
-    // Warm the JIT on a small score that touches the importer, layout and painter.
+    // Warm the JIT on a small score that touches the importers, layout and painter. The score is
+    // also round-tripped through a .gp file: Guitar Pro 7+ files use the zip and XML readers.
     const opened = openScore(new TextEncoder().encode(WARMUP_SCORE), 'warmup.atex');
+    openScore(new alphaTab.exporter.Gp7Exporter().export(opened.score, new alphaTab.Settings()), 'warmup.gp');
     const session = new RenderSession(opened.score, WARMUP_VIEW);
     try {
       const layout = session.layout();
