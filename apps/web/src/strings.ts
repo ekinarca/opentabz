@@ -370,6 +370,12 @@ export const strings = {
     zoomLevel: (zoom: number) => `${Math.round(zoom * 100)} %`,
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
+    fullScreen: 'Full screen',
+  },
+
+  fullScreen: {
+    controls: 'Full screen',
+    leave: 'Leave full screen',
   },
 
   staffDisplays: {
@@ -540,6 +546,48 @@ export const strings = {
     mutedString: 'not played',
     openString: 'open',
     diagram: (name: string, frets: string) => `${name}: ${frets}, from the lowest string`,
+  },
+
+  lyrics: {
+    open: 'Lyrics',
+    title: 'Lyrics',
+    close: 'Close the lyrics',
+    verse: 'Lines of lyrics',
+    verseOption: (number: number) => `Line ${number}`,
+    only: 'Lyrics only',
+    none: (track: string) => `${track} has no lyrics.`,
+    sing: (text: string) => `Sing from “${text}”`,
+  },
+
+  drums: {
+    open: 'Drums',
+    title: 'Drums',
+    settings: 'Drum view settings',
+    close: 'Close the drums',
+    mode: 'Show',
+    modes: { kit: 'Kit', sounds: 'Sounds' },
+    modeHints: {
+      kit: 'A pad for each piece of the kit the track plays, cymbals first.',
+      sounds: 'A pad for each sound the kit can make, by MIDI number.',
+    },
+    gmOnly: 'General MIDI sounds only',
+    largeLabels: 'Large labels',
+    labelHints: {
+      off: 'No names, to read the kit from memory.',
+      hover: 'Point at a pad to see its name and MIDI number.',
+      always: 'Every pad carries its name and MIDI number.',
+    },
+    showHints: {
+      beat: 'The pads being played.',
+      next: 'The pads being played, and the next ones to play outlined.',
+      bar: 'The pads being played, and the rest of the bar in a lighter colour.',
+    },
+    midi: (key: number) => `MIDI ${key}`,
+    pad: (name: string, key: number | null) => (key === null ? name : `${name}, MIDI ${key}`),
+    pads: (track: string) => `Drums of ${track}`,
+    playing: (names: readonly string[]) =>
+      names.length === 0 ? 'Nothing playing.' : `Playing ${names.join(', ')}.`,
+    notDrums: (track: string) => `${track} is not a drum track.`,
   },
 
   songMap: {
@@ -744,11 +792,12 @@ export const strings = {
       selectSongStart: 'Extend the selection to the start',
       selectSongEnd: 'Extend the selection to the end',
       selectAll: 'Select everything',
-      clearSelection: 'Clear the selection',
+      clearSelection: 'Clear the selection, or leave full screen',
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
       zoomReset: 'Zoom to 100 %',
       fretboard: 'Fretboard on or off',
+      fullScreen: 'Full screen on or off',
       trackPrevious: 'Previous track',
       trackNext: 'Next track',
       open: 'Open files',

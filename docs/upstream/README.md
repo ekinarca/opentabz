@@ -35,6 +35,8 @@ available as source: the patch file is that source.
 | [0024](0024-256th-flag-down.md)             | 256th notes with their stems down get their own flag                               | They were drawn with a 128th's flag                                        | not yet  |
 | [0025](0025-tempo-beat-units.md)            | Tempo marks keep their beat unit; MusicXML metronome units converted the right way | 6/8 tempos drawn against a quarter; MusicXML eighth = 120 played at 240    | not yet  |
 | [0026](0026-staccatissimo.md)               | Staccatissimo: read, written, engraved and played short                            | Guitar Pro and MusicXML staccatissimo was dropped                          | not yet  |
+| [0027](0027-lyrics-as-written.md)           | A track keeps the lyrics it was given, as written                                  | Line breaks and comments of typed lyrics were lost after import            | not yet  |
+| [0028](0028-percussion-mapper.md)           | `PercussionMapper` exported                                                        | A drum view could not list the kit's sounds or name a note's               | not yet  |
 
 ## Working on a patch
 

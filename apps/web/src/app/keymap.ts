@@ -19,6 +19,7 @@ import { usePractice } from '../state/practice.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
+import { leaveFullScreen, toggleFullScreen } from './full-screen.ts';
 import { pickFiles } from './open-actions.ts';
 import { modKey } from './platform.ts';
 
@@ -36,6 +37,8 @@ export interface KeyBinding {
   readonly mod?: boolean;
   readonly shift?: boolean;
   readonly alt?: boolean;
+  /** Control as well as ⌘ (⌃⌘F): such a binding is for Apple platforms only. */
+  readonly ctrl?: boolean;
 }
 
 export interface Shortcut {
@@ -231,10 +234,15 @@ function selectAll(): boolean {
   return true;
 }
 
+/** Clears the selection, else leaves full screen. */
 function clearSelection(): boolean {
   const player = usePlayer.getState();
-  if (player.selection === null) return false;
-  player.setSelection(null);
+  if (player.selection !== null) {
+    player.setSelection(null);
+    return true;
+  }
+  if (!useUi.getState().fullScreen) return false;
+  leaveFullScreen();
   return true;
 }
 
@@ -594,6 +602,18 @@ export const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    id: 'full-screen',
+    group: 'view',
+    label: s.fullScreen,
+    // Guitar Pro's keys: ⌃⌘F on macOS, F11 elsewhere.
+    bindings: [{ key: 'f', mod: true, ctrl: true }, { key: 'F11' }],
+    needsScore: true,
+    run: () => {
+      toggleFullScreen();
+      return true;
+    },
+  },
+  {
     id: 'track-previous',
     group: 'view',
     label: s.trackPrevious,
@@ -660,8 +680,14 @@ export interface KeyInput {
   readonly shiftKey: boolean;
 }
 
+/** Whether a binding exists on a platform whose primary modifier is ⌘ (`apple`). */
+export function onPlatform(binding: KeyBinding, apple: boolean): boolean {
+  return binding.ctrl !== true || apple;
+}
+
 /** Whether a key event matches a binding on a platform whose primary modifier is ⌘ (`apple`). */
 export function matches(binding: KeyBinding, event: KeyInput, apple: boolean): boolean {
+  if (!onPlatform(binding, apple)) return false;
   if (binding.code !== undefined) {
     if (event.code !== binding.code) return false;
   } else {
@@ -670,7 +696,13 @@ export function matches(binding: KeyBinding, event: KeyInput, apple: boolean): b
   }
   const primary = apple ? event.metaKey : event.ctrlKey;
   const other = apple ? event.ctrlKey : event.metaKey;
-  if (primary !== (binding.mod === true) || other || event.altKey !== (binding.alt === true)) return false;
+  if (
+    primary !== (binding.mod === true) ||
+    other !== (binding.ctrl === true) ||
+    event.altKey !== (binding.alt === true)
+  ) {
+    return false;
+  }
   // A printable character already says whether Shift was needed to type it (+, _, ?).
   const printable = binding.key.length === 1 && binding.key !== ' ' && !/[a-z0-9]/.test(binding.key);
   return printable || event.shiftKey === (binding.shift === true);
@@ -689,9 +721,10 @@ const KEY_NAMES: Readonly<Record<string, string>> = {
   PageDown: 'Page Down',
 };
 
-/** How a binding is written in tooltips and the shortcut sheet: "⌘ ⇧ →", "Ctrl Alt ←". */
+/** How a binding is written in tooltips and the shortcut sheet: "⌘ ⇧ →", "Ctrl Alt ←", "⌃ ⌘ F". */
 export function formatBinding(binding: KeyBinding, mod: string = modKey()): string {
   const parts: string[] = [];
+  if (binding.ctrl === true) parts.push('⌃');
   if (binding.mod === true) parts.push(mod);
   if (binding.alt === true) parts.push(mod === '⌘' ? '⌥' : 'Alt');
   if (binding.shift === true) parts.push(mod === '⌘' ? '⇧' : 'Shift');
@@ -699,8 +732,14 @@ export function formatBinding(binding: KeyBinding, mod: string = modKey()): stri
   return parts.join(' ');
 }
 
-/** The first binding of a shortcut, formatted, for tooltips. */
+/** The bindings of a shortcut on this platform. */
+export function platformBindings(shortcut: Shortcut, mod: string = modKey()): readonly KeyBinding[] {
+  return shortcut.bindings.filter(binding => onPlatform(binding, mod === '⌘'));
+}
+
+/** The first binding of a shortcut on this platform, formatted, for tooltips. */
 export function shortcutHint(id: string): string | undefined {
-  const binding = SHORTCUTS.find(shortcut => shortcut.id === id)?.bindings[0];
+  const shortcut = SHORTCUTS.find(candidate => candidate.id === id);
+  const binding = shortcut === undefined ? undefined : platformBindings(shortcut)[0];
   return binding === undefined ? undefined : formatBinding(binding);
 }

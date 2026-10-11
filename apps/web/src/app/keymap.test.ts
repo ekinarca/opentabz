@@ -4,10 +4,12 @@ import {
   formatBinding,
   isCharacterBinding,
   matches,
+  onPlatform,
   sectionTick,
   SHORTCUTS,
   type KeyInput,
 } from './keymap.ts';
+import { useUi } from '../state/ui.ts';
 import { shortcutFor } from './use-shortcuts.ts';
 
 function key(value: string, modifiers: Partial<Omit<KeyInput, 'key'>> = {}): KeyInput {
@@ -51,6 +53,17 @@ describe('keymap', () => {
     expect(matches(metronome, key('m', { code: 'KeyM' }), false)).toBe(false);
   });
 
+  it('matches Control with ⌘ on Apple platforms only (⌃⌘F)', () => {
+    const fullScreen = { key: 'f', mod: true, ctrl: true };
+    expect(matches(fullScreen, key('f', { metaKey: true, ctrlKey: true }), true)).toBe(true);
+    expect(matches(fullScreen, key('f', { metaKey: true }), true)).toBe(false);
+    expect(matches(fullScreen, key('f', { metaKey: true, ctrlKey: true }), false)).toBe(false);
+    expect(matches({ key: 'g', mod: true }, key('g', { metaKey: true, ctrlKey: true }), true)).toBe(false);
+    expect(formatBinding(fullScreen, '⌘')).toBe('⌃ ⌘ F');
+    expect(onPlatform(fullScreen, false)).toBe(false);
+    expect(onPlatform({ key: 'F11' }, false)).toBe(true);
+  });
+
   it('ignores Shift for printable symbols that need it, but not for named keys', () => {
     expect(matches({ key: '+' }, key('+', { shiftKey: true }), true)).toBe(true);
     expect(matches({ key: '?' }, key('?', { shiftKey: true }), true)).toBe(true);
@@ -68,6 +81,7 @@ describe('keymap', () => {
           binding.mod === true,
           binding.shift === true,
           binding.alt === true,
+          binding.ctrl === true,
         ]);
         expect(seen.get(id), `${shortcut.id} and ${seen.get(id) ?? ''} share ${id}`).toBeUndefined();
         seen.set(id, shortcut.id);
@@ -175,5 +189,22 @@ describe('shortcut context', () => {
       'select-bar-right',
     );
     expect(shortcutFor(event('Home', { metaKey: true }), context)?.id).toBe('song-start');
+  });
+
+  it('goes full screen with ⌃⌘F on macOS and F11 everywhere; Esc leaves it', () => {
+    expect(shortcutFor(event('f', { metaKey: true, ctrlKey: true }), context)?.id).toBe('full-screen');
+    expect(shortcutFor(event('F11'), context)?.id).toBe('full-screen');
+    expect(shortcutFor(event('F11'), { ...context, apple: false })?.id).toBe('full-screen');
+    expect(
+      shortcutFor(event('f', { metaKey: true, ctrlKey: true }), { ...context, apple: false }),
+    ).toBeNull();
+
+    const escape = shortcutFor(event('Escape'), context);
+    expect(escape?.id).toBe('clear-selection');
+    // Nothing selected and not full screen: Esc keeps its usual meaning.
+    expect(escape?.run()).toBe(false);
+    useUi.getState().setFullScreen(true);
+    expect(escape?.run()).toBe(true);
+    expect(useUi.getState().fullScreen).toBe(false);
   });
 });

@@ -1,14 +1,16 @@
 /**
- * What instrument views ask the engine about a track (its notes, its chords), asked once per
+ * What instrument views ask the engine about a track (its notes, chords, lyrics and drums), asked once per
  * document and track and kept for the next time the track is shown.
  */
-import type { TrackChords, TrackNotes } from '@opentabz/core/shared';
+import type { TrackChords, TrackDrums, TrackLyrics, TrackNotes } from '@opentabz/core/shared';
 import { useEffect, useState } from 'react';
 import { getEngine } from '../engine/instance.ts';
 
 interface TrackData {
   readonly trackNotes: TrackNotes;
   readonly trackChords: TrackChords;
+  readonly trackLyrics: TrackLyrics;
+  readonly trackDrums: TrackDrums;
 }
 
 type Method = keyof TrackData;
@@ -69,4 +71,14 @@ export function useTrackNotes(engineId: string, trackIndex: number): TrackNotes 
 /** The track's chords, or null until the engine has answered. */
 export function useTrackChords(engineId: string, trackIndex: number): TrackChords | null {
   return useTrackData('trackChords', engineId, trackIndex);
+}
+
+/** The track's lyrics, or null until the engine has answered. */
+export function useTrackLyrics(engineId: string, trackIndex: number): TrackLyrics | null {
+  return useTrackData('trackLyrics', engineId, trackIndex);
+}
+
+/** The track's drum kit and notes, or null until the engine has answered. */
+export function useTrackDrums(engineId: string, trackIndex: number): TrackDrums | null {
+  return useTrackData('trackDrums', engineId, trackIndex);
 }

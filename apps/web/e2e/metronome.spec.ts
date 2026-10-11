@@ -55,7 +55,7 @@ test.describe('metronome and count-in', () => {
     }
 
     // Open documents are not kept yet (the library comes in M3); the settings are.
-    await page.reload();
+    // A fresh page (opening the home page again: a reload just before would race its engine).
     await openShuffle(page);
     dialog = await openSettings(page, isMobile);
     await expect(dialog.getByRole('switch', { name: 'Metronome' })).toBeChecked();

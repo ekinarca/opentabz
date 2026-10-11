@@ -12,18 +12,36 @@ import {
   MenuTrigger,
   SegmentedControl,
 } from '@opentabz/ui';
-import { ChevronDown, Columns3, FileText, Guitar, Info, Minus, Piano, Plus, Rows3 } from 'lucide-react';
+import {
+  ChevronDown,
+  Columns3,
+  Drum,
+  FileText,
+  Guitar,
+  Info,
+  Maximize,
+  MicVocal,
+  Minus,
+  Piano,
+  Plus,
+  Rows3,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PAPER_IDS, type PaperId } from '../score-view/pagination.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
+import { enterFullScreen } from './full-screen.ts';
+import { FullScreenBar } from './FullScreenBar.tsx';
 import { FretboardPanel } from './FretboardPanel.tsx';
 import { ChordsPanel } from './ChordsPanel.tsx';
+import { DrumsPanel } from './DrumsPanel.tsx';
 import { ChordIcon } from './icons.tsx';
 import { KeyboardPanel } from './KeyboardPanel.tsx';
+import { LyricsPanel } from './LyricsPanel.tsx';
 import { shortcutHint, zoomStep } from './keymap.ts';
 import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { modKey } from './platform.ts';
@@ -58,6 +76,8 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
   const fretboard = usePreferences(state => state.fretboard);
   const keyboard = usePreferences(state => state.keyboard);
   const chords = usePreferences(state => state.chords);
+  const lyrics = usePreferences(state => state.lyrics);
+  const drums = usePreferences(state => state.drums);
   const { view, summary } = doc;
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
@@ -257,6 +277,14 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
           }}
         />
         <IconButton
+          label={strings.drums.open}
+          icon={<Drum size={18} aria-hidden />}
+          pressed={drums}
+          onClick={() => {
+            setPreferences({ drums: !drums });
+          }}
+        />
+        <IconButton
           label={strings.chords.open}
           icon={<ChordIcon />}
           pressed={chords}
@@ -264,8 +292,23 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
             setPreferences({ chords: !chords });
           }}
         />
+        <IconButton
+          label={strings.lyrics.open}
+          icon={<MicVocal size={18} aria-hidden />}
+          pressed={lyrics}
+          onClick={() => {
+            if (lyrics) useUi.getState().setLyricsOnly(false);
+            setPreferences({ lyrics: !lyrics });
+          }}
+        />
         <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
+        <IconButton
+          label={strings.toolbar.fullScreen}
+          shortcut={shortcutHint('full-screen')}
+          icon={<Maximize size={18} aria-hidden />}
+          onClick={enterFullScreen}
+        />
       </div>
     </div>
   );
@@ -295,24 +338,34 @@ export function Workspace() {
   const fretboard = usePreferences(state => state.fretboard);
   const keyboard = usePreferences(state => state.keyboard);
   const chords = usePreferences(state => state.chords);
+  const lyrics = usePreferences(state => state.lyrics);
+  const drums = usePreferences(state => state.drums);
+  // The lyrics in place of the score (VIEW-022).
+  const lyricsOnly = useUi(state => state.lyricsOnly) && lyrics;
+  const fullScreen = useUi(state => state.fullScreen);
   usePlaybackForActiveDocument(active);
 
   return (
     <main id="main" className="flex min-h-0 flex-1 flex-col" hidden={active === null}>
-      {active !== null && (
-        <ViewToolbar
-          doc={active}
-          onInfo={() => {
-            setInfoOpen(true);
-          }}
-        />
-      )}
+      {active !== null &&
+        (fullScreen ? (
+          <FullScreenBar doc={active} />
+        ) : (
+          <ViewToolbar
+            doc={active}
+            onInfo={() => {
+              setInfoOpen(true);
+            }}
+          />
+        ))}
       {docs.map(doc => (
-        <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey} />
+        <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey || lyricsOnly} />
       ))}
       {active !== null && fretboard && <FretboardPanel doc={active} />}
       {active !== null && keyboard && <KeyboardPanel doc={active} />}
+      {active !== null && drums && <DrumsPanel doc={active} />}
       {active !== null && chords && <ChordsPanel doc={active} />}
+      {active !== null && lyrics && <LyricsPanel doc={active} />}
       {active !== null && <SongMap doc={active} />}
       {active !== null && <Transport />}
       {active !== null && <PracticeDialog />}

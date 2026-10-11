@@ -11,3 +11,5 @@ export * from './protocol.ts';
 export * from './playback.ts';
 export * from './notes.ts';
 export * from './chords.ts';
+export * from './lyrics.ts';
+export * from './drums.ts';

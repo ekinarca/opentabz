@@ -5,6 +5,8 @@
  */
 import type { OpenError } from './open-error.ts';
 import type { TrackChords } from './chords.ts';
+import type { TrackDrums } from './drums.ts';
+import type { TrackLyrics } from './lyrics.ts';
 import type { TrackNotes } from './notes.ts';
 import type { MidiDelivery, PlaybackTimeline, ScoreBounds, TrackInterpretation } from './playback.ts';
 import type { DocSummary } from './summary.ts';
@@ -71,6 +73,10 @@ export interface EngineMethods {
   trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
   /** The chords of one track and the beats that carry them, for the chords panel. */
   trackChords(args: { readonly docId: string; readonly trackIndex: number }): TrackChords;
+  /** The lyrics of one track, syllable by syllable on their beats, for the lyrics pane. */
+  trackLyrics(args: { readonly docId: string; readonly trackIndex: number }): TrackLyrics;
+  /** The drum kit of one track and its notes, for the drum view. */
+  trackDrums(args: { readonly docId: string; readonly trackIndex: number }): TrackDrums;
   /**
    * The song for an audio export: the MIDI playback would send the synthesizer (with a silent
    * tail for the last notes to die away) and its timeline, returned rather than sent.

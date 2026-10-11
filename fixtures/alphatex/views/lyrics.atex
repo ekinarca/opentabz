@@ -1,0 +1,21 @@
+// Lyrics views — original music and words written for OpenTabz (AGPL-3.0-or-later).
+// A voice with two sections of lyrics (comments in brackets, line breaks, hyphenated words)
+// over six bars, and a guitar without lyrics.
+\title "Lyrics Views"
+\subtitle "OpenTabz test score"
+\instructions "Sing the verse softly, the chorus out loud."
+\notices "Words and music written for the OpenTabz tests."
+\tempo 100
+
+\track ("Voice" "Vo.") {instrument choirAahs}
+\lyrics "[Verse]\nMorn-ing light up-on the riv-er\nCar-ry me a-long the shore\n[Chorus]\nSing it out and sing it loud"
+\staff {score}
+\ts (4 4)
+C4.4 E4.4 G4.4 E4.4 | D4.4 F4.4 A4.4 F4.4 | E4.4 G4.4 C5.4 G4.4 | F4.4 A4.4 C5.4 A4.4 |
+G4.4 B4.4 D5.4 B4.4 | C5.4 G4.4 E4.4 C4.4 | r.1 |
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+0.5.1 | 0.4.1 | 0.5.1 | 0.4.1 | 0.6.1 | 0.5.1 | r.1 |

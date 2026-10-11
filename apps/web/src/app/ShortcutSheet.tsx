@@ -3,7 +3,7 @@ import { useId } from 'react';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
-import { formatBinding, SHORTCUTS, type ShortcutGroup } from './keymap.ts';
+import { formatBinding, platformBindings, SHORTCUTS, type ShortcutGroup } from './keymap.ts';
 
 const GROUPS: readonly ShortcutGroup[] = ['playback', 'navigation', 'selection', 'view', 'files', 'help'];
 
@@ -43,7 +43,7 @@ export function ShortcutSheet() {
                 >
                   <dt className="text-[13px] text-ink">{shortcut.label}</dt>
                   <dd className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-                    {shortcut.bindings.map((binding, index) => (
+                    {platformBindings(shortcut).map((binding, index) => (
                       <span key={formatBinding(binding)} className="inline-flex items-center gap-1">
                         {index > 0 && (
                           <span className="text-[11px] text-ink-faint">{strings.shortcuts.or}</span>

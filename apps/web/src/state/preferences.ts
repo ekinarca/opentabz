@@ -10,6 +10,7 @@ import {
   type FretboardShow,
   type NoteLabels,
 } from '../instrument-view/fretboard.ts';
+import { DRUM_MODES, type DrumMode } from '../instrument-view/drums.ts';
 import { HANDS, type Hand } from '../instrument-view/keyboard.ts';
 import type { PaperId } from '../score-view/pagination.ts';
 
@@ -53,6 +54,14 @@ export interface Preferences {
   readonly keyboard: boolean;
   /** The chords panel is open. */
   readonly chords: boolean;
+  /** The lyrics panel is open. */
+  readonly lyrics: boolean;
+  /** The drum view is open. */
+  readonly drums: boolean;
+  readonly drumMode: DrumMode;
+  /** The drum view's sounds limited to General MIDI's. */
+  readonly drumGmOnly: boolean;
+  readonly drumLargeLabels: boolean;
   /** The hands the keyboard shows. */
   readonly keyboardHand: Hand;
   readonly fretboardShow: FretboardShow;
@@ -90,6 +99,11 @@ export function defaultPreferences(locale: string): Preferences {
     fretboard: false,
     keyboard: false,
     chords: false,
+    lyrics: false,
+    drums: false,
+    drumMode: 'kit',
+    drumGmOnly: false,
+    drumLargeLabels: false,
     keyboardHand: 'both',
     fretboardShow: 'next',
     noteLabels: 'hover',
@@ -141,6 +155,12 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       fretboard: typeof value.fretboard === 'boolean' ? value.fretboard : fallback.fretboard,
       keyboard: typeof value.keyboard === 'boolean' ? value.keyboard : fallback.keyboard,
       chords: typeof value.chords === 'boolean' ? value.chords : fallback.chords,
+      lyrics: typeof value.lyrics === 'boolean' ? value.lyrics : fallback.lyrics,
+      drums: typeof value.drums === 'boolean' ? value.drums : fallback.drums,
+      drumMode: oneOf(value.drumMode, DRUM_MODES, fallback.drumMode),
+      drumGmOnly: typeof value.drumGmOnly === 'boolean' ? value.drumGmOnly : fallback.drumGmOnly,
+      drumLargeLabels:
+        typeof value.drumLargeLabels === 'boolean' ? value.drumLargeLabels : fallback.drumLargeLabels,
       keyboardHand: oneOf(value.keyboardHand, HANDS, fallback.keyboardHand),
       fretboardShow: oneOf(value.fretboardShow, FRETBOARD_SHOWS, fallback.fretboardShow),
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
@@ -197,6 +217,11 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       fretboard: state.fretboard,
       keyboard: state.keyboard,
       chords: state.chords,
+      lyrics: state.lyrics,
+      drums: state.drums,
+      drumMode: state.drumMode,
+      drumGmOnly: state.drumGmOnly,
+      drumLargeLabels: state.drumLargeLabels,
       keyboardHand: state.keyboardHand,
       fretboardShow: state.fretboardShow,
       noteLabels: state.noteLabels,

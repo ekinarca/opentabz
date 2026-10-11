@@ -2,9 +2,11 @@ import { ToastProvider, TooltipProvider } from '@opentabz/ui';
 import { useEffect, useState } from 'react';
 import { onEngineRestart } from '../engine/instance.ts';
 import { useDocuments } from '../state/documents.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
+import { leaveFullScreen, useFullScreenSync } from './full-screen.ts';
 import { MetronomeTool } from './MetronomeTool.tsx';
 import { TunerTool } from './TunerTool.tsx';
 import { SettingsDialog } from './SettingsDialog.tsx';
@@ -29,6 +31,13 @@ export function App() {
   const docs = useDocuments(state => state.docs);
   const activeKey = useDocuments(state => state.activeKey);
   const active = docs.find(doc => doc.key === activeKey) ?? null;
+  // Full screen puts the app's bars away while a score is open (VIEW-013).
+  const fullScreen = useUi(state => state.fullScreen) && active !== null;
+  useFullScreenSync();
+
+  useEffect(() => {
+    if (active === null && useUi.getState().fullScreen) leaveFullScreen();
+  }, [active]);
 
   useEffect(() => {
     onEngineRestart(() => void useDocuments.getState().reopenAll());
@@ -53,12 +62,14 @@ export function App() {
     <TooltipProvider>
       <ToastProvider>
         <div className="relative flex h-full flex-col bg-canvas text-ink">
-          <TopBar
-            home={active === null}
-            onAbout={() => {
-              setAboutOpen(true);
-            }}
-          />
+          {!fullScreen && (
+            <TopBar
+              home={active === null}
+              onAbout={() => {
+                setAboutOpen(true);
+              }}
+            />
+          )}
           {active === null && (
             <Home
               dragging={dragging}

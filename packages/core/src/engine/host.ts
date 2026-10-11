@@ -7,10 +7,14 @@ import { exportMidi } from '../export/midi.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
 import { collectTrackChords } from '../playback/track-chords.ts';
+import { collectTrackDrums } from '../playback/track-drums.ts';
+import { collectTrackLyrics } from '../playback/track-lyrics.ts';
 import { collectTrackNotes } from '../playback/track-notes.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackChords } from '../shared/chords.ts';
+import type { TrackDrums } from '../shared/drums.ts';
+import type { TrackLyrics } from '../shared/lyrics.ts';
 import type { TrackNotes } from '../shared/notes.ts';
 import {
   EXTRA_CHANNEL_DRUMS,
@@ -211,6 +215,18 @@ export class EngineHost implements EngineMethods {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
     return collectTrackChords(document.score, args.trackIndex);
+  }
+
+  public trackLyrics(args: EngineArgs<'trackLyrics'>): TrackLyrics {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    return collectTrackLyrics(document.score, args.trackIndex);
+  }
+
+  public trackDrums(args: EngineArgs<'trackDrums'>): TrackDrums {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    return collectTrackDrums(document.score, args.trackIndex);
   }
 
   public exportAudioSong(args: EngineArgs<'exportAudioSong'>): EngineResult<'exportAudioSong'> {

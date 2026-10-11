@@ -251,7 +251,13 @@ notes through one reader (`instrument-view/use-view-notes.ts`), which re-renders
 the notes shown change. The chords panel (`app/ChordsPanel.tsx`) asks the engine for a track's
 chords (`trackChords`: each chord once, and the beats that carry them), places them in playing
 order on the timeline (`instrument-view/chords.ts`) and shows the chord sounding, the next one
-and the beats left until it.
+and the beats left until it. The lyrics pane (`app/LyricsPanel.tsx`) does the same with a
+track's lyrics (`trackLyrics`): syllable by syllable on their beats, line by line as typed (the
+text a track keeps through alphaTab patch 0027), the syllable being sung lit; it can take the
+score's place in large type. The drum view (`app/DrumsPanel.tsx`) reads a drum track from
+`trackDrums`: every sound of its kit (its own articulations, then a standard kit's, named
+through alphaTab's percussion mapper, exported by patch 0028) and its notes in the views'
+layout, a note's pitch being its sound, so it shares the views' model.
 
 ## 6. Opening files
 

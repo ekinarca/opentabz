@@ -199,7 +199,7 @@ test('names exported files after a template, remembered', async ({ page }) => {
   expect(midi.file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4).mid');
   await page.keyboard.press('Escape');
 
-  await page.reload();
+  // A fresh page (opening the home page again: a reload just before would race its engine).
   await openShuffle(page);
   dialog = await openExport(page);
   await expect(dialog.getByLabel('File name')).toHaveValue('%T - %t (%n of %N)');

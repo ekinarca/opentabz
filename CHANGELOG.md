@@ -119,6 +119,18 @@ All notable changes to OpenTabz are recorded here. The format follows
   the chord sounding, the next one with the beats left until it, and every chord of the track
   as a diagram (open and unplayed strings, the first fret, barres). Clicking a chord plays
   from where it comes next.
+- **Drum view.** The drum button shows the active drum track as pads lit as the music plays: a
+  pad for each piece of the kit the track plays, cymbals to kick as on the staff, or a pad for
+  each of the kit's 95 sounds with its MIDI number, General MIDI's only on request. Names never,
+  on hover or always, large on request.
+- **Lyrics.** The microphone button shows the active track's lyrics under the score, line by
+  line as written, with headings such as Verse and Chorus, the syllable being sung lit as the
+  song plays. Clicking a syllable sings from there, and the lyrics can fill the window in large
+  type with the score hidden. Line breaks and bracketed comments typed in Guitar Pro or
+  alphaTex lyrics are kept (alphaTab patch 0027).
+- **Full screen.** The full-screen button, F11 or ⌃⌘F puts the app's bars away, and the browser
+  goes full screen too where a page may ask it to (on iPhone the bars still go). A slim strip
+  keeps the song's name, the zoom and the way out; Esc leaves.
 - **Phones.** The top bar folds the print, metronome, tuner, theme, settings and help buttons
   into a More menu on narrow screens, so the open scores' tabs keep their room.
 - **Tuner.** The tuning-fork button listens through the microphone, on this device only (nothing
@@ -158,7 +170,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   (0019), Guitar Pro 7+ documents read as they close (0020), "let ring" written as Guitar Pro
   writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
   first voice (0023), 256th flags on down stems (0024), tempo marks that keep their beat unit
-  (0025) and staccatissimo (0026). See [docs/upstream/](docs/upstream/).
+  (0025), staccatissimo (0026), lyrics kept as written (0027) and the percussion mapper exported
+  (0028). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
