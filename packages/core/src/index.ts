@@ -29,5 +29,7 @@ export {
 } from './render/session.ts';
 export { createRenderSettings, layoutMode } from './render/settings.ts';
 export { applyStaffDisplay } from './render/staff-display.ts';
-export { EngineHost, EngineHostError } from './engine/host.ts';
+export { EngineHost, EngineHostError, type MidiSink } from './engine/host.ts';
+export { generatePlayback, type GeneratedPlayback } from './playback/generate.ts';
+export { extractBounds } from './render/bounds.ts';
 export { ALPHATAB_VERSION } from './engine/version.ts';

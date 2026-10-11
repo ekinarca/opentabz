@@ -58,6 +58,9 @@ importers:
       '@fontsource/instrument-serif':
         specifier: 5.3.0
         version: 5.3.0
+      '@opentabz/audio':
+        specifier: workspace:*
+        version: link:../../packages/audio
       '@opentabz/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -110,6 +113,25 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@24.19.2)(jiti@2.7.0)
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@24.19.2)(happy-dom@20.14.6)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0))
+
+  packages/audio:
+    dependencies:
+      '@coderline/alphatab':
+        specifier: 1.8.4
+        version: 1.8.4(patch_hash=debcc25fd1e1d1a13eb6636d356b155ee1803429e349801423952d285bf15389)
+      '@opentabz/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@types/node@24.19.2)(happy-dom@20.14.6)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0))

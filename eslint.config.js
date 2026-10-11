@@ -99,16 +99,16 @@ export default tseslint.config(
   },
   {
     files: ['apps/web/src/**/*.{ts,tsx}'],
-    ignores: ['apps/web/src/engine/**/*.worker.ts'],
+    ignores: ['apps/web/src/**/*.worker.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          paths: ['@coderline/alphatab', '@opentabz/core'].map(name => ({
+          paths: ['@coderline/alphatab', '@opentabz/core', '@opentabz/audio'].map(name => ({
             name,
             allowTypeImports: true,
             message:
-              'The main thread never loads the engine at runtime (ADR-0004). Use @opentabz/core/shared or talk to the engine worker.',
+              'The main thread never loads the engine at runtime (ADR-0004, ADR-0015). Use @opentabz/core/shared, @opentabz/audio/protocol or @opentabz/audio/ring, or talk to a worker.',
           })),
         },
       ],

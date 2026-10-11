@@ -13,14 +13,16 @@ import {
   SegmentedControl,
 } from '@opentabz/ui';
 import { ChevronDown, Columns3, FileText, Info, Minus, Plus, Rows3 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PAPER_IDS, type PaperId } from '../score-view/pagination.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
+import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { modKey } from './platform.ts';
 import { ScoreHost } from './ScoreHost.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
+import { Transport } from './Transport.tsx';
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 const STAFF_DISPLAYS: readonly StaffDisplay[] = ['default', 'score-tab', 'score', 'tab'];
@@ -236,11 +238,28 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
   );
 }
 
+/** Keeps the synthesizer loaded with the active document. */
+function usePlaybackForActiveDocument(active: OpenDocument | null): void {
+  const load = usePlayer(state => state.load);
+  const unload = usePlayer(state => state.unload);
+  const key = active?.key ?? null;
+  const engineId = active?.engineId ?? null;
+  useEffect(() => {
+    const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
+    if (doc === undefined) {
+      unload();
+      return;
+    }
+    void load(doc);
+  }, [key, engineId, load, unload]);
+}
+
 export function Workspace() {
   const docs = useDocuments(state => state.docs);
   const activeKey = useDocuments(state => state.activeKey);
   const active = docs.find(doc => doc.key === activeKey) ?? null;
   const [infoOpen, setInfoOpen] = useState(false);
+  usePlaybackForActiveDocument(active);
 
   return (
     <main id="main" className="flex min-h-0 flex-1 flex-col" hidden={active === null}>
@@ -255,6 +274,7 @@ export function Workspace() {
       {docs.map(doc => (
         <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey} />
       ))}
+      {active !== null && <Transport />}
       {active !== null && <SongInfoDialog doc={active} open={infoOpen} onOpenChange={setInfoOpen} />}
     </main>
   );

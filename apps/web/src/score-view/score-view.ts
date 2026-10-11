@@ -4,13 +4,21 @@
  * Framework-free on purpose: layout, scrolling and painting never go through React. Geometry is
  * computed from data and written to the DOM; nothing is read back from layout in hot paths.
  */
-import type { LayoutKind, StaffDisplay, SystemsLayout, ViewLayout, ViewOptions } from '@opentabz/core/shared';
+import type {
+  LayoutKind,
+  ScoreBounds,
+  StaffDisplay,
+  SystemsLayout,
+  ViewLayout,
+  ViewOptions,
+} from '@opentabz/core/shared';
 import type { EngineClient } from '../engine/client.ts';
 import {
   contentWidth,
   pageGeometry,
   paginate,
   placeContinuous,
+  sheetToEngine,
   type PaperId,
   type SheetLayout,
 } from './pagination.ts';
@@ -39,6 +47,8 @@ export interface ScoreViewLayoutInfo {
 
 export interface ScoreViewEvents {
   readonly onLayout?: (info: ScoreViewLayoutInfo) => void;
+  /** A click on the music, in engine coordinates (see ScoreBounds). */
+  readonly onScoreClick?: (x: number, y: number) => void;
   readonly onFirstPaint?: () => void;
   readonly onError?: (error: unknown) => void;
 }
@@ -64,6 +74,8 @@ export class ScoreView {
   private readonly sheet: HTMLDivElement;
   private readonly pagesLayer: HTMLDivElement;
   private readonly partialsLayer: HTMLDivElement;
+  /** Layer above the music for the playback cursor and other overlays. */
+  public readonly overlay: HTMLDivElement;
   private readonly engine: EngineClient;
   private readonly viewId: string;
   private readonly events: ScoreViewEvents;
@@ -74,6 +86,8 @@ export class ScoreView {
   private layoutSeq = 0;
   private generation = 0;
   private sheetLayout: SheetLayout | null = null;
+  private scoreBounds: ScoreBounds | null = null;
+  private pointerStart: { x: number; y: number } | null = null;
   private readonly elements = new Map<string, HTMLDivElement>();
   private readonly svgCache = new Map<string, string>();
   private readonly requested = new Set<string>();
@@ -106,8 +120,12 @@ export class ScoreView {
     this.pagesLayer.className = 'ot-pages';
     this.partialsLayer = document.createElement('div');
     this.partialsLayer.className = 'ot-partials';
-    this.sheet.append(this.pagesLayer, this.partialsLayer);
+    this.overlay = document.createElement('div');
+    this.overlay.className = 'ot-overlay';
+    this.sheet.append(this.pagesLayer, this.partialsLayer, this.overlay);
     this.scroller.append(this.sheet);
+    this.scroller.addEventListener('pointerdown', this.onPointerDown);
+    this.scroller.addEventListener('pointerup', this.onPointerUp);
 
     this.intersection = new IntersectionObserver(
       entries => {
@@ -156,6 +174,8 @@ export class ScoreView {
     if (this.relayoutTimer !== null) clearTimeout(this.relayoutTimer);
     this.intersection.disconnect();
     this.resize.disconnect();
+    this.scroller.removeEventListener('pointerdown', this.onPointerDown);
+    this.scroller.removeEventListener('pointerup', this.onPointerUp);
     this.sheet.remove();
     void this.engine.call('closeView', { viewId: this.viewId }).catch(() => undefined);
   }
@@ -164,6 +184,47 @@ export class ScoreView {
   public get layout(): SheetLayout | null {
     return this.sheetLayout;
   }
+
+  /** Bounds of the music in the current layout. */
+  public get bounds(): ScoreBounds | null {
+    return this.scoreBounds;
+  }
+
+  public get zoom(): number {
+    return this.state?.zoom ?? 1;
+  }
+
+  public get layoutKind(): LayoutKind {
+    return this.state?.layout ?? 'page';
+  }
+
+  public get trackIndexes(): readonly number[] {
+    return this.state?.trackIndexes ?? [];
+  }
+
+  public get scrollContainer(): HTMLElement {
+    return this.scroller;
+  }
+
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    this.pointerStart = event.isPrimary && event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
+  };
+
+  /** A click (not a drag or scroll gesture) on the music reports its engine coordinates. */
+  private readonly onPointerUp = (event: PointerEvent): void => {
+    const start = this.pointerStart;
+    this.pointerStart = null;
+    if (start === null || this.sheetLayout === null || this.state === null) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6) return;
+    const rect = this.sheet.getBoundingClientRect();
+    const zoom = this.state.zoom;
+    const point = sheetToEngine(
+      this.sheetLayout,
+      (event.clientX - rect.left) / zoom,
+      (event.clientY - rect.top) / zoom,
+    );
+    if (point !== null) this.events.onScoreClick?.(point.x, point.y);
+  };
 
   private engineOptions(state: ScoreViewState): ViewOptions | null {
     let width: number;
@@ -229,6 +290,7 @@ export class ScoreView {
     const state = this.state;
     if (state === null) return;
     this.generation = layout.generation;
+    this.scoreBounds = layout.bounds;
     this.clearPartials();
 
     const sheetLayout =

@@ -87,3 +87,37 @@
   -moz-osx-font-smoothing: grayscale;
   overflow: visible;
 }
+
+/* Playback cursor ---------------------------------------------------------------------------- */
+
+.ot-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ot-cursor-bar,
+.ot-cursor-beat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.ot-cursor-bar {
+  background: color-mix(in oklab, var(--ot-accent) 9%, transparent);
+  border-radius: 3px;
+}
+
+.ot-cursor-beat {
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--ot-accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--ot-accent) 60%, transparent);
+  opacity: 0.9;
+}
+
+.ot-partial {
+  cursor: pointer;
+}

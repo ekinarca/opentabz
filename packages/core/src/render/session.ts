@@ -7,6 +7,8 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import type { PartialKind, PartialLayout, ViewOptions } from '../shared/view.ts';
+import type { ScoreBounds } from '../shared/playback.ts';
+import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
 import { applyStaffDisplay } from './staff-display.ts';
 
@@ -16,6 +18,7 @@ export interface LayoutResult {
   readonly width: number;
   readonly height: number;
   readonly partials: readonly PartialLayout[];
+  readonly bounds: ScoreBounds;
   readonly layoutMs: number;
 }
 
@@ -123,7 +126,14 @@ export class RenderSession {
     const width = finished?.totalWidth ?? Math.max(0, ...partials.map(p => p.x + p.width));
     const height = finished?.totalHeight ?? Math.max(0, ...partials.map(p => p.y + p.height));
     this.collected = [];
-    return { generation: this.generation, width, height, partials, layoutMs };
+    return {
+      generation: this.generation,
+      width,
+      height,
+      partials,
+      bounds: extractBounds(this.renderer.boundsLookup),
+      layoutMs,
+    };
   }
 
   /** Returns and clears the error reported by the renderer's error event, if any. */

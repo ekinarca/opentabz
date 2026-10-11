@@ -154,3 +154,19 @@ export function engineToSheet(layout: SheetLayout, x: number, y: number): { x: n
   }
   return null;
 }
+
+/** Inverse of `engineToSheet`: maps a point on the sheet back into engine coordinates. */
+export function sheetToEngine(layout: SheetLayout, x: number, y: number): { x: number; y: number } | null {
+  for (const placement of layout.placements) {
+    const { partial } = placement;
+    if (
+      x >= placement.x &&
+      x <= placement.x + partial.width &&
+      y >= placement.y &&
+      y <= placement.y + partial.height
+    ) {
+      return { x: partial.x + (x - placement.x), y: partial.y + (y - placement.y) };
+    }
+  }
+  return null;
+}

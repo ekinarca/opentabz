@@ -299,6 +299,26 @@ export const strings = {
       'The engine reported an error while laying out this score. Technical details are below.',
   },
 
+  transport: {
+    label: 'Playback',
+    play: 'Play',
+    pause: 'Pause',
+    playShortcut: 'Space',
+    stop: 'Stop and go to the start',
+    stopShortcut: '⇧ Space',
+    loading: 'Loading sounds…',
+    unavailable: 'Playback unavailable',
+    bar: (bar: number) => `Bar ${bar}`,
+    speed: 'Playback speed',
+    speedValue: (speed: number) => `${Math.round(speed * 100)} %`,
+    loop: 'Loop',
+    metronome: 'Metronome',
+    countIn: 'Count-in',
+    volume: 'Volume',
+    mute: 'Mute',
+    unmute: 'Unmute',
+  },
+
   songInfo: {
     title: 'Song info',
     fields: {

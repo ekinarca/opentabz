@@ -4,6 +4,7 @@
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
 import type { OpenError } from './open-error.ts';
+import type { PlaybackTimeline, ScoreBounds } from './playback.ts';
 import type { DocSummary } from './summary.ts';
 import type { PartialLayout, ViewOptions } from './view.ts';
 
@@ -24,6 +25,7 @@ export interface ViewLayout {
   readonly width: number;
   readonly height: number;
   readonly partials: readonly PartialLayout[];
+  readonly bounds: ScoreBounds;
   readonly layoutMs: number;
 }
 
@@ -50,6 +52,10 @@ export interface EngineMethods {
     readonly ids: readonly string[];
   }): PaintResult;
   closeView(args: { readonly viewId: string }): null;
+  /** Hands the engine a port to the synth worker; MIDI goes there directly. */
+  connectSynth(args: { readonly port: MessagePort }): null;
+  /** Generates MIDI for a document, sends it to the synth and returns the playback timeline. */
+  preparePlayback(args: { readonly docId: string; readonly playbackId: string }): PlaybackTimeline;
 }
 
 export type EngineMethod = keyof EngineMethods;

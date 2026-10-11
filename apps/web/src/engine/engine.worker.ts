@@ -37,6 +37,10 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.paint(message.args as EngineRequestMessage<'paint'>['args']);
     case 'closeView':
       return host.closeView(message.args as EngineRequestMessage<'closeView'>['args']);
+    case 'connectSynth':
+      return host.connectSynth(message.args as EngineRequestMessage<'connectSynth'>['args']);
+    case 'preparePlayback':
+      return host.preparePlayback(message.args as EngineRequestMessage<'preparePlayback'>['args']);
   }
 }
 

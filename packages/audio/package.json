@@ -1,0 +1,26 @@
+{
+  "name": "@opentabz/audio",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenTabz audio: synthesizer host, lock-free ring buffer to the AudioWorklet, playback protocol.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./ring": "./src/ring.ts",
+    "./protocol": "./src/protocol.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@coderline/alphatab": "1.8.4",
+    "@opentabz/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

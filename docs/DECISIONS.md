@@ -160,3 +160,24 @@ lead engineer; the owner is consulted only on fixtures, deploy access and licens
   (with links to alphaTab's source and to OpenTabz's patches, satisfying MPL-2.0 §3.2), the
   README and `THIRD_PARTY_NOTICES.md`; exported PDFs name OpenTabz and alphaTab in their metadata.
 - **Consequences:** If alphaTab's license terms change in a future version, revisit before upgrading.
+
+## ADR-0015 — Audio: synth worker → shared ring buffer → AudioWorklet
+
+- **Date:** 2026-10-11 · **Status:** accepted
+- **Context:** alphaTab's synthesizer renders 32 × 64 = 2,048 frames per request (≈ 43 ms at
+  48 kHz). Doing that inside an AudioWorklet's 128-frame `process()` call would blow the
+  real-time budget; alphaTab's own player routes samples from a worker through the main thread
+  into the worklet, which puts the main thread on the audio path.
+- **Decision:** A dedicated synth worker runs `AlphaSynth` (TinySoundFont port) at 48 kHz and writes
+  interleaved stereo frames into a lock-free single-producer/single-consumer ring in a
+  `SharedArrayBuffer` (cross-origin isolation is on via COOP/COEP). A tiny AudioWorklet reads the
+  ring and pings the worker every 1,024 frames over a direct `MessagePort`; the worker reports
+  progress to the synthesizer and tops the ring up to 250 ms. The engine worker generates MIDI and
+  posts it straight to the synth worker over another `MessagePort`; the main thread only sends
+  commands and receives positions. The SoundFont, MIDI and synthesizer are prepared when a
+  document opens; the `AudioContext` (fixed at 48 kHz, resampled by the browser if needed) is
+  created inside the first play gesture, so browsers neither warn nor block it.
+- **Proof:** an offline test renders scores through the real host, ring and a simulated worklet and
+  asserts fundamentals (A4, C5, E5 within ±2 %) at the expected times and silence in rests.
+- **Consequences:** Main-thread jank cannot cause audio dropouts; playback continues in background
+  tabs. Requires `crossOriginIsolated` (all current browsers with the headers in place).

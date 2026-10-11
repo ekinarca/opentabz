@@ -1,0 +1,63 @@
+/**
+ * MIDI generation for playback (engine worker): alphaTab's MidiFileGenerator plus a compact
+ * timeline of when each beat sounds, used by the UI for the playback cursor.
+ */
+import * as alphaTab from '@coderline/alphatab';
+import { TIMELINE_ITEM_STRIDE, TIMELINE_SLICE_STRIDE, type PlaybackTimeline } from '../shared/playback.ts';
+
+export interface GeneratedPlayback {
+  /** alphaTab MidiFile as a cloneable object (JsonConverter.midiFileToJsObject). */
+  readonly midi: unknown;
+  readonly tickShift: number;
+  readonly transpositionPitches: readonly (readonly [number, number])[];
+  readonly timeline: PlaybackTimeline;
+}
+
+export function generatePlayback(
+  score: alphaTab.model.Score,
+  playbackId: string,
+  settings: alphaTab.Settings = new alphaTab.Settings(),
+): GeneratedPlayback {
+  const midiFile = new alphaTab.midi.MidiFile();
+  const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
+  const generator = new alphaTab.midi.MidiFileGenerator(score, settings, handler);
+  // Transposition is applied by the synthesizer per channel, like alphaTab's own player.
+  generator.applyTranspositionPitches = false;
+  generator.generate();
+
+  return {
+    midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
+    tickShift: handler.tickShift,
+    transpositionPitches: [...generator.transpositionPitches.entries()],
+    timeline: buildTimeline(generator.tickLookup, playbackId),
+  };
+}
+
+function buildTimeline(lookup: alphaTab.midi.MidiTickLookup, playbackId: string): PlaybackTimeline {
+  const bars: number[] = [];
+  const slices: number[] = [];
+  const items: number[] = [];
+  let endTick = 0;
+  for (const bar of lookup.masterBars) {
+    const firstSlice = slices.length / TIMELINE_SLICE_STRIDE;
+    let sliceCount = 0;
+    // alphaTab stores slice and beat ticks relative to the start of the played bar.
+    for (let slice = bar.firstBeat; slice !== null; slice = slice.nextBeat) {
+      const firstItem = items.length / TIMELINE_ITEM_STRIDE;
+      for (const item of slice.highlightedBeats) {
+        items.push(item.beat.id, item.beat.voice.bar.staff.track.index, bar.start + item.playbackStart);
+      }
+      slices.push(bar.start + slice.start, bar.start + slice.end, firstItem, slice.highlightedBeats.length);
+      sliceCount += 1;
+    }
+    bars.push(bar.start, bar.end, bar.masterBar.index, firstSlice, sliceCount);
+    endTick = Math.max(endTick, bar.end);
+  }
+  return {
+    playbackId,
+    endTick,
+    bars: Int32Array.from(bars),
+    slices: Int32Array.from(slices),
+    items: Int32Array.from(items),
+  };
+}

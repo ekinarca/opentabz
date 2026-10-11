@@ -118,3 +118,9 @@
 @utility ot-pop-in {
   animation: ot-pop-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
+
+/* Native range input styled to the theme (volume). */
+.ot-range {
+  accent-color: var(--ot-accent);
+  height: 4px;
+}

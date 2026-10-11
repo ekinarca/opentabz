@@ -4,8 +4,10 @@
  */
 import { summarizeScore } from '../document/summary.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
+import { generatePlayback } from '../playback/generate.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
+import type { MidiDelivery, PlaybackTimeline } from '../shared/playback.ts';
 import type {
   EngineArgs,
   EngineInfo,
@@ -37,10 +39,16 @@ export class EngineHostError extends Error {
   }
 }
 
+/** Where MIDI for the synthesizer is sent (a MessagePort in the browser). */
+export interface MidiSink {
+  postMessage(message: MidiDelivery): void;
+}
+
 export class EngineHost implements EngineMethods {
   private readonly documents = new Map<string, OpenDocument>();
   private readonly views = new Map<string, View>();
   private documentCounter = 0;
+  private synth: MidiSink | null = null;
 
   public init(_args: EngineArgs<'init'>): EngineInfo {
     const started = performance.now();
@@ -124,6 +132,26 @@ export class EngineHost implements EngineMethods {
     this.views.get(args.viewId)?.session.dispose();
     this.views.delete(args.viewId);
     return null;
+  }
+
+  public connectSynth(args: { readonly port: MidiSink }): null {
+    this.synth = args.port;
+    return null;
+  }
+
+  public preparePlayback(args: EngineArgs<'preparePlayback'>): PlaybackTimeline {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    if (this.synth === null) throw new EngineHostError('No synthesizer is connected.');
+    const playback = generatePlayback(document.score, args.playbackId);
+    this.synth.postMessage({
+      type: 'midi',
+      playbackId: args.playbackId,
+      midi: playback.midi,
+      tickShift: playback.tickShift,
+      transpositionPitches: playback.transpositionPitches,
+    });
+    return playback.timeline;
   }
 
   /** Number of open documents (for tests and diagnostics). */

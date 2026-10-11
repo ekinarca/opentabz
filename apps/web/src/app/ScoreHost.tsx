@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { getEngine } from '../engine/instance.ts';
 import { pageGeometry } from '../score-view/pagination.ts';
+import { PlaybackCursor } from '../score-view/playback-cursor.ts';
 import { ScoreView } from '../score-view/score-view.ts';
+import { usePlayer } from '../state/player.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { strings } from '../strings.ts';
 
@@ -17,6 +19,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     const scroller = scrollerRef.current;
     if (scroller === null) return undefined;
     let measured = false;
+    let cursor: PlaybackCursor | null = null;
     const view = new ScoreView(
       scroller,
       getEngine(),
@@ -32,6 +35,15 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
             // The intake mark is gone (performance buffer cleared); nothing to measure.
           }
         },
+        onLayout: () => {
+          cursor?.onLayout();
+        },
+        onScoreClick: (x, y) => {
+          const player = usePlayer.getState();
+          if (player.docKey !== key || cursor === null) return;
+          const tick = cursor.tickAt(x, y);
+          if (tick !== null) player.seek(tick);
+        },
         onError: error => {
           useDocuments.getState().notify({
             title: strings.score.renderFailed,
@@ -42,7 +54,25 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       },
     );
     viewRef.current = view;
+    cursor = new PlaybackCursor(view);
+    const playbackCursor = cursor;
+    const sync = (state: ReturnType<typeof usePlayer.getState>) => {
+      const mine = state.docKey === key;
+      playbackCursor.update(mine ? state.tick : 0, state.tempo, mine && state.transport.status === 'playing');
+    };
+    let timeline = usePlayer.getState().docKey === key ? usePlayer.getState().timeline : null;
+    playbackCursor.setTimeline(timeline);
+    const unsubscribe = usePlayer.subscribe(state => {
+      const next = state.docKey === key ? state.timeline : null;
+      if (next !== timeline) {
+        timeline = next;
+        playbackCursor.setTimeline(next);
+      }
+      sync(state);
+    });
     return () => {
+      unsubscribe();
+      playbackCursor.dispose();
       view.dispose();
       viewRef.current = null;
     };
