@@ -117,8 +117,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   golpe and unison bends (0017), a playing style per track (0018), sample-accurate events
   (0019), Guitar Pro 7+ documents read as they close (0020), "let ring" written as Guitar Pro
   writes it (0021), octave lines below the staff (0022), rests of lower voices placed below the
-  first voice (0023), 256th flags on down stems (0024) and tempo marks that keep their beat unit
-  (0025). See [docs/upstream/](docs/upstream/).
+  first voice (0023), 256th flags on down stems (0024), tempo marks that keep their beat unit
+  (0025) and staccatissimo (0026). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
@@ -130,6 +130,8 @@ All notable changes to OpenTabz are recorded here. The format follows
 - In bars with two voices, a rest of the second voice moves below the first voice instead of
   above the staff, and no longer sits on a rest of the first voice of another length.
 - A 256th note with its stem down has a 256th flag, not a 128th's.
+- Staccatissimo from Guitar Pro 7+ and MusicXML files is kept: drawn as a wedge and played at a
+  quarter of the note's length (it was dropped).
 - MusicXML tempo marks against an eighth, a half or a dotted note play at the right speed
   ("eighth = 120" played at 240 quarters a minute; dots were ignored).
 - Tempo marks are written against their beat unit, as in the file: "♩. = 60" in 6/8 rather than

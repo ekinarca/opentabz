@@ -205,6 +205,15 @@ describe('PLAY-042 staccato', () => {
       [58, 2 * QUARTER, 3 * QUARTER],
     ]);
   });
+
+  it('PLAY-042 sounds staccatissimo notes a quarter of their length (alphaTab patch 0026)', () => {
+    const notes = soundingNotes(guitar(120, ':4 3.3{sti} 3.3{st} :2 3.3{sti}').events);
+    expect(timing(notes)).toEqual([
+      [58, 0, QUARTER / 4],
+      [58, QUARTER, QUARTER + QUARTER / 2],
+      [58, 2 * QUARTER, 2 * QUARTER + QUARTER / 2],
+    ]);
+  });
 });
 
 // Fade-outs and swells: playback-realism.test.ts (PLAY-043, patch 0015).

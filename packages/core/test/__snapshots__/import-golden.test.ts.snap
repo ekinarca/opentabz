@@ -582,7 +582,7 @@ exports[`every fixture imports to the same score > musicxml-testsuite/31c-Metron
 
 exports[`every fixture imports to the same score > musicxml-testsuite/31d-Directions-Compounds.xml 1`] = `"889f88203cad4ba1"`;
 
-exports[`every fixture imports to the same score > musicxml-testsuite/32a-Notations.xml 1`] = `"0809b80e5f16bbf1"`;
+exports[`every fixture imports to the same score > musicxml-testsuite/32a-Notations.xml 1`] = `"9fce2bbcf3350ccb"`;
 
 exports[`every fixture imports to the same score > musicxml-testsuite/32b-Articulations-Texts.xml 1`] = `"67e801804611916b"`;
 

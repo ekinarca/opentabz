@@ -7,8 +7,9 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
+import { openScore } from '../src/open/open.ts';
 import {
-  type Engraving,
+  Engraving,
   engraveFixture,
   engraveTex,
   glyphs,
@@ -450,6 +451,35 @@ describe('muting, ringing and articulations', () => {
       // Parentheses around the notehead.
       expect(own.filter(mark => mark.kind === 'path' && mark.name === 'fill').length).toBe(2);
     }
+  });
+
+  it('REND-132: staccatissimo is a wedge on the side away from the stem, kept by Guitar Pro 7+ and MusicXML', () => {
+    // A B4-and-above note has its stem down, so its wedge above; below the middle line, the other way.
+    const view = engraveTex(':4 3.1{sti} 3.6{sti} 3.1{st} 3.6');
+    const wedges = view
+      .beats()
+      .map(beat => glyphs(view.drawnBy(beat)).filter(name => name.startsWith('ArticStacc')));
+    expect(wedges).toEqual([
+      ['ArticStaccatissimoAbove'],
+      ['ArticStaccatissimoBelow'],
+      ['ArticStaccatoAbove'],
+      [],
+    ]);
+    // Saved as Guitar Pro 7 and opened again: still staccatissimo.
+    const saved = new alphaTab.exporter.Gp7Exporter().export(view.score, new alphaTab.Settings());
+    const reopened = new Engraving(openScore(saved, 'staccatissimo.gp').score);
+    expect(reopened.beats().map(beat => beat.notes.map(note => note.isStaccatissimo))).toEqual([
+      [true],
+      [true],
+      [false],
+      [false],
+    ]);
+    expect(glyphs(reopened.marks).filter(name => name.startsWith('ArticStaccatissimo'))).toHaveLength(2);
+    const xml = new TextEncoder().encode(
+      '<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type><notations><articulations><staccatissimo/></articulations></notations></note></measure></part></score-partwise>',
+    );
+    const fromXml = openScore(xml, 'staccatissimo.musicxml').score;
+    expect(fromXml.tracks[0]?.staves[0]?.bars[0]?.voices[0]?.beats[0]?.notes[0]?.isStaccatissimo).toBe(true);
   });
 
   it('REND-131…REND-133: accents, heavy accents, staccato and tenuto on their notes', () => {
