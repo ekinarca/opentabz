@@ -209,7 +209,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-204 | Circled string numbers on the standard staff                                      | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-205 | Dead slap                                                                         | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-206 | Sound-change labels where sound automations fire (custom text)                    | GP  | M2  | —                                                           | —    | planned |
-| REND-207 | Bracketed comments in lyrics are hidden in the score                              | GP  | M2  | fixtures/alphatex/views/lyrics.atex | packages/core/test/notation-toggles.test.ts | done |
+| REND-207 | Bracketed comments in lyrics are hidden in the score                              | GP  | M2  | alphatex/views/lyrics.atex | packages/core/test/notation-toggles.test.ts | done |
 | REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | —                                                           | —    | planned |
 | REND-209 | Scale diagrams attached to beats (geometry, custom dots, grid spacing)            | GP  | M2  | —                                                           | —    | planned |
 | REND-210 | Show or hide tempo-automation marks                                               | GP  | M2  | —                                                           | packages/core/test/notation-toggles.test.ts, apps/web/e2e/notation-toggles.spec.ts | done |
@@ -526,11 +526,11 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-008 | Scale diagrams                                            | GP  | M5  | —       | —    | planned |
 | VIEW-009 | Note-name view                                            | OT  | M2  | —       | —    | planned |
 | VIEW-010 | Lyrics pane                                               | GP  | M2  | —       | packages/core/test/track-lyrics.test.ts, apps/web/src/instrument-view/lyrics.test.ts, apps/web/e2e/lyrics.spec.ts | done |
-| VIEW-011 | Song info / notice page                                   | GP  | M2  | fixtures/alphatex/views/lyrics.atex | apps/web/e2e/song-info.spec.ts | done |
+| VIEW-011 | Song info / notice page                                   | GP  | M2  | alphatex/views/lyrics.atex | apps/web/e2e/song-info.spec.ts | done |
 | VIEW-012 | Section navigator                                         | OT  | M2  | —       | apps/web/e2e/practice.spec.ts, apps/web/e2e/song-map.spec.ts | done |
 | VIEW-013 | Fullscreen / presentation mode                            | GP  | M2  | —       | apps/web/e2e/full-screen.spec.ts, apps/web/src/app/full-screen.test.ts | done |
 | VIEW-014 | Shortcut cheat sheet                                      | OT  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/shortcuts-doc.test.ts | done |
-| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select, click a track to make it the active one | GP  | M2  | fixtures/alphatex/demos/twelve-bar-shuffle.atex | apps/web/e2e/overview.spec.ts, packages/core/test/score-overview.test.ts | done |
+| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select, click a track to make it the active one | GP  | M2  | alphatex/demos/twelve-bar-shuffle.atex | apps/web/e2e/overview.spec.ts, packages/core/test/score-overview.test.ts | done |
 | VIEW-016 | Active-track switcher (dropdown, next/previous-track keys) | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
