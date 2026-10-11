@@ -154,7 +154,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   first page's title block line by line (shown or not, from a template such as "Music by
   %MUSIC%", aligned left, centre or right) and every page's header and footer, the first page's
   and the later ones' apart, with the score's information and the page number and count. Lines a
-  Guitar Pro file hides stay hidden, and the PDF, images and printing write the same.
+  Guitar Pro file hides stay hidden, and the PDF, images and printing write the same. The score's
+  instructions and notice can be shown under the title block, aligned as asked, in fonts of
+  their own.
 - **Concert pitch, tempo marks and lyrics.** The Staves menu's Concert pitch writes transposing
   instruments (B♭ clarinet, F horn, saxophones…) as they sound, keeping the octave a guitar or a
   tenor saxophone reads in; the stylesheet shows or hides tempo marks and lyrics. Bracketed

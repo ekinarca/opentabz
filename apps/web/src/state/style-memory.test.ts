@@ -59,6 +59,24 @@ describe('styles remembered per song', () => {
     expect(parseStyle({ ...stored, fonts: older })?.fonts.tab).toEqual(DEFAULT_SCORE_STYLE.fonts.tab);
   });
 
+  it('reads the instructions and notice shown or not (REND-041), older styles hiding them', () => {
+    const textBlocks = {
+      instructions: { visible: true, align: 'center' },
+      notices: { visible: false, align: 'right' },
+    } as const;
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, textBlocks })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)?.textBlocks).toEqual(textBlocks);
+    expect(parseStyle({ ...stored, textBlocks: { ...textBlocks, notices: { visible: 'yes' } } })).toBeNull();
+    expect(
+      parseStyle({ ...stored, textBlocks: { ...textBlocks, instructions: { visible: true, align: 'up' } } }),
+    ).toBeNull();
+    const { textBlocks: _textBlocks, ...older } = stored;
+    expect(parseStyle(older)?.textBlocks).toEqual(DEFAULT_SCORE_STYLE.textBlocks);
+  });
+
   it('keeps a song’s style for the next time it is opened', () => {
     const style = { ...DEFAULT_SCORE_STYLE, systemSeparator: true };
     rememberStyle(HASH, style);

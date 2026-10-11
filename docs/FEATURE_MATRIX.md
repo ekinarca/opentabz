@@ -89,7 +89,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-035 | Track names and short names on systems                                            | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
 | REND-036 | Track colours                                                                     | GP  | M2  | alphatab/guitarpro7/colors.gp                               | —    | planned |
 | REND-040 | Score header: title, subtitle, artist, album, words, music, copyright, tab author | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
-| REND-041 | Score header: instructions and notice                                             | GP  | M2  | —                                                           | —    | planned |
+| REND-041 | Score header: instructions and notice                                             | GP  | M2  | alphatex/views/lyrics.atex | packages/core/test/text-blocks.test.ts, apps/web/src/state/style-memory.test.ts, apps/web/e2e/header-footer.spec.ts | done |
 | REND-042 | Page header and footer (page numbers, title on following pages)                   | GP  | M0  | — | apps/web/e2e/app.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-100 | Bend (any amount, quarter-tone steps)                                             | GP  | M2  | alphatab/guitarpro7/bends.gp                                | packages/core/test/render-techniques.test.ts | done |
 | REND-101 | Bend and release                                                                  | GP  | M2  | alphatab/guitarpro7/bends.gp                                | packages/core/test/render-techniques.test.ts | done |

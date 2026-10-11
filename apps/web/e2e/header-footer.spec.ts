@@ -1,12 +1,13 @@
 /**
  * Header and footer (REND-236, REND-237): the title block's lines shown or not, written from
- * templates of the score's information and aligned; the pages' header and footer, the first
- * page's and the later ones', with the page number and count; on screen and in the PDF.
+ * templates of the score's information and aligned; the score's instructions and notice under it
+ * (REND-041); the pages' header and footer, the first page's and the later ones', with the page
+ * number and count; on screen and in the PDF.
  */
 import { readFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -74,6 +75,41 @@ test('the title block and the pages’ lines, on screen and in the PDF', async (
   expect(await pageText(1)).toContain('Twelve-Bar Shuffle in A (OpenTabz)');
   expect(await pageText(1)).not.toContain('OpenTabz');
   expect(await pageText(2)).toContain('Twelve-Bar Shuffle in A · OpenTabz');
+});
+
+test('the instructions and notice under the title block, on screen and in the PDF', async ({ page }) => {
+  const instructions = 'Sing the verse softly, the chorus out loud.';
+  const notice = 'Words and music written for the OpenTabz tests.';
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/lyrics.atex')]);
+  await expectScore(page);
+  // Long lines may wrap on a phone: the words are read in order.
+  const written = async () => (await scoreTexts(page)).join(' ');
+  await expect.poll(written).toContain('Lyrics Views');
+  expect(await written()).not.toContain(instructions);
+  await page.getByRole('region', { name: /^Score/ }).focus();
+  await page.keyboard.press('F7');
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('checkbox', { name: 'Instructions', exact: true }).check();
+  await expect.poll(written).toContain(instructions);
+  expect(await written()).not.toContain(notice);
+  await dialog.getByRole('checkbox', { name: 'Notice', exact: true }).check();
+  await expect.poll(written).toContain(notice);
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('dialog', { name: 'Export' }).getByRole('button', { name: 'Export PDF' }).click();
+  const pdf = await getDocument({
+    data: new Uint8Array(await readFile(await (await download).path())),
+    useSystemFonts: false,
+  }).promise;
+  const firstPage = (await (await pdf.getPage(1)).getTextContent()).items
+    .flatMap(item => ('str' in item ? [item.str] : []))
+    .join(' ')
+    .replace(/\s+/g, ' ');
+  expect(firstPage).toContain(instructions);
+  expect(firstPage).toContain(notice);
 });
 
 test('each kind of text in the font, size and style chosen (REND-238)', async ({ page }) => {

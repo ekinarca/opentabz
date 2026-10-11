@@ -12,6 +12,7 @@ import {
   STYLE_SCALE,
   STYLE_SPACING,
   TEXT_ALIGNS,
+  TEXT_BLOCKS,
   TEXT_ELEMENTS,
   TEXT_ORIENTATIONS,
   TITLE_ELEMENTS,
@@ -19,6 +20,7 @@ import {
   TRACK_NAME_TEXTS,
   type PageFurniture,
   type ScoreStyle,
+  type TextBlocks,
   type TextFonts,
   type TitleBlock,
 } from '@opentabz/core/shared';
@@ -54,6 +56,20 @@ function parseTitleBlock(value: unknown, fallback: TitleBlock): TitleBlock | nul
   });
   if (lines.some(line => line === null)) return null;
   return Object.fromEntries(lines.filter(line => line !== null)) as unknown as TitleBlock;
+}
+
+/** Stored text blocks (REND-041), or null; blocks it lacks come from `fallback`. */
+function parseTextBlocks(value: unknown, fallback: TextBlocks): TextBlocks | null {
+  if (!isRecord(value)) return null;
+  const blocks = TEXT_BLOCKS.map(id => {
+    const block = value[id];
+    if (block === undefined) return [id, fallback[id]] as const;
+    if (!isRecord(block) || typeof block['visible'] !== 'boolean') return null;
+    const align = oneOf(block['align'], TEXT_ALIGNS);
+    return align === null ? null : ([id, { visible: block['visible'], align }] as const);
+  });
+  if (blocks.some(block => block === null)) return null;
+  return Object.fromEntries(blocks.filter(block => block !== null)) as unknown as TextBlocks;
 }
 
 /** Stored fonts, or null; kinds of text it lacks come from `fallback`. */
@@ -94,7 +110,8 @@ function parsePages(value: unknown): PageFurniture | null {
 
 /**
  * A stored style, or null if any of it is broken or out of range. What styles stored by older
- * versions lack (the title block, the pages' lines, chord spelling) comes from `fallback`.
+ * versions lack (the title block, the text blocks, the pages' lines, chord spelling, fonts) comes
+ * from `fallback`.
  */
 export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_STYLE): ScoreStyle | null {
   if (typeof value !== 'object' || value === null) return null;
@@ -134,7 +151,16 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   const chordSpelling =
     raw.chordSpelling === undefined ? fallback.chordSpelling : oneOf(raw.chordSpelling, CHORD_SPELLINGS);
   const fonts = raw.fonts === undefined ? fallback.fonts : parseFonts(raw.fonts, fallback.fonts);
-  if (titleBlock === null || pages === null || chordSpelling === null || fonts === null) return null;
+  const textBlocks =
+    raw.textBlocks === undefined ? fallback.textBlocks : parseTextBlocks(raw.textBlocks, fallback.textBlocks);
+  if (
+    titleBlock === null ||
+    textBlocks === null ||
+    pages === null ||
+    chordSpelling === null ||
+    fonts === null
+  )
+    return null;
   return {
     ...DEFAULT_SCORE_STYLE,
     ...Object.fromEntries(flags.map(flag => [flag, raw[flag] === true])),
@@ -143,6 +169,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     ),
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
     titleBlock,
+    textBlocks,
     pages,
     chordSpelling,
     fonts,

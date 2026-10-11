@@ -1,10 +1,12 @@
 import {
   PAGE_LINES,
   TEXT_ALIGNS,
+  TEXT_BLOCKS,
   TITLE_ELEMENTS,
   type PageLine,
   type ScoreStyle,
   type TextAlign,
+  type TextBlock,
   type TitleLine,
 } from '@opentabz/core/shared';
 import { SegmentedControl } from '@opentabz/ui';
@@ -76,8 +78,9 @@ function AlignControl({
 }
 
 /**
- * The title block's lines (shown or not, their text and alignment) and the pages' header and
- * footer, the first page's and the later ones' (REND-236, REND-237).
+ * The title block's lines (shown or not, their text and alignment), the instructions and notice
+ * under it (REND-041), and the pages' header and footer, the first page's and the later ones'
+ * (REND-236, REND-237).
  */
 export function HeaderFooterSection({
   style,
@@ -88,6 +91,9 @@ export function HeaderFooterSection({
 }) {
   const setTitleLine = (element: (typeof TITLE_ELEMENTS)[number], patch: Partial<TitleLine>) => {
     set({ titleBlock: { ...style.titleBlock, [element]: { ...style.titleBlock[element], ...patch } } });
+  };
+  const setTextBlock = (block: (typeof TEXT_BLOCKS)[number], patch: Partial<TextBlock>) => {
+    set({ textBlocks: { ...style.textBlocks, [block]: { ...style.textBlocks[block], ...patch } } });
   };
   const setPageLine = (line: (typeof PAGE_LINES)[number], patch: Partial<PageLine>) => {
     set({ pages: { ...style.pages, [line]: { ...style.pages[line], ...patch } } });
@@ -140,6 +146,45 @@ export function HeaderFooterSection({
             })}
           </tbody>
         </table>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] border-collapse text-[13px]">
+          <caption className="mb-1 text-left text-[13px] font-medium text-ink">{s.blocks}</caption>
+          <tbody>
+            {TEXT_BLOCKS.map(block => {
+              const shown = style.textBlocks[block];
+              const name = s.blockNames[block];
+              return (
+                <tr key={block} className="border-b border-line/60 last:border-0">
+                  <th scope="row" className="py-1.5 pr-2 text-left font-normal text-ink">
+                    <label className="flex items-center gap-2 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={shown.visible}
+                        onChange={event => {
+                          setTextBlock(block, { visible: event.target.checked });
+                        }}
+                        className="size-4 accent-[var(--ot-accent)]"
+                      />
+                      {name}
+                    </label>
+                  </th>
+                  <td className="w-full py-1.5 pr-2" />
+                  <td className="py-1.5">
+                    <AlignControl
+                      label={s.align(name)}
+                      value={shown.align}
+                      onChange={align => {
+                        setTextBlock(block, { align });
+                      }}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="mt-1 text-[12px] text-ink-faint">{s.blockHint}</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] border-collapse text-[13px]">

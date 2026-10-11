@@ -5,7 +5,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { spellChord, type ChordSpelling } from '../shared/chord-spelling.ts';
-import { DEFAULT_PAGE_FURNITURE } from '../shared/page-text.ts';
+import { DEFAULT_PAGE_FURNITURE, DEFAULT_TEXT_BLOCKS } from '../shared/page-text.ts';
 import { DEFAULT_TEXT_FONTS } from '../shared/text-fonts.ts';
 import { applyTextFonts } from './text-fonts.ts';
 import {
@@ -81,6 +81,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     hideEmptyStaves: sheet.hideEmptyStaves,
     hideEmptyStavesInFirstSystem: sheet.hideEmptyStavesInFirstSystem,
     titleBlock: readTitleBlock(score),
+    // Nor does it read whether Guitar Pro shows the instructions and notice: they start hidden.
+    textBlocks: DEFAULT_TEXT_BLOCKS,
     // alphaTab reads no fonts from Guitar Pro files: the texts start in its own.
     fonts: DEFAULT_TEXT_FONTS,
     // Guitar Pro's page numbers are not among what alphaTab reads: the pages start as ours.
@@ -180,11 +182,13 @@ export function applyScoreStyle(
         sheet.hideEmptyStavesInFirstSystem = style.hideEmptyStavesInFirstSystem;
         break;
       // Settings of the renderer rather than the score (see applyStyleSettings), the title block
-      // (applied whole below) and the pages' lines (drawn by the paged view, not the engine).
+      // (applied whole below), the text blocks (written by the session) and the pages' lines
+      // (drawn by the paged view, not the engine).
       case 'scale':
       case 'keepTextSize':
       case 'spacing':
       case 'titleBlock':
+      case 'textBlocks':
       case 'pages':
       case 'chordSpelling':
       case 'tempoMarks':

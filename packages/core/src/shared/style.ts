@@ -6,10 +6,13 @@ import type { ChordSpelling } from './chord-spelling.ts';
 import { DEFAULT_TEXT_FONTS, sameTextFonts, type TextFonts } from './text-fonts.ts';
 import {
   DEFAULT_PAGE_FURNITURE,
+  DEFAULT_TEXT_BLOCKS,
   DEFAULT_TITLE_BLOCK,
   samePageFurniture,
+  sameTextBlocks,
   sameTitleBlock,
   type PageFurniture,
+  type TextBlocks,
   type TitleBlock,
 } from './page-text.ts';
 
@@ -69,6 +72,8 @@ export interface ScoreStyle {
   readonly hideEmptyStavesInFirstSystem: boolean;
   /** The lines of the title block on the first page (REND-236, REND-237). */
   readonly titleBlock: TitleBlock;
+  /** The instructions and the notice under the title block, if shown (REND-041). */
+  readonly textBlocks: TextBlocks;
   /** The pages' running header and footer, the first page's and the later ones' (REND-237). */
   readonly pages: PageFurniture;
   /** The font of each kind of text (REND-238). */
@@ -104,6 +109,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   hideEmptyStaves: false,
   hideEmptyStavesInFirstSystem: false,
   titleBlock: DEFAULT_TITLE_BLOCK,
+  textBlocks: DEFAULT_TEXT_BLOCKS,
   pages: DEFAULT_PAGE_FURNITURE,
   fonts: DEFAULT_TEXT_FONTS,
 };
@@ -114,6 +120,8 @@ function sameSetting(a: ScoreStyle, b: ScoreStyle, key: keyof ScoreStyle): boole
   switch (key) {
     case 'titleBlock':
       return sameTitleBlock(a.titleBlock, b.titleBlock);
+    case 'textBlocks':
+      return sameTextBlocks(a.textBlocks, b.textBlocks);
     case 'pages':
       return samePageFurniture(a.pages, b.pages);
     case 'fonts':

@@ -16,13 +16,14 @@ import {
   type PartialLayout,
   type ViewOptions,
 } from '../shared/view.ts';
-import type { ScoreBounds } from '../shared/playback.ts';
+import { BOUNDS_BAR_RECT_STRIDE, BOUNDS_SYSTEM_STRIDE, type ScoreBounds } from '../shared/playback.ts';
 import { extractBounds } from './bounds.ts';
 import { createRenderSettings } from './settings.ts';
 import { applyLetRingThroughout } from './let-ring.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyNoteColors } from './note-colors.ts';
 import { applyReadingAids } from './reading-aids.ts';
+import { layoutTextBlocks } from './text-blocks.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
 
 export interface LayoutResult {
@@ -47,6 +48,9 @@ export class RenderSessionError extends Error {
   }
 }
 
+/** Ids of the text blocks' partials, unique across layouts and sessions. */
+let textBlockSerial = 0;
+
 export class RenderSession {
   private readonly renderer: alphaTab.rendering.ScoreRenderer;
   private readonly score: alphaTab.model.Score;
@@ -54,6 +58,8 @@ export class RenderSession {
   private generation = 0;
   private collected: alphaTab.rendering.RenderFinishedEventArgs[] = [];
   private painted: PaintedPartial[] = [];
+  /** The instructions and notice of the current layout, painted with it (REND-041). */
+  private textBlocks: PaintedPartial | null = null;
   private finished: alphaTab.rendering.RenderFinishedEventArgs | null = null;
   private failure: Error | null = null;
   private disposed = false;
@@ -112,7 +118,10 @@ export class RenderSession {
     this.painted = [];
     this.failure = null;
     this.withStaffDisplay(() => {
-      for (const id of ids) this.renderer.renderResult(id);
+      for (const id of ids) {
+        if (id === this.textBlocks?.id) this.painted.push(this.textBlocks);
+        else this.renderer.renderResult(id);
+      }
     });
     const failure = this.takeFailure();
     if (failure !== null) throw new RenderSessionError('Painting the score failed.', { cause: failure });
@@ -137,17 +146,51 @@ export class RenderSession {
   private end(layoutMs: number): LayoutResult {
     const failure = this.takeFailure();
     if (failure !== null) throw new RenderSessionError('Laying out the score failed.', { cause: failure });
-    const partials = classify(this.collected);
+    const laidOut = classify(this.collected);
     const finished = this.finished;
-    const width = finished?.totalWidth ?? Math.max(0, ...partials.map(p => p.x + p.width));
-    const height = finished?.totalHeight ?? Math.max(0, ...partials.map(p => p.y + p.height));
+    const width = finished?.totalWidth ?? Math.max(0, ...laidOut.map(p => p.x + p.width));
+    const height = finished?.totalHeight ?? Math.max(0, ...laidOut.map(p => p.y + p.height));
     this.collected = [];
+    const bounds = extractBounds(this.renderer.boundsLookup);
+    const { style } = this.options;
+    const blocks =
+      style === undefined || this.options.layout === 'horizontal'
+        ? null
+        : layoutTextBlocks(this.score, style, this.renderer.settings, this.options.width);
+    this.textBlocks = null;
+    if (blocks === null)
+      return { generation: this.generation, width, height, partials: laidOut, bounds, layoutMs };
+
+    // The blocks go under the title block, and what follows moves down to make room.
+    textBlockSerial += 1;
+    this.textBlocks = { id: `ot-text-blocks-${textBlockSerial}`, svg: blocks.svg };
+    const headers = laidOut.filter(partial => partial.kind === 'header');
+    const top =
+      headers.length > 0
+        ? Math.max(...headers.map(partial => partial.y + partial.height))
+        : (laidOut.find(partial => partial.kind === 'system')?.y ?? 0);
+    const partials = laidOut.map(partial =>
+      partial.y >= top ? { ...partial, y: partial.y + blocks.height } : partial,
+    );
+    const block: PartialLayout = {
+      id: this.textBlocks.id,
+      kind: 'header',
+      x: 0,
+      y: top,
+      width: this.options.width,
+      height: blocks.height,
+      firstBar: -1,
+      lastBar: -1,
+    };
+    // Right after the last header, or first of all.
+    const lastHeader = partials.findLastIndex(partial => partial.kind === 'header');
+    partials.splice(lastHeader + 1, 0, block);
     return {
       generation: this.generation,
       width,
-      height,
+      height: height + blocks.height,
       partials,
-      bounds: extractBounds(this.renderer.boundsLookup),
+      bounds: moveDown(bounds, top, blocks.height),
       layoutMs,
     };
   }
@@ -234,6 +277,24 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.bars?.last === b.bars?.last &&
     sameIndexes(a.trackIndexes, b.trackIndexes)
   );
+}
+
+/** Bounds with whatever lies at or below `top` moved down by `by`. */
+function moveDown(bounds: ScoreBounds, top: number, by: number): ScoreBounds {
+  const move = (rects: Float32Array, stride: number): Float32Array => {
+    const moved = rects.slice();
+    // The second of each rectangle's values is its top.
+    for (let i = 1; i < moved.length; i += stride) {
+      const y = moved[i] ?? 0;
+      if (y >= top) moved[i] = y + by;
+    }
+    return moved;
+  };
+  return {
+    ...bounds,
+    systems: move(bounds.systems, BOUNDS_SYSTEM_STRIDE),
+    barRect: move(bounds.barRect, BOUNDS_BAR_RECT_STRIDE),
+  };
 }
 
 function validTrackIndexes(score: alphaTab.model.Score, indexes: readonly number[]): number[] {

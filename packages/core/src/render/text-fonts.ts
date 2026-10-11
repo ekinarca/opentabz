@@ -25,6 +25,9 @@ const ELEMENTS: Readonly<Record<TextElement, readonly alphaTab.NotationElement[]
   album: [N.ScoreAlbum],
   credits: [N.ScoreWords, N.ScoreMusic, N.ScoreWordsAndMusic],
   copyright: [N.ScoreCopyright],
+  // Written by the render session (text-blocks.ts), not by alphaTab.
+  instructions: [],
+  notices: [],
   // Written by the paged view and the print module, not by alphaTab.
   pageHeader: [],
   pageFooter: [],

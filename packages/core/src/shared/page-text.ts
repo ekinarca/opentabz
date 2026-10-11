@@ -157,6 +157,30 @@ export const DEFAULT_TITLE_BLOCK: TitleBlock = {
   },
 };
 
+/**
+ * Guitar Pro's optional blocks of free text under the title block (REND-041): the score's
+ * instructions and its notice, as written in the score's information.
+ */
+export const TEXT_BLOCKS = ['instructions', 'notices'] as const;
+export type TextBlockId = (typeof TEXT_BLOCKS)[number];
+
+export interface TextBlock {
+  readonly visible: boolean;
+  readonly align: TextAlign;
+}
+
+export type TextBlocks = Readonly<Record<TextBlockId, TextBlock>>;
+
+/** Off until the stylesheet shows them, as in Guitar Pro. */
+export const DEFAULT_TEXT_BLOCKS: TextBlocks = {
+  instructions: { visible: false, align: 'left' },
+  notices: { visible: false, align: 'left' },
+};
+
+export function sameTextBlocks(a: TextBlocks, b: TextBlocks): boolean {
+  return TEXT_BLOCKS.every(id => a[id].visible === b[id].visible && a[id].align === b[id].align);
+}
+
 export function samePageFurniture(a: PageFurniture, b: PageFurniture): boolean {
   return PAGE_LINES.every(line => a[line].template === b[line].template && a[line].align === b[line].align);
 }
