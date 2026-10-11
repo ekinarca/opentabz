@@ -3,11 +3,11 @@
  * tracks, staves, systems and paper) in an engine view of its own, then painted a page at a time.
  */
 import type { Sheet } from '@opentabz/core/print';
-import type { BarRange } from '@opentabz/core/shared';
+import { DEFAULT_PAGE_FURNITURE, pageLines, type BarRange } from '@opentabz/core/shared';
 import { getEngine } from '../engine/instance.ts';
 import { contentWidth, pageGeometry, paginate, type Size } from '../score-view/pagination.ts';
 import type { OpenDocument } from '../state/documents.ts';
-import { strings } from '../strings.ts';
+import { scoreFields } from '../state/score-fields.ts';
 
 export interface PagedScore {
   readonly pageCount: number;
@@ -21,7 +21,7 @@ export interface PagedScore {
 
 let exportViews = 0;
 
-/** The title the paged view shows in the running header. */
+/** The score's title, or its file's name: what PDFs are called and say they are. */
 export function scoreTitle(doc: OpenDocument): string {
   return doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
 }
@@ -43,12 +43,13 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
       staves: doc.view.staves,
       width: contentWidth(geometry),
       notationScale: 1,
-      style: doc.view.style,
+      // The pages' header and footer are drawn on the sheets, not by the engine.
+      style: { ...doc.view.style, pages: DEFAULT_PAGE_FURNITURE },
       ...(bars === null ? {} : { bars }),
     },
   });
   const sheets = paginate(layout.partials, geometry);
-  const title = scoreTitle(doc);
+  const fields = scoreFields(doc);
   const pageCount = sheets.pages.length;
   let closed = false;
 
@@ -73,8 +74,8 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
           x: placement.x - page.x,
           y: placement.y - page.y,
         })),
-        header: index > 0 && title.length > 0 ? title : null,
-        footer: strings.score.pageNumber(index + 1, pageCount),
+        ...pageLines(doc.view.style.pages, fields, index + 1, pageCount),
+        margins: { left: geometry.margins.left, right: geometry.margins.right },
       };
     },
     close() {

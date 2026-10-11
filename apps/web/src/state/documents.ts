@@ -141,7 +141,7 @@ async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): 
     return;
   }
   const stored = recallMix(hash, trackCount);
-  const style = recallStyle(hash);
+  const style = recallStyle(hash, useDocuments.getState().docs.find(doc => doc.key === key)?.summary.style);
   useDocuments.setState(state => ({
     docs: state.docs.map(doc =>
       doc.key === key

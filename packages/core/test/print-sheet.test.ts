@@ -13,7 +13,7 @@ import { openScore } from '../src/open/open.ts';
 import { readDrawing, walkDrawing, type DrawOp } from '../src/print/drawing.ts';
 import { MUSIC_FONT_SIZE, musicGlyph, placeSymbols } from '../src/print/glyphs.ts';
 import { parsePath, pathBounds } from '../src/print/path.ts';
-import { sheetSvg, UNITS_PER_MM, type Sheet } from '../src/print/sheet.ts';
+import { pageTexts, sheetSvg, UNITS_PER_MM, type Sheet } from '../src/print/sheet.ts';
 import { RenderSession } from '../src/render/session.ts';
 import { PRINT_PALETTE, SCORE_COLOR_SENTINELS } from '../src/shared/score-colors.ts';
 import type { ViewOptions } from '../src/shared/view.ts';
@@ -263,8 +263,8 @@ describe('sheets as SVG pages', () => {
       width: 210 * UNITS_PER_MM,
       height: 297 * UNITS_PER_MM,
       partials: painted.map(({ partial, svg }) => ({ svg, x: 45.4 + partial.x, y: 56.7 + partial.y })),
-      header,
-      footer: 'Page 1 of 1',
+      header: header === null ? null : { text: header, align: 'center' },
+      footer: { text: 'Page 1 of 1', align: 'center' },
     };
   }
 
@@ -323,5 +323,30 @@ describe('sheets as SVG pages', () => {
       { palette: PRINT_PALETTE, background: null, idPrefix: '' },
     );
     expect(svg).toContain('fill="#FF0000" fill-opacity="0.5"');
+  });
+});
+
+describe('page texts (REND-237)', () => {
+  it('aligns the header and footer to the margins or the middle', () => {
+    const texts = pageTexts({
+      width: 800,
+      height: 1000,
+      partials: [],
+      header: { text: 'Title · Artist', align: 'left' },
+      footer: { text: 'Page 2 of 3', align: 'right' },
+      margins: { left: 40, right: 50 },
+    });
+    expect(texts.map(text => [text.text, text.x, text.anchor])).toEqual([
+      ['Title · Artist', 40, 'start'],
+      ['Page 2 of 3', 750, 'end'],
+    ]);
+    const centred = pageTexts({
+      width: 800,
+      height: 1000,
+      partials: [],
+      header: null,
+      footer: { text: '1', align: 'center' },
+    });
+    expect(centred.map(text => [text.x, text.anchor])).toEqual([[400, 'middle']]);
   });
 });

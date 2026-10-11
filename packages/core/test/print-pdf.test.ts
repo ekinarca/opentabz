@@ -114,8 +114,8 @@ function sheetsOf(path: string, trackIndexes: readonly number[] = [0]): Sheet[] 
     return pages.map((partials, index) => ({
       ...A4,
       partials,
-      header: index > 0 ? 'Twelve-Bar Shuffle in A' : null,
-      footer: `${index + 1} / ${pages.length}`,
+      header: index > 0 ? { text: 'Twelve-Bar Shuffle in A', align: 'center' as const } : null,
+      footer: { text: `${index + 1} / ${pages.length}`, align: 'center' as const },
     }));
   } finally {
     session.dispose();

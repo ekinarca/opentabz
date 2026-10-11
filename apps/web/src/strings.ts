@@ -4,12 +4,16 @@
  */
 import type {
   BracketMode,
+  ChordSpelling,
   FormatId,
   LayoutKind,
   OpenError,
+  PageLineId,
   StaffDisplay,
   SystemsLayout,
+  TextAlign,
   TextOrientation,
+  TitleElement,
   TrackNamePlace,
   TrackNameText,
 } from '@opentabz/core/shared';
@@ -409,6 +413,47 @@ export const strings = {
       systems: 'Systems',
       names: 'Track names',
       notation: 'Notation',
+      headerFooter: 'Header and footer',
+    },
+    chordSpelling: 'Chord names',
+    chordSpellings: {
+      written: 'As written',
+      classic: 'Classic',
+      jazz: 'Jazz',
+      rock: 'Rock',
+    } satisfies Record<ChordSpelling, string>,
+    chordSpellingHints: {
+      written: 'Chord names as the file writes them.',
+      classic: 'Cmaj7, Cm7, Cm7b5, Cdim, Caug.',
+      jazz: 'CΔ7, C-7, Cø7, C°, C+.',
+      rock: 'CM7, Cm7, Cm7(b5), Cdim, C+.',
+    } satisfies Record<ChordSpelling, string>,
+    headerFooter: {
+      titleBlock: 'Title block on the first page',
+      pageLines: 'On every page',
+      elements: {
+        title: 'Title',
+        subtitle: 'Subtitle',
+        artist: 'Artist',
+        album: 'Album',
+        words: 'Words',
+        music: 'Music',
+        wordsAndMusic: 'Words and music',
+        tabber: 'Transcriber',
+        copyright: 'Copyright',
+        copyright2: 'Second copyright line',
+      } satisfies Record<TitleElement, string>,
+      lines: {
+        firstHeader: 'First page header',
+        firstFooter: 'First page footer',
+        laterHeader: 'Later pages header',
+        laterFooter: 'Later pages footer',
+      } satisfies Record<PageLineId, string>,
+      aligns: { left: 'Left', center: 'Centre', right: 'Right' } satisfies Record<TextAlign, string>,
+      text: (line: string) => `Text of ${line}`,
+      align: (line: string) => `Alignment of ${line}`,
+      tokens:
+        'Write the score’s information with %TITLE%, %SUBTITLE%, %ARTIST%, %ALBUM%, %WORDS%, %MUSIC%, %WORDSMUSIC%, %TABBER% and %COPYRIGHT%; pages also with %PAGE% and %PAGES%. A line whose information is missing is left out.',
     },
     scale: 'Scale',
     scaleValue: (scale: number) => `${Math.round(scale * 100)} %`,
@@ -525,7 +570,6 @@ export const strings = {
 
   score: {
     region: (title: string) => `Score: ${title}`,
-    pageNumber: (page: number, pages: number) => `${page} / ${pages}`,
     untitled: 'Untitled',
     backToCursor: 'Back to the music',
     renderFailed: 'The score couldn’t be displayed',

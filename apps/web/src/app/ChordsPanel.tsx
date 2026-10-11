@@ -1,7 +1,7 @@
 import { IconButton, cx } from '@opentabz/ui';
 import { X } from 'lucide-react';
 import { useMemo, useSyncExternalStore } from 'react';
-import type { ChordShape } from '@opentabz/core/shared';
+import { spellChord, type ChordShape } from '@opentabz/core/shared';
 import { beatsUntil, chordChanges, chordsAt, type ChordChange } from '../instrument-view/chords.ts';
 import { useTrackChords } from '../instrument-view/use-track-notes.ts';
 import type { OpenDocument } from '../state/documents.ts';
@@ -63,7 +63,12 @@ export function ChordsPanel({ doc }: { readonly doc: OpenDocument }) {
   );
   const read = useMemo(() => chordsReader(doc, changes), [doc, changes]);
   const shown = useSyncExternalStore(usePlayer.subscribe, read);
-  const chords = trackChords?.chords ?? [];
+  // Spelled as the stylesheet asks, as in the score (REND-226).
+  const spelling = doc.view.style.chordSpelling;
+  const chords = useMemo(
+    () => (trackChords?.chords ?? []).map(chord => ({ ...chord, name: spellChord(chord.name, spelling) })),
+    [trackChords, spelling],
+  );
   const trackName = track === undefined ? '' : track.name.trim().length > 0 ? track.name : track.shortName;
   const chordAt = (index: number | null): ChordShape | null =>
     index === null ? null : (chords[index] ?? null);

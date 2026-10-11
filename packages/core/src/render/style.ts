@@ -4,6 +4,8 @@
  * is applied, so the per-track settings a file makes stay until the setting is changed for all.
  */
 import * as alphaTab from '@coderline/alphatab';
+import { spellChord, type ChordSpelling } from '../shared/chord-spelling.ts';
+import { DEFAULT_PAGE_FURNITURE } from '../shared/page-text.ts';
 import {
   styleChanges,
   type BracketMode,
@@ -12,6 +14,7 @@ import {
   type TrackNamePlace,
   type TrackNameText,
 } from '../shared/style.ts';
+import { applyTitleBlock, applyTitleBlockSettings, readTitleBlock } from './title-block.ts';
 
 const { BracketExtendMode, TrackNameMode, TrackNameOrientation, TrackNamePolicy } = alphaTab.model;
 
@@ -61,6 +64,7 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     chordDiagramsOnTop:
       sheet.globalDisplayChordDiagramsOnTop && !noneOf(sheet.perTrackChordDiagramsOnTop, tracks),
     chordDiagramsInScore: sheet.globalDisplayChordDiagramsInScore,
+    chordSpelling: 'written',
     singleTrackNames: keyOf(PLACES, sheet.singleTrackTrackNamePolicy, 'first'),
     multiTrackNames: keyOf(PLACES, sheet.multiTrackTrackNamePolicy, 'first'),
     firstSystemNames: keyOf(TEXTS, sheet.firstSystemTrackNameMode, 'short'),
@@ -72,6 +76,9 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
       (tracks.length > 0 && restsPerTrack !== null && tracks.every(track => restsPerTrack.has(track.index))),
     hideEmptyStaves: sheet.hideEmptyStaves,
     hideEmptyStavesInFirstSystem: sheet.hideEmptyStavesInFirstSystem,
+    titleBlock: readTitleBlock(score),
+    // Guitar Pro's page numbers are not among what alphaTab reads: the pages start as ours.
+    pages: DEFAULT_PAGE_FURNITURE,
   };
 }
 
@@ -166,15 +173,40 @@ export function applyScoreStyle(
       case 'hideEmptyStavesInFirstSystem':
         sheet.hideEmptyStavesInFirstSystem = style.hideEmptyStavesInFirstSystem;
         break;
-      // Settings of the renderer rather than the score (see applyStyleSettings).
+      // Settings of the renderer rather than the score (see applyStyleSettings), the title block
+      // (applied whole below) and the pages' lines (drawn by the paged view, not the engine).
       case 'scale':
       case 'keepTextSize':
       case 'spacing':
+      case 'titleBlock':
+      case 'pages':
+      case 'chordSpelling':
         break;
     }
   }
+  const restoreTitleBlock = applyTitleBlock(score, style.titleBlock);
+  const restoreChords = respellChords(score, style.chordSpelling);
   return () => {
+    restoreChords();
+    restoreTitleBlock();
     Object.assign(sheet, saved);
+  };
+}
+
+/** Writes every chord's name in a style, returning what writes them back as they were. */
+function respellChords(score: alphaTab.model.Score, spelling: ChordSpelling): () => void {
+  if (spelling === 'written') return () => undefined;
+  const written: [alphaTab.model.Chord, string][] = [];
+  for (const track of score.tracks) {
+    for (const staff of track.staves) {
+      for (const chord of staff.chords?.values() ?? []) {
+        written.push([chord, chord.name]);
+        chord.name = spellChord(chord.name, spelling);
+      }
+    }
+  }
+  return () => {
+    for (const [chord, name] of written) chord.name = name;
   };
 }
 
@@ -184,6 +216,7 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   display.scale *= style.scale;
   display.stretchForce = style.spacing;
   settings.notation.elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
+  applyTitleBlockSettings(settings, style.titleBlock);
   if (style.keepTextSize && style.scale !== 1) {
     // The renderer scales text with the score: text drawn at its size divided by the scale stays put.
     const fonts = display.resources.elementFonts;

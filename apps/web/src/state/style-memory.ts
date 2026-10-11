@@ -5,13 +5,19 @@
  */
 import {
   BRACKET_MODES,
+  CHORD_SPELLINGS,
   DEFAULT_SCORE_STYLE,
+  PAGE_LINES,
   STYLE_SCALE,
   STYLE_SPACING,
+  TEXT_ALIGNS,
   TEXT_ORIENTATIONS,
+  TITLE_ELEMENTS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  type PageFurniture,
   type ScoreStyle,
+  type TitleBlock,
 } from '@opentabz/core/shared';
 
 export const STYLE_STORAGE_KEY = 'opentabz.style.v1';
@@ -26,8 +32,44 @@ function within(value: unknown, range: { readonly min: number; readonly max: num
   return typeof value === 'number' && value >= range.min && value <= range.max ? value : null;
 }
 
-/** A stored style, or null if any of it is missing or out of range. */
-export function parseStyle(value: unknown): ScoreStyle | null {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** A stored title block, or null; lines it lacks come from `fallback`. */
+function parseTitleBlock(value: unknown, fallback: TitleBlock): TitleBlock | null {
+  if (!isRecord(value)) return null;
+  const lines = TITLE_ELEMENTS.map(element => {
+    const line = value[element];
+    if (line === undefined) return [element, fallback[element]] as const;
+    if (!isRecord(line) || typeof line['visible'] !== 'boolean' || typeof line['template'] !== 'string')
+      return null;
+    const align = oneOf(line['align'], TEXT_ALIGNS);
+    return align === null
+      ? null
+      : ([element, { visible: line['visible'], template: line['template'], align }] as const);
+  });
+  if (lines.some(line => line === null)) return null;
+  return Object.fromEntries(lines.filter(line => line !== null)) as unknown as TitleBlock;
+}
+
+function parsePages(value: unknown): PageFurniture | null {
+  if (!isRecord(value)) return null;
+  const lines = PAGE_LINES.map(id => {
+    const line = value[id];
+    if (!isRecord(line) || typeof line['template'] !== 'string') return null;
+    const align = oneOf(line['align'], TEXT_ALIGNS);
+    return align === null ? null : ([id, { template: line['template'], align }] as const);
+  });
+  if (lines.some(line => line === null)) return null;
+  return Object.fromEntries(lines.filter(line => line !== null)) as unknown as PageFurniture;
+}
+
+/**
+ * A stored style, or null if any of it is broken or out of range. What styles stored by older
+ * versions lack (the title block, the pages' lines, chord spelling) comes from `fallback`.
+ */
+export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_STYLE): ScoreStyle | null {
   if (typeof value !== 'object' || value === null) return null;
   const raw = value as Partial<Record<keyof ScoreStyle, unknown>>;
   const flags = [
@@ -56,15 +98,27 @@ export function parseStyle(value: unknown): ScoreStyle | null {
     otherSystemNamesOrientation: oneOf(raw.otherSystemNamesOrientation, TEXT_ORIENTATIONS),
   };
   if (Object.values(style).some(entry => entry === null)) return null;
+  const titleBlock =
+    raw.titleBlock === undefined ? fallback.titleBlock : parseTitleBlock(raw.titleBlock, fallback.titleBlock);
+  const pages = raw.pages === undefined ? fallback.pages : parsePages(raw.pages);
+  const chordSpelling =
+    raw.chordSpelling === undefined ? fallback.chordSpelling : oneOf(raw.chordSpelling, CHORD_SPELLINGS);
+  if (titleBlock === null || pages === null || chordSpelling === null) return null;
   return {
     ...DEFAULT_SCORE_STYLE,
     ...Object.fromEntries(flags.map(flag => [flag, raw[flag] === true])),
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
+    titleBlock,
+    pages,
+    chordSpelling,
   };
 }
 
 /** Remembered styles, most recently used last; anything unreadable is left out. */
-export function parseStyleMemory(raw: string | null): Map<string, ScoreStyle> {
+export function parseStyleMemory(
+  raw: string | null,
+  fallback: ScoreStyle = DEFAULT_SCORE_STYLE,
+): Map<string, ScoreStyle> {
   const memory = new Map<string, ScoreStyle>();
   if (raw === null) return memory;
   try {
@@ -72,7 +126,7 @@ export function parseStyleMemory(raw: string | null): Map<string, ScoreStyle> {
     if (typeof value !== 'object' || value === null) return memory;
     for (const [hash, entry] of Object.entries(value as Record<string, unknown>)) {
       if (!/^[0-9a-f]{64}$/.test(hash)) continue;
-      const style = parseStyle(entry);
+      const style = parseStyle(entry, fallback);
       if (style !== null) memory.set(hash, style);
     }
   } catch {
@@ -81,9 +135,9 @@ export function parseStyleMemory(raw: string | null): Map<string, ScoreStyle> {
   return memory;
 }
 
-function load(): Map<string, ScoreStyle> {
+function load(fallback?: ScoreStyle): Map<string, ScoreStyle> {
   try {
-    return parseStyleMemory(localStorage.getItem(STYLE_STORAGE_KEY));
+    return parseStyleMemory(localStorage.getItem(STYLE_STORAGE_KEY), fallback);
   } catch {
     return new Map();
   }
@@ -105,6 +159,7 @@ export function rememberStyle(hash: string, style: ScoreStyle): void {
   }
 }
 
-export function recallStyle(hash: string): ScoreStyle | null {
-  return load().get(hash) ?? null;
+/** A song's remembered style; what an older version did not keep comes from the file's (`fallback`). */
+export function recallStyle(hash: string, fallback?: ScoreStyle): ScoreStyle | null {
+  return load(fallback).get(hash) ?? null;
 }

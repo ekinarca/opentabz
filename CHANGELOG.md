@@ -132,6 +132,13 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Header, footer and title block.** The stylesheet's Header and footer section writes the
+  first page's title block line by line (shown or not, from a template such as "Music by
+  %MUSIC%", aligned left, centre or right) and every page's header and footer, the first page's
+  and the later ones' apart, with the score's information and the page number and count. Lines a
+  Guitar Pro file hides stay hidden, and the PDF, images and printing write the same.
+- **Chord names in a style.** Chord names in the score and the chords panel as written, or
+  spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
 - **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard
   notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
   one another; one choice in the menu applies to every track again. Exports print the same.

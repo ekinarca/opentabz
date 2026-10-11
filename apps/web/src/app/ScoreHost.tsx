@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LocateFixed } from 'lucide-react';
 import { getEngine } from '../engine/instance.ts';
 import { forgetPainted, markPainted } from '../score-view/first-paint.ts';
@@ -7,6 +7,7 @@ import { PlaybackCursor, type CursorOptions } from '../score-view/playback-curso
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
 import { usePlayer } from '../state/player.ts';
+import { scoreFields } from '../state/score-fields.ts';
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePreferences, type Preferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
@@ -31,6 +32,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   const cursorColor = usePreferences(state => state.cursorColor);
   const intakeMark = useRef(doc.intakeMark);
   const title = doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
+  const fields = useMemo(() => scoreFields(doc), [doc]);
   const key = doc.key;
 
   useEffect(() => {
@@ -85,37 +87,31 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       viewRef.current?.zoomAround(clientX, clientY);
       useDocuments.getState().updateView(key, { zoom: clampZoom(gestureZoom) });
     };
-    const view = new ScoreView(
-      scroller,
-      getEngine(),
-      key,
-      { pageNumber: strings.score.pageNumber },
-      {
-        onZoom,
-        onFirstPaint: () => {
-          markPainted(key);
-          if (measured) return;
-          measured = true;
-          try {
-            performance.measure('ot:drop-to-paint', intakeMark.current);
-          } catch {
-            // The intake mark is gone (performance buffer cleared); nothing to measure.
-          }
-        },
-        onLayout: () => {
-          selection?.onLayout();
-          cursor?.onLayout();
-        },
-        onGesture,
-        onError: error => {
-          useDocuments.getState().notify({
-            title: strings.score.renderFailed,
-            description: error instanceof Error ? error.message : String(error),
-            tone: 'error',
-          });
-        },
+    const view = new ScoreView(scroller, getEngine(), key, {
+      onZoom,
+      onFirstPaint: () => {
+        markPainted(key);
+        if (measured) return;
+        measured = true;
+        try {
+          performance.measure('ot:drop-to-paint', intakeMark.current);
+        } catch {
+          // The intake mark is gone (performance buffer cleared); nothing to measure.
+        }
       },
-    );
+      onLayout: () => {
+        selection?.onLayout();
+        cursor?.onLayout();
+      },
+      onGesture,
+      onError: error => {
+        useDocuments.getState().notify({
+          title: strings.score.renderFailed,
+          description: error instanceof Error ? error.message : String(error),
+          tone: 'error',
+        });
+      },
+    });
     viewRef.current = view;
     cursor = new PlaybackCursor(view, setFollowPaused);
     cursorRef.current = cursor;
@@ -221,9 +217,9 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       staves: doc.view.staves,
       trackIndexes: doc.view.trackIndexes,
       zoom: doc.view.zoom,
-      title,
+      fields,
     });
-  }, [doc.engineId, doc.view, title]);
+  }, [doc.engineId, doc.view, fields]);
 
   return (
     <div hidden={hidden} className="relative flex min-h-0 flex-1 flex-col">

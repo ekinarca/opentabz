@@ -2,6 +2,15 @@
  * How a score is engraved: Guitar Pro's stylesheet (REND-218…), as the file has it or as changed
  * in the Stylesheet panel. Plain data for the UI and the engine.
  */
+import type { ChordSpelling } from './chord-spelling.ts';
+import {
+  DEFAULT_PAGE_FURNITURE,
+  DEFAULT_TITLE_BLOCK,
+  samePageFurniture,
+  sameTitleBlock,
+  type PageFurniture,
+  type TitleBlock,
+} from './page-text.ts';
 
 /** Brackets and braces: none, a track's own staves, or tracks of similar instruments too. */
 export const BRACKET_MODES = ['none', 'staves', 'similar'] as const;
@@ -38,6 +47,8 @@ export interface ScoreStyle {
   readonly chordDiagramsOnTop: boolean;
   /** Chord diagrams above the beats that carry them. */
   readonly chordDiagramsInScore: boolean;
+  /** How chord names are spelled: as written, or in a classic, jazz or rock style (REND-226). */
+  readonly chordSpelling: ChordSpelling;
   /** Track names when one track is shown, and when several are. */
   readonly singleTrackNames: TrackNamePlace;
   readonly multiTrackNames: TrackNamePlace;
@@ -51,6 +62,10 @@ export interface ScoreStyle {
   /** Staves that rest for a whole system are left out, on the first system too if asked. */
   readonly hideEmptyStaves: boolean;
   readonly hideEmptyStavesInFirstSystem: boolean;
+  /** The lines of the title block on the first page (REND-236, REND-237). */
+  readonly titleBlock: TitleBlock;
+  /** The pages' running header and footer, the first page's and the later ones' (REND-237). */
+  readonly pages: PageFurniture;
 }
 
 export const STYLE_SCALE = { min: 0.5, max: 2 } as const;
@@ -69,6 +84,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tuning: true,
   chordDiagramsOnTop: true,
   chordDiagramsInScore: false,
+  chordSpelling: 'written',
   singleTrackNames: 'first',
   multiTrackNames: 'first',
   firstSystemNames: 'short',
@@ -78,15 +94,28 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   multiBarRests: false,
   hideEmptyStaves: false,
   hideEmptyStavesInFirstSystem: false,
+  titleBlock: DEFAULT_TITLE_BLOCK,
+  pages: DEFAULT_PAGE_FURNITURE,
 };
 
 const STYLE_KEYS = Object.keys(DEFAULT_SCORE_STYLE) as (keyof ScoreStyle)[];
 
+function sameSetting(a: ScoreStyle, b: ScoreStyle, key: keyof ScoreStyle): boolean {
+  switch (key) {
+    case 'titleBlock':
+      return sameTitleBlock(a.titleBlock, b.titleBlock);
+    case 'pages':
+      return samePageFurniture(a.pages, b.pages);
+    default:
+      return a[key] === b[key];
+  }
+}
+
 export function sameScoreStyle(a: ScoreStyle, b: ScoreStyle): boolean {
-  return STYLE_KEYS.every(key => a[key] === b[key]);
+  return STYLE_KEYS.every(key => sameSetting(a, b, key));
 }
 
 /** The settings that differ between two styles. */
 export function styleChanges(style: ScoreStyle, from: ScoreStyle): (keyof ScoreStyle)[] {
-  return STYLE_KEYS.filter(key => style[key] !== from[key]);
+  return STYLE_KEYS.filter(key => !sameSetting(style, from, key));
 }

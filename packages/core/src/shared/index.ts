@@ -15,3 +15,5 @@ export * from './lyrics.ts';
 export * from './drums.ts';
 export * from './overview.ts';
 export * from './style.ts';
+export * from './page-text.ts';
+export * from './chord-spelling.ts';

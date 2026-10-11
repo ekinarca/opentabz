@@ -53,8 +53,10 @@ describe('the stylesheet a file brings (REND-219)', () => {
     });
   });
 
-  it('takes alphaTab’s defaults for a score without one', () => {
-    expect(fileStyle('alphatex/demos/twelve-bar-shuffle.atex')).toEqual(DEFAULT_SCORE_STYLE);
+  it('takes alphaTab’s defaults for a score without one, but its own title block lines', () => {
+    const style = fileStyle('alphatex/demos/twelve-bar-shuffle.atex');
+    expect({ ...style, titleBlock: DEFAULT_SCORE_STYLE.titleBlock }).toEqual(DEFAULT_SCORE_STYLE);
+    expect(style.titleBlock.copyright2.template).toBe('Free to play, share and adapt.');
   });
 
   it('engraves as the file says when the view asks for nothing else', () => {

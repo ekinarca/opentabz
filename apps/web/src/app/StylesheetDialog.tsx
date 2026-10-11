@@ -1,5 +1,6 @@
 import {
   BRACKET_MODES,
+  CHORD_SPELLINGS,
   sameScoreStyle,
   STYLE_SCALE,
   STYLE_SPACING,
@@ -13,13 +14,22 @@ import type { ReactNode } from 'react';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
+import { HeaderFooterSection } from './HeaderFooterSection.tsx';
 import { Field } from './MetronomeSettingsForm.tsx';
 
 const s = strings.stylesheet;
 
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
+function Section({
+  title,
+  children,
+  wide = false,
+}: {
+  readonly title: string;
+  readonly children: ReactNode;
+  readonly wide?: boolean;
+}) {
   return (
-    <section aria-label={title} className="flex flex-col gap-3">
+    <section aria-label={title} className={`flex flex-col gap-3 ${wide ? 'md:col-span-2' : ''}`}>
       <h3 className="text-[12px] font-semibold tracking-[0.06em] text-ink-faint uppercase">{title}</h3>
       {children}
     </section>
@@ -251,6 +261,20 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ chordDiagramsInScore });
             }}
           />
+          <Field label={s.chordSpelling} hint={s.chordSpellingHints[style.chordSpelling]}>
+            <SegmentedControl
+              label={s.chordSpelling}
+              value={style.chordSpelling}
+              segments={CHORD_SPELLINGS.map(value => ({ value, label: s.chordSpellings[value] }))}
+              onValueChange={chordSpelling => {
+                set({ chordSpelling });
+              }}
+            />
+          </Field>
+        </Section>
+
+        <Section title={s.sections.headerFooter} wide>
+          <HeaderFooterSection style={style} set={set} />
         </Section>
       </div>
     </Dialog>

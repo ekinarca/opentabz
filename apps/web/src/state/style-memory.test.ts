@@ -19,6 +19,32 @@ describe('styles remembered per song', () => {
     expect(parseStyleMemory('{oops').size).toBe(0);
   });
 
+  it('reads the title block, the pages’ lines and chord spelling, and takes what older versions lacked from the file', () => {
+    const file = {
+      ...DEFAULT_SCORE_STYLE,
+      titleBlock: {
+        ...DEFAULT_SCORE_STYLE.titleBlock,
+        title: { visible: false, template: 'T: %TITLE%', align: 'left' as const },
+      },
+    };
+    const stored = {
+      ...DEFAULT_SCORE_STYLE,
+      chordSpelling: 'jazz',
+      pages: { ...DEFAULT_SCORE_STYLE.pages, laterFooter: { template: '%PAGE%', align: 'right' } },
+    };
+    expect(parseStyle(JSON.parse(JSON.stringify(stored)), file)).toMatchObject({
+      chordSpelling: 'jazz',
+      pages: { laterFooter: { template: '%PAGE%', align: 'right' } },
+    });
+    const older = JSON.parse(JSON.stringify(DEFAULT_SCORE_STYLE)) as Record<string, unknown>;
+    delete older['titleBlock'];
+    delete older['pages'];
+    delete older['chordSpelling'];
+    expect(parseStyle(older, file)?.titleBlock.title).toEqual(file.titleBlock.title);
+    expect(parseStyle({ ...stored, chordSpelling: 'baroque' })).toBeNull();
+    expect(parseStyle({ ...stored, pages: { laterFooter: { template: 1 } } })).toBeNull();
+  });
+
   it('keeps a song’s style for the next time it is opened', () => {
     const style = { ...DEFAULT_SCORE_STYLE, systemSeparator: true };
     rememberStyle(HASH, style);

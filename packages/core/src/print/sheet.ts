@@ -3,6 +3,7 @@
  * its running header and footer. Written out as a standalone SVG file here and as a PDF page in
  * pdf.ts; both draw the same thing.
  */
+import type { PageText, TextAlign } from '../shared/page-text.ts';
 import { resolveScoreColor, type ScorePalette } from '../shared/score-colors.ts';
 import { readDrawing, type DrawOp, type Shade, type TextStyle } from './drawing.ts';
 import { musicGlyph, placeSymbols } from './glyphs.ts';
@@ -20,10 +21,12 @@ export interface Sheet {
   readonly width: number;
   readonly height: number;
   readonly partials: readonly SheetPartial[];
-  /** The running header (the title on pages after the first), if any. */
-  readonly header: string | null;
-  /** The footer (the page number), if any. */
-  readonly footer: string | null;
+  /** The running header (the title on pages after the first, say), if any, and its alignment. */
+  readonly header: PageText | null;
+  /** The footer (the page number, say), if any, and its alignment. */
+  readonly footer: PageText | null;
+  /** How far from the paper's edges texts aligned left begin and texts aligned right end. */
+  readonly margins?: { readonly left: number; readonly right: number };
 }
 
 /** Layout units per millimetre and per PDF point. */
@@ -39,29 +42,39 @@ const PAGE_TEXT_STYLE: TextStyle = {
   italic: false,
 };
 
+/** Where aligned page texts sit when a sheet does not say: the default page margins. */
+const DEFAULT_SIDE = 12 * (96 / 25.4);
+const ANCHORS = { left: 'start', center: 'middle', right: 'end' } as const satisfies Record<
+  TextAlign,
+  string
+>;
+
 /** The header and footer of a sheet as texts, where the paged view shows them. */
 export function pageTexts(sheet: Sheet): Extract<DrawOp, { kind: 'text' }>[] {
   const texts: Extract<DrawOp, { kind: 'text' }>[] = [];
-  if (sheet.header !== null && sheet.header.length > 0) {
+  const left = sheet.margins?.left ?? DEFAULT_SIDE;
+  const right = sheet.width - (sheet.margins?.right ?? DEFAULT_SIDE);
+  const x = (align: TextAlign) => (align === 'left' ? left : align === 'right' ? right : sheet.width / 2);
+  if (sheet.header !== null && sheet.header.text.length > 0) {
     texts.push({
       kind: 'text',
-      x: sheet.width / 2,
+      x: x(sheet.header.align),
       y: 22,
-      text: sheet.header,
+      text: sheet.header.text,
       style: { ...PAGE_TEXT_STYLE, italic: true },
-      anchor: 'middle',
+      anchor: ANCHORS[sheet.header.align],
       baseline: 'hanging',
       fill: PAGE_TEXT_COLOR,
     });
   }
-  if (sheet.footer !== null && sheet.footer.length > 0) {
+  if (sheet.footer !== null && sheet.footer.text.length > 0) {
     texts.push({
       kind: 'text',
-      x: sheet.width / 2,
+      x: x(sheet.footer.align),
       y: sheet.height - 20,
-      text: sheet.footer,
+      text: sheet.footer.text,
       style: PAGE_TEXT_STYLE,
-      anchor: 'middle',
+      anchor: ANCHORS[sheet.footer.align],
       baseline: 'ideographic',
       fill: PAGE_TEXT_COLOR,
     });

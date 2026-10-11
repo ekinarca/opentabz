@@ -5,10 +5,14 @@
  * computed from data and written to the DOM; nothing is read back from layout in hot paths.
  */
 import {
+  DEFAULT_PAGE_FURNITURE,
+  pageLines,
+  samePageFurniture,
   sameScoreStyle,
   sameTrackStaves,
   type LayoutKind,
   type ScoreBounds,
+  type ScoreFields,
   type ScoreStyle,
   type StaffDisplay,
   type SystemsLayout,
@@ -47,8 +51,8 @@ export interface ScoreViewState {
   readonly staves: readonly TrackStaves[];
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
-  /** Shown in the running header of pages after the first. */
-  readonly title: string;
+  /** The score's information, for the pages' header and footer. */
+  readonly fields: ScoreFields;
 }
 
 export interface ScoreViewLayoutInfo {
@@ -96,11 +100,6 @@ export interface ScoreViewEvents {
   readonly onZoom?: (factor: number, clientX: number, clientY: number) => void;
 }
 
-/** Labels for page furniture; injected so all strings live in strings.ts. */
-export interface ScoreViewLabels {
-  readonly pageNumber: (page: number, pages: number) => string;
-}
-
 /** Re-layout delay after the reflow width settles (resize, zoom in vertical layout). */
 const RELAYOUT_DELAY_MS = 120;
 /** Partials are painted this far ahead of the viewport. */
@@ -144,7 +143,6 @@ export class ScoreView {
   private readonly engine: EngineClient;
   private readonly viewId: string;
   private readonly events: ScoreViewEvents;
-  private readonly labels: ScoreViewLabels;
 
   private state: ScoreViewState | null = null;
   private requestedOptions: ViewOptions | null = null;
@@ -186,13 +184,11 @@ export class ScoreView {
     scroller: HTMLElement,
     engine: EngineClient,
     viewId: string,
-    labels: ScoreViewLabels,
     events: ScoreViewEvents = {},
   ) {
     this.scroller = scroller;
     this.engine = engine;
     this.viewId = viewId;
-    this.labels = labels;
     this.events = events;
 
     this.sheet = document.createElement('div');
@@ -258,8 +254,15 @@ export class ScoreView {
     ) {
       this.rearrange();
     }
-    if (previous !== null && previous.title !== state.title && this.sheetLayout !== null)
+    // New page texts: the pages are drawn again, the music stays.
+    if (
+      previous !== null &&
+      this.sheetLayout !== null &&
+      (!sameFields(previous.fields, state.fields) ||
+        !samePageFurniture(previous.style.pages, state.style.pages))
+    ) {
       this.renderPages(this.sheetLayout);
+    }
 
     const options = this.engineOptions(state);
     if (options === null) return;
@@ -572,7 +575,8 @@ export class ScoreView {
       staves: state.staves,
       width,
       notationScale: 1,
-      style: state.style,
+      // The pages' header and footer are drawn here: changing them needs no new layout.
+      style: { ...state.style, pages: DEFAULT_PAGE_FURNITURE },
     };
   }
 
@@ -680,17 +684,22 @@ export class ScoreView {
       element.style.height = `${page.height}px`;
       this.pagesLayer.append(element);
       // An endless sheet has no pages to number.
-      if (state?.arrangement === 'endless') continue;
-      if (page.index > 0 && state !== null && state.title.length > 0) {
-        const header = document.createElement('div');
-        header.className = 'ot-page-header';
-        header.textContent = state.title;
-        element.append(header);
+      if (state === null || state.arrangement === 'endless') continue;
+      const { margins } = pageGeometry(state.page);
+      const lines = pageLines(state.style.pages, state.fields, page.index + 1, total);
+      for (const [line, className] of [
+        [lines.header, 'ot-page-header'],
+        [lines.footer, 'ot-page-footer'],
+      ] as const) {
+        if (line === null) continue;
+        const text = document.createElement('div');
+        text.className = className;
+        text.textContent = line.text;
+        text.style.textAlign = line.align;
+        text.style.paddingLeft = `${margins.left}px`;
+        text.style.paddingRight = `${margins.right}px`;
+        element.append(text);
       }
-      const footer = document.createElement('div');
-      footer.className = 'ot-page-footer';
-      footer.textContent = this.labels.pageNumber(page.index + 1, total);
-      element.append(footer);
     }
   }
 
@@ -879,5 +888,18 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     sameTrackStaves(a.staves, b.staves) &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
+  );
+}
+
+function sameFields(a: ScoreFields, b: ScoreFields): boolean {
+  return (
+    a.title === b.title &&
+    a.subtitle === b.subtitle &&
+    a.artist === b.artist &&
+    a.album === b.album &&
+    a.words === b.words &&
+    a.music === b.music &&
+    a.tabber === b.tabber &&
+    a.copyright === b.copyright
   );
 }

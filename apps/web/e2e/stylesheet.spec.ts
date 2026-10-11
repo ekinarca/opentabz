@@ -3,7 +3,7 @@
  * remembered for the file, and "As in the file" brings the file's own style back.
  */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -68,4 +68,26 @@ test('changes show in the score, are remembered for the file, and go back to the
   await dialog.getByRole('button', { name: 'As in the file' }).click();
   await expect(trackName(page).first()).toBeVisible();
   await expect.poll(() => systemHeight(page)).toBeCloseTo(height, 0);
+});
+
+test('chord names are spelled in the style chosen, in the score and the chords panel (REND-226)', async ({
+  page,
+}) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatab/guitarpro7/chords.gp')]);
+  await expectScore(page);
+  const texts = () => page.locator('.ot-scroll:not([hidden]) .ot-partials text').allTextContents();
+  await expect.poll(async () => (await texts()).includes('Cm')).toBe(true);
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('radiogroup', { name: 'Chord names' }).getByRole('radio', { name: 'Jazz' }).click();
+  await expect.poll(async () => (await texts()).includes('C-')).toBe(true);
+  expect(await texts()).not.toContain('Cm');
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: 'Chords', exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: 'Chords', exact: true }).getByText('C-', { exact: true }).first(),
+  ).toBeVisible();
 });
