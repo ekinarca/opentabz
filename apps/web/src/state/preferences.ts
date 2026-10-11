@@ -58,6 +58,8 @@ export interface Preferences {
   readonly lyrics: boolean;
   /** The drum view is open. */
   readonly drums: boolean;
+  /** The song overview is open. */
+  readonly overview: boolean;
   readonly drumMode: DrumMode;
   /** The drum view's sounds limited to General MIDI's. */
   readonly drumGmOnly: boolean;
@@ -101,6 +103,7 @@ export function defaultPreferences(locale: string): Preferences {
     chords: false,
     lyrics: false,
     drums: false,
+    overview: false,
     drumMode: 'kit',
     drumGmOnly: false,
     drumLargeLabels: false,
@@ -157,6 +160,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       chords: typeof value.chords === 'boolean' ? value.chords : fallback.chords,
       lyrics: typeof value.lyrics === 'boolean' ? value.lyrics : fallback.lyrics,
       drums: typeof value.drums === 'boolean' ? value.drums : fallback.drums,
+      overview: typeof value.overview === 'boolean' ? value.overview : fallback.overview,
       drumMode: oneOf(value.drumMode, DRUM_MODES, fallback.drumMode),
       drumGmOnly: typeof value.drumGmOnly === 'boolean' ? value.drumGmOnly : fallback.drumGmOnly,
       drumLargeLabels:
@@ -219,6 +223,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       chords: state.chords,
       lyrics: state.lyrics,
       drums: state.drums,
+      overview: state.overview,
       drumMode: state.drumMode,
       drumGmOnly: state.drumGmOnly,
       drumLargeLabels: state.drumLargeLabels,

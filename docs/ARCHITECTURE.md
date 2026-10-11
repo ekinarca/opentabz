@@ -257,7 +257,11 @@ text a track keeps through alphaTab patch 0027), the syllable being sung lit; it
 score's place in large type. The drum view (`app/DrumsPanel.tsx`) reads a drum track from
 `trackDrums`: every sound of its kit (its own articulations, then a standard kit's, named
 through alphaTab's percussion mapper, exported by patch 0028) and its notes in the views'
-layout, a note's pitch being its sound, so it shares the views' model.
+layout, a note's pitch being its sound, so it shares the views' model. The song overview
+(`app/OverviewPanel.tsx`, Guitar Pro's global view) asks once per song which bars each track
+plays in (`scoreOverview`: a byte per track and bar) and draws them as SVG squares under the
+sections and bar numbers, drawn again only when the song changes; the bar being played, the
+selection and the active track are overlays on top.
 
 ## 6. Opening files
 

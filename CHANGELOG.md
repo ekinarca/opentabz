@@ -128,6 +128,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   song plays. Clicking a syllable sings from there, and the lyrics can fill the window in large
   type with the score hidden. Line breaks and bracketed comments typed in Guitar Pro or
   alphaTex lyrics are kept (alphaTab patch 0027).
+- **Song overview.** The grid button or F8 (Guitar Pro's global view) shows every track as a row
+  of squares, a square per bar filled in the track's colour where it plays, under the sections
+  and bar numbers, with each track's mute and solo. A click goes to the bar and makes the track
+  the active one, a drag selects bars, and the bar being played stays in view.
 - **Full screen.** The full-screen button, F11 or ⌃⌘F puts the app's bars away, and the browser
   goes full screen too where a page may ask it to (on iPhone the bars still go). A slim strip
   keeps the song's name, the zoom and the way out; Esc leaves.

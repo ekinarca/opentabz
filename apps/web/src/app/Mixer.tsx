@@ -10,16 +10,18 @@ import { SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
 const s = strings.mixer;
 
-function ToggleChip({
+export function ToggleChip({
   label,
   pressed,
   onClick,
   children,
+  compact = false,
 }: {
   readonly label: string;
   readonly pressed: boolean;
   readonly onClick: () => void;
   readonly children: React.ReactNode;
+  readonly compact?: boolean;
 }) {
   return (
     <Tooltip label={label}>
@@ -28,7 +30,7 @@ function ToggleChip({
         aria-label={label}
         aria-pressed={pressed}
         onClick={onClick}
-        className={`inline-flex size-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors ${
+        className={`inline-flex ${compact ? 'size-6' : 'size-7'} shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors ${
           pressed
             ? 'border-accent bg-accent text-on-accent'
             : 'border-line text-ink-muted hover:border-line-strong hover:text-ink'

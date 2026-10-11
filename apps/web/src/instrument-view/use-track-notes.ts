@@ -1,8 +1,9 @@
 /**
- * What instrument views ask the engine about a track (its notes, chords, lyrics and drums), asked once per
- * document and track and kept for the next time the track is shown.
+ * What instrument views ask the engine about a track (its notes, chords, lyrics and drums) or the
+ * whole song (the bars each track plays in), asked once per document and track and kept for the
+ * next time they are shown.
  */
-import type { TrackChords, TrackDrums, TrackLyrics, TrackNotes } from '@opentabz/core/shared';
+import type { ScoreOverview, TrackChords, TrackDrums, TrackLyrics, TrackNotes } from '@opentabz/core/shared';
 import { useEffect, useState } from 'react';
 import { getEngine } from '../engine/instance.ts';
 
@@ -11,6 +12,7 @@ interface TrackData {
   readonly trackChords: TrackChords;
   readonly trackLyrics: TrackLyrics;
   readonly trackDrums: TrackDrums;
+  readonly scoreOverview: ScoreOverview;
 }
 
 type Method = keyof TrackData;
@@ -27,7 +29,12 @@ function request<M extends Method>(method: M, engineId: string, trackIndex: numb
     requests.set(key, known);
     return known;
   }
-  const asked = getEngine().call(method, { docId: engineId, trackIndex }) as Promise<TrackData[M]>;
+  const engine = getEngine();
+  const asked = (
+    method === 'scoreOverview'
+      ? engine.call('scoreOverview', { docId: engineId })
+      : engine.call(method, { docId: engineId, trackIndex })
+  ) as Promise<TrackData[M]>;
   requests.set(key, asked);
   // A failed request is forgotten, so the next time asks again.
   void asked.catch(() => {
@@ -81,4 +88,9 @@ export function useTrackLyrics(engineId: string, trackIndex: number): TrackLyric
 /** The track's drum kit and notes, or null until the engine has answered. */
 export function useTrackDrums(engineId: string, trackIndex: number): TrackDrums | null {
   return useTrackData('trackDrums', engineId, trackIndex);
+}
+
+/** The bars each track of the song plays in, or null until the engine has answered. */
+export function useScoreOverview(engineId: string): ScoreOverview | null {
+  return useTrackData('scoreOverview', engineId, -1);
 }

@@ -590,6 +590,18 @@ export const strings = {
     notDrums: (track: string) => `${track} is not a drum track.`,
   },
 
+  overview: {
+    open: 'Song overview',
+    title: 'Song overview',
+    close: 'Close the song overview',
+    tracks: 'Tracks',
+    bars: 'Bars of the song',
+    value: (bar: number, count: number, section: string, playing: readonly string[]) =>
+      `Bar ${bar} of ${count}${section.length > 0 ? `, ${section}` : ''}. ${
+        playing.length === 0 ? 'Nothing plays' : `Playing: ${playing.join(', ')}`
+      }.`,
+  },
+
   songMap: {
     label: 'Song map',
     value: (bar: number, count: number, section: string) =>
@@ -798,6 +810,7 @@ export const strings = {
       zoomReset: 'Zoom to 100 %',
       fretboard: 'Fretboard on or off',
       fullScreen: 'Full screen on or off',
+      overview: 'Song overview on or off',
       trackPrevious: 'Previous track',
       trackNext: 'Next track',
       open: 'Open files',

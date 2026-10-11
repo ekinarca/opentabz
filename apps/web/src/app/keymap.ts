@@ -602,6 +602,19 @@ export const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    id: 'overview',
+    group: 'view',
+    label: s.overview,
+    // Guitar Pro's global view.
+    bindings: [{ key: 'F8' }],
+    needsScore: true,
+    run: () => {
+      const preferences = usePreferences.getState();
+      preferences.set({ overview: !preferences.overview });
+      return true;
+    },
+  },
+  {
     id: 'full-screen',
     group: 'view',
     label: s.fullScreen,

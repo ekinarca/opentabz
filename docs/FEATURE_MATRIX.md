@@ -530,7 +530,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-012 | Section navigator                                         | OT  | M2  | —       | apps/web/e2e/practice.spec.ts, apps/web/e2e/song-map.spec.ts | done |
 | VIEW-013 | Fullscreen / presentation mode                            | GP  | M2  | —       | apps/web/e2e/full-screen.spec.ts, apps/web/src/app/full-screen.test.ts | done |
 | VIEW-014 | Shortcut cheat sheet                                      | OT  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/shortcuts-doc.test.ts | done |
-| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select, click a track to make it the active one | GP  | M2  | —       | —    | planned |
+| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select, click a track to make it the active one | GP  | M2  | fixtures/alphatex/demos/twelve-bar-shuffle.atex | apps/web/e2e/overview.spec.ts, packages/core/test/score-overview.test.ts | done |
 | VIEW-016 | Active-track switcher (dropdown, next/previous-track keys) | GP  | M1  | —       | apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |
 | VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | apps/web/src/instrument-view/fretboard.test.ts, apps/web/e2e/fretboard.spec.ts | done |

@@ -17,6 +17,7 @@ import {
   Columns3,
   Drum,
   FileText,
+  Grid3x3,
   Guitar,
   Info,
   Maximize,
@@ -42,6 +43,7 @@ import { DrumsPanel } from './DrumsPanel.tsx';
 import { ChordIcon } from './icons.tsx';
 import { KeyboardPanel } from './KeyboardPanel.tsx';
 import { LyricsPanel } from './LyricsPanel.tsx';
+import { OverviewPanel } from './OverviewPanel.tsx';
 import { shortcutHint, zoomStep } from './keymap.ts';
 import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { modKey } from './platform.ts';
@@ -78,6 +80,7 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
   const chords = usePreferences(state => state.chords);
   const lyrics = usePreferences(state => state.lyrics);
   const drums = usePreferences(state => state.drums);
+  const overview = usePreferences(state => state.overview);
   const { view, summary } = doc;
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
@@ -301,6 +304,15 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
             setPreferences({ lyrics: !lyrics });
           }}
         />
+        <IconButton
+          label={strings.overview.open}
+          shortcut={shortcutHint('overview')}
+          icon={<Grid3x3 size={18} aria-hidden />}
+          pressed={overview}
+          onClick={() => {
+            setPreferences({ overview: !overview });
+          }}
+        />
         <PlaybackViewControl />
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
         <IconButton
@@ -340,6 +352,7 @@ export function Workspace() {
   const chords = usePreferences(state => state.chords);
   const lyrics = usePreferences(state => state.lyrics);
   const drums = usePreferences(state => state.drums);
+  const overview = usePreferences(state => state.overview);
   // The lyrics in place of the score (VIEW-022).
   const lyricsOnly = useUi(state => state.lyricsOnly) && lyrics;
   const fullScreen = useUi(state => state.fullScreen);
@@ -366,6 +379,7 @@ export function Workspace() {
       {active !== null && drums && <DrumsPanel doc={active} />}
       {active !== null && chords && <ChordsPanel doc={active} />}
       {active !== null && lyrics && <LyricsPanel doc={active} />}
+      {active !== null && overview && <OverviewPanel doc={active} />}
       {active !== null && <SongMap doc={active} />}
       {active !== null && <Transport />}
       {active !== null && <PracticeDialog />}

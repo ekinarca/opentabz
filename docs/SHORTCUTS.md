@@ -67,15 +67,16 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## View
 
-| Action                | Windows and Linux    | macOS            |
-| --------------------- | -------------------- | ---------------- |
-| Zoom in               | `Ctrl =` or `Ctrl +` | `⌘ =` or `⌘ +`   |
-| Zoom out              | `Ctrl -` or `Ctrl _` | `⌘ -` or `⌘ _`   |
-| Zoom to 100 %         | `Ctrl 0`             | `⌘ 0`            |
-| Fretboard on or off   | `Ctrl F6`            | `⌘ F6`           |
-| Full screen on or off | `F11`                | `⌃ ⌘ F` or `F11` |
-| Previous track        | `Ctrl ↑`             | `⌘ ↑`            |
-| Next track            | `Ctrl ↓`             | `⌘ ↓`            |
+| Action                  | Windows and Linux    | macOS            |
+| ----------------------- | -------------------- | ---------------- |
+| Zoom in                 | `Ctrl =` or `Ctrl +` | `⌘ =` or `⌘ +`   |
+| Zoom out                | `Ctrl -` or `Ctrl _` | `⌘ -` or `⌘ _`   |
+| Zoom to 100 %           | `Ctrl 0`             | `⌘ 0`            |
+| Fretboard on or off     | `Ctrl F6`            | `⌘ F6`           |
+| Song overview on or off | `F8`                 | `F8`             |
+| Full screen on or off   | `F11`                | `⌃ ⌘ F` or `F11` |
+| Previous track          | `Ctrl ↑`             | `⌘ ↑`            |
+| Next track              | `Ctrl ↓`             | `⌘ ↓`            |
 
 ## Files
 

@@ -51,6 +51,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.trackLyrics(message.args as EngineRequestMessage<'trackLyrics'>['args']);
     case 'trackDrums':
       return host.trackDrums(message.args as EngineRequestMessage<'trackDrums'>['args']);
+    case 'scoreOverview':
+      return host.scoreOverview(message.args as EngineRequestMessage<'scoreOverview'>['args']);
     case 'exportAudioSong':
       return host.exportAudioSong(message.args as EngineRequestMessage<'exportAudioSong'>['args']);
     case 'exportMidi':

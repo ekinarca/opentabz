@@ -13,3 +13,4 @@ export * from './notes.ts';
 export * from './chords.ts';
 export * from './lyrics.ts';
 export * from './drums.ts';
+export * from './overview.ts';
