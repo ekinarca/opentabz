@@ -4,6 +4,7 @@
 \artist "OpenTabz"
 \music "OpenTabz contributors"
 \copyright "Original music for OpenTabz · AGPL-3.0-or-later"
+\copyright2 ("Free to play, share and adapt." center)
 \tempo (112 "Shuffle")
 
 \track ("Rhythm Guitar" "R.Gt.") {instrument overdrivenGuitar color "#2E6FBA"}

@@ -201,6 +201,7 @@ export const strings = {
     headline: ['Guitar tabs,', 'beautifully engraved.'],
     lede: 'Open Guitar Pro, MusicXML, Capella and alphaTex files right in your browser — nothing to install, nothing uploaded.',
     openFile: 'Open a file',
+    openFileShortcut: (mod: string) => `${mod} O`,
     openUrl: 'Open from a link',
     dropHint: 'or drop files anywhere on this page',
     /** Shown while files are dragged over the window ("let ring" is the tab marking for sustain). */
@@ -341,6 +342,9 @@ export const strings = {
     solo: (track: string) => `Solo ${track}`,
     volume: (track: string) => `${track} level`,
     practice: 'Practice mode: mute the tracks you are reading',
+    /** Abbreviations on the mute and solo toggles. */
+    muteShort: 'M',
+    soloShort: 'S',
   },
 
   songInfo: {
@@ -414,6 +418,7 @@ export const strings = {
     trademark:
       'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with or endorsed by Arobas Music; it opens Guitar Pro files for compatibility.',
     notices: 'Third-party notices',
+    alphaTab: 'alphaTab',
     maker: 'OpenTabz is a Whale Development Studios product.',
     close: 'Close',
   },

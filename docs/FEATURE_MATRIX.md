@@ -73,23 +73,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-012 | Custom paper size and margins                                                     | GP  | M2  | —                                                           | —    | planned |
 | REND-013 | Horizontal (continuous) layout                                                    | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
 | REND-014 | Vertical scroll layout                                                            | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
-| REND-015 | Zoom 25–400 %                                                                     | GP  | M0  | —                                                           | —    | planned |
+| REND-015 | Zoom 25–400 %                                                                     | GP  | M0  | — | apps/web/e2e/app.spec.ts | done |
 | REND-016 | Respect the file's own systems layout (bars per system, bar proportions)          | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
 | REND-017 | HiDPI-crisp vector rendering                                                      | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
 | REND-018 | Smooth reflow on window resize                                                    | GP  | M0  | — | apps/web/e2e/open.spec.ts, packages/core/test/render-session.test.ts | done |
 | REND-019 | Virtualized rendering: only visible systems are painted and attached              | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/score-view/svg-cache.test.ts | done |
 | REND-020 | Notation layout and rendering in a Web Worker                                     | OT  | M0  | — | packages/core/test/shared-isolation.test.ts, scripts/check-budgets.ts | done |
 | REND-021 | Instant theme switch of rendered notation (no re-render)                          | OT  | M0  | — | packages/core/test/score-colors.test.ts, packages/core/test/render-session.test.ts | done |
-| REND-030 | Show all tracks or any subset of tracks                                           | GP  | M0  | alphatab/guitarpro5/staves.gp5                              | —    | planned |
+| REND-030 | Show all tracks or any subset of tracks                                           | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
 | REND-031 | Per-track staff visibility (standard / tab / slash / numbered)                    | GP  | M2  | —                                                           | —    | planned |
 | REND-032 | Transposing instruments: concert vs written pitch display                         | GP  | M2  | alphatab/guitarpro8/transposition-tonality-a.gp             | —    | planned |
 | REND-033 | Capo display                                                                      | GP  | M2  | —                                                           | —    | planned |
-| REND-034 | Tuning display (score header)                                                     | GP  | M0  | alphatab/guitarpro5/hide-tuning.gp5                         | —    | planned |
-| REND-035 | Track names and short names on systems                                            | GP  | M0  | alphatab/guitarpro8/track-names.gp                          | —    | planned |
+| REND-034 | Tuning display (score header)                                                     | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
+| REND-035 | Track names and short names on systems                                            | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
 | REND-036 | Track colours                                                                     | GP  | M2  | alphatab/guitarpro7/colors.gp                               | —    | planned |
-| REND-040 | Score header: title, subtitle, artist, album, words, music, copyright, tab author | GP  | M0  | alphatab/guitarpro7/score-info.gp                           | —    | planned |
+| REND-040 | Score header: title, subtitle, artist, album, words, music, copyright, tab author | GP  | M0  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/render-content.test.ts | done |
 | REND-041 | Score header: instructions and notice                                             | GP  | M2  | —                                                           | —    | planned |
-| REND-042 | Page header and footer (page numbers, title on following pages)                   | GP  | M0  | alphatab/guitarpro8/header-footer.gp                        | —    | planned |
+| REND-042 | Page header and footer (page numbers, title on following pages)                   | GP  | M0  | — | apps/web/e2e/app.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-100 | Bend (any amount, quarter-tone steps)                                             | GP  | M2  | alphatab/guitarpro7/bends.gp                                | —    | planned |
 | REND-101 | Bend and release                                                                  | GP  | M2  | alphatab/guitarpro7/bends.gp                                | —    | planned |
 | REND-102 | Bend, release, bend                                                               | GP  | M2  | alphatab/guitarpro7/bends-advanced.gp                       | —    | planned |
@@ -847,7 +847,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-022 | High-contrast support                                       | OT  | M3  | —       | —    | planned |
 | PLAT-023 | Reduced-motion support                                      | OT  | M3  | —       | —    | planned |
 | PLAT-024 | WCAG 2.2 AA audit passed                                    | OT  | M3  | —       | —    | planned |
-| PLAT-030 | Settings: theme                                             | GP  | M0  | —       | —    | planned |
+| PLAT-030 | Settings: theme                                             | GP  | M0  | — | apps/web/e2e/app.spec.ts | done |
 | PLAT-031 | Settings: default layout and workspace                      | GP  | M3  | —       | —    | planned |
 | PLAT-032 | Settings: notation preferences                              | GP  | M2  | —       | —    | planned |
 | PLAT-033 | Settings: synth and sound-pack selection                    | GP  | M7  | —       | —    | planned |
@@ -867,7 +867,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | LIB-015  | Library backup and restore as one file                      | OT  | M3  | —       | —    | planned |
 | PLAT-045 | New-version notice with one-click reload                    | GP  | M3  | —       | —    | planned |
 | PLAT-046 | Opt-in preview channel with a way back to stable            | GP  | M3  | —       | —    | planned |
-| PLAT-047 | Supported platforms: current Chromium, Firefox and Safari on Windows, macOS, Linux, ChromeOS, Android and iOS | GP+ | M0  | —       | —    | planned |
+| PLAT-047 | Supported platforms: current Chromium, Firefox and Safari on Windows, macOS, Linux, ChromeOS, Android and iOS | GP+ | M0  | —       | —    | in progress |
 | PLAT-048 | Settings: override a file's own stylesheet, layout, zoom, notation or sound when opening | GP  | M3  | —       | —    | planned |
 | PLAT-049 | Settings: default author details for new documents          | GP  | M4  | —       | —    | planned |
 | PLAT-050 | Settings: editing preferences (diagrams in normal paste, duration-key direction) | GP  | M4  | —       | —    | planned |
@@ -890,9 +890,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-013 | Split view: two documents, or two views of one                                                                              | OT  | M3  | —        | —    | planned |
 | UX-014 | Command palette (Ctrl/Cmd+K) exposing every action                                                                          | OT  | M3  | —        | —    | planned |
 | UX-015 | Every action reachable within one click or one shortcut                                                                     | OT  | M3  | —        | —    | planned |
-| UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | —        | —    | planned |
+| UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | — | apps/web/e2e/app.spec.ts, packages/core/test/score-colors.test.ts | done |
 | UX-021 | Desktop and mobile first-class; no feature removed on mobile                                                                | OT  | M3  | —        | —    | planned |
-| UX-022 | All user-facing strings in one module                                                                                       | OT  | M0  | —        | —    | planned |
+| UX-022 | All user-facing strings in one module                                                                                       | OT  | M0  | — | scripts/strings.test.ts | done |
 | UX-023 | Localizable UI with language switching without a reload                                                                     | GP+ | M3  | —        | —    | planned |
 | UX-024 | Translations for at least the 13 languages Guitar Pro ships                                                                 | GP  | M8  | —        | —    | planned |
 | UX-025 | Help links: user guide, issue tracker, community                                                                            | GP  | M8  | —        | —    | planned |
@@ -935,10 +935,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                                                 | Src | M   | Fixture | Test | Status  |
 | -------- | --------------------------------------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
-| PROJ-001 | CI: typecheck, lint, unit, E2E, bundle budgets, Lighthouse ≥ 95                         | OT  | M0  | —       | —    | planned |
+| PROJ-001 | CI: typecheck, lint, unit, E2E, bundle budgets, Lighthouse ≥ 95                         | OT  | M0  | —       | —    | in progress |
 | PROJ-002 | Deploys to opentabz.com with preview deploys per PR                                     | OT  | M0  | —       | —    | planned |
-| PROJ-003 | Repository hygiene: README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, LICENSE, templates | OT  | M0  | —       | —    | planned |
-| PROJ-004 | THIRD_PARTY_NOTICES covers every dependency and asset                                   | OT  | M0  | —       | —    | planned |
-| PROJ-005 | Trademark disclaimer in footer and README                                               | OT  | M0  | —       | —    | planned |
-| PROJ-006 | No network requests except own assets and user-requested sound packs                    | OT  | M0  | —       | —    | planned |
-| PROJ-007 | Conventional commits, changelog, semantic versioning, Renovate                          | OT  | M0  | —       | —    | planned |
+| PROJ-003 | Repository hygiene: README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, LICENSE, templates | OT  | M0  | — | scripts/repository.test.ts | done |
+| PROJ-004 | THIRD_PARTY_NOTICES covers every dependency and asset                                   | OT  | M0  | — | scripts/repository.test.ts | done |
+| PROJ-005 | Trademark disclaimer in footer and README                                               | OT  | M0  | — | scripts/repository.test.ts, apps/web/e2e/app.spec.ts | done |
+| PROJ-006 | No network requests except own assets and user-requested sound packs                    | OT  | M0  | — | apps/web/e2e/app.spec.ts, scripts/repository.test.ts | done |
+| PROJ-007 | Conventional commits, changelog, semantic versioning, Renovate                          | OT  | M0  | —       | —    | in progress |

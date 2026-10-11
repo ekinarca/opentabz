@@ -73,7 +73,7 @@ export function AboutDialog({
               target="_blank"
               rel="noreferrer"
             >
-              alphaTab
+              {strings.about.alphaTab}
             </a>
           </li>
         </ul>

@@ -102,7 +102,7 @@ export function Mixer({ doc }: { readonly doc: OpenDocument }) {
                     updateMix(doc.key, track.index, { mute: !mix.mute });
                   }}
                 >
-                  M
+                  {strings.mixer.muteShort}
                 </ToggleChip>
                 <ToggleChip
                   label={strings.mixer.solo(name)}
@@ -111,7 +111,7 @@ export function Mixer({ doc }: { readonly doc: OpenDocument }) {
                     updateMix(doc.key, track.index, { solo: !mix.solo });
                   }}
                 >
-                  S
+                  {strings.mixer.soloShort}
                 </ToggleChip>
                 <Slider
                   className="w-24 shrink-0"

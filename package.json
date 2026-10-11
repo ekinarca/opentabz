@@ -12,7 +12,7 @@
     "dev": "pnpm --filter @opentabz/web dev",
     "build": "pnpm --filter @opentabz/web build",
     "preview": "pnpm --filter @opentabz/web preview",
-    "typecheck": "pnpm -r --parallel typecheck",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm -r --parallel typecheck",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

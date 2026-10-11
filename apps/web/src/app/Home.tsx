@@ -766,7 +766,7 @@ export function Home({
                   >
                     {strings.home.openFile}
                     <kbd aria-hidden className="ot-cta-kbd">
-                      {mod} O
+                      {strings.home.openFileShortcut(mod)}
                     </kbd>
                   </button>
                   <button type="button" onClick={onOpenUrl} className="ot-secondary">
