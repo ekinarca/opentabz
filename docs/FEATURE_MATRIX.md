@@ -812,9 +812,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-023 | AIFF                                                                  | GP  | M7  | —       | —    | planned |
 | EXP-024 | MIDI options: muted tracks left out, one or two channels per track    | GP  | M2  | —       | packages/core/test/export-midi.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-025 | MIDI round trip keeps decimal tempos and note-level audio settings    | GP  | M5  | —       | —    | planned |
-| EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | apps/web/e2e/export.spec.ts | in progress |
+| EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | packages/core/test/render-session.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | packages/core/test/print-sheet.test.ts, apps/web/e2e/export.spec.ts | done |
-| EXP-028 | File-name templates with tokens (title, track name, number and count, date, time) and a preview | GP  | M2  | —       | —    | planned |
+| EXP-028 | File-name templates with tokens (title, track name, number and count, date, time) and a preview | GP  | M2  | —       | apps/web/src/export/file-names.test.ts, apps/web/src/state/preferences.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-029 | Audio export of the selected bars only                                | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-030 | Metronome click and count-in in audio export                          | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |
 | EXP-031 | Audio export applies the current practice speed and transpose         | GP  | M2  | —       | packages/audio/test/export-render.test.ts, apps/web/e2e/export.spec.ts | done |

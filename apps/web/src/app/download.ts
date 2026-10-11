@@ -6,16 +6,14 @@
 /** Characters no file system takes in a name. */
 const RESERVED = /[\\/:*?"<>|]+/g;
 
-/** A file name without extension from a title: reserved and control characters replaced, trimmed, never empty. */
+/**
+ * A file name, without extension, from a title: reserved and control characters replaced,
+ * trimmed, never empty.
+ */
 export function fileBase(title: string, fallback = 'Untitled'): string {
   const printable = Array.from(title, char => ((char.codePointAt(0) ?? 0) < 32 ? ' ' : char)).join('');
   const base = printable.replace(RESERVED, '-').replace(/\s+/g, ' ').trim().replace(/^\.+/, '');
   return base === '' ? fallback : base;
-}
-
-/** A file name from a title (see fileBase) and an extension. */
-export function fileName(title: string, extension: string, fallback = 'Untitled'): string {
-  return `${fileBase(title, fallback)}.${extension}`;
 }
 
 export function download(bytes: Uint8Array, name: string, type: string): void {

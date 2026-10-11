@@ -15,8 +15,16 @@ export const STAFF_DISPLAYS = ['default', 'score-tab', 'score', 'tab'] as const;
  */
 export type StaffDisplay = (typeof STAFF_DISPLAYS)[number];
 
+/** A run of master bars, by index (inclusive). */
+export interface BarRange {
+  readonly first: number;
+  readonly last: number;
+}
+
 export interface ViewOptions {
   readonly trackIndexes: readonly number[];
+  /** Only these bars (an export of the selection); the whole score when absent. */
+  readonly bars?: BarRange;
   readonly layout: LayoutKind;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;

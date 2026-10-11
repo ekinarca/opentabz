@@ -28,6 +28,10 @@ export function createRenderSettings(options: ViewOptions): alphaTab.Settings {
   display.scale = options.notationScale;
   display.layoutMode = layoutMode(options.layout, options.systemsLayout);
   display.padding = PADDING[options.layout].map(value => value * options.notationScale);
+  if (options.bars !== undefined) {
+    display.startBar = options.bars.first + 1;
+    display.barCount = options.bars.last - options.bars.first + 1;
+  }
 
   const resources = display.resources;
   resources.mainGlyphColor = color(SCORE_COLOR_SENTINELS.ink);

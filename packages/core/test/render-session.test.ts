@@ -41,6 +41,21 @@ describe('RenderSession', () => {
     session.dispose();
   });
 
+  it('EXP-026: lays out only the bars asked for (an export of the selection)', () => {
+    const whole = sessionFor('alphatex/demos/twelve-bar-shuffle.atex').layout();
+    expect(whole.partials.filter(p => p.kind === 'system').at(-1)?.lastBar).toBe(12);
+    const session = sessionFor('alphatex/demos/twelve-bar-shuffle.atex', { bars: { first: 8, last: 11 } });
+    const systems = session.layout().partials.filter(p => p.kind === 'system');
+    expect(systems[0]?.firstBar).toBe(8);
+    expect(systems.at(-1)?.lastBar).toBe(11);
+    // Another range lays out again.
+    const other = session
+      .layout({ ...BASE, bars: { first: 0, last: 1 } })
+      .partials.filter(p => p.kind === 'system');
+    expect([other[0]?.firstBar, other.at(-1)?.lastBar]).toEqual([0, 1]);
+    session.dispose();
+  });
+
   it('paints SVG with themable sentinel colours and nothing hard-coded black for staff lines', () => {
     const session = sessionFor('alphatab/guitarpro7/notes.gp');
     const layout = session.layout();

@@ -86,6 +86,16 @@ describe('preferences', () => {
     );
   });
 
+  it('read back the export file-name template, keeping templates of a sensible length', () => {
+    const parse = (value: unknown) =>
+      parsePreferences(JSON.stringify({ exportFileName: value }), FALLBACK).exportFileName;
+    expect(FALLBACK.exportFileName).toBe('%T');
+    expect(parse('%T - %t')).toBe('%T - %t');
+    expect(parse('')).toBe('');
+    expect(parse('x'.repeat(201))).toBe('%T');
+    expect(parse(42)).toBe('%T');
+  });
+
   it('resolve the system theme from the colour scheme', () => {
     expect(resolveTheme('system', true)).toBe('dark');
     expect(resolveTheme('system', false)).toBe('light');

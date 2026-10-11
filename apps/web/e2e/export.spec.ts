@@ -1,6 +1,6 @@
 /**
  * Exports: the pages as a PDF document, SVG and PNG files (EXP-001, EXP-002, EXP-003, EXP-026,
- * EXP-027) and printed (EXP-016); the score saved as a Standard MIDI File (EXP-004, EXP-024), named after it, every
+ * EXP-027) and printed (EXP-016), named after a template (EXP-028); the score saved as a Standard MIDI File (EXP-004, EXP-024), named after it, every
  * track named in it, muted tracks left out on request; and as WAV audio (EXP-005, EXP-029), the
  * whole song or the selected bars. What the files hold is proved in
  * packages/core/test/print-sheet.test.ts, packages/core/test/export-midi.test.ts and
@@ -161,6 +161,51 @@ test('exports the pages as a PDF document: vector, its text where the screen sho
     // Engines place hanging and middle baselines a little differently; Chromium is the reference.
     if (browserName === 'chromium') expect(Math.abs(nearest.y - screen.y), `${text}: y`).toBeLessThan(1);
   }
+});
+
+test('exports the selected bars on pages of their own', async ({ page }) => {
+  await usePaper(page, 'a4');
+  await openShuffle(page);
+  await page.getByRole('button', { name: /^Go to: / }).click();
+  await page
+    .getByRole('dialog', { name: 'Go to' })
+    .getByRole('button', { name: 'Select Turnaround (bars 9–12)' })
+    .click();
+  await expect.poll(() => transportText(page)).toMatch(/Bars 9–12 selected/);
+  const dialog = await openExport(page);
+  await dialog.getByRole('radio', { name: 'Selection' }).click();
+  await expect(dialog.getByText('Bars 9–12 on pages of their own.')).toBeVisible();
+  const { bytes } = await downloadFrom(page, dialog.getByRole('button', { name: 'Export PDF' }));
+  const pdf = await getDocument({ data: new Uint8Array(bytes), useSystemFonts: false }).promise;
+  expect(pdf.numPages).toBe(1);
+  const texts = (await (await pdf.getPage(1)).getTextContent()).items.map(item =>
+    'str' in item ? item.str : '',
+  );
+  // The turnaround, numbered as in the score; nothing of the bars before it.
+  expect(texts).toContain('Turnaround');
+  expect(texts).toContain('9');
+  expect(texts).not.toContain('Shuffle');
+  expect(texts).not.toContain('Twelve bars');
+});
+
+test('names exported files after a template, remembered', async ({ page }) => {
+  await openShuffle(page);
+  let dialog = await openExport(page);
+  const name = dialog.getByLabel('File name');
+  await expect(name).toHaveValue('%T');
+  await name.fill('%T - %t (%n of %N)');
+  await expect(dialog.getByText('Saved as “Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4)”')).toBeVisible();
+  const midi = await downloadFrom(page, dialog.getByRole('button', { name: 'Export MIDI' }));
+  expect(midi.file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4).mid');
+  await page.keyboard.press('Escape');
+
+  await page.reload();
+  await openShuffle(page);
+  dialog = await openExport(page);
+  await expect(dialog.getByLabel('File name')).toHaveValue('%T - %t (%n of %N)');
+  await dialog.getByLabel('File name').fill('%d %T');
+  const pdf = await downloadFrom(page, dialog.getByRole('button', { name: 'Export PDF' }));
+  expect(pdf.file.suggestedFilename()).toMatch(/^\d{4}-\d{2}-\d{2} Twelve-Bar Shuffle in A\.pdf$/);
 });
 
 test('exports the pages as SVG files, vector and with their music symbols as outlines', async ({ page }) => {

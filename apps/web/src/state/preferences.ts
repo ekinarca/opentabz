@@ -53,7 +53,12 @@ export interface Preferences {
   /** Instrument views mirrored for left-handed players. */
   readonly leftHanded: boolean;
   readonly audioLatency: AudioLatency;
+  /** How exported files are named, with tokens (see export/file-names.ts). */
+  readonly exportFileName: string;
 }
+
+/** The longest file-name template kept. */
+export const MAX_FILE_NAME_TEMPLATE = 200;
 
 export const STORAGE_KEY = 'opentabz.preferences.v1';
 
@@ -80,6 +85,7 @@ export function defaultPreferences(locale: string): Preferences {
     noteLabels: 'hover',
     leftHanded: false,
     audioLatency: 'interactive',
+    exportFileName: '%T',
   };
 }
 
@@ -127,6 +133,10 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
       audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
+      exportFileName:
+        typeof value.exportFileName === 'string' && value.exportFileName.length <= MAX_FILE_NAME_TEMPLATE
+          ? value.exportFileName
+          : fallback.exportFileName,
     };
   } catch {
     return fallback;
@@ -176,6 +186,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       noteLabels: state.noteLabels,
       leftHanded: state.leftHanded,
       audioLatency: state.audioLatency,
+      exportFileName: state.exportFileName,
     });
   },
 }));

@@ -270,8 +270,13 @@ export const strings = {
     },
     pdfCreator: 'OpenTabz',
     pdfProducer: 'OpenTabz, with the alphaTab notation engine',
+    fileName: 'File name',
+    fileNameHint: '%T title · %t track · %n track number · %N tracks · %d date · %h time',
+    fileNamePreview: (name: string) => `Saved as “${name}”, with the extension of each format.`,
     pageChoice: 'Which pages',
-    pageChoices: { all: 'All', range: 'Range' },
+    pageChoices: { all: 'All', range: 'Range', selection: 'Selection' },
+    selectionBars: (first: number, last: number) =>
+      first === last ? `Bar ${first} on a page of its own.` : `Bars ${first}–${last} on pages of their own.`,
     pageCount: (pages: number) =>
       pages === 1 ? 'The score fills one page.' : `The score fills ${pages} pages.`,
     countingPages: 'Counting the pages…',

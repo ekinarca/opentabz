@@ -1,6 +1,7 @@
 import { Button, Dialog, SegmentedControl, Switch } from '@opentabz/ui';
 import { Download, Printer } from 'lucide-react';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { BarRange } from '@opentabz/core/shared';
+import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
 import { AudioExportCancelled, exportWav } from '../audio/audio-export.ts';
 import { getEngine } from '../engine/instance.ts';
 import {
@@ -13,25 +14,55 @@ import {
   type PageFormat,
   type PngResolution,
 } from '../export/page-files.ts';
+import { expandFileName, fileNameContext } from '../export/file-names.ts';
 import { layoutPages, scoreTitle, type PagedScore } from '../export/pages.ts';
 import { clearPrint, openPrintDialog, preparePrint, userJustActed } from '../export/print.ts';
+import { rangeBars } from '../score-view/timeline-lookup.ts';
 import { silencedTracks } from '../state/audible.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { interpretations, usePlayer } from '../state/player.ts';
 import { usePractice } from '../state/practice.ts';
+import { MAX_FILE_NAME_TEMPLATE, usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
-import { download, fileBase, fileName } from './download.ts';
-import { Field, NumberField } from './MetronomeSettingsForm.tsx';
+import { download, fileBase } from './download.ts';
+import { Field, NumberField, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
 const s = strings.exportDialog;
 const CHANNELS = ['two', 'one'] as const;
 type Channels = (typeof CHANNELS)[number];
-const PAGE_CHOICES = ['all', 'range'] as const;
+const PAGE_CHOICES = ['all', 'range', 'selection'] as const;
 type PageChoice = (typeof PAGE_CHOICES)[number];
 
-function title(doc: OpenDocument): string {
-  return doc.summary.title || doc.source.name.replace(/\.[^.]*$/, '');
+/** The name of exported files, without extension, from the file-name template. */
+function exportBase(doc: OpenDocument, template: string): string {
+  return fileBase(expandFileName(template, fileNameContext(doc)));
+}
+
+/** The file-name template (remembered) and the name it gives now (EXP-028). */
+function FileNameField({ doc }: { readonly doc: OpenDocument }) {
+  const id = useId();
+  const template = usePreferences(state => state.exportFileName);
+  const setPreferences = usePreferences(state => state.set);
+  return (
+    <Field label={s.fileName} htmlFor={id} hint={s.fileNameHint}>
+      <input
+        id={id}
+        type="text"
+        spellCheck={false}
+        autoComplete="off"
+        maxLength={MAX_FILE_NAME_TEMPLATE}
+        value={template}
+        onChange={event => {
+          setPreferences({ exportFileName: event.target.value });
+        }}
+        className={`${SELECT_CLASS} w-full font-mono`}
+      />
+      <p className="text-[12px] text-ink-muted" aria-live="polite">
+        {s.fileNamePreview(exportBase(doc, template))}
+      </p>
+    </Field>
+  );
 }
 
 function failureOf(error: unknown): string {
@@ -93,12 +124,16 @@ function Progress({
 }
 
 /**
- * The score's pages as images (PNG, SVG) or printed: all of them or a range, PNG at a chosen
- * resolution, either with a transparent background.
+ * The score's pages as a PDF, as images (PNG, SVG) or printed: all of them, a range, or the
+ * selected bars on pages of their own; PNG at a chosen resolution; images with a transparent
+ * background on request.
  */
 function PagesExport({ doc }: { readonly doc: OpenDocument }) {
+  const selection = usePlayer(state => (state.docKey === doc.key ? state.selection : null));
+  const timeline = usePlayer(state => (state.docKey === doc.key ? state.timeline : null));
+  const template = usePreferences(state => state.exportFileName);
   const [format, setFormat] = useState<PageFormat>('pdf');
-  const [choice, setChoice] = useState<PageChoice>('all');
+  const [chosen, setChoice] = useState<PageChoice>('all');
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState<number | null>(null);
   const [dpi, setDpi] = useState<PngResolution>(150);
@@ -107,28 +142,42 @@ function PagesExport({ doc }: { readonly doc: OpenDocument }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [printReady, setPrintReady] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const paged = useRef<Promise<PagedScore> | null>(null);
+  const paged = useRef(new Map<string, Promise<PagedScore>>());
   const abort = useRef<AbortController | null>(null);
 
-  // The pages are laid out once, when first needed, and released with the dialog.
-  useEffect(
-    () => () => {
-      abort.current?.abort();
-      void paged.current?.then(score => {
-        score.close();
-      });
-      paged.current = null;
-      clearPrint();
-    },
-    [doc.engineId, doc.view],
-  );
+  // The selected bars, first to last in the score.
+  const span = selection === null || timeline === null ? null : rangeBars(timeline, selection);
+  const bars: BarRange | null =
+    span === null ? null : { first: Math.min(span.first, span.last), last: Math.max(span.first, span.last) };
+  const choice: PageChoice = chosen === 'selection' && bars === null ? 'all' : chosen;
 
-  const pagedScore = () => {
-    paged.current ??= layoutPages(doc).then(score => {
-      setPageCount(score.pageCount);
-      return score;
-    });
-    return paged.current;
+  // Pages are laid out when first needed (the score's, or the selection's) and released with the
+  // dialog.
+  useEffect(() => {
+    const layouts = paged.current;
+    return () => {
+      abort.current?.abort();
+      for (const pending of layouts.values()) {
+        void pending.then(score => {
+          score.close();
+        });
+      }
+      layouts.clear();
+      clearPrint();
+    };
+  }, [doc.engineId, doc.view]);
+
+  const pagedScore = (only: BarRange | null) => {
+    const key = only === null ? 'all' : `${only.first}-${only.last}`;
+    let pending = paged.current.get(key);
+    if (pending === undefined) {
+      pending = layoutPages(doc, only).then(score => {
+        if (only === null) setPageCount(score.pageCount);
+        return score;
+      });
+      paged.current.set(key, pending);
+    }
+    return pending;
   };
 
   const lastPage = to ?? pageCount ?? 1;
@@ -154,15 +203,15 @@ function PagesExport({ doc }: { readonly doc: OpenDocument }) {
     setFailure(null);
     setPrintReady(false);
     try {
-      const score = await pagedScore();
+      const score = await pagedScore(choice === 'selection' ? bars : null);
       const pages =
-        choice === 'all'
-          ? Array.from({ length: score.pageCount }, (_, index) => index)
-          : pageRange(from, to ?? score.pageCount, score.pageCount);
+        choice === 'range'
+          ? pageRange(from, to ?? score.pageCount, score.pageCount)
+          : Array.from({ length: score.pageCount }, (_, index) => index);
       if (action === 'files') {
         const file = await exportPageFiles(
           score,
-          fileBase(title(doc)),
+          exportBase(doc, template),
           { format, pages, dpi, transparent },
           {
             title: scoreTitle(doc),
@@ -206,16 +255,25 @@ function PagesExport({ doc }: { readonly doc: OpenDocument }) {
   }, []);
 
   const formatName = s.formats[format];
+  const choiceHint =
+    choice === 'selection' && bars !== null
+      ? s.selectionBars(bars.first + 1, bars.last + 1)
+      : pageCount === null
+        ? null
+        : s.pageCount(pageCount);
   return (
     <Section id="export-pages" title={s.pages} hint={s.pagesHint}>
-      <Field label={s.pageChoice} {...(pageCount === null ? {} : { hint: s.pageCount(pageCount) })}>
+      <Field label={s.pageChoice} {...(choiceHint === null ? {} : { hint: choiceHint })}>
         <SegmentedControl
           label={s.pageChoice}
           value={choice}
-          segments={PAGE_CHOICES.map(value => ({ value, label: s.pageChoices[value] }))}
+          segments={PAGE_CHOICES.filter(value => value !== 'selection' || bars !== null).map(value => ({
+            value,
+            label: s.pageChoices[value],
+          }))}
           onValueChange={value => {
             setChoice(value);
-            if (value === 'range') void pagedScore().catch(() => undefined);
+            if (value === 'range') void pagedScore(null).catch(() => undefined);
           }}
         />
       </Field>
@@ -310,6 +368,7 @@ function PagesExport({ doc }: { readonly doc: OpenDocument }) {
 }
 
 function MidiExport({ doc }: { readonly doc: OpenDocument }) {
+  const template = usePreferences(state => state.exportFileName);
   const [leaveOutMuted, setLeaveOutMuted] = useState(true);
   const [channels, setChannels] = useState<Channels>('two');
   const [working, setWorking] = useState(false);
@@ -325,7 +384,7 @@ function MidiExport({ doc }: { readonly doc: OpenDocument }) {
         channelsPerTrack: channels === 'one' ? 1 : 2,
         interpretations: interpretations(doc),
       });
-      download(bytes, fileName(title(doc), 'mid'), 'audio/midi');
+      download(bytes, `${exportBase(doc, template)}.mid`, 'audio/midi');
     } catch (error) {
       setFailure(failureOf(error));
     } finally {
@@ -364,6 +423,7 @@ function MidiExport({ doc }: { readonly doc: OpenDocument }) {
 }
 
 function AudioExport({ doc }: { readonly doc: OpenDocument }) {
+  const template = usePreferences(state => state.exportFileName);
   const selection = usePlayer(state => (state.docKey === doc.key ? state.selection : null));
   const speed = usePlayer(state => state.speed);
   const practice = usePractice();
@@ -394,7 +454,7 @@ function AudioExport({ doc }: { readonly doc: OpenDocument }) {
         setProgress,
         controller.signal,
       );
-      download(wav, fileName(title(doc), 'wav'), 'audio/wav');
+      download(wav, `${exportBase(doc, template)}.wav`, 'audio/wav');
     } catch (error) {
       if (!(error instanceof AudioExportCancelled)) setFailure(failureOf(error));
     } finally {
@@ -463,6 +523,8 @@ export function ExportDialog() {
     >
       {doc !== null && (
         <div className="flex flex-col gap-6">
+          <FileNameField doc={doc} />
+          <div className="border-t border-line" />
           <PagesExport doc={doc} />
           <div className="border-t border-line" />
           <MidiExport doc={doc} />

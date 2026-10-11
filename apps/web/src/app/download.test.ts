@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { fileName } from './download.ts';
+import { fileBase } from './download.ts';
 
 describe('file names for exports', () => {
   it('keeps a title as it is when the file system takes it', () => {
-    expect(fileName('Twelve-Bar Shuffle in A', 'mid')).toBe('Twelve-Bar Shuffle in A.mid');
+    expect(fileBase('Twelve-Bar Shuffle in A')).toBe('Twelve-Bar Shuffle in A');
   });
 
   it('replaces what file systems refuse and never starts with a dot', () => {
-    expect(fileName('AC/DC: "Back in Black"?', 'mid')).toBe('AC-DC- -Back in Black-.mid');
-    expect(fileName('..hidden', 'wav')).toBe('hidden.wav');
+    expect(fileBase('AC/DC: "Back in Black"?')).toBe('AC-DC- -Back in Black-');
+    expect(fileBase('..hidden')).toBe('hidden');
+    expect(fileBase('Line\nbreak\tand tab')).toBe('Line break and tab');
   });
 
   it('falls back when nothing is left', () => {
-    expect(fileName('  ', 'mid')).toBe('Untitled.mid');
-    expect(fileName('', 'mid', 'Track')).toBe('Track.mid');
+    expect(fileBase('  ')).toBe('Untitled');
+    expect(fileBase('', 'Track')).toBe('Track');
   });
 });

@@ -91,7 +91,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   phones, with performance budgets (warm start, drop to first render, view changes, play
   start); a bundle budget check; deterministic generated fixtures.
 - **Export to PDF, images, MIDI and WAV.** The Export button saves the score, made on the device:
-  - its pages, as the page view lays them out, all of them or a range: as a PDF document,
+  - its pages, as the page view lays them out, all of them, a range, or the selected bars on
+    pages of their own: as a PDF document,
     vector, its text set in embedded font subsets (selectable and searchable, placed where the
     screen shows it) and named after the song in its information; as PNG images (72, 150 or
     300 dpi) or SVG vector files whose music symbols are outlines (no font needed), with a white
@@ -104,6 +105,10 @@ All notable changes to OpenTabz are recorded here. The format follows
     rendered faster than real time in a worker of its own while playback goes on, the last
     notes left to ring out; on request only the selected bars, at the practice speed, with the
     metronome and the count-in. A progress bar shows how far it is, and it can be cancelled.
+
+  Files are named from a template with Guitar Pro's tokens (title, track name, number and
+  count, date, time), previewed as it is typed and remembered.
+
 - **Printing.** The printer button or ⌘/Ctrl+P draws every page and opens the browser's print
   dialog: one page of the score per sheet of A4 or US Letter, vector, with the running header
   and page numbers, ready for a printer or for saving as PDF.

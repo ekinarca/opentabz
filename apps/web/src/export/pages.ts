@@ -3,6 +3,7 @@
  * tracks, staves, systems and paper) in an engine view of its own, then painted a page at a time.
  */
 import type { Sheet } from '@opentabz/core/print';
+import type { BarRange } from '@opentabz/core/shared';
 import { getEngine } from '../engine/instance.ts';
 import { contentWidth, pageGeometry, paginate, type Size } from '../score-view/pagination.ts';
 import type { OpenDocument } from '../state/documents.ts';
@@ -25,7 +26,8 @@ export function scoreTitle(doc: OpenDocument): string {
   return doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
 }
 
-export async function layoutPages(doc: OpenDocument): Promise<PagedScore> {
+/** The score's pages, or those of only some bars (an export of the selection). */
+export async function layoutPages(doc: OpenDocument, bars: BarRange | null = null): Promise<PagedScore> {
   const engine = getEngine();
   exportViews += 1;
   const viewId = `${doc.key}:pages:${exportViews}`;
@@ -40,6 +42,7 @@ export async function layoutPages(doc: OpenDocument): Promise<PagedScore> {
       staffDisplay: doc.view.staffDisplay,
       width: contentWidth(geometry),
       notationScale: 1,
+      ...(bars === null ? {} : { bars }),
     },
   });
   const sheets = paginate(layout.partials, geometry);

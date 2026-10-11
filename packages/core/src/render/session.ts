@@ -195,6 +195,8 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     a.notationScale === b.notationScale &&
+    a.bars?.first === b.bars?.first &&
+    a.bars?.last === b.bars?.last &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );
