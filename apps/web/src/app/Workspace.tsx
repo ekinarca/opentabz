@@ -26,7 +26,12 @@ import {
   Rows3,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { PAPER_IDS, type PaperId } from '../score-view/pagination.ts';
+import {
+  PAGE_ARRANGEMENTS,
+  PAPER_IDS,
+  type PageArrangement,
+  type PaperId,
+} from '../score-view/pagination.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
@@ -187,6 +192,27 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
               {PAPER_IDS.map(option => (
                 <MenuRadioItem key={option} value={option}>
                   {strings.papers[option]}
+                </MenuRadioItem>
+              ))}
+            </MenuRadioGroup>
+          </MenuContent>
+        </Menu>
+      )}
+
+      {view.layout === 'page' && (
+        <Menu>
+          <ToolbarMenuButton label={strings.toolbar.pages} value={strings.arrangements[view.arrangement]} />
+          <MenuContent>
+            <MenuRadioGroup<PageArrangement>
+              value={view.arrangement}
+              onValueChange={value => {
+                update({ arrangement: value });
+                setPreferences({ pageArrangement: value });
+              }}
+            >
+              {PAGE_ARRANGEMENTS.map(option => (
+                <MenuRadioItem key={option} value={option}>
+                  {strings.arrangements[option]}
                 </MenuRadioItem>
               ))}
             </MenuRadioGroup>

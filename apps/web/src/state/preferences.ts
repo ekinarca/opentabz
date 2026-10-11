@@ -12,7 +12,7 @@ import {
 } from '../instrument-view/fretboard.ts';
 import { DRUM_MODES, type DrumMode } from '../instrument-view/drums.ts';
 import { HANDS, type Hand } from '../instrument-view/keyboard.ts';
-import type { PaperId } from '../score-view/pagination.ts';
+import { PAGE_ARRANGEMENTS, type PageArrangement, type PaperId } from '../score-view/pagination.ts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark', 'sepia', 'stage'] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
@@ -37,6 +37,8 @@ export interface Preferences {
   readonly theme: ThemePreference;
   readonly layout: LayoutKind;
   readonly paper: PaperId;
+  /** How the pages sit on screen in the page layout. */
+  readonly pageArrangement: PageArrangement;
   readonly staffDisplay: StaffDisplay;
   /** Shortcuts on a single character key (−, =, ?): can be turned off (WCAG 2.2 SC 2.1.4). */
   readonly singleKeyShortcuts: boolean;
@@ -90,6 +92,7 @@ export function defaultPreferences(locale: string): Preferences {
     theme: 'system',
     layout: 'page',
     paper: defaultPaper(locale),
+    pageArrangement: 'vertical',
     staffDisplay: 'default',
     singleKeyShortcuts: true,
     scrollMode: 'continuous',
@@ -133,6 +136,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
           ? value.layout
           : fallback.layout,
       paper: value.paper === 'a4' || value.paper === 'letter' ? value.paper : fallback.paper,
+      pageArrangement: oneOf(value.pageArrangement, PAGE_ARRANGEMENTS, fallback.pageArrangement),
       staffDisplay:
         value.staffDisplay === 'default' ||
         value.staffDisplay === 'score-tab' ||
@@ -210,6 +214,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       theme: state.theme,
       layout: state.layout,
       paper: state.paper,
+      pageArrangement: state.pageArrangement,
       staffDisplay: state.staffDisplay,
       singleKeyShortcuts: state.singleKeyShortcuts,
       scrollMode: state.scrollMode,

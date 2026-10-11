@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { getEngine } from '../engine/instance.ts';
 import { EngineTimeoutError } from '../engine/client.ts';
 import type { IntakeSource } from '../features/open/intake.ts';
-import type { PaperId } from '../score-view/pagination.ts';
+import type { PageArrangement, PaperId } from '../score-view/pagination.ts';
 import { describeFormat, strings } from '../strings.ts';
 import { fingerprint, recallMix, rememberMix, STYLE_DEFAULTS, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
@@ -19,6 +19,8 @@ export interface DocViewState {
   readonly trackIndexes: readonly number[];
   readonly layout: LayoutKind;
   readonly paper: PaperId;
+  /** How the pages sit on screen in the page layout (REND-212…REND-214). */
+  readonly arrangement: PageArrangement;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
   readonly zoom: number;
@@ -162,6 +164,7 @@ function initialView(summary: DocSummary): DocViewState {
     trackIndexes: [0],
     layout: narrow && preferences.layout === 'page' ? 'scroll' : preferences.layout,
     paper: preferences.paper,
+    arrangement: preferences.pageArrangement,
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,
     zoom: 1,

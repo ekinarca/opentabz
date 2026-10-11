@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   contentWidth,
   engineToSheet,
+  gridColumns,
   PAPER_SIZES,
   pageGeometry,
   paginate,
@@ -137,5 +138,68 @@ describe('placeContinuous', () => {
     expect(sheet.placements).toHaveLength(4);
     expect(sheet.placements[1]?.y).toBe(parts[1]?.y);
     expect(sheet.width).toBe(900);
+  });
+});
+
+describe('page arrangements (REND-212…REND-214)', () => {
+  const geometry = pageGeometry('letter');
+  const { paper, gap, outer } = geometry;
+  // Ten systems of 300 px: three to a page, four pages.
+  const parts = strip(10, 300);
+
+  it('puts the pages one under the other by default', () => {
+    const layout = paginate(parts, geometry);
+    expect(layout.pages.map(page => [page.x, page.y])).toEqual(
+      [0, 1, 2, 3].map(index => [outer, outer + index * (paper.height + gap)]),
+    );
+  });
+
+  it('puts the pages side by side, the sheet as wide as all of them', () => {
+    const layout = paginate(parts, geometry, 'horizontal');
+    expect(layout.pages).toHaveLength(4);
+    expect(layout.pages.map(page => [page.x, page.y])).toEqual(
+      [0, 1, 2, 3].map(index => [outer + index * (paper.width + gap), outer]),
+    );
+    expect(layout.width).toBe(2 * outer + 4 * paper.width + 3 * gap);
+    expect(layout.height).toBe(2 * outer + paper.height);
+    // The music moves with its page.
+    const third = layout.placements.find(placement => placement.page === 2);
+    expect(third?.x).toBe(outer + 2 * (paper.width + gap) + geometry.margins.left);
+  });
+
+  it('puts as many pages to a row as the view fits', () => {
+    expect(gridColumns(geometry, 2 * outer + 3 * paper.width + 2 * gap)).toBe(3);
+    expect(gridColumns(geometry, 2 * outer + 3 * paper.width + 2 * gap - 1)).toBe(2);
+    expect(gridColumns(geometry, 100)).toBe(1);
+    const layout = paginate(parts, geometry, 'grid', 3);
+    expect(layout.pages.map(page => [page.x, page.y])).toEqual([
+      [outer, outer],
+      [outer + paper.width + gap, outer],
+      [outer + 2 * (paper.width + gap), outer],
+      [outer, outer + paper.height + gap],
+    ]);
+    expect(layout.width).toBe(2 * outer + 3 * paper.width + 2 * gap);
+    expect(layout.height).toBe(2 * outer + 2 * paper.height + gap);
+  });
+
+  it('lays the music on one endless sheet without page breaks', () => {
+    const layout = paginate(parts, geometry, 'endless');
+    expect(layout.pages).toHaveLength(1);
+    const systems = layout.placements.filter(placement => placement.partial.kind === 'system');
+    expect(systems).toHaveLength(10);
+    // The engine's gaps are kept from the first partial to the last.
+    const first = layout.placements[0];
+    expect(first?.y).toBe(outer + geometry.margins.top);
+    for (const placement of layout.placements) {
+      expect(placement.y - (first?.y ?? 0)).toBe(placement.partial.y);
+    }
+    const sheet = layout.pages[0];
+    const last = systems.at(-1);
+    expect((sheet?.y ?? 0) + (sheet?.height ?? 0)).toBe(
+      (last?.y ?? 0) + (last?.partial.height ?? 0) + geometry.margins.bottom,
+    );
+    // Engine and sheet coordinates still map both ways.
+    const point = engineToSheet(layout, 10, 1000);
+    expect(point === null ? null : sheetToEngine(layout, point.x, point.y)).toEqual({ x: 10, y: 1000 });
   });
 });

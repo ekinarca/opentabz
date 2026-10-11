@@ -4,7 +4,7 @@
  */
 import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
 import type { PngResolution } from './export/page-files.ts';
-import type { PaperId } from './score-view/pagination.ts';
+import type { PageArrangement, PaperId } from './score-view/pagination.ts';
 import type { ZoomFit } from './state/documents.ts';
 import type { ThemePreference } from './state/preferences.ts';
 
@@ -364,6 +364,7 @@ export const strings = {
     staves: 'Staves',
     layout: 'Layout',
     paper: 'Paper',
+    pages: 'Pages',
     systems: 'Line breaks',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
@@ -404,6 +405,13 @@ export const strings = {
     a4: 'A4',
     letter: 'US Letter',
   } satisfies Record<PaperId, string>,
+
+  arrangements: {
+    vertical: 'Down',
+    horizontal: 'Side by side',
+    grid: 'Grid',
+    endless: 'Endless',
+  } satisfies Record<PageArrangement, string>,
 
   systemsLayouts: {
     model: 'As in file',

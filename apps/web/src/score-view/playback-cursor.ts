@@ -444,17 +444,32 @@ export class PlaybackCursor {
     const systemBottom = (top.y + placement.system.h) * zoom;
     const viewTop = scroller.scrollTop;
     const height = scroller.clientHeight;
+    const page = layout.pages.find(
+      box => top.y >= box.y && top.y < box.y + box.height && top.x >= box.x && top.x < box.x + box.width,
+    );
+    // Pages side by side or in a grid: sideways too, to the page, when the system starts out of view.
+    const left = this.systemLeftInView(placement) ? undefined : Math.max(0, ((page?.x ?? top.x) - 12) * zoom);
     if (scrollMode === 'page') {
       if (!now && this.inView(placement)) return;
       // To the top of the page the system is on, if it fits; otherwise to the system.
-      const page = layout.pages.find(box => top.y >= box.y && top.y < box.y + box.height);
       const pageTop = page === undefined ? null : page.y * zoom - 12;
       const target = pageTop !== null && systemBottom - pageTop <= height ? pageTop : systemTop - 12;
-      scrollTo({ top: Math.max(0, target) });
+      scrollTo({ top: Math.max(0, target), ...(left === undefined ? {} : { left }) });
       return;
     }
     const target = Math.max(0, systemTop - height * scrollOffset);
-    if (now || Math.abs(target - viewTop) > 4) scrollTo({ top: target });
+    if (now || Math.abs(target - viewTop) > 4 || left !== undefined)
+      scrollTo({ top: target, ...(left === undefined ? {} : { left }) });
+  }
+
+  /** Whether the start of the placement's system is in view sideways. */
+  private systemLeftInView(placement: BeatPlacement): boolean {
+    const layout = this.view.layout;
+    const start = layout === null ? null : engineToSheet(layout, placement.system.x, placement.system.y);
+    if (start === null) return true;
+    const scroller = this.view.scrollContainer;
+    const x = start.x * this.view.zoom;
+    return x >= scroller.scrollLeft && x < scroller.scrollLeft + scroller.clientWidth;
   }
 
   /** Whether the placement's system (or, horizontally, its beat) is all in view. */
@@ -470,7 +485,11 @@ export class PlaybackCursor {
     }
     const systemTop = top.y * zoom;
     const systemBottom = (top.y + placement.system.h) * zoom;
-    return systemTop >= scroller.scrollTop && systemBottom <= scroller.scrollTop + scroller.clientHeight;
+    return (
+      systemTop >= scroller.scrollTop &&
+      systemBottom <= scroller.scrollTop + scroller.clientHeight &&
+      this.systemLeftInView(placement)
+    );
   }
 
   private hide(): void {

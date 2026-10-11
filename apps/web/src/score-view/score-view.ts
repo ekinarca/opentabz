@@ -17,11 +17,13 @@ import { EdgeScroller } from './edge-scroll.ts';
 import { SvgCache } from './svg-cache.ts';
 import {
   contentWidth,
+  gridColumns,
   pageGeometry,
   paginate,
   placeContinuous,
   sheetToEngine,
   sheetToEngineNearest,
+  type PageArrangement,
   type PaperId,
   type SheetLayout,
 } from './pagination.ts';
@@ -30,6 +32,8 @@ export interface ScoreViewState {
   readonly docId: string;
   readonly layout: LayoutKind;
   readonly paper: PaperId;
+  /** How the pages sit on screen, in the page layout. */
+  readonly arrangement: PageArrangement;
   readonly systemsLayout: SystemsLayout;
   readonly staffDisplay: StaffDisplay;
   readonly trackIndexes: readonly number[];
@@ -138,6 +142,10 @@ export class ScoreView {
   private layoutSeq = 0;
   private generation = 0;
   private sheetLayout: SheetLayout | null = null;
+  /** The engine's last layout, arranged again without asking it when only the pages move. */
+  private viewLayout: ViewLayout | null = null;
+  /** Pages to a row of the page grid as last arranged. */
+  private columns = 1;
   private scoreBounds: ScoreBounds | null = null;
   private gesture: PointerGesture | null = null;
   private dragFrame = 0;
@@ -214,6 +222,7 @@ export class ScoreView {
       const width = entries[0]?.contentRect.width ?? 0;
       if (Math.abs(width - this.hostWidth) < 1) return;
       this.hostWidth = width;
+      if (this.state !== null && this.pageColumns(this.state) !== this.columns) this.rearrange();
       this.scheduleRelayout();
     });
     this.hostWidth = this.scroller.clientWidth;
@@ -229,6 +238,15 @@ export class ScoreView {
 
     if (previous?.zoom !== state.zoom) this.applyZoom(previous?.zoom ?? state.zoom, state.zoom);
     this.zoomAnchor = null;
+    // Pages moved (another arrangement, or the grid fits more or fewer to a row): no new layout.
+    if (
+      previous !== null &&
+      state.layout === 'page' &&
+      previous.layout === 'page' &&
+      (previous.arrangement !== state.arrangement || this.pageColumns(state) !== this.columns)
+    ) {
+      this.rearrange();
+    }
     if (previous !== null && previous.title !== state.title && this.sheetLayout !== null)
       this.renderPages(this.sheetLayout);
 
@@ -590,15 +608,18 @@ export class ScoreView {
     if (state === null) return;
     this.generation = layout.generation;
     this.scoreBounds = layout.bounds;
+    this.viewLayout = layout;
     this.clearPartials();
 
+    this.columns = this.pageColumns(state);
     const sheetLayout =
       state.layout === 'page'
-        ? paginate(layout.partials, pageGeometry(state.paper))
+        ? paginate(layout.partials, pageGeometry(state.paper), state.arrangement, this.columns)
         : placeContinuous(layout.partials, layout.width);
     this.sheetLayout = sheetLayout;
 
     this.sheet.dataset['layout'] = state.layout;
+    this.sheet.dataset['arrangement'] = state.layout === 'page' ? state.arrangement : '';
     this.sheet.style.width = `${sheetLayout.width}px`;
     this.sheet.style.height = `${sheetLayout.height}px`;
     this.renderPages(sheetLayout);
@@ -644,6 +665,9 @@ export class ScoreView {
       element.style.top = `${page.y}px`;
       element.style.width = `${page.width}px`;
       element.style.height = `${page.height}px`;
+      this.pagesLayer.append(element);
+      // An endless sheet has no pages to number.
+      if (state?.arrangement === 'endless') continue;
       if (page.index > 0 && state !== null && state.title.length > 0) {
         const header = document.createElement('div');
         header.className = 'ot-page-header';
@@ -654,8 +678,18 @@ export class ScoreView {
       footer.className = 'ot-page-footer';
       footer.textContent = this.labels.pageNumber(page.index + 1, total);
       element.append(footer);
-      this.pagesLayer.append(element);
     }
+  }
+
+  /** Pages to a row: as many as the view fits in the page grid, else one. */
+  private pageColumns(state: ScoreViewState): number {
+    if (state.layout !== 'page' || state.arrangement !== 'grid') return 1;
+    return gridColumns(pageGeometry(state.paper), this.scroller.clientWidth / state.zoom);
+  }
+
+  /** Arranges the last layout's pages again, keeping the reader's place. */
+  private rearrange(): void {
+    if (this.viewLayout !== null) this.apply(this.viewLayout, this.captureAnchor());
   }
 
   private onIntersection(entries: IntersectionObserverEntry[]): void {
@@ -743,16 +777,21 @@ export class ScoreView {
   private captureAnchor(): Anchor | null {
     const layout = this.sheetLayout;
     if (layout === null || this.state === null) return null;
-    const top = this.scroller.scrollTop / this.state.zoom;
-    for (const placement of layout.placements) {
-      const { partial } = placement;
-      if (partial.firstBar < 0) continue;
-      if (placement.y + partial.height > top) {
-        const fraction = Math.min(1, Math.max(0, (top - placement.y) / partial.height));
-        return { bar: partial.firstBar, fraction };
-      }
-    }
-    return null;
+    const zoom = this.state.zoom;
+    const top = this.scroller.scrollTop / zoom;
+    const left = this.scroller.scrollLeft / zoom;
+    const right = left + this.scroller.clientWidth / zoom;
+    const bottom = top + this.scroller.clientHeight / zoom;
+    const music = layout.placements.filter(placement => placement.partial.firstBar >= 0);
+    // The first system in view (pages may sit side by side), else the first below the top.
+    const anchor =
+      music.find(
+        ({ x, y, partial }) =>
+          x + partial.width > left && x < right && y + partial.height > top && y < bottom,
+      ) ?? music.find(({ y, partial }) => y + partial.height > top);
+    if (anchor === undefined) return null;
+    const fraction = Math.min(1, Math.max(0, (top - anchor.y) / anchor.partial.height));
+    return { bar: anchor.partial.firstBar, fraction };
   }
 
   private restoreAnchor(anchor: Anchor | null): void {
@@ -765,7 +804,19 @@ export class ScoreView {
         candidate.partial.firstBar <= anchor.bar,
     );
     if (placement === undefined) return;
-    this.scroller.scrollTop = (placement.y + anchor.fraction * placement.partial.height) * this.state.zoom;
+    const zoom = this.state.zoom;
+    this.scroller.scrollTop = (placement.y + anchor.fraction * placement.partial.height) * zoom;
+    // Pages side by side or in a grid: also to the page, if it is out of view.
+    const page = layout.pages[placement.page];
+    if (
+      page !== undefined &&
+      (this.state.arrangement === 'horizontal' || this.state.arrangement === 'grid')
+    ) {
+      const left = this.scroller.scrollLeft;
+      if (page.x * zoom < left || (page.x + page.width) * zoom > left + this.scroller.clientWidth) {
+        this.scroller.scrollLeft = Math.max(0, (page.x - 16) * zoom);
+      }
+    }
   }
 
   private clearPartials(): void {

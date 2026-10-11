@@ -78,18 +78,36 @@ function visible(partials: readonly PartialLayout[]): PartialLayout[] {
 }
 
 /**
+ * How the pages sit on screen (REND-212…REND-214): one under the other, side by side, in rows of
+ * as many as the view fits, or as one endless sheet without page breaks.
+ */
+export const PAGE_ARRANGEMENTS = ['vertical', 'horizontal', 'grid', 'endless'] as const;
+export type PageArrangement = (typeof PAGE_ARRANGEMENTS)[number];
+
+/** How many pages fit side by side in a view `width` wide (layout units); at least one. */
+export function gridColumns(geometry: PageGeometry, width: number): number {
+  const { paper, gap, outer } = geometry;
+  return Math.max(1, Math.floor((width - 2 * outer + gap) / (paper.width + gap)));
+}
+
+/**
  * Distributes partials onto pages in order. Vertical gaps between consecutive partials from the
  * engine's layout are preserved, except at the top of a page. A system never splits; one taller
- * than a page's content area starts a new page and overflows its bottom margin.
+ * than a page's content area starts a new page and overflows its bottom margin. The pages are
+ * then arranged: down, side by side, or `columns` to a row.
  */
-export function paginate(partials: readonly PartialLayout[], geometry: PageGeometry): SheetLayout {
+export function paginate(
+  partials: readonly PartialLayout[],
+  geometry: PageGeometry,
+  arrangement: PageArrangement = 'vertical',
+  columns = 1,
+): SheetLayout {
+  if (arrangement === 'endless') return endlessSheet(partials, geometry);
   const { paper, margins, gap, outer } = geometry;
   const contentTop = margins.top;
   const contentBottom = paper.height - margins.bottom;
-  const pageX = outer;
-  const pageY = (index: number): number => outer + index * (paper.height + gap);
 
-  const placements: Placement[] = [];
+  const onPages: { partial: PartialLayout; page: number; top: number }[] = [];
   let page = 0;
   let cursor = contentTop;
   let pageHasContent = false;
@@ -103,25 +121,56 @@ export function paginate(partials: readonly PartialLayout[], geometry: PageGeome
       top = contentTop;
       pageHasContent = false;
     }
-    placements.push({ partial, page, x: pageX + margins.left + partial.x, y: pageY(page) + top });
+    onPages.push({ partial, page, top });
     cursor = top + partial.height;
     pageHasContent = true;
     previousBottom = partial.y + partial.height;
   }
 
   const pageCount = Math.max(1, page + 1);
+  const perRow = arrangement === 'horizontal' ? pageCount : arrangement === 'grid' ? Math.max(1, columns) : 1;
+  const pageX = (index: number): number => outer + (index % perRow) * (paper.width + gap);
+  const pageY = (index: number): number => outer + Math.floor(index / perRow) * (paper.height + gap);
+  const placements: Placement[] = onPages.map(({ partial, page: index, top }) => ({
+    partial,
+    page: index,
+    x: pageX(index) + margins.left + partial.x,
+    y: pageY(index) + top,
+  }));
   const pages: PageBox[] = Array.from({ length: pageCount }, (_, index) => ({
     index,
-    x: pageX,
+    x: pageX(index),
     y: pageY(index),
     width: paper.width,
     height: paper.height,
   }));
+  const across = Math.min(perRow, pageCount);
+  const down = Math.ceil(pageCount / perRow);
   return {
-    width: paper.width + 2 * outer,
-    height: outer * 2 + pageCount * paper.height + (pageCount - 1) * gap,
+    width: outer * 2 + across * paper.width + (across - 1) * gap,
+    height: outer * 2 + down * paper.height + (down - 1) * gap,
     pages,
     placements,
+  };
+}
+
+/** One sheet of the paper's width, as long as the music, with its margins and no page breaks. */
+function endlessSheet(partials: readonly PartialLayout[], geometry: PageGeometry): SheetLayout {
+  const { paper, margins, outer } = geometry;
+  const shown = visible(partials);
+  const first = shown[0]?.y ?? 0;
+  const bottom = Math.max(first, ...shown.map(partial => partial.y + partial.height));
+  const height = Math.max(paper.height, margins.top + (bottom - first) + margins.bottom);
+  return {
+    width: paper.width + 2 * outer,
+    height: height + 2 * outer,
+    pages: [{ index: 0, x: outer, y: outer, width: paper.width, height }],
+    placements: shown.map(partial => ({
+      partial,
+      page: 0,
+      x: outer + margins.left + partial.x,
+      y: outer + margins.top + (partial.y - first),
+    })),
   };
 }
 
