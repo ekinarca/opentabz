@@ -18,6 +18,7 @@ const domGlobals = [
 export default tseslint.config(
   {
     ignores: [
+      '.claude/**',
       '**/dist/**',
       '**/coverage/**',
       '**/test-results/**',

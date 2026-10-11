@@ -27,3 +27,7 @@ fixtures/private/
 .vscode/*
 !.vscode/extensions.json
 lighthouse-report/
+
+# local agent worktrees and tool settings
+.claude/worktrees/
+.claude/settings.local.json
