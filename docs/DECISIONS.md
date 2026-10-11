@@ -181,3 +181,33 @@ lead engineer; the owner is consulted only on fixtures, deploy access and licens
   asserts fundamentals (A4, C5, E5 within ±2 %) at the expected times and silence in rests.
 - **Consequences:** Main-thread jank cannot cause audio dropouts; playback continues in background
   tabs. Requires `crossOriginIsolated` (all current browsers with the headers in place).
+
+## ADR-0016 — Default sound bank: alphaTab's SONiVOX bank now, a bank built from AOSP sources in M7
+
+- **Date:** 2026-10-11 · **Status:** accepted
+- **Context:** Playback needs a General MIDI SoundFont that loads fast (the default is fetched
+  when a document opens). alphaTab ships `sonivox.sf2` (1.35 MB, 684 KB gzip) with an Apache-2.0
+  licence file naming Sonic Network's EAS synthesizer from the Android Open Source Project. Its
+  README, written by the person who converted it, also mentions phone firmware, editing tools and
+  a Creative Sound Blaster bank, so the conversion's provenance cannot be fully verified.
+- **Decision:** Ship alphaTab's bank as the default for now, under its declared Apache-2.0
+  licence, and say so in `THIRD_PARTY_NOTICES.md`. In M7 (audio engine), replace it with a bank
+  OpenTabz builds itself, reproducibly, from the AOSP SONiVOX EAS wavetable sources
+  (`external/sonivox`, Apache-2.0), with the converter in this repository. Higher-quality banks are
+  offered as optional packs the user downloads explicitly; each pack's licence is checked first
+  (for example MuseScore General, MIT).
+- **Consequences:** Until M7 the default sound inherits the uncertainty above. The replacement must
+  keep the same General MIDI program map so scores sound the same.
+
+## ADR-0017 — Performance budgets are enforced in Chromium, measured everywhere
+
+- **Date:** 2026-10-11 · **Status:** accepted
+- **Context:** The budgets in ARCHITECTURE.md §1 are hard gates. Timing differs between browser
+  engines and machines; a gate that fails on noise teaches people to ignore it.
+- **Decision:** The Playwright budget tests measure with the app's own performance marks
+  (`ot:app-ready`, `ot:drop-to-paint`, `ot:layout`, `ot:play-start`) in every desktop project and
+  fail only in Chromium, the reference engine. WebKit and Firefox results are attached to the
+  test report as annotations, so regressions there are visible. The bundle budget
+  (`scripts/check-budgets.ts`) is engine-independent and always enforced.
+- **Consequences:** A WebKit- or Firefox-only regression does not fail CI; it shows up in the
+  report. Revisit when CI runners become stable enough to gate every engine.

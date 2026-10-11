@@ -15,38 +15,38 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                                                         | Src | M   | Fixture             | Test | Status  |
 | -------- | ----------------------------------------------------------------------------------------------- | --- | --- | ------------------- | ---- | ------- |
-| OPEN-001 | Drag-and-drop a file anywhere in the window                                                     | GP+ | M0  | —                   | —    | planned |
-| OPEN-002 | File picker (Open button and shortcut)                                                          | GP  | M0  | —                   | —    | planned |
-| OPEN-003 | Paste files from the clipboard                                                                  | OT  | M0  | —                   | —    | planned |
+| OPEN-001 | Drag-and-drop a file anywhere in the window                                                     | GP+ | M0  | — | apps/web/e2e/budgets.spec.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-002 | File picker (Open button and shortcut)                                                          | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
+| OPEN-003 | Paste files from the clipboard                                                                  | OT  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | OPEN-004 | Paste plain-text tabs from the clipboard                                                        | OT  | M5  | —                   | —    | planned |
-| OPEN-005 | Open from URL (CORS permitting), including `?url=` deep links                                   | OT  | M0  | —                   | —    | planned |
+| OPEN-005 | Open from URL (CORS permitting), including `?url=` deep links                                   | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/features/open/intake.test.ts | done |
 | OPEN-006 | OS file-handler registration via the PWA manifest                                               | OT  | M3  | —                   | —    | planned |
 | OPEN-007 | Web Share Target on mobile                                                                      | OT  | M3  | —                   | —    | planned |
 | OPEN-008 | Open a whole folder                                                                             | OT  | M3  | —                   | —    | planned |
-| OPEN-009 | Multiple documents in tabs                                                                      | GP  | M0  | —                   | —    | planned |
-| OPEN-010 | Guitar Pro 3 (.gp3)                                                                             | GP  | M0  | alphatab/guitarpro3 | —    | planned |
-| OPEN-011 | Guitar Pro 4 (.gp4)                                                                             | GP  | M0  | alphatab/guitarpro4 | —    | planned |
-| OPEN-012 | Guitar Pro 5 (.gp5, v5.00 and v5.10)                                                            | GP  | M0  | alphatab/guitarpro5 | —    | planned |
-| OPEN-013 | Guitar Pro 6 (.gpx, BCFZ and BCFS containers)                                                   | GP  | M0  | alphatab/guitarpro6 | —    | planned |
-| OPEN-014 | Guitar Pro 7 (.gp)                                                                              | GP  | M0  | alphatab/guitarpro7 | —    | planned |
-| OPEN-015 | Guitar Pro 8 (.gp), including files with audio tracks                                           | GP  | M0  | alphatab/guitarpro8 | —    | planned |
+| OPEN-009 | Multiple documents in tabs                                                                      | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
+| OPEN-010 | Guitar Pro 3 (.gp3)                                                                             | GP  | M0  | alphatab/guitarpro3 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-011 | Guitar Pro 4 (.gp4)                                                                             | GP  | M0  | alphatab/guitarpro4 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-012 | Guitar Pro 5 (.gp5, v5.00 and v5.10)                                                            | GP  | M0  | alphatab/guitarpro5 | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-013 | Guitar Pro 6 (.gpx, BCFZ and BCFS containers)                                                   | GP  | M0  | alphatab/guitarpro6 | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-014 | Guitar Pro 7 (.gp)                                                                              | GP  | M0  | alphatab/guitarpro7 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-015 | Guitar Pro 8 (.gp), including files with audio tracks                                           | GP  | M0  | alphatab/guitarpro8, alphatab/audio | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts | done |
 | OPEN-016 | OpenTabz project (.otz)                                                                         | OT  | M4  | —                   | —    | planned |
-| OPEN-017 | MusicXML (.xml, .musicxml; partwise and timewise)                                               | GP  | M0  | —                   | —    | planned |
-| OPEN-018 | Compressed MusicXML (.mxl)                                                                      | GP  | M0  | —                   | —    | planned |
-| OPEN-019 | alphaTex (.atex, .tex, .alphatex)                                                               | OT  | M0  | alphatex            | —    | planned |
-| OPEN-020 | Capella (.capx)                                                                                 | OT  | M0  | —                   | —    | planned |
+| OPEN-017 | MusicXML (.xml, .musicxml; partwise and timewise)                                               | GP  | M0  | musicxml-testsuite, musicxml/original-timewise.musicxml | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-018 | Compressed MusicXML (.mxl)                                                                      | GP  | M0  | alphatab/musicxml3/compressed.mxl | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-019 | alphaTex (.atex, .tex, .alphatex)                                                               | OT  | M0  | alphatex/demos | packages/core/test/alphatex-fixtures.test.ts, packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-020 | Capella (.capx)                                                                                 | OT  | M0  | capella/original-air.capx, capella/original-air.capxml | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
 | OPEN-021 | ASCII / plain-text tabs with rhythm inference and chord-line detection                          | GP+ | M5  | —                   | —    | planned |
 | OPEN-022 | ChordPro                                                                                        | OT  | M5  | —                   | —    | planned |
 | OPEN-023 | MIDI import with pitch → string/fret mapping per tuning                                         | GP  | M5  | —                   | —    | planned |
 | OPEN-024 | PowerTab (.ptb)                                                                                 | GP  | M8  | —                   | —    | planned |
 | OPEN-025 | TuxGuitar (.tg)                                                                                 | OT  | S   | —                   | —    | planned |
-| OPEN-026 | Format detection by content, never by extension                                                 | OT  | M0  | corrupt             | —    | planned |
-| OPEN-027 | Files with wrong or missing extensions and odd names open correctly                             | OT  | M0  | corrupt             | —    | planned |
-| OPEN-028 | Truncated files produce a specific "truncated" error                                            | OT  | M0  | corrupt             | —    | planned |
-| OPEN-029 | Corrupted files produce a specific error naming the format and the problem                      | OT  | M0  | corrupt             | —    | planned |
-| OPEN-030 | Recognized but unsupported formats (MIDI, PDF, images, audio, archives…) are named in the error | OT  | M0  | corrupt             | —    | planned |
-| OPEN-031 | Parsing runs off the main thread; a hung parse is cancelled by a watchdog                       | OT  | M0  | —                   | —    | planned |
-| OPEN-032 | Fuzzed (bit-flipped, truncated) inputs never hang or crash the app                              | OT  | M0  | corrupt             | —    | planned |
+| OPEN-026 | Format detection by content, never by extension                                                 | OT  | M0  | — | packages/core/test/sniff.test.ts, packages/core/test/open.test.ts | done |
+| OPEN-027 | Files with wrong or missing extensions and odd names open correctly                             | OT  | M0  | — | packages/core/test/open.test.ts | done |
+| OPEN-028 | Truncated files produce a specific "truncated" error                                            | OT  | M0  | — | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts | done |
+| OPEN-029 | Corrupted files produce a specific error naming the format and the problem                      | OT  | M0  | — | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
+| OPEN-030 | Recognized but unsupported formats (MIDI, PDF, images, audio, archives…) are named in the error | OT  | M0  | — | packages/core/test/open.test.ts, packages/core/test/sniff.test.ts | done |
+| OPEN-031 | Parsing runs off the main thread; a hung parse is cancelled by a watchdog                       | OT  | M0  | — | apps/web/src/engine/client.test.ts, packages/core/test/engine-host.test.ts | done |
+| OPEN-032 | Fuzzed (bit-flipped, truncated) inputs never hang or crash the app                              | OT  | M0  | alphatab/corrupt | packages/core/test/fuzz.test.ts | done |
 | OPEN-033 | Guitar Pro 1–2 (.gtp)                                                                           | GP  | M8  | —                   | —    | planned |
 | OPEN-034 | TablEdit (.tef)                                                                                 | GP  | M8  | —                   | —    | planned |
 | OPEN-035 | Protected Guitar Pro files: edit-locked files open read-only, open-locked files ask for the password | GP  | M4  | —                   | —    | planned |
@@ -61,25 +61,25 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                                           | Src | M   | Fixture                                                     | Test | Status  |
 | -------- | --------------------------------------------------------------------------------- | --- | --- | ----------------------------------------------------------- | ---- | ------- |
-| REND-001 | Standard notation + tablature                                                     | GP  | M0  | alphatex                                                    | —    | planned |
-| REND-002 | Tablature only                                                                    | GP  | M0  | alphatex                                                    | —    | planned |
-| REND-003 | Standard notation only                                                            | GP  | M0  | alphatex                                                    | —    | planned |
+| REND-001 | Standard notation + tablature                                                     | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
+| REND-002 | Tablature only                                                                    | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
+| REND-003 | Standard notation only                                                            | GP  | M0  | — | packages/core/test/render-session.test.ts, apps/web/e2e/budgets.spec.ts | done |
 | REND-004 | Rhythm / slash notation                                                           | GP  | M2  | alphatab/guitarpro7/slash.gp                                | —    | planned |
 | REND-005 | Numbered (jianpu) notation                                                        | GP  | M2  | —                                                           | —    | planned |
 | REND-006 | Lead-sheet / chord-chart layout (chords over lyrics)                              | OT  | M5  | —                                                           | —    | planned |
 | REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | —    | planned |
-| REND-010 | Page layout on A4 paper                                                           | GP  | M0  | —                                                           | —    | planned |
-| REND-011 | Page layout on US Letter paper                                                    | GP  | M0  | —                                                           | —    | planned |
+| REND-010 | Page layout on A4 paper                                                           | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
+| REND-011 | Page layout on US Letter paper                                                    | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
 | REND-012 | Custom paper size and margins                                                     | GP  | M2  | —                                                           | —    | planned |
-| REND-013 | Horizontal (continuous) layout                                                    | GP  | M0  | —                                                           | —    | planned |
-| REND-014 | Vertical scroll layout                                                            | GP  | M0  | —                                                           | —    | planned |
+| REND-013 | Horizontal (continuous) layout                                                    | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
+| REND-014 | Vertical scroll layout                                                            | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | REND-015 | Zoom 25–400 %                                                                     | GP  | M0  | —                                                           | —    | planned |
-| REND-016 | Respect the file's own systems layout (bars per system, bar proportions)          | GP  | M0  | alphatab/guitarpro7/layout-configuration-multi-track-all.gp | —    | planned |
-| REND-017 | HiDPI-crisp vector rendering                                                      | GP  | M0  | —                                                           | —    | planned |
-| REND-018 | Smooth reflow on window resize                                                    | GP  | M0  | —                                                           | —    | planned |
-| REND-019 | Virtualized rendering: only visible systems are painted and attached              | OT  | M0  | —                                                           | —    | planned |
-| REND-020 | Notation layout and rendering in a Web Worker                                     | OT  | M0  | —                                                           | —    | planned |
-| REND-021 | Instant theme switch of rendered notation (no re-render)                          | OT  | M0  | —                                                           | —    | planned |
+| REND-016 | Respect the file's own systems layout (bars per system, bar proportions)          | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
+| REND-017 | HiDPI-crisp vector rendering                                                      | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
+| REND-018 | Smooth reflow on window resize                                                    | GP  | M0  | — | apps/web/e2e/open.spec.ts, packages/core/test/render-session.test.ts | done |
+| REND-019 | Virtualized rendering: only visible systems are painted and attached              | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/score-view/svg-cache.test.ts | done |
+| REND-020 | Notation layout and rendering in a Web Worker                                     | OT  | M0  | — | packages/core/test/shared-isolation.test.ts, scripts/check-budgets.ts | done |
+| REND-021 | Instant theme switch of rendered notation (no re-render)                          | OT  | M0  | — | packages/core/test/score-colors.test.ts, packages/core/test/render-session.test.ts | done |
 | REND-030 | Show all tracks or any subset of tracks                                           | GP  | M0  | alphatab/guitarpro5/staves.gp5                              | —    | planned |
 | REND-031 | Per-track staff visibility (standard / tab / slash / numbered)                    | GP  | M2  | —                                                           | —    | planned |
 | REND-032 | Transposing instruments: concert vs written pitch display                         | GP  | M2  | alphatab/guitarpro8/transposition-tonality-a.gp             | —    | planned |
@@ -881,9 +881,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID     | Feature                                                                                                                     | Src | M   | Fixture  | Test | Status  |
 | ------ | --------------------------------------------------------------------------------------------------------------------------- | --- | --- | -------- | ---- | ------- |
-| UX-001 | Home page is the drop zone; no onboarding, sign-up or modal before the first note                                           | OT  | M0  | —        | —    | planned |
+| UX-001 | Home page is the drop zone; no onboarding, sign-up or modal before the first note                                           | OT  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | UX-002 | **New** button on the home page; blank page to first note in under five seconds                                             | OT  | M4  | —        | —    | planned |
-| UX-003 | Original demo scores openable from the home page                                                                            | OT  | M0  | alphatex | —    | planned |
+| UX-003 | Original demo scores openable from the home page                                                                            | OT  | M0  | alphatex/demos | apps/web/e2e/open.spec.ts | done |
 | UX-010 | Dockable workspace (score, fretboard, mixer, tuner, chord palette, lyrics, arrangement, piano roll, drum grid, text editor) | OT  | M3  | —        | —    | planned |
 | UX-011 | Drag, dock and pop out panels                                                                                               | OT  | M3  | —        | —    | planned |
 | UX-012 | Named workspace layouts                                                                                                     | OT  | M3  | —        | —    | planned |
@@ -920,15 +920,15 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                | Src | M   | Fixture   | Test | Status  |
 | -------- | ------------------------------------------------------ | --- | --- | --------- | ---- | ------- |
-| PERF-001 | Warm start to interactive < 1 s                        | OT  | M0  | —         | —    | planned |
-| PERF-002 | File drop → first render < 300 ms (5 tracks, 150 bars) | OT  | M0  | generated | —    | planned |
-| PERF-003 | File drop → first render < 1.5 s (20 tracks, 500 bars) | OT  | M0  | generated | —    | planned |
-| PERF-004 | Local operations under 100 ms, never a spinner         | OT  | M0  | —         | —    | planned |
+| PERF-001 | Warm start to interactive < 1 s                        | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
+| PERF-002 | File drop → first render < 300 ms (5 tracks, 150 bars) | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
+| PERF-003 | File drop → first render < 1.5 s (20 tracks, 500 bars) | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
+| PERF-004 | Local operations under 100 ms, never a spinner         | OT  | M0  | — | apps/web/e2e/budgets.spec.ts | done |
 | PERF-005 | Steady 60 fps cursor, scrolling and editing            | OT  | M1  | —         | —    | planned |
 | PERF-006 | Playback starts < 100 ms after pressing space          | OT  | M1  | —         | —    | planned |
 | PERF-007 | Pitch-detection feedback < 50 ms                       | OT  | M6  | —         | —    | planned |
-| PERF-008 | Initial JS < 300 KB gzip before the engine chunk       | OT  | M0  | —         | —    | planned |
-| PERF-009 | Zero console errors or warnings in production          | OT  | M0  | —         | —    | planned |
+| PERF-008 | Initial JS < 300 KB gzip before the engine chunk       | OT  | M0  | — | scripts/check-budgets.ts | done |
+| PERF-009 | Zero console errors or warnings in production          | OT  | M0  | — | apps/web/e2e/support.ts | done |
 | PERF-010 | Budgets also met on a low-end reference laptop and a mid-range phone | GP+ | M3  | —         | —    | planned |
 
 ## Project and compliance

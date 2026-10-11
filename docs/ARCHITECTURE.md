@@ -35,8 +35,11 @@ recorded as ADRs in [DECISIONS.md](DECISIONS.md); measurements behind them are i
 │ per view), SVG post-processing, exporters; from M4 the command layer   │
 │ and undo stacks; from M1 MIDI + playback timeline generation           │
 └────────────────────────────────────────────────────────────────────────┘
-┌────────────────── audio (planned, M1 — see §9) ────────────────────────┐
-│ AudioWorklet render thread · synth · effects · metronome               │
+┌──────────────────────────── synth worker (§9) ─────────────────────────┐
+│ alphaTab AlphaSynth (SoundFont) · metronome · count-in · loop ranges   │
+│      │ MIDI from the engine worker (MessagePort, no main-thread hop)    │
+│      ▼ stereo frames in a SharedArrayBuffer ring                       │
+│ AudioWorklet (audio thread): reads the ring, pings for more            │
 └────────────────────────────────────────────────────────────────────────┘
 ┌────────────── service worker (planned, M3) ─────────────────────────────┐
 │ precache app + engine for offline · file handlers · share target       │
@@ -58,12 +61,17 @@ apps/web/            Vite + React 19 application served at opentabz.com
   src/features/      user-facing features (open, view settings, …)
   src/state/         Zustand stores
   src/strings.ts     every user-facing string (English only)
-  e2e/               Playwright tests (render, budgets, visual regression)
+  src/audio/         audio engine controller, synth worker entry, AudioWorklet, transport FSM
+  build/             build-time helpers (production headers for `vite preview`)
+  e2e/               Playwright tests (formats, playback, phones, performance budgets)
 packages/core/       zero-DOM library: format sniffing, import, open errors, documents,
-                     render sessions, SVG post-processing; later .otz, commands, undo,
-                     theory, lint. Runs in Node (tests) and in workers.
+                     render sessions, bounds, MIDI and playback timelines; later .otz,
+                     commands, undo, theory, lint. Runs in Node (tests) and in workers.
+  src/shared/        types and constants safe for the main thread (protocol, timelines, views)
+  scripts/           generated fixtures (`pnpm fixtures`)
 packages/ui/         design tokens, the four themes, accessible components (Radix + Tailwind)
-packages/audio/      (planned, M1) synth integration, metronome, effects, encoders, pitch detection
+packages/audio/      synth host (alphaTab AlphaSynth), the shared ring buffer, synth protocol;
+                     later effects, encoders, pitch detection
 fixtures/            public test fixtures (authored alphaTex + generated binaries +
                      vetted third-party files); fixtures/private/ is gitignored
 patches/             pnpm patches applied to pinned dependencies (alphaTab)
@@ -80,27 +88,27 @@ at runtime (type-only imports of our own protocol types only).
 
 ### 4.1 Protocol
 
-`apps/web/src/engine/protocol.ts` defines a discriminated union of requests, responses and
-events. Requests carry an id and resolve one promise; events (render results) stream back
-tagged with the view id and a **generation** number, so results from a superseded layout are
-dropped. Binary payloads (file bytes) are transferred, never copied.
+`packages/core/src/shared/protocol.ts` defines the engine's methods as one typed map
+(`EngineMethods`); `apps/web/src/engine/client.ts` turns each into an awaited call. Every request
+carries an id and resolves one promise; layouts carry a **generation** number, so paint results
+for a superseded layout are dropped. Binary payloads (file bytes) are transferred, never copied.
+Each method has a deadline; a worker that misses one is terminated and replaced (the watchdog),
+and a worker that fails three times while starting is reported as unavailable.
 
-| Request          | Purpose                                                           |
-| ---------------- | ----------------------------------------------------------------- |
-| `open`           | sniff + import bytes → `DocSummary` or a typed `OpenError`        |
-| `closeDocument`  | release a document                                                |
-| `openView`       | create a render session (tracks, layout, notation options, width) |
-| `updateView`     | change options; re-layouts and bumps the generation               |
-| `renderPartials` | paint specific laid-out partials (lazy, viewport-driven)          |
-| `closeView`      | dispose a render session                                          |
+| Method            | Purpose                                                                           |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `init`            | warm the JIT (alphaTex and a `.gp` round trip, layout, paint); report the version |
+| `open`            | sniff + import bytes → `DocSummary`, or a typed `OpenError`                       |
+| `closeDocument`   | release a document and its views                                                  |
+| `layoutView`      | lay out a view (tracks, layout, staff display, width) → partials, bounds, timing  |
+| `paint`           | paint laid-out partials of the current generation to SVG (viewport-driven)        |
+| `closeView`       | dispose a render session                                                          |
+| `connectSynth`    | receive a `MessagePort` to the synth worker                                       |
+| `preparePlayback` | generate MIDI (sent straight to the synth worker) and the playback timeline       |
 
-| Event           | Payload                                                              |
-| --------------- | -------------------------------------------------------------------- |
-| `layoutStart`   | view id, generation, reason                                          |
-| `partialLayout` | id, kind (header/tuning/chords/system/footer), x, y, w, h, bar range |
-| `layoutEnd`     | total size, staff-system list, timings                               |
-| `partialSvg`    | id, SVG markup (post-processed, see §5.4)                            |
-| `viewError`     | typed error for a view                                               |
+Layouts also return `ScoreBounds`: compact typed arrays with every system, bar and beat
+rectangle, which the main thread uses for the cursor, hit testing and selections without
+asking the worker again.
 
 ### 4.2 Documents
 
@@ -136,7 +144,7 @@ tempo text are spaced exactly like main-thread rendering.
   .ot-sheet  (CSS zoom = view zoom; width/height in layout units)
     .ot-page      × pages   (paged layout only: paper, header, footer, page number)
     .ot-partial   × partials (absolute; one alphaTab SVG each; content attached lazily)
-    .ot-overlay   (cursor, selection, annotations — planned M1+)
+    .ot-overlay   (selection ranges and handles, bar highlight, beat cursor)
 ```
 
 ### 5.1 Layouts
@@ -162,9 +170,21 @@ margins, header/footer text, page numbers) is pure data in `pagination.ts` with 
 ### 5.3 Virtualization
 
 An `IntersectionObserver` on the scroll container (root margin ≈ one viewport) requests
-partials as they approach the viewport, batched per frame. Partials far outside the viewport
-release their DOM; their SVG markup stays in an LRU cache bounded by bytes, so scrolling back
-re-attaches without a worker round trip.
+partials as they approach the viewport, batched per microtask. Partials far outside the
+viewport release their DOM; their SVG markup stays in an LRU cache bounded by size
+(`svg-cache.ts`, 24 M UTF-16 units), so scrolling back re-attaches without a worker round trip
+and a long score scrolled end to end stays light.
+
+### 5.6 Pointer gestures and selections
+
+ScoreView turns pointer input into gestures in engine coordinates: a tap (Shift extends), a
+mouse drag (with auto-scroll near the edges), and on touch screens a long press, because a
+finger drag must keep scrolling. `SelectionOverlay` maps gestures to playback ranges with pure
+lookups over the timeline and bounds (`timeline-lookup.ts`): ranges snap to beats, whole bars are
+highlighted edge to edge, and passes through repeats are chosen near the playback position. Its
+two handles are separate elements with `touch-action: none` and zoom-independent size, so they
+can be dragged with a finger. `PlaybackCursor` animates the beat line with the Web Animations API
+between position reports and scrolls the playing system into view.
 
 ### 5.4 Theming rendered notation
 
@@ -214,44 +234,66 @@ as needed) plus `opentabz.json`; every `.otz` opens in Guitar Pro minus the extr
 ## 8. State
 
 Zustand stores, each small and serializable: `documents` (open docs, active doc, per-doc view
-options), `preferences` (theme, default layout/zoom, persisted to `localStorage` until the
-library lands in M3), `ui` (panels, dialogs, toasts). **(planned, M1)** The transport is an
-explicit, typed finite-state machine (`idle → loading → ready ⇄ playing ⇄ paused`, count-in,
-seeking) whose transitions are unit-tested.
+options and mixer state), `preferences` (theme, default layout/zoom/staff display/paper,
+persisted to `localStorage` until the library lands in M3) and `player` (transport, timeline,
+position, speed, metronome, count-in, loop, selection, volume). The transport is an explicit,
+typed finite-state machine (`unloaded → loading → ready ⇄ playing`, `error`) with an exhaustive
+transition table under test (`transport-machine.ts`).
 
-## 9. Audio **(planned, M1/M7)**
+## 9. Audio
 
-Requirements: AudioWorklet-based, glitch-free, correct when the tab is backgrounded,
-sample-accurate scheduling, < 100 ms to start. alphaTab's own design synthesizes in a worker
-and streams samples to an AudioWorklet. M1 starts with a spike comparing (a) that design and
-(b) running the synthesizer inside the AudioWorklet itself, measuring start latency, underruns
-under main-thread and engine-worker load, and CPU at 64+ voices; the result becomes an ADR.
-MIDI and the playback timeline (tick → beat → bounds) are generated in the engine worker and
-sent to the main thread as compact typed arrays for the cursor.
+ADR-0015. A synth worker runs alphaTab's `AlphaSynth` (a TinySoundFont port) at 48 kHz and
+writes stereo frames into a lock-free single-producer/single-consumer ring in a
+`SharedArrayBuffer`; an AudioWorklet copies them to the output and pings the worker every 1,024
+frames over a direct `MessagePort`, and the worker tops the ring up to 250 ms. The engine worker
+generates MIDI and the playback timeline (`preparePlayback`) and posts the MIDI straight to the
+synth worker; the main thread only sends commands (play, seek, speed, metronome, count-in, loop
+range, channel mute/solo/volume) and receives positions about 45 times a second. The
+`AudioContext` is created inside the first play gesture, everything else is prepared when a
+document opens, so play starts within the budget.
+
+Loop ranges map to alphaTab's playback range: a new range starts playback at its start, while a
+range adjusted around the playhead keeps playing from where it is (a range change seeks once,
+when the gesture ends). The default sound bank is discussed in ADR-0016; a full sound engine
+(effects, SFZ, physical modelling) is M7.
 
 ## 10. Performance practice
 
-- Engine worker is spawned and warmed (JIT) right after first paint, before any file is dropped.
-- Performance marks: `ot:intake`, `ot:parsed`, `ot:layout-end`, `ot:first-partial-painted`.
-  Playwright reads them and fails CI when a budget is exceeded.
-- Bundle budgets are checked on every build (main entry, CSS, engine worker).
+- The engine worker is spawned and warmed (JIT, including the Guitar Pro 7+ zip and XML path)
+  as soon as the first contentful paint is reported, before any file is dropped.
+- Performance marks and measures: `ot:app-ready` (warm start), `ot:engine-ready`,
+  `ot:drop-to-paint` (per document, from intake to the first painted system), `ot:layout`
+  (request to placed partials) and `ot:play-start` (play pressed to the synthesizer playing).
+  The Playwright budget tests read them; ADR-0017 says where they gate.
+- `scripts/check-budgets.ts` checks the initial JavaScript (entry chunk and static imports,
+  gzip) on every build and that no alphaTab code reaches the main thread.
+- Parser hot spots are fixed in alphaTab itself when profiling shows them (patch 0003).
 - No layout thrash in hot paths: geometry is computed from data, never read back from the DOM.
 
 ## 11. Testing
 
-- **Unit (Vitest, Node):** sniffing, error mapping, pagination, theming map, summaries, render
-  sessions (alphaTab runs in Node), and from M4 every editor command and inverse.
-- **E2E (Playwright, Chromium + WebKit + Firefox):** open every public fixture, assert no
-  console errors/warnings, screenshot visual regression, budgets, keyboard-only flows.
+- **Unit (Vitest, Node and happy-dom):** sniffing, error mapping, every public fixture, render
+  sessions (alphaTab runs in Node), playback timelines, pagination, theming, timeline lookups,
+  the engine client's watchdog, the transport FSM, and from M4 every editor command and inverse.
+- **E2E (Playwright):** against the production build with production headers, in Chromium,
+  WebKit and Firefox, desktop and phone viewports: every format through the file picker, drop,
+  paste and links; playback and loops; phone layouts and touch; budgets. Any console error or
+  warning fails a test.
 - **Fuzz:** truncated and bit-flipped fixtures through the open pipeline must yield a typed
   error or a score — never a hang or an untyped exception.
-- **Audio (M1):** offline render → FFT → assert fundamentals at expected times.
+- **Audio:** scores are rendered offline through the real synth host and ring buffer; tests
+  assert fundamentals (autocorrelation) at the expected times, silence in rests, loop
+  boundaries without leaks (Goertzel) and playhead behaviour when ranges change.
+- **Generated fixtures:** `pnpm fixtures` builds deterministic performance scores (5 × 150,
+  20 × 500), `.gp` versions of the demos and corrupt files.
 
 ## 12. Security and privacy
 
 Strict CSP via Netlify headers (`default-src 'self'`; workers and blobs from self only; no
 third-party origins), no cookies, no storage of file contents outside the device. Open-from-URL
-fetches only the URL the user typed. **(planned, M8)** User scripts run in a sandboxed iframe /
+fetches only the URL the user typed. `vite preview` serves the same `_headers`, so the
+end-to-end tests run under the production CSP, and the build never inlines assets as `data:`
+URLs (the CSP would block them). **(planned, M8)** User scripts run in a sandboxed iframe /
 worker with a capability-based API.
 
 ## 13. Build and deploy
