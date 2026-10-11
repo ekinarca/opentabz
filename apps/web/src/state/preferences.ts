@@ -12,7 +12,19 @@ import {
 } from '../instrument-view/fretboard.ts';
 import { DRUM_MODES, type DrumMode } from '../instrument-view/drums.ts';
 import { HANDS, type Hand } from '../instrument-view/keyboard.ts';
-import { PAGE_ARRANGEMENTS, type PageArrangement, type PaperId } from '../score-view/pagination.ts';
+import {
+  MARGIN_MM,
+  ORIENTATIONS,
+  PAGE_ARRANGEMENTS,
+  PAPER_IDS,
+  PAPER_SIDE_MM,
+  pageSetup,
+  type Margins,
+  type PageArrangement,
+  type PageSetup,
+  type PaperId,
+  type Size,
+} from '../score-view/pagination.ts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark', 'sepia', 'stage'] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
@@ -36,7 +48,8 @@ export const MAX_SCROLL_OFFSET = 0.6;
 export interface Preferences {
   readonly theme: ThemePreference;
   readonly layout: LayoutKind;
-  readonly paper: PaperId;
+  /** The paper, its orientation and margins new scores start with. */
+  readonly page: PageSetup;
   /** How the pages sit on screen in the page layout. */
   readonly pageArrangement: PageArrangement;
   readonly staffDisplay: StaffDisplay;
@@ -91,7 +104,7 @@ export function defaultPreferences(locale: string): Preferences {
   return {
     theme: 'system',
     layout: 'page',
-    paper: defaultPaper(locale),
+    page: pageSetup(defaultPaper(locale)),
     pageArrangement: 'vertical',
     staffDisplay: 'default',
     singleKeyShortcuts: true,
@@ -123,10 +136,48 @@ function oneOf<T>(value: unknown, options: readonly T[], fallback: T): T {
   return options.includes(value as T) ? (value as T) : fallback;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function numberIn(
+  value: unknown,
+  range: { readonly min: number; readonly max: number },
+  fallback: number,
+): number {
+  return typeof value === 'number' && value >= range.min && value <= range.max ? value : fallback;
+}
+
+/** A stored page setup; older preferences kept only the paper's name. */
+function parsePageSetup(raw: unknown, paper: unknown, fallback: PageSetup): PageSetup {
+  if (!isRecord(raw)) return { ...fallback, paper: oneOf(paper, PAPER_IDS, fallback.paper) };
+  const custom: Size = isRecord(raw['custom'])
+    ? {
+        width: numberIn(raw['custom']['width'], PAPER_SIDE_MM, fallback.custom.width),
+        height: numberIn(raw['custom']['height'], PAPER_SIDE_MM, fallback.custom.height),
+      }
+    : fallback.custom;
+  const margins: Margins = isRecord(raw['margins'])
+    ? {
+        top: numberIn(raw['margins']['top'], MARGIN_MM, fallback.margins.top),
+        right: numberIn(raw['margins']['right'], MARGIN_MM, fallback.margins.right),
+        bottom: numberIn(raw['margins']['bottom'], MARGIN_MM, fallback.margins.bottom),
+        left: numberIn(raw['margins']['left'], MARGIN_MM, fallback.margins.left),
+      }
+    : fallback.margins;
+  return {
+    paper: oneOf(raw['paper'], PAPER_IDS, fallback.paper),
+    custom,
+    orientation: oneOf(raw['orientation'], ORIENTATIONS, fallback.orientation),
+    margins,
+  };
+}
+
 export function parsePreferences(raw: string | null, fallback: Preferences): Preferences {
   if (raw === null) return fallback;
   try {
-    const value = JSON.parse(raw) as Partial<Record<keyof Preferences, unknown>>;
+    // `paper` is how older versions kept the page: its name only.
+    const value = JSON.parse(raw) as Partial<Record<keyof Preferences | 'paper', unknown>>;
     return {
       theme: (THEME_PREFERENCES as readonly unknown[]).includes(value.theme)
         ? (value.theme as ThemePreference)
@@ -135,7 +186,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
         value.layout === 'page' || value.layout === 'scroll' || value.layout === 'horizontal'
           ? value.layout
           : fallback.layout,
-      paper: value.paper === 'a4' || value.paper === 'letter' ? value.paper : fallback.paper,
+      page: parsePageSetup(value.page, value.paper, fallback.page),
       pageArrangement: oneOf(value.pageArrangement, PAGE_ARRANGEMENTS, fallback.pageArrangement),
       staffDisplay:
         value.staffDisplay === 'default' ||
@@ -213,7 +264,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
     save({
       theme: state.theme,
       layout: state.layout,
-      paper: state.paper,
+      page: state.page,
       pageArrangement: state.pageArrangement,
       staffDisplay: state.staffDisplay,
       singleKeyShortcuts: state.singleKeyShortcuts,

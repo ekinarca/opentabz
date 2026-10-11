@@ -31,7 +31,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
   const engine = getEngine();
   exportViews += 1;
   const viewId = `${doc.key}:pages:${exportViews}`;
-  const geometry = pageGeometry(doc.view.paper);
+  const geometry = pageGeometry(doc.view.page);
   const layout = await engine.call('layoutView', {
     viewId,
     docId: doc.engineId,

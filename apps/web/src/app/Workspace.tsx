@@ -27,8 +27,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
+  ORIENTATIONS,
   PAGE_ARRANGEMENTS,
   PAPER_IDS,
+  type Orientation,
   type PageArrangement,
   type PaperId,
 } from '../score-view/pagination.ts';
@@ -48,6 +50,7 @@ import { KeyboardPanel } from './KeyboardPanel.tsx';
 import { LyricsPanel } from './LyricsPanel.tsx';
 import { OverviewPanel } from './OverviewPanel.tsx';
 import { shortcutHint } from './keymap.ts';
+import { PageSetupDialog, usePageSetup } from './PageSetupDialog.tsx';
 import { PlaybackViewControl } from './PlaybackViewControl.tsx';
 import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
@@ -74,7 +77,15 @@ function ToolbarMenuButton({ label, value }: { readonly label: string; readonly 
   );
 }
 
-function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onInfo: () => void }) {
+function ViewToolbar({
+  doc,
+  onInfo,
+  onPageSetup,
+}: {
+  readonly doc: OpenDocument;
+  readonly onInfo: () => void;
+  readonly onPageSetup: () => void;
+}) {
   const updateView = useDocuments(state => state.updateView);
   const setPreferences = usePreferences(state => state.set);
   const fretboard = usePreferences(state => state.fretboard);
@@ -87,6 +98,7 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
   const update = (patch: Partial<OpenDocument['view']>) => {
     updateView(doc.key, patch);
   };
+  const setPage = usePageSetup(doc);
   const allTracks = summary.tracks.map(track => track.index);
 
   const toggleTrack = (index: number, checked: boolean) => {
@@ -180,21 +192,41 @@ function ViewToolbar({ doc, onInfo }: { readonly doc: OpenDocument; readonly onI
 
       {view.layout === 'page' && (
         <Menu>
-          <ToolbarMenuButton label={strings.toolbar.paper} value={strings.papers[view.paper]} />
+          <ToolbarMenuButton
+            label={strings.toolbar.paper}
+            value={strings.pageSetup.paperValue(
+              strings.papers[view.page.paper],
+              view.page.orientation === 'landscape',
+            )}
+          />
           <MenuContent>
             <MenuRadioGroup<PaperId>
-              value={view.paper}
-              onValueChange={value => {
-                update({ paper: value });
-                setPreferences({ paper: value });
+              value={view.page.paper}
+              onValueChange={paper => {
+                setPage({ paper });
               }}
             >
-              {PAPER_IDS.map(option => (
+              {PAPER_IDS.filter(option => option !== 'custom' || view.page.paper === 'custom').map(option => (
                 <MenuRadioItem key={option} value={option}>
                   {strings.papers[option]}
                 </MenuRadioItem>
               ))}
             </MenuRadioGroup>
+            <MenuSeparator />
+            <MenuRadioGroup<Orientation>
+              value={view.page.orientation}
+              onValueChange={orientation => {
+                setPage({ orientation });
+              }}
+            >
+              {ORIENTATIONS.map(option => (
+                <MenuRadioItem key={option} value={option}>
+                  {strings.orientations[option]}
+                </MenuRadioItem>
+              ))}
+            </MenuRadioGroup>
+            <MenuSeparator />
+            <MenuItem onSelect={onPageSetup}>{strings.pageSetup.open}</MenuItem>
           </MenuContent>
         </Menu>
       )}
@@ -328,6 +360,7 @@ export function Workspace() {
   const activeKey = useDocuments(state => state.activeKey);
   const active = docs.find(doc => doc.key === activeKey) ?? null;
   const [infoOpen, setInfoOpen] = useState(false);
+  const [pageSetupOpen, setPageSetupOpen] = useState(false);
   const fretboard = usePreferences(state => state.fretboard);
   const keyboard = usePreferences(state => state.keyboard);
   const chords = usePreferences(state => state.chords);
@@ -350,6 +383,9 @@ export function Workspace() {
             onInfo={() => {
               setInfoOpen(true);
             }}
+            onPageSetup={() => {
+              setPageSetupOpen(true);
+            }}
           />
         ))}
       {docs.map(doc => (
@@ -366,6 +402,9 @@ export function Workspace() {
       {active !== null && <PracticeDialog />}
       {active !== null && <CountInOverlay />}
       {active !== null && <SongInfoDialog doc={active} open={infoOpen} onOpenChange={setInfoOpen} />}
+      {active !== null && (
+        <PageSetupDialog doc={active} open={pageSetupOpen} onOpenChange={setPageSetupOpen} />
+      )}
     </main>
   );
 }

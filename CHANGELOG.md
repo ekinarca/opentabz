@@ -132,6 +132,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   page's width or a whole page fitted to the window (and kept fitted as it changes). ⌘/Ctrl with
   the wheel zooms around the pointer, and pinching the score (on a trackpad, or with two fingers)
   zooms the music rather than the page.
+- **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
+  Executive, Statement, Folio, Quarto) or a size of one's own, portrait or landscape, and the
+  four margins, from the Paper menu and its Page setup dialog. The page on screen, the PDF and
+  printing follow, and new scores start the same way.
 - **Pages side by side, in a grid or endless.** In the page layout the Pages menu sets the pages
   one under another, side by side (scrolling sideways), in rows of as many as the window fits
   (more as the zoom goes down), or as one endless sheet of the paper's width with no page breaks.

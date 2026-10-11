@@ -10,6 +10,37 @@ describe('preferences', () => {
     expect(defaultPaper('tr-TR')).toBe('a4');
   });
 
+  it('read back the page setup, and the paper of older versions', () => {
+    const stored = JSON.stringify({
+      page: {
+        paper: 'custom',
+        custom: { width: 300, height: 400 },
+        orientation: 'landscape',
+        margins: { top: 20, right: 10, bottom: 20, left: 10 },
+      },
+    });
+    expect(parsePreferences(stored, FALLBACK).page).toEqual({
+      paper: 'custom',
+      custom: { width: 300, height: 400 },
+      orientation: 'landscape',
+      margins: { top: 20, right: 10, bottom: 20, left: 10 },
+    });
+    // Older versions kept the paper's name only.
+    expect(parsePreferences(JSON.stringify({ paper: 'letter' }), FALLBACK).page).toEqual({
+      ...FALLBACK.page,
+      paper: 'letter',
+    });
+    const invalid = JSON.stringify({
+      page: {
+        paper: 'napkin',
+        custom: { width: 5, height: 'tall' },
+        orientation: 'diagonal',
+        margins: { top: -3 },
+      },
+    });
+    expect(parsePreferences(invalid, FALLBACK).page).toEqual(FALLBACK.page);
+  });
+
   it('fall back to the defaults for missing or broken storage', () => {
     expect(parsePreferences(null, FALLBACK)).toEqual(FALLBACK);
     expect(parsePreferences('{oops', FALLBACK)).toEqual(FALLBACK);

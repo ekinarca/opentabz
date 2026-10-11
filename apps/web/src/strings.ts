@@ -4,7 +4,7 @@
  */
 import type { FormatId, LayoutKind, OpenError, StaffDisplay, SystemsLayout } from '@opentabz/core/shared';
 import type { PngResolution } from './export/page-files.ts';
-import type { PageArrangement, PaperId } from './score-view/pagination.ts';
+import type { Orientation, PageArrangement, PaperId } from './score-view/pagination.ts';
 import type { ZoomFit } from './state/documents.ts';
 import type { ThemePreference } from './state/preferences.ts';
 
@@ -402,9 +402,44 @@ export const strings = {
   } satisfies Record<LayoutKind, string>,
 
   papers: {
+    a3: 'A3',
     a4: 'A4',
+    a5: 'A5',
+    b4: 'B4 (JIS)',
+    b5: 'B5 (JIS)',
     letter: 'US Letter',
+    legal: 'US Legal',
+    tabloid: 'Tabloid',
+    executive: 'Executive',
+    statement: 'Statement',
+    folio: 'Folio',
+    quarto: 'Quarto',
+    custom: 'Custom',
   } satisfies Record<PaperId, string>,
+
+  orientations: {
+    portrait: 'Portrait',
+    landscape: 'Landscape',
+  } satisfies Record<Orientation, string>,
+
+  pageSetup: {
+    open: 'Page setup…',
+    title: 'Page setup',
+    description: 'The paper, which way up, and the margins around the music. New scores start the same way.',
+    paper: 'Paper',
+    width: 'Width',
+    height: 'Height',
+    millimetres: 'mm',
+    orientation: 'Orientation',
+    margins: 'Margins',
+    top: 'Top',
+    right: 'Right',
+    bottom: 'Bottom',
+    left: 'Left',
+    close: 'Close',
+    paperValue: (paper: string, landscape: boolean) => (landscape ? `${paper}, landscape` : paper),
+    size: (width: number, height: number) => `${width} × ${height} mm`,
+  },
 
   arrangements: {
     vertical: 'Down',

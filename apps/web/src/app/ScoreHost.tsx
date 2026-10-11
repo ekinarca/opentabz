@@ -173,7 +173,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (scroller === null || fit === null || hidden) return undefined;
-    const geometry = pageGeometry(doc.view.paper);
+    const geometry = pageGeometry(doc.view.page);
     const apply = () => {
       if (scroller.clientWidth <= 0 || scroller.clientHeight <= 0) return;
       const width = scroller.clientWidth / (geometry.paper.width + 2 * geometry.outer);
@@ -191,7 +191,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     return () => {
       observer.disconnect();
     };
-  }, [key, fit, doc.view.paper, hidden]);
+  }, [key, fit, doc.view.page, hidden]);
 
   // Fit the page to narrow windows once, when the document first appears.
   useEffect(() => {
@@ -199,21 +199,21 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     if (scroller === null || !doc.view.autoFit || hidden) return;
     let zoom = doc.view.zoom;
     if (doc.view.layout === 'page') {
-      const geometry = pageGeometry(doc.view.paper);
+      const geometry = pageGeometry(doc.view.page);
       const needed = geometry.paper.width + 2 * geometry.outer;
       // Round down so the fitted page never overflows by a fraction of a pixel.
       if (scroller.clientWidth > 0 && scroller.clientWidth < needed)
         zoom = clampZoom(Math.floor((scroller.clientWidth / needed) * 100) / 100);
     }
     useDocuments.getState().updateView(key, { zoom, autoFit: false });
-  }, [key, doc.view.autoFit, doc.view.layout, doc.view.paper, doc.view.zoom, hidden]);
+  }, [key, doc.view.autoFit, doc.view.layout, doc.view.page, doc.view.zoom, hidden]);
 
   useEffect(() => {
     if (doc.view.autoFit) return;
     viewRef.current?.update({
       docId: doc.engineId,
       layout: doc.view.layout,
-      paper: doc.view.paper,
+      page: doc.view.page,
       arrangement: doc.view.arrangement,
       systemsLayout: doc.view.systemsLayout,
       staffDisplay: doc.view.staffDisplay,

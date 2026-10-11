@@ -4,8 +4,10 @@ import {
   contentWidth,
   engineToSheet,
   gridColumns,
-  PAPER_SIZES,
+  PAPER_IDS,
   pageGeometry,
+  pageSetup,
+  paperSize,
   paginate,
   placeContinuous,
   sheetToEngine,
@@ -35,21 +37,38 @@ function strip(systems: number, height: number): PartialLayout[] {
   return parts;
 }
 
-describe('paper', () => {
-  it('has A4 and Letter at 96 dpi', () => {
-    expect(PAPER_SIZES.a4.width).toBeCloseTo(793.7, 1);
-    expect(PAPER_SIZES.a4.height).toBeCloseTo(1122.5, 1);
-    expect(PAPER_SIZES.letter).toEqual({ width: 816, height: 1056 });
+describe('paper (REND-012, REND-221, REND-222)', () => {
+  it("has twelve formats at 96 dpi, A4 and Letter among them, and a size of one's own", () => {
+    expect(PAPER_IDS).toHaveLength(13);
+    const a4 = paperSize(pageSetup('a4'));
+    expect(a4.width).toBeCloseTo(793.7, 1);
+    expect(a4.height).toBeCloseTo(1122.5, 1);
+    const letter = paperSize(pageSetup('letter'));
+    expect(letter.width).toBeCloseTo(816, 6);
+    expect(letter.height).toBeCloseTo(1056, 6);
+    expect(paperSize(pageSetup('a3')).height).toBeCloseTo(420 * (96 / 25.4), 6);
+    const custom = paperSize(pageSetup('custom', { custom: { width: 254, height: 127 } }));
+    expect(custom.width).toBeCloseTo(960, 6);
+    expect(custom.height).toBeCloseTo(480, 6);
   });
 
-  it('subtracts margins from the content width', () => {
-    const geometry = pageGeometry('letter', { top: 10, right: 20, bottom: 10, left: 30 });
-    expect(contentWidth(geometry)).toBe(766);
+  it('turns the paper on its side for landscape', () => {
+    const landscape = paperSize(pageSetup('letter', { orientation: 'landscape' }));
+    expect(landscape.width).toBeCloseTo(1056, 6);
+    expect(landscape.height).toBeCloseTo(816, 6);
+  });
+
+  it('subtracts margins (millimetres) from the content width', () => {
+    const geometry = pageGeometry(
+      pageSetup('letter', { margins: { top: 10, right: 25.4, bottom: 10, left: 25.4 } }),
+    );
+    expect(contentWidth(geometry)).toBeCloseTo(624, 6);
+    expect(geometry.margins.top).toBeCloseTo(10 * (96 / 25.4), 6);
   });
 });
 
 describe('paginate', () => {
-  const geometry = pageGeometry('a4');
+  const geometry = pageGeometry(pageSetup('a4'));
   const contentHeight = geometry.paper.height - geometry.margins.top - geometry.margins.bottom;
 
   it('keeps everything on one page when it fits and drops the credit line', () => {
@@ -142,7 +161,7 @@ describe('placeContinuous', () => {
 });
 
 describe('page arrangements (REND-212…REND-214)', () => {
-  const geometry = pageGeometry('letter');
+  const geometry = pageGeometry(pageSetup('letter'));
   const { paper, gap, outer } = geometry;
   // Ten systems of 300 px: three to a page, four pages.
   const parts = strip(10, 300);

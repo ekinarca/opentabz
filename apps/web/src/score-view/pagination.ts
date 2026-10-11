@@ -6,26 +6,103 @@
  */
 import type { PartialLayout } from '@opentabz/core/shared';
 
-export const PAPER_IDS = ['a4', 'letter'] as const;
-export type PaperId = (typeof PAPER_IDS)[number];
-
 const MM = 96 / 25.4;
+
+/**
+ * Paper formats (REND-221): ISO A, JIS B, the North American sizes and others printers offer, and
+ * a size of one's own.
+ */
+export const PAPER_IDS = [
+  'a3',
+  'a4',
+  'a5',
+  'b4',
+  'b5',
+  'letter',
+  'legal',
+  'tabloid',
+  'executive',
+  'statement',
+  'folio',
+  'quarto',
+  'custom',
+] as const;
+export type PaperId = (typeof PAPER_IDS)[number];
+export type PresetPaperId = Exclude<PaperId, 'custom'>;
 
 export interface Size {
   readonly width: number;
   readonly height: number;
 }
 
-export const PAPER_SIZES: Readonly<Record<PaperId, Size>> = {
-  a4: { width: 210 * MM, height: 297 * MM },
-  letter: { width: 8.5 * 96, height: 11 * 96 },
+/** The preset formats upright, in millimetres. */
+export const PAPER_MM: Readonly<Record<PresetPaperId, Size>> = {
+  a3: { width: 297, height: 420 },
+  a4: { width: 210, height: 297 },
+  a5: { width: 148, height: 210 },
+  b4: { width: 257, height: 364 },
+  b5: { width: 182, height: 257 },
+  letter: { width: 215.9, height: 279.4 },
+  legal: { width: 215.9, height: 355.6 },
+  tabloid: { width: 279.4, height: 431.8 },
+  executive: { width: 184.15, height: 266.7 },
+  statement: { width: 139.7, height: 215.9 },
+  folio: { width: 215.9, height: 330.2 },
+  quarto: { width: 215, height: 275 },
 };
+
+export const ORIENTATIONS = ['portrait', 'landscape'] as const;
+export type Orientation = (typeof ORIENTATIONS)[number];
 
 export interface Margins {
   readonly top: number;
   readonly right: number;
   readonly bottom: number;
   readonly left: number;
+}
+
+/** How a page is set up (REND-012, REND-221, REND-222); lengths in millimetres. */
+export interface PageSetup {
+  readonly paper: PaperId;
+  /** A custom paper's size, upright. */
+  readonly custom: Size;
+  readonly orientation: Orientation;
+  readonly margins: Margins;
+}
+
+export const DEFAULT_MARGINS_MM: Margins = { top: 15, right: 12, bottom: 15, left: 12 };
+/** A custom paper's sides, and the margins, stay within these (millimetres). */
+export const PAPER_SIDE_MM = { min: 50, max: 1500 } as const;
+export const MARGIN_MM = { min: 0, max: 100 } as const;
+
+export function pageSetup(paper: PaperId, changes: Partial<Omit<PageSetup, 'paper'>> = {}): PageSetup {
+  return { paper, custom: PAPER_MM.a4, orientation: 'portrait', margins: DEFAULT_MARGINS_MM, ...changes };
+}
+
+export function samePageSetup(a: PageSetup, b: PageSetup): boolean {
+  return (
+    a.paper === b.paper &&
+    a.orientation === b.orientation &&
+    a.custom.width === b.custom.width &&
+    a.custom.height === b.custom.height &&
+    a.margins.top === b.margins.top &&
+    a.margins.right === b.margins.right &&
+    a.margins.bottom === b.margins.bottom &&
+    a.margins.left === b.margins.left
+  );
+}
+
+/** The paper's size upright in millimetres, whatever its orientation. */
+export function paperMillimetres(setup: PageSetup): Size {
+  return setup.paper === 'custom' ? setup.custom : PAPER_MM[setup.paper];
+}
+
+/** The paper's size on screen (layout units), turned on its side for landscape. */
+export function paperSize(setup: PageSetup): Size {
+  const { width, height } = paperMillimetres(setup);
+  return setup.orientation === 'landscape'
+    ? { width: height * MM, height: width * MM }
+    : { width: width * MM, height: height * MM };
 }
 
 export interface PageGeometry {
@@ -37,10 +114,19 @@ export interface PageGeometry {
   readonly outer: number;
 }
 
-export const DEFAULT_MARGINS: Margins = { top: 15 * MM, right: 12 * MM, bottom: 15 * MM, left: 12 * MM };
-
-export function pageGeometry(paper: PaperId, margins: Margins = DEFAULT_MARGINS): PageGeometry {
-  return { paper: PAPER_SIZES[paper], margins, gap: 32, outer: 32 };
+export function pageGeometry(setup: PageSetup): PageGeometry {
+  const { margins } = setup;
+  return {
+    paper: paperSize(setup),
+    margins: {
+      top: margins.top * MM,
+      right: margins.right * MM,
+      bottom: margins.bottom * MM,
+      left: margins.left * MM,
+    },
+    gap: 32,
+    outer: 32,
+  };
 }
 
 /** Width available to the notation on a page. */

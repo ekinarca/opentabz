@@ -23,15 +23,17 @@ import {
   placeContinuous,
   sheetToEngine,
   sheetToEngineNearest,
+  samePageSetup,
   type PageArrangement,
-  type PaperId,
+  type PageSetup,
   type SheetLayout,
 } from './pagination.ts';
 
 export interface ScoreViewState {
   readonly docId: string;
   readonly layout: LayoutKind;
-  readonly paper: PaperId;
+  /** The paper, its orientation and margins, in the page layout. */
+  readonly page: PageSetup;
   /** How the pages sit on screen, in the page layout. */
   readonly arrangement: PageArrangement;
   readonly systemsLayout: SystemsLayout;
@@ -243,7 +245,9 @@ export class ScoreView {
       previous !== null &&
       state.layout === 'page' &&
       previous.layout === 'page' &&
-      (previous.arrangement !== state.arrangement || this.pageColumns(state) !== this.columns)
+      (previous.arrangement !== state.arrangement ||
+        !samePageSetup(previous.page, state.page) ||
+        this.pageColumns(state) !== this.columns)
     ) {
       this.rearrange();
     }
@@ -543,7 +547,7 @@ export class ScoreView {
     let width: number;
     switch (state.layout) {
       case 'page':
-        width = contentWidth(pageGeometry(state.paper));
+        width = contentWidth(pageGeometry(state.page));
         break;
       case 'scroll':
         if (this.hostWidth <= 0) return null;
@@ -614,7 +618,7 @@ export class ScoreView {
     this.columns = this.pageColumns(state);
     const sheetLayout =
       state.layout === 'page'
-        ? paginate(layout.partials, pageGeometry(state.paper), state.arrangement, this.columns)
+        ? paginate(layout.partials, pageGeometry(state.page), state.arrangement, this.columns)
         : placeContinuous(layout.partials, layout.width);
     this.sheetLayout = sheetLayout;
 
@@ -684,7 +688,7 @@ export class ScoreView {
   /** Pages to a row: as many as the view fits in the page grid, else one. */
   private pageColumns(state: ScoreViewState): number {
     if (state.layout !== 'page' || state.arrangement !== 'grid') return 1;
-    return gridColumns(pageGeometry(state.paper), this.scroller.clientWidth / state.zoom);
+    return gridColumns(pageGeometry(state.page), this.scroller.clientWidth / state.zoom);
   }
 
   /** Arranges the last layout's pages again, keeping the reader's place. */
@@ -856,7 +860,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
   return (
     a.docId === b.docId &&
     a.layout === b.layout &&
-    a.paper === b.paper &&
+    samePageSetup(a.page, b.page) &&
     a.systemsLayout === b.systemsLayout &&
     a.staffDisplay === b.staffDisplay &&
     a.trackIndexes.length === b.trackIndexes.length &&

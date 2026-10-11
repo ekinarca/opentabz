@@ -70,7 +70,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | —    | planned |
 | REND-010 | Page layout on A4 paper                                                           | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
 | REND-011 | Page layout on US Letter paper                                                    | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
-| REND-012 | Custom paper size and margins                                                     | GP  | M2  | —                                                           | —    | planned |
+| REND-012 | Custom paper size and margins                                                     | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-013 | Horizontal (continuous) layout                                                    | GP  | M0  | — | packages/core/test/render-session.test.ts | done |
 | REND-014 | Vertical scroll layout                                                            | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | REND-015 | Zoom 25–400 %                                                                     | GP  | M0  | — | apps/web/e2e/app.spec.ts | done |
@@ -223,8 +223,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-218 | Stylesheet panel: per-document engraving options (page, systems, header/footer, text, notation), saved with the document | GP  | M2  | —                                                           | —    | planned |
 | REND-219 | Stylesheet settings stored in Guitar Pro files are honoured                       | GP  | M2  | —                                                           | —    | planned |
 | REND-220 | Stylesheet presets: bundled looks, user stylesheets, one chosen as the default for new documents | GP  | M2  | —                                                           | —    | planned |
-| REND-221 | Stylesheet: paper-size presets (twelve formats) and custom sizes                  | GP  | M2  | —                                                           | —    | planned |
-| REND-222 | Stylesheet: portrait or landscape                                                 | GP  | M2  | —                                                           | —    | planned |
+| REND-221 | Stylesheet: paper-size presets (twelve formats) and custom sizes                  | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
+| REND-222 | Stylesheet: portrait or landscape                                                 | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
 | REND-223 | Stylesheet: overall score scale, optionally keeping text and diagram sizes        | GP  | M2  | —                                                           | —    | planned |
 | REND-224 | Stylesheet: rhythmic spacing factor                                               | GP  | M2  | —                                                           | —    | planned |
 | REND-225 | Stylesheet: tuning legend (show, position, detail level, layout, frame)           | GP  | M2  | —                                                           | —    | planned |
