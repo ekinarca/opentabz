@@ -19,8 +19,10 @@ import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.t
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
+import { CountInOverlay } from './CountInOverlay.tsx';
 import { zoomStep } from './keymap.ts';
 import { modKey } from './platform.ts';
+import { PracticeDialog } from './PracticeDialog.tsx';
 import { ScoreHost } from './ScoreHost.tsx';
 import { SongInfoDialog } from './SongInfoDialog.tsx';
 import { Transport } from './Transport.tsx';
@@ -271,6 +273,8 @@ export function Workspace() {
         <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey} />
       ))}
       {active !== null && <Transport />}
+      {active !== null && <PracticeDialog />}
+      {active !== null && <CountInOverlay />}
       {active !== null && <SongInfoDialog doc={active} open={infoOpen} onOpenChange={setInfoOpen} />}
     </main>
   );

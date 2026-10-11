@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./ring": "./src/ring.ts",
-    "./protocol": "./src/protocol.ts"
+    "./protocol": "./src/protocol.ts",
+    "./metronome": "./src/metronome.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

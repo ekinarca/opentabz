@@ -70,4 +70,8 @@ export interface MidiDelivery {
   readonly tickShift: number;
   /** Per-channel transposition in semitones (transposing instruments). */
   readonly transpositionPitches: readonly (readonly [number, number])[];
+  /** Played bars in playback order: [startTick, numerator, denominator] (score ticks). */
+  readonly bars: Int32Array;
+  /** End of the song in score ticks. */
+  readonly endTick: number;
 }

@@ -15,7 +15,9 @@ import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../stat
 import { strings } from '../strings.ts';
 import { pickFiles } from './open-actions.ts';
 import { modKey } from './platform.ts';
+import { MetronomeIcon } from './icons.tsx';
 import { shortcutHint } from './keymap.ts';
+import { openMetronomeTool } from './MetronomeTool.tsx';
 import { useUi } from '../state/ui.ts';
 
 export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readonly home: boolean }) {
@@ -128,6 +130,7 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             </MenuRadioGroup>
           </MenuContent>
         </Menu>
+        <IconButton label={strings.metronomeTool.open} icon={<MetronomeIcon />} onClick={openMetronomeTool} />
         <IconButton
           label={strings.shortcuts.title}
           shortcut={shortcutHint('shortcuts')}

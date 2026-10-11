@@ -21,8 +21,17 @@ All notable changes to OpenTabz are recorded here. The format follows
   file's own systems layout; any selection of tracks; zoom from 25 % to 400 %; light, dark,
   sepia and high-contrast stage themes without re-rendering; song information.
 - **Playback.** SoundFont synthesis in a worker streamed to an AudioWorklet through shared
-  memory; a cursor that glides between beats and turns pages; click to seek; speed from 25 % to
-  200 %; metronome; count-in; volume.
+  memory; a cursor that glides between beats and turns pages; click to seek; speed from 10 % to
+  300 % without changing the pitch, by preset, slider, keys or tap tempo; volume.
+- **Metronome and count-in.** Six centred click sounds of even loudness, one to four clicks per
+  beat, swing, half time, accents on the first beat, none or a pattern set beat by beat,
+  polyrhythms and randomly silent bars; its own volume (zero leaves the beat display). A
+  count-in of one or two bars with its own volume, shown large on screen, fitted to where
+  playback starts (mid-bar starts count the beats before them), optionally before every loop
+  pass. Changing the pattern while playing never interrupts it. Settings are remembered.
+- **Standalone metronome.** Tempo from 10 to 400 BPM by typing, buttons, slider or tap tempo
+  (button or T), any meter up to 16 beats, with the beat display and the same sounds and
+  patterns; the open song waits and comes back when it closes.
 - **Practice.** A mixer with mute, solo and level per track and a practice mode; selecting a
   range by dragging across the music, Shift+click or a long press on phones, with handles to
   adjust it; looping the selection; Shift+arrow keys and Esc for selections
@@ -38,8 +47,11 @@ All notable changes to OpenTabz are recorded here. The format follows
 ### Changed
 
 - alphaTab 1.8.4 is patched: text measurement in workers (0001), runtime exports of reader
-  errors (0002), faster XML parsing for large Guitar Pro 7+ files (0003) and a fix that makes
-  Capella files open at all (0004). See [docs/upstream/](docs/upstream/).
+  errors (0002), faster XML parsing for large Guitar Pro 7+ files (0003), a fix that makes
+  Capella files open at all (0004), 10 % playback speed (0005), count-ins and loop passes that
+  switch while audio is generated, without gaps or drift (0006), drum kits on any channel and
+  silence instead of `NaN` for unloaded samples (0007), centred channels (0008) and replacing
+  the song while it plays (0009). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
 

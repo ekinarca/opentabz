@@ -15,6 +15,7 @@ import {
   Pause,
   Play,
   Repeat,
+  Settings,
   Square,
   TriangleAlert,
   Volume2,
@@ -23,33 +24,27 @@ import {
 } from 'lucide-react';
 import { canToggle } from '../audio/transport-machine.ts';
 import { rangeBars } from '../score-view/timeline-lookup.ts';
-import { useDocuments } from '../state/documents.ts';
+import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
+import { usePractice } from '../state/practice.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
+import { BeatIndicator, useSongConductor } from './BeatIndicator.tsx';
+import { MetronomeIcon } from './icons.tsx';
 import { shortcutHint } from './keymap.ts';
 import { Mixer } from './Mixer.tsx';
 import { PositionReadout } from './PositionReadout.tsx';
 import { SpeedControl } from './SpeedControl.tsx';
 
-/** A metronome glyph (Lucide has none): body, pendulum and weight. */
-function MetronomeIcon({ size = 18 }: { readonly size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M9 3h6l4 18H5L9 3Z" />
-      <path d="M12 17 17 7" />
-      <path d="M7.5 14h9" />
-    </svg>
-  );
+/** The visual metronome of the song, while the metronome is on. */
+function SongBeat({ doc, playing }: { readonly doc: OpenDocument; readonly playing: boolean }) {
+  const conductor = useSongConductor(doc);
+  if (conductor === null) return null;
+  return <BeatIndicator conductor={conductor} playing={playing} />;
+}
+
+function openPracticeSettings(): void {
+  useUi.getState().openPanel('practice');
 }
 
 /** The selected bars with a button to clear them (tablets and desktops). */
@@ -86,15 +81,20 @@ function SelectionChip({
 export function Transport() {
   const transport = usePlayer(state => state.transport);
   const timeline = usePlayer(state => state.timeline);
-  const metronome = usePlayer(state => state.metronome);
-  const countIn = usePlayer(state => state.countIn);
+  const metronome = usePractice(state => state.metronome);
+  const countIn = usePractice(state => state.countIn);
+  const setPractice = usePractice(state => state.set);
   const loop = usePlayer(state => state.loop);
   const selection = usePlayer(state => state.selection);
   const volume = usePlayer(state => state.volume);
   const toggle = usePlayer(state => state.toggle);
   const stop = usePlayer(state => state.stop);
-  const setMetronome = usePlayer(state => state.setMetronome);
-  const setCountIn = usePlayer(state => state.setCountIn);
+  const setMetronome = (on: boolean) => {
+    setPractice({ metronome: on });
+  };
+  const setCountIn = (on: boolean) => {
+    setPractice({ countIn: on });
+  };
   const setLoop = usePlayer(state => state.setLoop);
   const setSelection = usePlayer(state => state.setSelection);
   const setVolume = usePlayer(state => state.setVolume);
@@ -147,6 +147,7 @@ export function Transport() {
       />
 
       {activeDoc !== null && <PositionReadout doc={activeDoc} status={status} />}
+      {activeDoc !== null && metronome && <SongBeat doc={activeDoc} playing={playing} />}
 
       {selectedBars !== null && (
         <SelectionChip first={selectedBars.first + 1} last={selectedBars.last + 1} onClear={clearSelection} />
@@ -174,6 +175,7 @@ export function Transport() {
         />
         <IconButton
           label={strings.transport.metronome}
+          shortcut={shortcutHint('metronome')}
           icon={<MetronomeIcon />}
           pressed={metronome}
           onClick={() => {
@@ -183,11 +185,18 @@ export function Transport() {
         />
         <IconButton
           label={strings.transport.countIn}
+          shortcut={shortcutHint('count-in')}
           icon={<Hourglass size={17} aria-hidden />}
           pressed={countIn}
           onClick={() => {
             setCountIn(!countIn);
           }}
+          className="max-sm:hidden"
+        />
+        <IconButton
+          label={strings.transport.practiceSettings}
+          icon={<Settings size={16} aria-hidden />}
+          onClick={openPracticeSettings}
           className="max-sm:hidden"
         />
         {/* Phones: the less frequent controls live in a menu. */}
@@ -223,6 +232,9 @@ export function Transport() {
             <MenuCheckboxItem checked={countIn} onCheckedChange={setCountIn}>
               {strings.transport.countIn}
             </MenuCheckboxItem>
+            <MenuItem icon={<Settings size={14} aria-hidden />} onSelect={openPracticeSettings}>
+              {strings.transport.practiceSettings}
+            </MenuItem>
           </MenuContent>
         </Menu>
         <div className="ml-1 hidden items-center gap-1.5 sm:flex">

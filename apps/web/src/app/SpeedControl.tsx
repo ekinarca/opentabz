@@ -1,6 +1,8 @@
 import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Tooltip } from '@opentabz/ui';
 import { Minus, Plus } from 'lucide-react';
+import { useRef } from 'react';
 import { clampSpeed, MAX_SPEED, MIN_SPEED, SPEED_PRESETS, usePlayer } from '../state/player.ts';
+import { TAP_RESET_MS, tapTempo } from '../state/practice.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { shortcutHint, SPEED_STEP } from './keymap.ts';
@@ -12,6 +14,18 @@ export function SpeedControl() {
   const open = useUi(state => state.panel === 'speed');
   const setPanelOpen = useUi(state => state.setPanelOpen);
   const label = strings.transport.speedValue(speed);
+  const taps = useRef<number[]>([]);
+  // Tap tempo: the speed that turns the score's tempo here into the tapped one.
+  const tap = () => {
+    const now = performance.now();
+    const last = taps.current.at(-1);
+    if (last !== undefined && now - last > TAP_RESET_MS) taps.current = [];
+    taps.current.push(now);
+    const bpm = tapTempo(taps.current);
+    const player = usePlayer.getState();
+    const scoreTempo = player.tempo / player.speed;
+    if (bpm !== null && scoreTempo > 0) setSpeed(clampSpeed(bpm / scoreTempo));
+  };
 
   return (
     <Popover
@@ -86,6 +100,16 @@ export function SpeedControl() {
               {strings.transport.speedValue(preset)}
             </button>
           ))}
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={tap}
+            className="h-9 shrink-0 rounded-full border border-line-strong px-4 text-[13px] font-semibold text-ink hover:bg-sunken active:scale-95"
+          >
+            {strings.transport.speedTap}
+          </button>
+          <p className="text-[12px] text-ink-faint">{strings.transport.speedTapHint}</p>
         </div>
         <p className="mt-3 text-[12px] text-ink-faint">{strings.transport.speedHint}</p>
       </PopoverContent>

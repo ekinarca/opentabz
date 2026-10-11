@@ -275,7 +275,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-004 | Jump to section                                       | GP  | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/src/app/keymap.test.ts | done |
 | PLAY-005 | Go to bar                                             | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PLAY-006 | Mini-map / timeline scrubber                          | OT  | M1  | —                                                     | —    | planned |
-| PLAY-007 | Tap tempo                                             | OT  | M1  | —                                                     | —    | planned |
+| PLAY-007 | Tap tempo                                             | OT  | M1  | —                                                     | apps/web/e2e/practice.spec.ts, apps/web/e2e/metronome.spec.ts, apps/web/src/state/practice.test.ts | done |
 | PLAY-008 | Keyboard shortcuts for every transport action         | GP  | M1  | — | apps/web/src/app/keymap.test.ts, apps/web/src/app/shortcuts-doc.test.ts, apps/web/e2e/practice.spec.ts, apps/web/e2e/playback.spec.ts | done |
 | PLAY-010 | Beat cursor                                           | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | PLAY-011 | Bar highlight                                         | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
@@ -395,17 +395,17 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                         | Src | M   | Fixture                               | Test | Status  |
 | -------- | --------------------------------------------------------------- | --- | --- | ------------------------------------- | ---- | ------- |
-| PRAC-001 | Metronome: BPM and tap tempo                                    | GP  | M1  | —                                     | —    | planned |
-| PRAC-002 | Metronome: subdivisions                                         | OT  | M1  | —                                     | —    | planned |
-| PRAC-003 | Metronome: accent patterns                                      | OT  | M1  | —                                     | —    | planned |
-| PRAC-004 | Metronome: programmable patterns                                | OT  | M1  | —                                     | —    | planned |
-| PRAC-005 | Metronome: polyrhythms                                          | OT  | M1  | —                                     | —    | planned |
-| PRAC-006 | Metronome: swing amount                                         | OT  | M1  | —                                     | —    | planned |
-| PRAC-007 | Metronome: multiple click sounds                                | OT  | M1  | —                                     | —    | planned |
-| PRAC-008 | Metronome: visual conductor / flash                             | OT  | M1  | —                                     | —    | planned |
-| PRAC-009 | Metronome: random beat-drop training                            | OT  | M1  | —                                     | —    | planned |
-| PRAC-010 | Metronome-only page usable without a song                       | OT  | M1  | —                                     | —    | planned |
-| PRAC-011 | Count-in of 1–2 bars, audible and visual                        | GP  | M1  | —                                     | —    | planned |
+| PRAC-001 | Metronome: BPM and tap tempo                                    | GP  | M1  | —                                     | apps/web/e2e/metronome.spec.ts, apps/web/src/state/practice.test.ts, packages/audio/test/practice-audio.test.ts | done |
+| PRAC-002 | Metronome: subdivisions                                         | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
+| PRAC-003 | Metronome: accent patterns                                      | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
+| PRAC-004 | Metronome: programmable patterns                                | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, apps/web/src/state/practice.test.ts, apps/web/e2e/metronome.spec.ts | done |
+| PRAC-005 | Metronome: polyrhythms                                          | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, packages/audio/test/practice-audio.test.ts | done |
+| PRAC-006 | Metronome: swing amount                                         | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, packages/audio/test/practice-audio.test.ts | done |
+| PRAC-007 | Metronome: multiple click sounds                                | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
+| PRAC-008 | Metronome: visual conductor / flash                             | OT  | M1  | —                                     | apps/web/e2e/metronome.spec.ts | done |
+| PRAC-009 | Metronome: random beat-drop training                            | OT  | M1  | —                                     | packages/audio/test/metronome.test.ts, packages/audio/test/practice-audio.test.ts | done |
+| PRAC-010 | Metronome-only page usable without a song                       | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
+| PRAC-011 | Count-in of 1–2 bars, audible and visual                        | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts, packages/audio/test/metronome.test.ts | done |
 | PRAC-020 | Speed 10–300 % without pitch change                             | GP+ | M1  | — | apps/web/e2e/practice.spec.ts, packages/audio/test/render-offline.test.ts | done |
 | PRAC-021 | Fine-grained speed steps                                        | GP  | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PRAC-022 | Progressive speed trainer (start %, step per loop, target %)    | GP  | M1  | —                                     | —    | planned |
@@ -447,12 +447,12 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-103 | Fixed-tempo practice: one BPM ignoring tempo changes (presets, 10–300 BPM) | GP  | M1  | —                                     | —    | planned |
 | PRAC-104 | Speed presets (25–100 %) with one-tap half speed                | GP+ | M1  | — | apps/web/e2e/practice.spec.ts | done |
 | PRAC-105 | Speed trainer: number of passes at each step                    | GP  | M1  | —                                     | —    | planned |
-| PRAC-106 | Metronome volume; zero gives a silent visual metronome          | GP  | M1  | —                                     | —    | planned |
-| PRAC-107 | Count-in before every loop pass                                 | GP  | M1  | —                                     | —    | planned |
+| PRAC-106 | Metronome volume; zero gives a silent visual metronome          | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts | done |
+| PRAC-107 | Count-in before every loop pass                                 | GP  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, apps/web/e2e/metronome.spec.ts | done |
 | PRAC-108 | Keyboard loop control: toggle, resize, jump to the loop start   | GP+ | M1  | — | apps/web/e2e/practice.spec.ts, apps/web/e2e/playback.spec.ts, apps/web/src/app/keymap.test.ts | done |
 | PRAC-109 | Loop range entered by bar numbers                               | OT  | M1  | —                                     | —    | planned |
-| PRAC-110 | Separate count-in and click volumes; click at half or double the beat | OT  | M1  | —                                     | —    | planned |
-| PRAC-111 | Count-in fitted to the start point: a full bar of the meter, extra beats mid-bar or on a pickup | OT  | M1  | —                                     | —    | planned |
+| PRAC-110 | Separate count-in and click volumes; click at half or double the beat | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/metronome.test.ts | done |
+| PRAC-111 | Count-in fitted to the start point: a full bar of the meter, extra beats mid-bar or on a pickup | OT  | M1  | —                                     | packages/audio/test/practice-audio.test.ts, packages/audio/test/metronome.test.ts | done |
 | PRAC-112 | Polyphonic tuner: every string from one strum, per-string cents, click a string for single mode | GP  | M6  | —                                     | —    | planned |
 | PRAC-113 | Tuner reference pitch (A4 calibration)                          | OT  | M2  | —                                     | —    | planned |
 | PRAC-114 | Tuner chromatic and strobe modes                                | OT  | M2  | —                                     | —    | planned |

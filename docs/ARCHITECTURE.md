@@ -235,8 +235,10 @@ as needed) plus `opentabz.json`; every `.otz` opens in Guitar Pro minus the extr
 
 Zustand stores, each small and serializable: `documents` (open docs, active doc, per-doc view
 options and mixer state), `preferences` (theme, default layout/zoom/staff display/paper,
-persisted to `localStorage` until the library lands in M3) and `player` (transport, timeline,
-position, speed, metronome, count-in, loop, selection, volume). The transport is an explicit,
+persisted to `localStorage` until the library lands in M3), `practice` (metronome and count-in
+settings and the standalone metronome's tempo and meter, persisted the same way; changes go to
+the synth worker as they happen) and `player` (transport, timeline, position, speed, count-in
+progress, the standalone metronome, loop, selection, volume). The transport is an explicit,
 typed finite-state machine (`unloaded → loading → ready ⇄ playing`, `error`) with an exhaustive
 transition table under test (`transport-machine.ts`).
 
@@ -256,6 +258,22 @@ Loop ranges map to alphaTab's playback range: a new range starts playback at its
 range adjusted around the playhead keeps playing from where it is (a range change seeks once,
 when the gesture ends). The default sound bank is discussed in ADR-0016; a full sound engine
 (effects, SFZ, physical modelling) is M7.
+
+**Metronome.** The clicks are MIDI notes, generated in the synth worker from the song's bar grid
+(the engine sends the played bars with their meters) by `packages/audio/src/metronome.ts`: a
+General MIDI drum kit (bank select 127, patch 0007) on a channel of its own after the song's,
+centred (patch 0008), with per-sound gains that even out the SoundFont's levels. Turning the
+metronome on or off and its volume are that channel's mute and level, and it stays audible when
+tracks are soloed. A new pattern swaps in MIDI with the new clicks while playing (patch 0009):
+the buffered audio plays out and nothing stops or repeats. The standalone metronome is the same
+machinery with a song of its own: sixteen bars of clicks in the chosen meter, looped, whose
+tempo changes in place keeping the position in the bar.
+
+**Count-in and loop passes** switch while audio is generated, not when it is heard (patch 0006):
+the count-in runs straight into the song and each loop pass into the next, carrying over the
+part of a 64-sample block that ran past the end, so passes last exactly their length. The
+synth worker fits the count-in to the start point (a start on beat 3 counts 1 2 3 4 1 2) and
+reports each click as it is heard, for the visual count-in.
 
 ## 10. Performance practice
 

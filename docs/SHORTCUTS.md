@@ -17,6 +17,7 @@ appears below with the same keys. Press `?` in the app to see the same list.
   reader users and keyboards that need those keys (WCAG 2.2 SC 2.1.4).
 - On macOS, ⌘⌥← and ⌘⌥→ switch browser tabs before a web page sees them, so the sections also
   answer to ⌥ Page Up and ⌥ Page Down.
+- In the standalone metronome, `T` taps the tempo (outside its text fields).
 
 ## Playback
 

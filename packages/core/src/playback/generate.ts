@@ -11,6 +11,8 @@ export interface GeneratedPlayback {
   readonly tickShift: number;
   readonly transpositionPitches: readonly (readonly [number, number])[];
   readonly timeline: PlaybackTimeline;
+  /** Played bars: [startTick, numerator, denominator], for the metronome and count-ins. */
+  readonly bars: Int32Array;
 }
 
 export function generatePlayback(
@@ -30,6 +32,13 @@ export function generatePlayback(
     tickShift: handler.tickShift,
     transpositionPitches: [...generator.transpositionPitches.entries()],
     timeline: buildTimeline(generator.tickLookup, playbackId),
+    bars: Int32Array.from(
+      generator.tickLookup.masterBars.flatMap(bar => [
+        bar.start,
+        bar.masterBar.timeSignatureNumerator,
+        bar.masterBar.timeSignatureDenominator,
+      ]),
+    ),
   };
 }
 

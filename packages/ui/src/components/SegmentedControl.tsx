@@ -44,7 +44,8 @@ export function SegmentedControl<T extends string>({
             key={segment.value}
             value={segment.value}
             aria-label={segment.label}
-            className="inline-flex h-full items-center gap-1.5 rounded-[6px] px-2.5 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink data-[state=on]:bg-raised data-[state=on]:text-ink data-[state=on]:shadow-sm"
+            // Styled by aria-checked: a tooltip around an icon-only segment overrides data-state.
+            className="inline-flex h-full items-center gap-1.5 rounded-[6px] px-2.5 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink aria-checked:bg-raised aria-checked:text-ink aria-checked:shadow-sm"
           >
             {segment.icon}
             {segment.iconOnly === true ? null : (

@@ -15,6 +15,7 @@ import {
 } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
+import { usePractice } from '../state/practice.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { pickFiles } from './open-actions.ts';
@@ -328,8 +329,8 @@ export const SHORTCUTS: readonly Shortcut[] = [
     bindings: [{ key: 'm', code: 'KeyM', alt: true }],
     needsScore: true,
     run: () => {
-      const player = usePlayer.getState();
-      player.setMetronome(!player.metronome);
+      const practice = usePractice.getState();
+      practice.set({ metronome: !practice.metronome });
       return true;
     },
   },
@@ -340,8 +341,8 @@ export const SHORTCUTS: readonly Shortcut[] = [
     bindings: [{ key: 'c', code: 'KeyC', alt: true }],
     needsScore: true,
     run: () => {
-      const player = usePlayer.getState();
-      player.setCountIn(!player.countIn);
+      const practice = usePractice.getState();
+      practice.set({ countIn: !practice.countIn });
       return true;
     },
   },

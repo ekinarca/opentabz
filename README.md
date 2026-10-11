@@ -35,10 +35,14 @@ the music.
 ![A score in page layout](docs/screenshots/score.png)
 
 **Play and practise.** Playback with a SoundFont synthesizer running off the main thread, a
-cursor that follows the music and turns pages for you, click-to-seek, speed from 25 % to 200 %,
-metronome, count-in and volume. A mixer with mute, solo and level per track, plus a practice
-mode that mutes the parts you are playing yourself. Drag across the music (or long-press a bar on
-a phone) to select a range, then loop it.
+cursor that follows the music and turns pages for you, click-to-seek, and speed from 10 % to
+300 % without changing the pitch (or tap the tempo you want). A metronome with six sounds, one to
+four clicks per beat, swing, half time, accents you set beat by beat, polyrhythms and silent bars
+to practise keeping time; a count-in of one or two bars, shown large on screen, fitted to where
+you start and, if you like, before every pass of a loop; and a standalone metronome with tap
+tempo for practising without a song. A mixer with mute, solo and level per track, plus a
+practice mode that mutes the parts you are playing yourself. Drag across the music (or
+long-press a bar on a phone) to select a range, then loop it seamlessly.
 
 ![Looping two bars with the mixer open](docs/screenshots/practice.png)
 
@@ -60,6 +64,7 @@ Keyboard shortcuts and gestures are listed in [docs/SHORTCUTS.md](docs/SHORTCUTS
 | Opens PowerTab, TablEdit, MIDI                      | Yes                         | Planned (MIDI M5, PowerTab and TablEdit M8)                      |
 | Notation and tab; page, scroll and horizontal views | Yes                         | Yes                                                              |
 | Playback, mixer, speed, metronome, count-in, loops  | Yes                         | Yes                                                              |
+| Metronome sounds, subdivisions, accents, polyrhythm | Not documented              | Yes, plus swing, silent bars and a standalone metronome          |
 | Speed trainer, fretboard and keyboard views         | Yes                         | Planned (M1–M2)                                                  |
 | Writing and editing scores                          | Yes                         | Planned (M4–M5)                                                  |
 | Realistic instrument sound engine                   | Yes (RSE)                   | SoundFont playback now; a full sound engine is planned (M7)      |

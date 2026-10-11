@@ -2,6 +2,7 @@
  * Messages between the UI, the synth worker, the engine worker and the AudioWorklet.
  * Ticks are always score ticks (the engine's MIDI tick shift is applied inside the synth worker).
  */
+import type { MetronomeSettings } from './metronome.ts';
 import type { RingBuffers } from './ring.ts';
 
 import type { TickRange } from '@opentabz/core/shared';
@@ -27,8 +28,26 @@ export type SynthCommand =
   | { readonly type: 'seek'; readonly tick: number; readonly id: number }
   | { readonly type: 'setSpeed'; readonly value: number }
   | { readonly type: 'setMasterVolume'; readonly value: number }
-  | { readonly type: 'setMetronomeVolume'; readonly value: number }
-  | { readonly type: 'setCountInVolume'; readonly value: number }
+  /** The metronome: on or off, its level (0–1), and its pattern and sound. */
+  | {
+      readonly type: 'setMetronome';
+      readonly enabled: boolean;
+      readonly volume: number;
+      readonly settings: MetronomeSettings;
+    }
+  | ({ readonly type: 'setCountIn' } & CountInSettings)
+  /**
+   * The metronome without a score: a song of clicks in one meter, played in a loop. Sent again
+   * with the same id and meter it changes the tempo without interrupting the clicks.
+   */
+  | {
+      readonly type: 'loadClickTrack';
+      readonly playbackId: string;
+      /** Clicks per minute, one per beat of the meter (quarters in 4/4, eighths in 6/8). */
+      readonly bpm: number;
+      readonly numerator: number;
+      readonly denominator: number;
+    }
   | {
       readonly type: 'setLoop';
       readonly enabled: boolean;
@@ -39,6 +58,16 @@ export type SynthCommand =
   | { readonly type: 'setChannelMute'; readonly channel: number; readonly value: boolean }
   | { readonly type: 'setChannelSolo'; readonly channel: number; readonly value: boolean }
   | { readonly type: 'setChannelVolume'; readonly channel: number; readonly value: number };
+
+export interface CountInSettings {
+  readonly enabled: boolean;
+  /** Level of the count-in clicks, separate from the metronome's (0–1). */
+  readonly volume: number;
+  /** Whole bars counted in; a start in mid-bar adds the beats before it. */
+  readonly bars: 1 | 2;
+  /** Count in again before every pass of a loop. */
+  readonly everyLoop: boolean;
+}
 
 export interface SynthPosition {
   readonly tick: number;
@@ -67,5 +96,10 @@ export type SynthEvent =
    * before it describe the old position.
    */
   | ({ readonly type: 'moved'; readonly id: number } & SynthPosition)
+  /**
+   * The count-in click being heard (0-based) of `beats`, in a meter of `numerator` beats (the
+   * beat of the bar is `beat % numerator`); -1 when the count-in is over.
+   */
+  | { readonly type: 'countIn'; readonly beat: number; readonly beats: number; readonly numerator: number }
   | { readonly type: 'finished' }
   | { readonly type: 'error'; readonly context: string; readonly message: string };

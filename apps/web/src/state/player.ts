@@ -5,7 +5,7 @@
 import type { PlaybackTimeline, TickRange } from '@opentabz/core/shared';
 import type { SynthEvent } from '@opentabz/audio/protocol';
 import { create } from 'zustand';
-import { getAudioEngine } from '../audio/audio-engine.ts';
+import { getAudioEngine, type AudioEngine } from '../audio/audio-engine.ts';
 import {
   canToggle,
   INITIAL_TRANSPORT,
@@ -15,6 +15,7 @@ import {
 } from '../audio/transport-machine.ts';
 import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from './documents.ts';
+import { usePractice, type PracticeSettings } from './practice.ts';
 
 export const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
 /** Guitar Pro's practice range: 10 % to 300 % (alphaTab patch 0005 lowers its floor to 10 %). */
@@ -33,8 +34,10 @@ export interface PlayerState {
   /** BPM including the speed factor. */
   readonly tempo: number;
   readonly speed: number;
-  readonly metronome: boolean;
-  readonly countIn: boolean;
+  /** The count-in click being heard, while counting in. */
+  readonly countInBeat: CountInBeat | null;
+  /** The metronome plays on its own (its song of clicks is loaded instead of a document). */
+  readonly clickTrack: boolean;
   readonly loop: boolean;
   /**
    * The selected range (A/B). Playback stays inside it: it plays the range once, or repeats it
@@ -50,9 +53,11 @@ export interface PlayerState {
   /** Moves playback to `tick`; a tick outside the selection clears the selection. */
   readonly seek: (tick: number) => void;
   readonly setSpeed: (speed: number) => void;
-  readonly setMetronome: (on: boolean) => void;
-  readonly setCountIn: (on: boolean) => void;
   readonly setLoop: (on: boolean) => void;
+  /** Loads the metronome's own song of clicks (tempo and meter from the practice settings). */
+  readonly openClickTrack: () => Promise<void>;
+  /** Back from the metronome on its own to the active document, if any. */
+  readonly closeClickTrack: () => void;
   /**
    * Changes the selection. While a gesture is still adjusting it pass `final: false`: only the
    * UI follows, and the synthesizer gets the range once the gesture ends.
@@ -61,7 +66,17 @@ export interface PlayerState {
   readonly setVolume: (volume: number) => void;
 }
 
+export interface CountInBeat {
+  /** 0-based click of `beats`. */
+  readonly beat: number;
+  readonly beats: number;
+  /** Beats in a bar of the count-in's meter. */
+  readonly numerator: number;
+}
+
 let loadSeq = 0;
+/** Id of the loaded song of clicks: the same id lets the synthesizer change its tempo in place. */
+let clickTrackId: string | null = null;
 
 /**
  * Commands that move the playhead (seek, stop, loop range) carry an id; position events that
@@ -93,6 +108,64 @@ function applyMix(doc: OpenDocument): void {
   });
 }
 
+function sendMetronome(engine: AudioEngine, practice: PracticeSettings): void {
+  engine.send({
+    type: 'setMetronome',
+    enabled: practice.metronome,
+    volume: practice.metronomeVolume,
+    settings: practice.click,
+  });
+}
+
+function sendCountIn(engine: AudioEngine, practice: PracticeSettings): void {
+  engine.send({
+    type: 'setCountIn',
+    enabled: practice.countIn,
+    volume: practice.countInVolume,
+    bars: practice.countInBars,
+    everyLoop: practice.countInEveryLoop,
+  });
+}
+
+function sendClickTrack(engine: AudioEngine, playbackId: string, practice: PracticeSettings): void {
+  engine.send({
+    type: 'loadClickTrack',
+    playbackId,
+    bpm: practice.toolBpm,
+    numerator: practice.toolNumerator,
+    denominator: practice.toolDenominator,
+  });
+}
+
+// Keep the synthesizer in step with the practice settings. Before the synthesizer exists nothing
+// is sent; loading sends everything.
+usePractice.subscribe((state, previous) => {
+  const engine = getAudioEngine();
+  if (
+    state.metronome !== previous.metronome ||
+    state.metronomeVolume !== previous.metronomeVolume ||
+    state.click !== previous.click
+  ) {
+    sendMetronome(engine, state);
+  }
+  if (
+    state.countIn !== previous.countIn ||
+    state.countInVolume !== previous.countInVolume ||
+    state.countInBars !== previous.countInBars ||
+    state.countInEveryLoop !== previous.countInEveryLoop
+  ) {
+    sendCountIn(engine, state);
+  }
+  if (
+    clickTrackId !== null &&
+    (state.toolBpm !== previous.toolBpm ||
+      state.toolNumerator !== previous.toolNumerator ||
+      state.toolDenominator !== previous.toolDenominator)
+  ) {
+    sendClickTrack(engine, clickTrackId, state);
+  }
+});
+
 // Keep the synthesizer in step with mixer changes of the loaded document.
 useDocuments.subscribe((state, previous) => {
   const key = usePlayer.getState().docKey;
@@ -120,6 +193,13 @@ export const usePlayer = create<PlayerState>((set, get) => {
           performance.clearMarks(PLAY_REQUEST);
         }
         dispatch(event.playing ? { type: 'play' } : { type: 'pause' });
+        if (!event.playing) set({ countInBeat: null });
+        break;
+      case 'countIn':
+        set({
+          countInBeat:
+            event.beat < 0 ? null : { beat: event.beat, beats: event.beats, numerator: event.numerator },
+        });
         break;
       case 'position':
         if (awaitingMove !== null) break;
@@ -166,8 +246,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
     endTime: 0,
     tempo: 120,
     speed: 1,
-    metronome: false,
-    countIn: false,
+    countInBeat: null,
+    clickTrack: false,
     loop: false,
     selection: null,
     volume: 1,
@@ -177,6 +257,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const engine = audio();
       if (get().transport.status === 'playing') engine.send({ type: 'pause' });
       dispatch({ type: 'load' });
+      clickTrackId = null;
       set({
         docKey: doc.key,
         timeline: null,
@@ -184,6 +265,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         time: 0,
         endTime: 0,
         selection: null,
+        countInBeat: null,
+        clickTrack: false,
         tempo: doc.summary.tempo * get().speed,
       });
       try {
@@ -201,10 +284,11 @@ export const usePlayer = create<PlayerState>((set, get) => {
           dispatch({ type: 'fail', message: result.message });
           return;
         }
-        const { speed, metronome, countIn, loop, volume } = get();
+        const { speed, loop, volume } = get();
+        const practice = usePractice.getState();
         engine.send({ type: 'setSpeed', value: speed });
-        engine.send({ type: 'setMetronomeVolume', value: metronome ? 1 : 0 });
-        engine.send({ type: 'setCountInVolume', value: countIn ? 1 : 0 });
+        sendMetronome(engine, practice);
+        sendCountIn(engine, practice);
         engine.send({ type: 'setLoop', enabled: loop, range: null, id: nextMove() });
         engine.send({ type: 'setMasterVolume', value: volume });
         applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc);
@@ -218,9 +302,72 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
     unload: () => {
       loadSeq += 1;
+      clickTrackId = null;
       if (get().transport.status === 'playing') audio().send({ type: 'pause' });
-      set({ docKey: null, timeline: null, tick: 0, time: 0, endTime: 0, selection: null });
+      set({
+        docKey: null,
+        timeline: null,
+        tick: 0,
+        time: 0,
+        endTime: 0,
+        selection: null,
+        countInBeat: null,
+        clickTrack: false,
+      });
       dispatch({ type: 'unload' });
+    },
+
+    openClickTrack: async () => {
+      const seq = ++loadSeq;
+      const engine = audio();
+      if (get().transport.status === 'playing') engine.send({ type: 'pause' });
+      dispatch({ type: 'load' });
+      set({
+        docKey: null,
+        timeline: null,
+        tick: 0,
+        time: 0,
+        endTime: 0,
+        selection: null,
+        countInBeat: null,
+        clickTrack: true,
+      });
+      try {
+        await engine.prepare();
+        if (seq !== loadSeq) return;
+        const playbackId = `clicks#${seq}`;
+        const loaded = engine.waitFor(
+          event =>
+            (event.type === 'midiLoaded' && event.playbackId === playbackId) ||
+            (event.type === 'error' && event.context === 'midi'),
+        );
+        const practice = usePractice.getState();
+        sendMetronome(engine, practice);
+        // The tempo is the metronome's own: no practice speed.
+        engine.send({ type: 'setSpeed', value: 1 });
+        engine.send({ type: 'setMasterVolume', value: get().volume });
+        clickTrackId = playbackId;
+        sendClickTrack(engine, playbackId, practice);
+        const result = await loaded;
+        if (seq !== loadSeq) return;
+        if (result.type === 'error') {
+          dispatch({ type: 'fail', message: result.message });
+          return;
+        }
+        set({ endTime: result.type === 'midiLoaded' ? result.endTime : 0 });
+        dispatch({ type: 'loaded' });
+      } catch (error) {
+        if (seq !== loadSeq) return;
+        dispatch({ type: 'fail', message: error instanceof Error ? error.message : String(error) });
+      }
+    },
+
+    closeClickTrack: () => {
+      if (!get().clickTrack) return;
+      const { docs, activeKey } = useDocuments.getState();
+      const active = docs.find(doc => doc.key === activeKey);
+      if (active === undefined) get().unload();
+      else void get().load(active);
     },
 
     toggle: () => {
@@ -265,17 +412,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
     setSpeed: speed => {
       const value = clampSpeed(speed);
       audio().send({ type: 'setSpeed', value });
-      set({ speed: value });
-    },
-
-    setMetronome: on => {
-      audio().send({ type: 'setMetronomeVolume', value: on ? 1 : 0 });
-      set({ metronome: on });
-    },
-
-    setCountIn: on => {
-      audio().send({ type: 'setCountInVolume', value: on ? 1 : 0 });
-      set({ countIn: on });
+      // The live tempo includes the speed; it follows at once, not with the next position.
+      set(state => ({ speed: value, tempo: (state.tempo / state.speed) * value }));
     },
 
     setLoop: on => {

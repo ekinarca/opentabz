@@ -49,6 +49,24 @@ test.describe('practice controls', () => {
     await expect(page.getByRole('button', { name: 'Faster', exact: true })).toBeDisabled();
   });
 
+  test('tap tempo sets the speed from the tapped tempo', async ({ page }) => {
+    await openShuffle(page);
+    const speed = page.getByRole('button', { name: /^Playback speed: / });
+    await speed.click();
+    const tap = page.getByRole('button', { name: 'Tap tempo' });
+    await expect(tap).toBeVisible();
+    // Five taps 400 ms apart (150 BPM) on a 112 BPM song: about 134 %. Timed inside the page.
+    await tap.evaluate(async button => {
+      for (let count = 0; count < 5; count++) {
+        if (count > 0) await new Promise(resolve => setTimeout(resolve, 400));
+        (button as HTMLButtonElement).click();
+      }
+    });
+    const percent = Number.parseInt((await speed.innerText()).replace(/\D/g, ''), 10);
+    expect(percent).toBeGreaterThanOrEqual(130);
+    expect(percent).toBeLessThanOrEqual(138);
+  });
+
   test('shows bar, beat, meter and tempo, and steps beat by beat', async ({ page }) => {
     await openShuffle(page);
     await expect(position(page)).toHaveAccessibleName('Go to: Bar 1, beat 1, 4/4, 112 beats per minute');

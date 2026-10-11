@@ -154,6 +154,8 @@ export class EngineHost implements EngineMethods {
       midi: playback.midi,
       tickShift: playback.tickShift,
       transpositionPitches: playback.transpositionPitches,
+      bars: playback.bars,
+      endTick: playback.timeline.endTick,
     });
     return playback.timeline;
   }

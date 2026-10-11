@@ -1,25 +1,62 @@
 /**
  * The synth worker's logic, independent of messaging: an alphaTab AlphaSynth writing into the
  * shared ring buffer, driven by commands from the UI and MIDI from the engine.
+ *
+ * The metronome is part of the MIDI: its clicks are notes on a drum kit on a channel of their
+ * own, generated from the song's bar grid (metronome.ts). Turning it on or off and changing its
+ * level only touch that channel; changing its pattern swaps in MIDI with the new clicks while
+ * playing (alphaTab patch 0009), so nothing is interrupted.
  */
 import * as alphaTab from '@coderline/alphatab';
 import type { MidiDelivery, PreviewDelivery, SynthDelivery } from '@opentabz/core/shared';
-import type { SynthCommand, SynthEvent, SynthPosition, TickRange } from './protocol.ts';
+import {
+  clickTrackBars,
+  CLICK_TRACK_BARS,
+  countInStart,
+  DEFAULT_METRONOME,
+  metronomeClicks,
+  METRONOME_SOUNDS,
+  type MetronomeSettings,
+} from './metronome.ts';
+import type { CountInSettings, SynthCommand, SynthEvent, SynthPosition, TickRange } from './protocol.ts';
 import { type RingWriter } from './ring.ts';
 import { RingSynthOutput } from './synth-output.ts';
 
 /** Audio kept ready ahead of the playhead; absorbs scheduling hiccups in the worker. */
 export const SYNTH_BUFFER_MS = 250;
+/** Length of a metronome click note in ticks (percussion samples ring out on their own). */
+const CLICK_TICKS = 60;
+
+interface ChannelMix {
+  mute: boolean;
+  solo: boolean;
+  volume: number;
+}
 
 export class SynthHost {
   private readonly emit: (event: SynthEvent) => void;
   private synth: alphaTab.synth.AlphaSynth | null = null;
   private output: RingSynthOutput | null = null;
+  private song: MidiDelivery | null = null;
   private tickShift = 0;
   private playbackId: string | null = null;
   private loop: { enabled: boolean; range: TickRange | null } = { enabled: false, range: null };
   /** The last position reported, so acknowledgements can say where the playhead is. */
   private position: SynthPosition | null = null;
+  private readonly mixer = new Map<number, ChannelMix>();
+  private metronome: { enabled: boolean; volume: number; settings: MetronomeSettings } = {
+    enabled: false,
+    volume: 1,
+    settings: DEFAULT_METRONOME,
+  };
+  /** Settings the loaded MIDI's clicks were generated with. */
+  private builtMetronome: MetronomeSettings | null = null;
+  private metronomeChannel = -1;
+  private countIn: CountInSettings = { enabled: false, volume: 1, bars: 1, everyLoop: false };
+  /** Beats in a bar of the count-in being played, so the UI can show the beat of the bar. */
+  private countInNumerator = 4;
+  /** Set while the loaded song is the metronome's own song of clicks. */
+  private clickTrack: { playbackId: string; numerator: number; denominator: number } | null = null;
 
   public constructor(emit: (event: SynthEvent) => void) {
     this.emit = emit;
@@ -36,7 +73,7 @@ export class SynthHost {
         synth.loadSoundFont(new Uint8Array(command.bytes), false);
         break;
       case 'play':
-        synth.play();
+        this.play(synth);
         break;
       case 'pause':
         synth.pause();
@@ -55,11 +92,22 @@ export class SynthHost {
       case 'setMasterVolume':
         synth.masterVolume = command.value;
         break;
-      case 'setMetronomeVolume':
-        synth.metronomeVolume = command.value;
+      case 'setMetronome':
+        this.metronome = { enabled: command.enabled, volume: command.volume, settings: command.settings };
+        if (this.song !== null && !sameSettings(this.builtMetronome, command.settings)) this.rebuild();
+        this.applyMetronomeChannel();
         break;
-      case 'setCountInVolume':
-        synth.countInVolume = command.value;
+      case 'loadClickTrack':
+        this.loadClickTrack(synth, command);
+        break;
+      case 'setCountIn':
+        this.countIn = {
+          enabled: command.enabled,
+          volume: command.volume,
+          bars: command.bars,
+          everyLoop: command.everyLoop,
+        };
+        this.applyCountIn();
         break;
       case 'setLoop': {
         const previous = this.loop.range;
@@ -69,12 +117,17 @@ export class SynthHost {
         break;
       }
       case 'setChannelMute':
+        this.mixFor(command.channel).mute = command.value;
         synth.setChannelMute(command.channel, command.value);
+        this.applyMetronomeChannel();
         break;
       case 'setChannelSolo':
+        this.mixFor(command.channel).solo = command.value;
         synth.setChannelSolo(command.channel, command.value);
+        this.applyMetronomeChannel();
         break;
       case 'setChannelVolume':
+        this.mixFor(command.channel).volume = command.value;
         synth.setChannelVolume(command.channel, command.value);
         break;
     }
@@ -127,6 +180,11 @@ export class SynthHost {
     synth.finished.on(() => {
       this.emit({ type: 'finished' });
     });
+    synth.countInProgress.on(({ beat, beats }) => {
+      this.emit({ type: 'countIn', beat, beats, numerator: this.countInNumerator });
+      // Later passes of a loop count in to the loop start.
+      if (beat < 0) this.fitCountInToLoop();
+    });
   }
 
   /** Acknowledges a command that may have moved the playhead, with the position it is at now. */
@@ -170,13 +228,14 @@ export class SynthHost {
     if (synth === null) return;
     try {
       synth.pause();
+      this.song = delivery;
       this.tickShift = delivery.tickShift;
       this.playbackId = delivery.playbackId;
-      const midi = alphaTab.model.JsonConverter.jsObjectToMidiFile(delivery.midi);
-      synth.loadMidiFile(midi);
-      synth.applyTranspositionPitches(
-        new Map(delivery.transpositionPitches.map(([channel, pitch]) => [channel, pitch])),
-      );
+      this.clickTrack = null;
+      // A new document starts with the mixer the UI sends next.
+      this.mixer.clear();
+      synth.resetChannelStates();
+      this.load(synth, delivery);
       this.applyLoop(null);
     } catch (error) {
       this.emit({ type: 'error', context: 'midi', message: messageOf(error) });
@@ -186,6 +245,177 @@ export class SynthHost {
   /** The AudioWorklet played more audio. */
   public progress(): void {
     this.output?.onProgress();
+  }
+
+  private play(synth: alphaTab.synth.AlphaSynth): void {
+    const song = this.song;
+    // The metronome on its own needs no count-in.
+    synth.countInVolume = this.clickTrack === null ? this.countInLevel() : 0;
+    if (this.countIn.enabled && this.clickTrack === null && song !== null) {
+      // Count in to the start of the beat, with the beats of the bar before it.
+      const tick = Math.max(0, synth.tickPosition - this.tickShift);
+      const start = countInStart(song.bars, song.endTick, tick);
+      if (Math.abs(start.tick - tick) > 2) synth.tickPosition = start.tick + this.tickShift;
+      synth.countInLeadBeats = start.beatsBefore;
+      this.countInNumerator = start.numerator;
+    }
+    synth.play();
+  }
+
+  /**
+   * Loads (or retunes) the metronome's own song of clicks. The same id and meter only change the
+   * tempo, swapped in while playing; anything else starts the clicks from the top.
+   */
+  private loadClickTrack(
+    synth: alphaTab.synth.AlphaSynth,
+    command: Extract<SynthCommand, { type: 'loadClickTrack' }>,
+  ): void {
+    try {
+      const { playbackId, bpm, numerator, denominator } = command;
+      const delivery = clickTrackDelivery(playbackId, bpm, numerator, denominator);
+      const previous = this.clickTrack;
+      this.song = delivery;
+      this.tickShift = 0;
+      this.playbackId = playbackId;
+      this.clickTrack = { playbackId, numerator, denominator };
+      if (
+        previous !== null &&
+        previous.playbackId === playbackId &&
+        previous.numerator === numerator &&
+        previous.denominator === denominator
+      ) {
+        synth.replaceMidiFile(this.buildMidi(delivery));
+        return;
+      }
+      const playing = synth.state === alphaTab.synth.PlayerState.Playing;
+      synth.pause();
+      this.mixer.clear();
+      synth.resetChannelStates();
+      this.loop = { enabled: true, range: null };
+      this.load(synth, delivery);
+      this.applyLoop(null);
+      if (playing) this.play(synth);
+    } catch (error) {
+      this.emit({ type: 'error', context: 'midi', message: messageOf(error) });
+    }
+  }
+
+  /** After the first count-in, later loop passes count in to the loop start. */
+  private fitCountInToLoop(): void {
+    const synth = this.synth;
+    const song = this.song;
+    const range = this.loop.range;
+    if (synth === null || song === null) return;
+    const start = countInStart(song.bars, song.endTick, range?.startTick ?? 0);
+    synth.countInLeadBeats = start.beatsBefore;
+    this.countInNumerator = start.numerator;
+  }
+
+  /** Loads the song with the metronome's clicks on a drum channel of their own. */
+  private load(synth: alphaTab.synth.AlphaSynth, song: MidiDelivery): void {
+    synth.loadMidiFile(this.buildMidi(song));
+    synth.applyTranspositionPitches(new Map(song.transpositionPitches.map(([key, pitch]) => [key, pitch])));
+    for (const [mixChannel, mix] of this.mixer) {
+      synth.setChannelMute(mixChannel, mix.mute);
+      synth.setChannelSolo(mixChannel, mix.solo);
+      synth.setChannelVolume(mixChannel, mix.volume);
+    }
+    // alphaTab's own metronome stays off: the clicks above replace it.
+    synth.metronomeVolume = 0;
+    this.applyMetronomeChannel();
+    this.applyCountIn();
+  }
+
+  /** The song's MIDI plus the metronome's clicks. */
+  private buildMidi(song: MidiDelivery): alphaTab.midi.MidiFile {
+    const midi = alphaTab.model.JsonConverter.jsObjectToMidiFile(song.midi);
+    let channel = 0;
+    for (const event of midi.events) {
+      if ('channel' in event && typeof event.channel === 'number') channel = Math.max(channel, event.channel);
+    }
+    this.metronomeChannel = channel + 1;
+    const clicks = metronomeClicks(song.bars, song.endTick, this.metronome.settings);
+    const { ControlChangeEvent, ControllerType, NoteOffEvent, NoteOnEvent, ProgramChangeEvent } =
+      alphaTab.midi;
+    const track = 0;
+    const events: alphaTab.midi.MidiEvent[] = [
+      // Bank 127 selects a drum kit on any channel (alphaTab patch 0007).
+      new ControlChangeEvent(track, 0, this.metronomeChannel, ControllerType.BankSelectCoarse, 127),
+      new ProgramChangeEvent(track, 0, this.metronomeChannel, 0),
+      new ControlChangeEvent(track, 0, this.metronomeChannel, ControllerType.VolumeCoarse, 127),
+    ];
+    // Every metronome key once, silently (a note-on with velocity 0 is a note-off): alphaTab loads
+    // the samples of the keys a song uses, and the sound may change while the song plays.
+    const keys = new Set(Object.values(METRONOME_SOUNDS).flatMap(sound => [sound.accent, sound.normal]));
+    for (const key of keys) events.push(new NoteOnEvent(track, 0, this.metronomeChannel, key, 0));
+    for (const click of clicks) {
+      const tick = click.tick + song.tickShift;
+      events.push(new NoteOnEvent(track, tick, this.metronomeChannel, click.key, click.velocity));
+      events.push(new NoteOffEvent(track, tick + CLICK_TICKS, this.metronomeChannel, click.key, 0));
+    }
+    events.sort((a, b) => a.tick - b.tick);
+    const single = midi.tracks.length === 1 ? midi.tracks[0] : undefined;
+    if (single === undefined) {
+      // Several tracks: the clicks get one of their own, appended in order.
+      const own = midi.tracks.length;
+      for (const event of events) {
+        event.track = own;
+        midi.addEvent(event);
+      }
+    } else {
+      // One merge and a stable sort instead of thousands of sorted inserts.
+      single.events.push(...events);
+      single.events.sort((a, b) => a.tick - b.tick);
+    }
+    this.builtMetronome = this.metronome.settings;
+    return midi;
+  }
+
+  /** New metronome clicks, swapped in without moving or interrupting playback. */
+  private rebuild(): void {
+    const synth = this.synth;
+    const song = this.song;
+    if (synth === null || song === null) return;
+    synth.replaceMidiFile(this.buildMidi(song));
+  }
+
+  private mixFor(channel: number): ChannelMix {
+    let mix = this.mixer.get(channel);
+    if (mix === undefined) {
+      mix = { mute: false, solo: false, volume: 1 };
+      this.mixer.set(channel, mix);
+    }
+    return mix;
+  }
+
+  /**
+   * The metronome channel: muted when off, kept audible when tracks are soloed, and centered
+   * (drum kits spread percussion across the stereo field; alphaTab patch 0008).
+   */
+  private applyMetronomeChannel(): void {
+    const synth = this.synth;
+    if (synth === null || this.metronomeChannel < 0) return;
+    const anySolo = [...this.mixer.entries()].some(
+      ([channel, mix]) => channel !== this.metronomeChannel && mix.solo,
+    );
+    synth.setChannelCentered(this.metronomeChannel, true);
+    // The metronome on its own always clicks; its volume can still make it silent (visual only).
+    synth.setChannelMute(this.metronomeChannel, !this.metronome.enabled && this.clickTrack === null);
+    synth.setChannelSolo(this.metronomeChannel, anySolo);
+    synth.setChannelVolume(this.metronomeChannel, this.metronome.volume);
+  }
+
+  private applyCountIn(): void {
+    const synth = this.synth;
+    if (synth === null) return;
+    synth.countInVolume = this.clickTrack === null ? this.countInLevel() : 0;
+    synth.countInBars = this.countIn.bars;
+    synth.countInEveryLoop = this.countIn.everyLoop;
+  }
+
+  /** alphaTab counts in whenever its count-in volume is above zero: a silent count-in stays on. */
+  private countInLevel(): number {
+    return this.countIn.enabled ? Math.max(0.0001, this.countIn.volume) : 0;
   }
 
   /** Applies the loop state; `previous` is the range the synthesizer currently has. */
@@ -206,8 +436,42 @@ export class SynthHost {
       if (position > playbackRange.startTick && position < playbackRange.endTick)
         synth.tickPosition = position;
     }
-    synth.isLooping = enabled;
+    // The metronome's own song of clicks always repeats.
+    synth.isLooping = enabled || this.clickTrack !== null;
+    this.fitCountInToLoop();
   }
+}
+
+/** The metronome's own song: bars of one meter at one tempo, with nothing but its clicks. */
+function clickTrackDelivery(
+  playbackId: string,
+  bpm: number,
+  numerator: number,
+  denominator: number,
+): MidiDelivery {
+  const { AlphaTabRestEvent, MidiFile, TempoChangeEvent, TimeSignatureEvent } = alphaTab.midi;
+  const midi = new MidiFile();
+  const bars = clickTrackBars(numerator, denominator);
+  const endTick = CLICK_TRACK_BARS * ((numerator * 4 * midi.division) / denominator);
+  // BPM counts beats of the meter; MIDI tempo counts quarter notes.
+  const quarterBpm = (bpm * 4) / denominator;
+  midi.addEvent(new TimeSignatureEvent(0, 0, numerator, Math.log2(denominator), 24, 8));
+  midi.addEvent(new TempoChangeEvent(0, Math.round(60_000_000 / quarterBpm)));
+  // A rest at the end makes the song last its full bars.
+  midi.addEvent(new AlphaTabRestEvent(0, endTick, 0));
+  return {
+    type: 'midi',
+    playbackId,
+    midi: alphaTab.model.JsonConverter.midiFileToJsObject(midi),
+    tickShift: 0,
+    transpositionPitches: [],
+    bars,
+    endTick,
+  };
+}
+
+function sameSettings(a: MetronomeSettings | null, b: MetronomeSettings): boolean {
+  return a !== null && JSON.stringify(a) === JSON.stringify(b);
 }
 
 function messageOf(error: unknown): string {

@@ -7,11 +7,17 @@ as decided in ADR-0003. Each change is written up here as the equivalent change 
 TypeScript sources, ready to be offered upstream. Under MPL-2.0 §3.2 the modified files are
 available as source: the patch file is that source.
 
-| #                                       | Change                                                   | Why                                                          | Upstream |
-| --------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------ | -------- |
-| [0001](0001-worker-font-measurement.md) | Measure text with `OffscreenCanvas` in workers           | Titles, tempo text and lyrics were spaced at 8 px per glyph  | not yet  |
-| [0002](0002-io-error-exports.md)        | Export `EndOfReaderError` and `OverflowError` at runtime | Callers cannot recognise truncated files                     | not yet  |
-| [0003](0003-xml-lazy-allocation.md)     | Allocate XML child lists and attribute maps on first use | Large Guitar Pro 7+ files spent a third of parsing in the GC | not yet  |
+| #                                           | Change                                                                             | Why                                                                        | Upstream |
+| ------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------- |
+| [0001](0001-worker-font-measurement.md)     | Measure text with `OffscreenCanvas` in workers                                     | Titles, tempo text and lyrics were spaced at 8 px per glyph                | not yet  |
+| [0002](0002-io-error-exports.md)            | Export `EndOfReaderError` and `OverflowError` at runtime                           | Callers cannot recognise truncated files                                   | not yet  |
+| [0003](0003-xml-lazy-allocation.md)         | Allocate XML child lists and attribute maps on first use                           | Large Guitar Pro 7+ files spent a third of parsing in the GC               | not yet  |
+| [0004](0004-capella-beat-duration.md)       | Full-bar-rest check before a beat joins its voice                                  | No Capella file could be opened                                            | not yet  |
+| [0005](0005-min-playback-speed.md)          | Allow playback at 10 % speed                                                       | Guitar Pro practises down to 10 %; alphaTab stopped at 12.5 %              | not yet  |
+| [0006](0006-seamless-count-in-and-loops.md) | Switch count-in, song and loop passes while generating; fitted, accented count-ins | The song came in late after a count-in and loops paused between passes     | not yet  |
+| [0007](0007-drum-kits-on-any-channel.md)    | Drum kits on any channel (bank 127); unloaded samples stay silent                  | A metronome needs its own drum channel; unloaded drum samples rendered NaN | not yet  |
+| [0008](0008-centered-channels.md)           | Channels that ignore the SoundFont's region pans                                   | Woodblock and hi-hat clicks came out of one ear                            | not yet  |
+| [0009](0009-replace-midi-while-playing.md)  | Replace the song while it plays, keeping the position by tick                      | A new metronome pattern or tempo stuttered and restarted                   | not yet  |
 
 ## Working on a patch
 

@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..d1a9f7ccefa9531e7fd7a69d158434c185fa5ab2 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a12109416449 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -74,7 +74,467 @@ index b6203da6066c95efcf66298fe48a690f144597a5..d1a9f7ccefa9531e7fd7a69d158434c1
  			measureContext.font = `11px ${family}`;
  			const widths = [];
  			const heights = [];
-@@ -65583,7 +65598,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -35078,6 +35093,46 @@ class MidiFileSequencer {
+ 		this._mainState = this.createStateFromFile(midiFile);
+ 		this._currentState = this._mainState;
+ 	}
++	/**
++	* OpenTabz patch 0009: replaces the main song while it plays with one of the same bars (the same
++	* song with other metronome clicks, or at another tempo). The position carries over by tick, as
++	* does the playback range; events before the position count as played, so nothing is skipped,
++	* repeated or cut off.
++	*/
++	replaceMain(midiFile) {
++		const previous = this._mainState;
++		const state = this.createStateFromFile(midiFile);
++		const tick = MidiFileSequencer._timeToTick(previous, previous.currentTime);
++		state.currentTime = this._tickPositionToTimePositionWithSpeed(state, tick, 1);
++		if (state.tempoChanges.length > 0) this._updateCurrentTempo(state, state.currentTime);
++		state.syncPoints = previous.syncPoints;
++		state.syncPointIndex = previous.syncPointIndex;
++		if (state.syncPoints.length > 0) state.syncPointTempo = previous.syncPointTempo;
++		const range = previous.playbackRange;
++		if (range) {
++			state.playbackRange = range;
++			state.playbackRangeStartTime = this._tickPositionToTimePositionWithSpeed(state, range.startTick, 1);
++			state.playbackRangeEndTime = this._tickPositionToTimePositionWithSpeed(state, range.endTick, 1);
++		}
++		let eventIndex = 0;
++		while (eventIndex < state.synthData.length && state.synthData[eventIndex].time < state.currentTime) eventIndex++;
++		state.eventIndex = eventIndex;
++		if (this._currentState === previous) this._currentState = state;
++		this._mainState = state;
++	}
++	/** OpenTabz patch 0009: the (fractional) tick at a time of the song, without speed. */
++	static _timeToTick(state, timePosition) {
++		let ticks = 0;
++		let time = 0;
++		let bpm = 120;
++		for (const c of state.tempoChanges) {
++			if (timePosition < c.time) break;
++			ticks = c.ticks;
++			time = c.time;
++			bpm = c.bpm;
++		}
++		return ticks + (timePosition - time) / (6e4 / (MidiFileSequencer._sanitizeBpm(bpm) * state.division));
++	}
+ 	createStateFromFile(midiFile) {
+ 		const state = new MidiSequencerState();
+ 		this.percussionKeys.add(SynthConstants.MetronomeKey);
+@@ -35096,6 +35151,8 @@ class MidiFileSequencer {
+ 		let metronomeTime = 0;
+ 		let maxChannel = 0;
+ 		let previousTick = 0;
++		// OpenTabz patch 0007: channels switched to a drum kit by bank select MSB 127.
++		const xgDrumChannels = /* @__PURE__ */ new Set();
+ 		for (const mEvent of midiFile.events) {
+ 			const synthData = new SynthEvent(state.synthData.length, mEvent);
+ 			state.synthData.push(synthData);
+@@ -35126,15 +35183,21 @@ class MidiFileSequencer {
+ 					state.firstTimeSignatureNumerator = meta.numerator;
+ 					state.firstTimeSignatureDenominator = timeSignatureDenominator;
+ 				}
++			} else if (mEvent.type === MidiEventType.ControlChange) {
++				const control = mEvent;
++				if (control.controller === ControllerType.BankSelectCoarse) {
++					if (control.value === 127) xgDrumChannels.add(control.channel);
++					else xgDrumChannels.delete(control.channel);
++				}
+ 			} else if (mEvent.type === MidiEventType.ProgramChange) {
+ 				const programChange = mEvent;
+ 				const channel = programChange.channel;
+ 				if (!state.firstProgramEventPerChannel.has(channel)) state.firstProgramEventPerChannel.set(channel, synthData);
+ 				if (channel > maxChannel) maxChannel = channel;
+-				if (!(channel === SynthConstants.PercussionChannel)) this.instrumentPrograms.add(programChange.program);
++				if (!(channel === SynthConstants.PercussionChannel || xgDrumChannels.has(channel))) this.instrumentPrograms.add(programChange.program);
+ 			} else if (mEvent.type === MidiEventType.NoteOn) {
+ 				const noteOn = mEvent;
+-				if (noteOn.channel === SynthConstants.PercussionChannel) this.percussionKeys.add(noteOn.noteKey);
++				if (noteOn.channel === SynthConstants.PercussionChannel || xgDrumChannels.has(noteOn.channel)) this.percussionKeys.add(noteOn.noteKey);
+ 				if (noteOn.channel > maxChannel) maxChannel = noteOn.channel;
+ 			}
+ 		}
+@@ -35351,6 +35414,52 @@ class MidiFileSequencer {
+ 		this._countInState = null;
+ 		this._currentState = this._mainState;
+ 	}
++	// OpenTabz patch 0006: events are dispatched in blocks of MicroBufferSize samples, so the block
++	// that reaches the end runs past it. That part belongs to what plays next (the song after a
++	// count-in, the next pass of a loop): carried over, every pass keeps its exact length.
++	/** Song milliseconds the current state ran past its end. */
++	get currentOvershoot() {
++		return Math.max(0, this._currentState.currentTime - this._internalEndTime);
++	}
++	/** Moves the current state on without dispatching: the skipped events go out with the next block. */
++	advanceCurrent(milliseconds) {
++		this._currentState.currentTime += milliseconds;
++	}
++	// OpenTabz patch 0006: whole bars of count-in, plus the beats before a start in mid-bar.
++	countInBars = 1;
++	countInLeadBeats = 0;
++	/** Time to tick against the main song while another state (a count-in) is being generated. */
++	mainTimePositionToTickPosition(timePosition) {
++		const current = this._currentState;
++		this._currentState = this._mainState;
++		try {
++			return this.currentTimePositionToTickPosition(timePosition);
++		} finally {
++			this._currentState = current;
++		}
++	}
++	get mainEndTime() {
++		return this._mainState.endTime / this.playbackSpeed;
++	}
++	get mainCurrentTime() {
++		return this._mainState.currentTime / this.playbackSpeed;
++	}
++	get mainEndTick() {
++		return this._mainState.endTick;
++	}
++	get mainTempo() {
++		return this._mainState.currentTempo;
++	}
++	get mainModifiedTempo() {
++		return this._mainState.syncPointTempo * this.playbackSpeed;
++	}
++	/** Real-time length of the count-in, and its number of clicks. */
++	get countInEndTime() {
++		return this._countInState ? this._countInState.endTime / this.playbackSpeed : 0;
++	}
++	get countInClicks() {
++		return this._countInState ? this._countInState.synthData.length : 0;
++	}
+ 	startCountIn() {
+ 		this.generateCountInMidi();
+ 		this._currentState = this._countInState;
+@@ -35377,8 +35486,9 @@ class MidiFileSequencer {
+ 		const metronomeLengthInMillis = metronomeLengthInTicks * (6e4 / (bpm * this._mainState.division));
+ 		let metronomeTick = 0;
+ 		let metronomeTime = 0;
+-		for (let i = 0; i < timeSignatureNumerator; i++) {
+-			const metronome = SynthEvent.newMetronomeEvent(state.synthData.length, metronomeTick, i, metronomeLengthInTicks, metronomeLengthInMillis);
++		const countInClicks = Math.max(1, this.countInBars | 0) * timeSignatureNumerator + Math.max(0, Math.min(timeSignatureNumerator - 1, this.countInLeadBeats | 0));
++		for (let i = 0; i < countInClicks; i++) {
++			const metronome = SynthEvent.newMetronomeEvent(state.synthData.length, metronomeTick, i % timeSignatureNumerator, metronomeLengthInTicks, metronomeLengthInMillis);
+ 			state.synthData.push(metronome);
+ 			metronome.time = metronomeTime;
+ 			metronomeTick += metronomeLengthInTicks;
+@@ -37974,7 +38084,8 @@ class Channels {
+ 	channelList = [];
+ 	setupVoice(tinySoundFont, voice) {
+ 		const c = this.channelList[this.activeChannel];
+-		const newpan = voice.region.pan + c.panOffset;
++		// OpenTabz patch 0008: a centered channel ignores the pan of the SoundFont region.
++		const newpan = (tinySoundFont.channelIsCentered(this.activeChannel) ? 0 : voice.region.pan) + c.panOffset;
+ 		voice.playingChannel = this.activeChannel;
+ 		voice.mixVolume = c.mixVolume;
+ 		voice.noteGainDb += c.gainDb;
+@@ -38875,6 +38986,7 @@ class TinySoundFont {
+ 	_midiEventQueue = new Queue();
+ 	_mutedChannels = /* @__PURE__ */ new Map();
+ 	_soloChannels = /* @__PURE__ */ new Map();
++	_centeredChannels = /* @__PURE__ */ new Map();
+ 	_isAnySolo = false;
+ 	_transpositionPitches = /* @__PURE__ */ new Map();
+ 	_liveTranspositionPitches = /* @__PURE__ */ new Map();
+@@ -38903,6 +39015,19 @@ class TinySoundFont {
+ 		if (mute) this._mutedChannels.set(channel, true);
+ 		else this._mutedChannels.delete(channel);
+ 	}
++	/**
++	* OpenTabz patch 0008: plays every note of a channel in the middle of the stereo image (plus the
++	* channel's own pan), whatever pan the SoundFont gives its regions; for a metronome on a drum kit
++	* whose percussion is spread across the stereo field.
++	*/
++	channelSetCentered(channel, centered) {
++		if (centered) this._centeredChannels.set(channel, true);
++		else this._centeredChannels.delete(channel);
++		this.channelSetPan(channel, this._channelInit(channel).panOffset + .5);
++	}
++	channelIsCentered(channel) {
++		return this._centeredChannels.has(channel);
++	}
+ 	channelSetSolo(channel, solo) {
+ 		if (solo) this._soloChannels.set(channel, true);
+ 		else this._soloChannels.delete(channel);
+@@ -38911,6 +39036,7 @@ class TinySoundFont {
+ 	resetChannelStates() {
+ 		this._mutedChannels = /* @__PURE__ */ new Map();
+ 		this._soloChannels = /* @__PURE__ */ new Map();
++		this._centeredChannels = /* @__PURE__ */ new Map();
+ 		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
+ 		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
+ 		this._isAnySolo = false;
+@@ -38948,8 +39074,10 @@ class TinySoundFont {
+ 		while (!this._midiEventQueue.isEmpty) {
+ 			const m = this._midiEventQueue.dequeue();
+ 			if (m.isMetronome && this.metronomeVolume > 0) {
++				// OpenTabz patch 0006: the first beat of each bar is accented.
++				const metronomeAccent = m.event !== null && m.event.metronomeNumerator === 0;
+ 				this.channelNoteOff(this._metronomeChannel, SynthConstants.MetronomeKey);
+-				this.channelNoteOn(this._metronomeChannel, SynthConstants.MetronomeKey, 95 / 127);
++				this.channelNoteOn(this._metronomeChannel, SynthConstants.MetronomeKey, metronomeAccent ? 1 : 80 / 127);
+ 			} else if (m.event) this.processMidiMessage(m.event);
+ 			processedEvents.push(m);
+ 		}
+@@ -38982,7 +39110,11 @@ class TinySoundFont {
+ 				break;
+ 			case MidiEventType.ProgramChange:
+ 				const programChange = e;
+-				this.channelSetPresetNumber(programChange.channel, programChange.program, programChange.channel === 9);
++				// OpenTabz patch 0007: bank select MSB 127 selects a drum kit (XG), on any channel.
++				const programBank = this._channelInit(programChange.channel).bank;
++				const programBankMsb = (programBank & 32768) !== 0 ? programBank & 127 : programBank >> 7 & 127;
++				const xgDrums = programBankMsb === 127;
++				this.channelSetPresetNumber(programChange.channel, programChange.program, programChange.channel === 9 || xgDrums);
+ 				break;
+ 			case MidiEventType.TempoChange:
+ 				const tempoChange = e;
+@@ -39100,6 +39232,8 @@ class TinySoundFont {
+ 		const voicePlayIndex = this._voicePlayIndex++;
+ 		for (const region of this.presets[presetIndex].regions) {
+ 			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
++			// OpenTabz patch 0007: samples of unused regions are not loaded; such a region stays silent.
++			if (region.samples.length === 0) continue;
+ 			let voice = null;
+ 			if (region.group !== 0) {
+ 				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
+@@ -39360,7 +39494,7 @@ class TinySoundFont {
+ 	*/
+ 	channelSetPan(channel, pan) {
+ 		for (const v of this._voices) if (v.playingChannel === channel && v.playingPreset !== -1) {
+-			const newPan = v.region.pan + pan - .5;
++			const newPan = (this.channelIsCentered(channel) ? 0 : v.region.pan) + pan - .5;
+ 			if (newPan <= -.5) {
+ 				v.panFactorLeft = 1;
+ 				v.panFactorRight = 0;
+@@ -39787,6 +39921,36 @@ class AlphaSynthBase {
+ 	_output;
+ 	_loadedMidiInfo;
+ 	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
++	// OpenTabz patch 0006: count-in and loop ends switch the sequencer while samples are being
++	// generated; these segments say from which played sample on the new part sounds.
++	_segments = [];
++	_generatedSamples = 0;
++	_playedSamples = 0;
++	_playingCountIn = false;
++	_countInPlayedMillis = 0;
++	/** Play the count-in again before every pass of a loop. */
++	countInEveryLoop = false;
++	/** Fires while a count-in plays: the click being heard (0-based) and the number of clicks; -1 when it ends. */
++	countInProgress = new EventEmitterOfT();
++	get countInBars() {
++		return this.sequencer.countInBars;
++	}
++	set countInBars(value) {
++		this.sequencer.countInBars = value;
++	}
++	get countInLeadBeats() {
++		return this.sequencer.countInLeadBeats;
++	}
++	set countInLeadBeats(value) {
++		this.sequencer.countInLeadBeats = value;
++	}
++	_resetSegments() {
++		this._segments = [];
++		this._generatedSamples = 0;
++		this._playedSamples = 0;
++		this._playingCountIn = this.sequencer.isPlayingCountIn;
++		this._countInPlayedMillis = 0;
++	}
+ 	get output() {
+ 		return this._output;
+ 	}
+@@ -39866,6 +40030,7 @@ class AlphaSynthBase {
+ 		if (this.sequencer.isPlayingMain) {
+ 			this._notPlayedSamples = 0;
+ 			this.output.resetSamples();
++			this._resetSegments();
+ 		}
+ 	}
+ 	get playbackRange() {
+@@ -39937,10 +40102,15 @@ class AlphaSynthBase {
+ 				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
+ 				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
+ 				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
+-				if (this.sequencer.isFinished) break;
++				if (this.sequencer.isFinished) {
++					// OpenTabz patch 0006: go on with the song (or the loop start) in the same buffer.
++					if (this._continueSeamlessly(this._generatedSamples + bufferPos)) continue;
++					break;
++				}
+ 			}
+ 			if (bufferPos < samples.length) samples = samples.subarray(0, bufferPos);
+ 			this._notPlayedSamples += samples.length;
++			this._generatedSamples += samples.length;
+ 			this.output.addSamples(samples);
+ 			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
+ 		} else {
+@@ -39948,15 +40118,79 @@ class AlphaSynthBase {
+ 			this.output.addSamples(samples);
+ 		}
+ 	}
++	_continueSeamlessly(at) {
++		const overshoot = this.sequencer.currentOvershoot;
++		if (this.sequencer.isPlayingCountIn) {
++			this.sequencer.resetCountIn();
++			this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this.metronomeVolume);
++			const time = this.sequencer.currentTime;
++			this.sequencer.advanceCurrent(overshoot);
++			this._segments.push({ at, countIn: false, time, wrapped: false });
++			return true;
++		}
++		if (this.sequencer.isPlayingMain && this.isLooping) {
++			const startTick = this.playbackRange ? this.playbackRange.startTick : 0;
++			const startTime = this.sequencer.mainTickPositionToTimePosition(startTick);
++			this.sequencer.mainSeek(startTime);
++			const countIn = this.countInEveryLoop && this._countInVolume > 0;
++			if (countIn) {
++				this.sequencer.startCountIn();
++				this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this._countInVolume);
++			}
++			this.sequencer.advanceCurrent(overshoot);
++			this._segments.push({ at, countIn, time: startTime, wrapped: true });
++			return true;
++		}
++		return false;
++	}
++	_reportPlayed(timePosition, isSeek) {
++		if (this.sequencer.isPlayingMain || this.sequencer.isPlayingOneTimeMidi) {
++			this.updateTimePosition(timePosition, isSeek);
++			return;
++		}
++		// A count-in for the next loop pass is being generated: report against the song itself.
++		this._timePosition = timePosition;
++		let currentTick = this.sequencer.mainTimePositionToTickPosition(timePosition);
++		const endTime = this.sequencer.mainEndTime;
++		const endTick = this.sequencer.mainEndTick;
++		if (timePosition > endTime) {
++			timePosition = endTime;
++			currentTick = endTick;
++		}
++		const args = new PositionChangedEventArgs(timePosition, endTime, currentTick, endTick, isSeek, this.sequencer.mainTempo, this.sequencer.mainModifiedTempo);
++		this._tickPosition = args.currentTick;
++		this._currentPosition = args;
++		this.positionChanged.trigger(args);
++	}
++	_reportCountIn(playedMillis) {
++		const clicks = this.sequencer.countInClicks;
++		const total = this.sequencer.countInEndTime;
++		if (clicks <= 0 || total <= 0) return;
++		const before = Math.floor(this._countInPlayedMillis / (total / clicks));
++		this._countInPlayedMillis += playedMillis;
++		const after = Math.min(clicks - 1, Math.floor(this._countInPlayedMillis / (total / clicks)));
++		if (after !== before) this.countInProgress.trigger({ beat: after, beats: clicks });
++	}
+ 	play() {
+ 		if (this.state !== PlayerState.Paused || !this._isMidiLoaded) return false;
+ 		this.output.activate();
+ 		this._playInternal();
+ 		if (this._countInVolume > 0) {
+ 			Logger.debug("AlphaSynth", "Starting countin");
++			// Count in from where the listener is, not from where generation got to.
++			const pending = this._segments.find((segment) => !segment.countIn);
++			const resume = this._playingCountIn ? pending ? pending.time : this.sequencer.mainCurrentTime : this._timePosition;
++			this.sequencer.resetCountIn();
++			this.sequencer.mainSeek(resume);
++			this._notPlayedSamples = 0;
++			this.output.resetSamples();
++			this._resetSegments();
+ 			this.sequencer.startCountIn();
+ 			this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this._countInVolume);
+ 			this.updateTimePosition(0, true);
++			this._playingCountIn = true;
++			this._countInPlayedMillis = 0;
++			this.countInProgress.trigger({ beat: 0, beats: this.sequencer.countInClicks });
+ 		}
+ 		this.output.play();
+ 		return true;
+@@ -39992,6 +40226,9 @@ class AlphaSynthBase {
+ 		this._notPlayedSamples = 0;
+ 		this.sequencer.stop();
+ 		this.synthesizer.noteOffAll(true);
++		if (this._playingCountIn) this.countInProgress.trigger({ beat: -1, beats: 0 });
++		this._resetSegments();
++		this._playingCountIn = false;
+ 		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
+ 		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
+ 	}
+@@ -40003,6 +40240,7 @@ class AlphaSynthBase {
+ 		this.updateTimePosition(0, true);
+ 		this._notPlayedSamples = 0;
+ 		this.output.resetSamples();
++		this._resetSegments();
+ 		this.output.activate();
+ 		this._synthStopping = false;
+ 		this.state = PlayerState.Playing;
+@@ -40082,16 +40320,53 @@ class AlphaSynthBase {
+ 	setChannelSolo(channel, solo) {
+ 		this.synthesizer.channelSetSolo(channel, solo);
+ 	}
++	/** OpenTabz patch 0008: plays a channel's notes centered, ignoring the SoundFont's region pans. */
++	setChannelCentered(channel, centered) {
++		this.synthesizer.channelSetCentered(channel, centered);
++	}
++	/**
++	* OpenTabz patch 0009: swaps the loaded song for one of the same timing without interrupting
++	* playback: what is buffered plays out, and the rest is generated from the new song.
++	*/
++	replaceMidiFile(midi) {
++		if (!this._isMidiLoaded) {
++			this.loadMidiFile(midi);
++			return;
++		}
++		this.sequencer.replaceMain(midi);
++	}
+ 	setChannelVolume(channel, volume) {
+ 		volume = Math.max(volume, SynthConstants.MinVolume);
+ 		this.synthesizer.channelSetMixVolume(channel, volume);
+ 	}
+ 	_onSamplesPlayed(sampleCount) {
+ 		if (sampleCount === 0) return;
+-		const playedMillis = sampleCount / this.synthesizer.outSampleRate * 1e3;
+-		this._notPlayedSamples -= sampleCount * SynthConstants.AudioChannels;
+-		this.updateTimePosition(this._timePosition + playedMillis, false);
+-		this.checkForFinish();
++		// OpenTabz patch 0006: follow the segments the generator switched between.
++		let remaining = sampleCount * SynthConstants.AudioChannels;
++		this._notPlayedSamples -= remaining;
++		while (remaining > 0) {
++			const next = this._segments.length > 0 ? this._segments[0] : null;
++			const chunk = next === null ? remaining : Math.min(remaining, Math.max(0, next.at - this._playedSamples));
++			if (chunk > 0) {
++				this._playedSamples += chunk;
++				remaining -= chunk;
++				const millis = chunk / SynthConstants.AudioChannels / this.synthesizer.outSampleRate * 1e3;
++				if (this._playingCountIn) this._reportCountIn(millis);
++				else this._reportPlayed(this._timePosition + millis, false);
++			}
++			if (next !== null && this._playedSamples >= next.at) {
++				this._segments.shift();
++				if (this._playingCountIn && !next.countIn) this.countInProgress.trigger({ beat: -1, beats: 0 });
++				this._playingCountIn = next.countIn;
++				if (next.wrapped) this.finished.trigger();
++				if (next.countIn) {
++					this._countInPlayedMillis = 0;
++					this._timePosition = next.time;
++					this.countInProgress.trigger({ beat: 0, beats: this.sequencer.countInClicks });
++				} else this._reportPlayed(next.time, false);
++			}
++		}
++		if (this._segments.length === 0) this.checkForFinish();
+ 	}
+ 	checkForFinish() {
+ 		let startTick = 0;
+@@ -40428,6 +40703,7 @@ class BackingTrackAudioSynthesizer {
+ 	setChannelTranspositionPitch(_channel, _semitones) {}
+ 	channelSetMute(_channel, _mute) {}
+ 	channelSetSolo(_channel, _solo) {}
++	channelSetCentered(_channel, _centered) {}
+ 	resetChannelStates() {}
+ 	channelSetMixVolume(_channel, _volume) {}
+ 	hasSamplesForProgram(_program) {
+@@ -65583,7 +65859,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -85,3 +545,41 @@ index b6203da6066c95efcf66298fe48a690f144597a5..d1a9f7ccefa9531e7fd7a69d158434c1
  });
  //#endregion
  //#region src/exporter/ScoreExporter.ts
+diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..ffdf6dd94befd042de3027ea90d65b3a2fb2bad1 100644
+--- a/dist/alphaTab.d.ts
++++ b/dist/alphaTab.d.ts
+@@ -128,6 +128,19 @@ declare class AlphaSynthBase implements IAlphaSynth {
+     protected updateMasterVolume(value: number): void;
+     get metronomeVolume(): number;
+     set metronomeVolume(value: number);
++    /** OpenTabz patch 0006: play the count-in again before every pass of a loop. */
++    countInEveryLoop: boolean;
++    /** OpenTabz patch 0006: the count-in click being heard (0-based) and the number of clicks; beat -1 when it ends. */
++    readonly countInProgress: IEventEmitterOfT<{
++        beat: number;
++        beats: number;
++    }>;
++    /** OpenTabz patch 0006: whole bars of count-in (default 1). */
++    get countInBars(): number;
++    set countInBars(value: number);
++    /** OpenTabz patch 0006: extra clicks so a start in mid-bar falls on its beat. */
++    get countInLeadBeats(): number;
++    set countInLeadBeats(value: number);
+     get countInVolume(): number;
+     set countInVolume(value: number);
+     get midiEventsPlayedFilter(): MidiEventType[];
+@@ -167,6 +180,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
+     setChannelMute(channel: number, mute: boolean): void;
+     resetChannelStates(): void;
+     setChannelSolo(channel: number, solo: boolean): void;
++    /** OpenTabz patch 0008: plays a channel's notes centered, ignoring the SoundFont's region pans. */
++    setChannelCentered(channel: number, centered: boolean): void;
++    /**
++     * OpenTabz patch 0009: swaps the loaded song for one of the same timing without interrupting
++     * playback: what is buffered plays out, and the rest is generated from the new song.
++     */
++    replaceMidiFile(midi: MidiFile): void;
+     setChannelVolume(channel: number, volume: number): void;
+     private _onSamplesPlayed;
+     protected checkForFinish(): void;
