@@ -33,12 +33,12 @@ export interface TrueTypeFont {
   subset(glyphs: Iterable<number>): Uint8Array;
 }
 
-type Tables = Map<string, Uint8Array>;
+export type Tables = Map<string, Uint8Array>;
 
-const tag = (bytes: Uint8Array, at: number) => String.fromCharCode(...bytes.subarray(at, at + 4));
-const view = (bytes: Uint8Array) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+export const tag = (bytes: Uint8Array, at: number) => String.fromCharCode(...bytes.subarray(at, at + 4));
+export const view = (bytes: Uint8Array) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
-function sfntTables(bytes: Uint8Array): Tables {
+export function sfntTables(bytes: Uint8Array): Tables {
   const data = view(bytes);
   const count = data.getUint16(4);
   const tables: Tables = new Map();
@@ -53,9 +53,11 @@ function sfntTables(bytes: Uint8Array): Tables {
   return tables;
 }
 
-function woffTables(bytes: Uint8Array): Tables {
+/** A WOFF 1.0 file's tables; PostScript-flavoured ones only if asked (they cannot be embedded). */
+export function woffTables(bytes: Uint8Array, postScript = false): Tables {
   const data = view(bytes);
-  if (tag(bytes, 4) === 'OTTO') throw new FontFormatError('PostScript-flavoured fonts are not supported.');
+  if (tag(bytes, 4) === 'OTTO' && !postScript)
+    throw new FontFormatError('PostScript-flavoured fonts are not supported.');
   const count = data.getUint16(12);
   const tables: Tables = new Map();
   for (let index = 0; index < count; index++) {
@@ -71,14 +73,14 @@ function woffTables(bytes: Uint8Array): Tables {
   return tables;
 }
 
-function required(tables: Tables, name: string): Uint8Array {
+export function required(tables: Tables, name: string): Uint8Array {
   const table = tables.get(name);
   if (table === undefined) throw new FontFormatError(`The font has no ${name} table.`);
   return table;
 }
 
 /** The character-to-glyph map: Windows Unicode (full or BMP), else any Unicode subtable. */
-function readCmap(cmap: Uint8Array): (codePoint: number) => number {
+export function readCmap(cmap: Uint8Array): (codePoint: number) => number {
   const data = view(cmap);
   const count = data.getUint16(2);
   let best: { offset: number; rank: number } | null = null;
