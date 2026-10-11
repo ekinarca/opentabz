@@ -38,7 +38,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | OPEN-021 | ASCII / plain-text tabs with rhythm inference and chord-line detection                          | GP+ | M5  | —                   | —    | planned |
 | OPEN-022 | ChordPro                                                                                        | OT  | M5  | —                   | —    | planned |
 | OPEN-023 | MIDI import with pitch → string/fret mapping per tuning                                         | GP  | M5  | —                   | —    | planned |
-| OPEN-024 | PowerTab (.ptb)                                                                                 | GP  | S   | —                   | —    | planned |
+| OPEN-024 | PowerTab (.ptb)                                                                                 | GP  | M8  | —                   | —    | planned |
 | OPEN-025 | TuxGuitar (.tg)                                                                                 | OT  | S   | —                   | —    | planned |
 | OPEN-026 | Format detection by content, never by extension                                                 | OT  | M0  | corrupt             | —    | planned |
 | OPEN-027 | Files with wrong or missing extensions and odd names open correctly                             | OT  | M0  | corrupt             | —    | planned |
@@ -47,6 +47,15 @@ The single source of truth for what OpenTabz does. One row per feature.
 | OPEN-030 | Recognized but unsupported formats (MIDI, PDF, images, audio, archives…) are named in the error | OT  | M0  | corrupt             | —    | planned |
 | OPEN-031 | Parsing runs off the main thread; a hung parse is cancelled by a watchdog                       | OT  | M0  | —                   | —    | planned |
 | OPEN-032 | Fuzzed (bit-flipped, truncated) inputs never hang or crash the app                              | OT  | M0  | corrupt             | —    | planned |
+| OPEN-033 | Guitar Pro 1–2 (.gtp)                                                                           | GP  | M8  | —                   | —    | planned |
+| OPEN-034 | TablEdit (.tef)                                                                                 | GP  | M8  | —                   | —    | planned |
+| OPEN-035 | Protected Guitar Pro files: edit-locked files open read-only, open-locked files ask for the password | GP  | M4  | —                   | —    | planned |
+| OPEN-036 | MIDI import into the open document, appending tracks after the last one                         | GP  | M5  | —                   | —    | planned |
+| OPEN-037 | MIDI import track mapping: pick tracks, merge several into one, detect piano grand staves, instrument from Program Change | GP  | M5  | —                   | —    | planned |
+| OPEN-038 | MIDI import per-track options: notations, staves, tuning, sound, colour and icon                | GP  | M5  | —                   | —    | planned |
+| OPEN-039 | MIDI import quantize and clean-up: grid, shortest note, gap filling, dotted notes, voices from overlaps, triplet detection | GP  | M5  | —                   | —    | planned |
+| OPEN-040 | MIDI import score options: keep or ignore time signatures, key signatures and tempo             | GP  | M5  | —                   | —    | planned |
+| OPEN-041 | Live preview of the MIDI import result while options change                                     | GP  | M5  | —                   | —    | planned |
 
 ## Score rendering
 
@@ -56,7 +65,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-002 | Tablature only                                                                    | GP  | M0  | alphatex                                                    | —    | planned |
 | REND-003 | Standard notation only                                                            | GP  | M0  | alphatex                                                    | —    | planned |
 | REND-004 | Rhythm / slash notation                                                           | GP  | M2  | alphatab/guitarpro7/slash.gp                                | —    | planned |
-| REND-005 | Numbered (jianpu) notation                                                        | OT  | M2  | —                                                           | —    | planned |
+| REND-005 | Numbered (jianpu) notation                                                        | GP  | M2  | —                                                           | —    | planned |
 | REND-006 | Lead-sheet / chord-chart layout (chords over lyrics)                              | OT  | M5  | —                                                           | —    | planned |
 | REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | —    | planned |
 | REND-010 | Page layout on A4 paper                                                           | GP  | M0  | —                                                           | —    | planned |
@@ -178,6 +187,83 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-308 | Per-note annotations                                                              | OT  | M5  | —                                                           | —    | planned |
 | REND-309 | Comment layer                                                                     | OT  | M5  | —                                                           | —    | planned |
 | REND-310 | Custom notation styling presets                                                   | OT  | M2  | —                                                           | —    | planned |
+| REND-186 | Grand staff: two staves of one track joined by a brace                            | GP  | M2  | —                                                           | —    | planned |
+| REND-187 | Partial capo display                                                              | GP  | M2  | —                                                           | —    | planned |
+| REND-188 | "Let ring throughout" marking for tracks with automatic let ring                  | GP  | M2  | —                                                           | —    | planned |
+| REND-189 | Note values from quadruple whole down to 256th                                    | GP+ | M2  | —                                                           | —    | planned |
+| REND-190 | Tablature for any pitched instrument (keyboards, voice, orchestral)               | GP  | M2  | —                                                           | —    | planned |
+| REND-191 | Drum tablature labelled with MIDI note numbers                                    | GP  | M2  | —                                                           | —    | planned |
+| REND-192 | Accidentals: sharp, flat, natural                                                 | GP  | M2  | —                                                           | —    | planned |
+| REND-193 | Double sharp and double flat                                                      | GP  | M2  | —                                                           | —    | planned |
+| REND-194 | Courtesy (bracketed) accidentals                                                  | GP  | M2  | —                                                           | —    | planned |
+| REND-195 | Automatic accidentals from the key and earlier notes in the bar, including across ties | GP  | M2  | —                                                           | —    | planned |
+| REND-196 | Slash noteheads inside standard and drum staves, keeping the underlying pitches   | GP  | M2  | —                                                           | —    | planned |
+| REND-197 | Forced grouping of consecutive identical tuplets                                  | GP  | M2  | —                                                           | —    | planned |
+| REND-198 | Stem directions forced in the file                                                | GP  | M2  | —                                                           | —    | planned |
+| REND-199 | Forced and prevented system breaks from the file                                  | GP  | M2  | —                                                           | —    | planned |
+| REND-200 | Detached coda drawn apart from the main score, with a configurable gap            | GP  | M2  | —                                                           | —    | planned |
+| REND-201 | Release of a bend begun on an earlier note                                        | GP  | M2  | —                                                           | —    | planned |
+| REND-202 | Whammy-bar amounts in quarter tones                                               | GP  | M2  | —                                                           | —    | planned |
+| REND-203 | Piano fingering (1–5) with collision avoidance                                    | GP  | M2  | —                                                           | —    | planned |
+| REND-204 | Circled string numbers on the standard staff                                      | GP  | M2  | —                                                           | —    | planned |
+| REND-205 | Dead slap                                                                         | GP  | M2  | —                                                           | —    | planned |
+| REND-206 | Sound-change labels where sound automations fire (custom text)                    | GP  | M2  | —                                                           | —    | planned |
+| REND-207 | Bracketed comments in lyrics are hidden in the score                              | GP  | M2  | —                                                           | —    | planned |
+| REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | —                                                           | —    | planned |
+| REND-209 | Scale diagrams attached to beats (geometry, custom dots, grid spacing)            | GP  | M2  | —                                                           | —    | planned |
+| REND-210 | Show or hide tempo-automation marks                                               | GP  | M2  | —                                                           | —    | planned |
+| REND-211 | Tempo marks against any beat unit (e.g. dotted quarter)                           | GP  | M2  | —                                                           | —    | planned |
+| REND-212 | Page layout with pages side by side, scrolling horizontally                       | GP  | M2  | —                                                           | —    | planned |
+| REND-213 | Page grid: as many pages per row as the window fits                               | GP  | M2  | —                                                           | —    | planned |
+| REND-214 | Continuous page-width layout without page breaks                                  | GP  | M2  | —                                                           | —    | planned |
+| REND-215 | Zoom range 10–800 % (presets, slider, keyboard, Ctrl/Cmd+wheel, pinch)            | GP  | M2  | —                                                           | —    | planned |
+| REND-216 | Zoom to fit the page width                                                        | GP  | M2  | —                                                           | —    | planned |
+| REND-217 | Zoom to fit a whole page                                                          | GP  | M2  | —                                                           | —    | planned |
+| REND-218 | Stylesheet panel: per-document engraving options (page, systems, header/footer, text, notation), saved with the document | GP  | M2  | —                                                           | —    | planned |
+| REND-219 | Stylesheet settings stored in Guitar Pro files are honoured                       | GP  | M2  | —                                                           | —    | planned |
+| REND-220 | Stylesheet presets: bundled looks, user stylesheets, one chosen as the default for new documents | GP  | M2  | —                                                           | —    | planned |
+| REND-221 | Stylesheet: paper-size presets (twelve formats) and custom sizes                  | GP  | M2  | —                                                           | —    | planned |
+| REND-222 | Stylesheet: portrait or landscape                                                 | GP  | M2  | —                                                           | —    | planned |
+| REND-223 | Stylesheet: overall score scale, optionally keeping text and diagram sizes        | GP  | M2  | —                                                           | —    | planned |
+| REND-224 | Stylesheet: rhythmic spacing factor                                               | GP  | M2  | —                                                           | —    | planned |
+| REND-225 | Stylesheet: tuning legend (show, position, detail level, layout, frame)           | GP  | M2  | —                                                           | —    | planned |
+| REND-226 | Stylesheet: chord-symbol spelling (classic, jazz, rock)                           | GP  | M2  | —                                                           | —    | planned |
+| REND-227 | Stylesheet: chord-diagram placement (top grid, in score, both), size and spacing  | GP  | M2  | —                                                           | —    | planned |
+| REND-228 | Stylesheet: staff-line thickness, system spacing, first-system indent             | GP  | M2  | —                                                           | —    | planned |
+| REND-229 | Stylesheet: slash-notation staff lines, barlines, and fret/string for single notes | GP  | M2  | —                                                           | —    | planned |
+| REND-230 | Stylesheet: barlines drawn through all staves of a system                         | GP  | M2  | —                                                           | —    | planned |
+| REND-231 | Stylesheet: repeat clef and time signature on every system or at sections         | GP  | M2  | —                                                           | —    | planned |
+| REND-232 | Stylesheet: capo and tuning reflected in standard notation (sounding pitch) or not | GP  | M2  | —                                                           | —    | planned |
+| REND-233 | Stylesheet: staff brackets (none, tab with its staff, similar instruments)        | GP  | M2  | —                                                           | —    | planned |
+| REND-234 | Stylesheet: system separator mark                                                 | GP  | M2  | —                                                           | —    | planned |
+| REND-235 | Stylesheet: track names (placement, single/multi-track, full or short, orientation) | GP  | M2  | —                                                           | —    | planned |
+| REND-236 | Stylesheet: header/footer tokens for every score field, page number and page count | GP  | M2  | —                                                           | —    | planned |
+| REND-237 | Stylesheet: header/footer element formatting (visibility, prefix label, font, size, style, alignment), separate set for later pages | GP  | M2  | —                                                           | —    | planned |
+| REND-238 | Stylesheet: font, size and style for every text element                           | GP  | M2  | —                                                           | —    | planned |
+| REND-239 | Stylesheet: lyrics above, below or hidden                                         | GP  | M2  | —                                                           | —    | planned |
+| REND-240 | Stylesheet: tempo decimals shown or hidden                                        | GP  | M2  | —                                                           | —    | planned |
+| REND-241 | Stylesheet: music font (engraved or handwritten; any SMuFL font)                  | GP+ | M2  | —                                                           | —    | planned |
+| REND-242 | Stylesheet: rename printed technique labels                                       | GP  | M2  | —                                                           | —    | planned |
+| REND-243 | Stylesheet: technique extension lines continue across rests                       | GP  | M2  | —                                                           | —    | planned |
+| REND-244 | Stylesheet: rhythm in tablature (stems in the tab, hidden when the staff shows, per-voice above/below/none) | GP  | M2  | —                                                           | —    | planned |
+| REND-245 | Stylesheet: beams across tab rests, circled half and whole notes in tab           | GP  | M2  | —                                                           | —    | planned |
+| REND-246 | Stylesheet: flat beams on standard and drum staves                                | GP  | M2  | —                                                           | —    | planned |
+| REND-247 | Stylesheet: artificial-harmonic tab display (touch fret, octave dot)              | GP  | M2  | —                                                           | —    | planned |
+| REND-248 | Stylesheet: notation toggles (C and cut-C, bent pitch in the staff, extra rests, dynamics, tuplet brackets) | GP  | M2  | —                                                           | —    | planned |
+| REND-249 | Stylesheet: technique toggles (arpeggio arrowheads, trill auxiliary note, slide label) | GP  | M2  | —                                                           | —    | planned |
+| REND-250 | Stylesheet: tablature toggles (repeat tied frets, dashed quarter rests, coloured frets for voices 2–4) | GP  | M2  | —                                                           | —    | planned |
+| REND-251 | Stylesheet: hammer-on/pull-off display (H/P letters, collision avoidance, outer-note slurs, one slur per group) | GP  | M2  | —                                                           | —    | planned |
+| REND-252 | Stylesheet: fingering display (left- and right-hand label sets, position on staff and tab, size) | GP  | M2  | —                                                           | —    | planned |
+| REND-311 | Multi-bar rests in multi-track views and per-part printing                        | OT  | M2  | —                                                           | —    | planned |
+| REND-312 | Extended dynamics: pppp–ffffff, sf, sfz, sffz, fp, rf, rfz, niente                | OT  | M2  | —                                                           | —    | planned |
+| REND-313 | Lyrics on any staff, any number of verses, per-verse styling                      | OT  | M5  | —                                                           | —    | planned |
+| REND-314 | Left-handed (mirrored) chord and scale diagrams                                   | OT  | M2  | —                                                           | —    | planned |
+| REND-315 | Inverted tablature string order (lowest string on top)                            | OT  | M2  | —                                                           | —    | planned |
+| REND-316 | Colour-blind-safe palettes and custom string colours                              | OT  | M2  | —                                                           | —    | planned |
+| REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | —    | planned |
+| REND-318 | Percussion legend for drum staves                                                 | OT  | M2  | —                                                           | —    | planned |
+| REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | —                                                           | —    | planned |
+| REND-320 | Hide staves that rest for a whole system                                          | OT  | M2  | —                                                           | —    | planned |
 
 ## Playback
 
@@ -230,13 +316,80 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-057 | Master volume                                         | GP  | M1  | —                                                     | —    | planned |
 | PLAY-058 | Mixer state persisted per song                        | OT  | M1  | —                                                     | —    | planned |
 | PLAY-060 | Buses and sends                                       | OT  | M7  | —                                                     | —    | planned |
-| PLAY-061 | Automation lanes                                      | OT  | M7  | —                                                     | —    | planned |
-| PLAY-062 | Per-track EQ with spectrum analyzer                   | OT  | M7  | —                                                     | —    | planned |
+| PLAY-061 | Automation lanes                                      | GP  | M7  | —                                                     | —    | planned |
+| PLAY-062 | Per-track EQ with spectrum analyzer                   | GP  | M7  | —                                                     | —    | planned |
 | PLAY-063 | Master limiter                                        | OT  | M7  | —                                                     | —    | planned |
 | PLAY-064 | Stereo width                                          | OT  | M7  | —                                                     | —    | planned |
 | PLAY-065 | Humanize (timing / velocity)                          | OT  | M7  | —                                                     | —    | planned |
 | PLAY-066 | Groove templates                                      | OT  | M7  | —                                                     | —    | planned |
 | PLAY-070 | Web MIDI output to external synths                    | OT  | M7  | —                                                     | —    | planned |
+| PLAY-071 | Position display: bar, beat, time signature and live tempo including automation | GP  | M1  | —                                                     | —    | planned |
+| PLAY-072 | Manual scrolling pauses auto-scroll; a Resume button re-attaches the view to the cursor | GP  | M1  | —                                                     | —    | planned |
+| PLAY-073 | Audible stepping: move beat by beat and hear each one without starting playback | GP  | M1  | —                                                     | —    | planned |
+| PLAY-074 | Cursor styles: none, smooth, jump per note, jump per metronome beat | GP  | M1  | —                                                     | —    | planned |
+| PLAY-075 | Elapsed and total time display in score time, unaffected by practice speed | GP  | M1  | —                                                     | —    | planned |
+| PLAY-076 | Playback detune in cents                              | GP  | M1  | —                                                     | —    | planned |
+| PLAY-077 | Focus/unfocus: boost or duck the active track against the rest | GP  | M1  | —                                                     | —    | planned |
+| PLAY-078 | Master pan (balance)                                  | GP  | M1  | —                                                     | —    | planned |
+| PLAY-079 | Audible accents and heavy accents                     | GP  | M1  | —                                                     | —    | planned |
+| PLAY-080 | Audible ghost notes                                   | GP  | M1  | —                                                     | —    | planned |
+| PLAY-081 | Fermatas (short, medium, long) hold time in playback  | GP  | M1  | —                                                     | —    | planned |
+| PLAY-082 | Hairpins ramp velocity toward the next dynamic        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-083 | Feel playback: 8th triplet feel                       | GP  | M1  | —                                                     | —    | planned |
+| PLAY-084 | Feel playback: 16th triplet feel                      | GP  | M1  | —                                                     | —    | planned |
+| PLAY-085 | Feel playback: dotted 8th feel                        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-086 | Feel playback: dotted 16th feel                       | GP  | M1  | —                                                     | —    | planned |
+| PLAY-087 | Feel playback: Scottish (reverse-dotted) 8th feel     | GP  | M1  | —                                                     | —    | planned |
+| PLAY-088 | Feel playback: Scottish 16th feel                     | GP  | M1  | —                                                     | —    | planned |
+| PLAY-089 | Ottava lines and octave clefs sound at the right octave | GP  | M1  | —                                                     | —    | planned |
+| PLAY-090 | One- and two-bar simile marks play the repeated bars  | GP  | M1  | —                                                     | —    | planned |
+| PLAY-091 | Audible brush strokes and arpeggios honouring their duration and spread | GP  | M1  | —                                                     | —    | planned |
+| PLAY-092 | Audible rasgueado, all 18 patterns                    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-093 | Audible mordents and turns, following the key         | GP  | M1  | —                                                     | —    | planned |
+| PLAY-094 | Audible tapping (both hands) without a pick attack    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-095 | Audible golpe (finger and thumb)                      | GP  | M1  | —                                                     | —    | planned |
+| PLAY-096 | Sustain pedal (down, hold, up) holds notes in playback | GP  | M1  | —                                                     | —    | planned |
+| PLAY-097 | Bend timing styles: as drawn, spread over the beat, fast before the next note | GP  | M1  | —                                                     | —    | planned |
+| PLAY-098 | Simultaneous bends on different strings play independently (one channel per string) | GP  | M1  | —                                                     | —    | planned |
+| PLAY-099 | Decimal tempos and tempos below 30 BPM                | GP  | M1  | —                                                     | —    | planned |
+| PLAY-100 | Traversal: Da Capo, landing after a pickup bar        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-101 | Traversal: D.C. al Coda                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-102 | Traversal: D.C. al Double Coda                        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-103 | Traversal: D.C. al Fine                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-104 | Traversal: Dal Segno, firing on the last pass inside a repeat | GP  | M1  | —                                                     | —    | planned |
+| PLAY-105 | Traversal: D.S. al Coda                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-106 | Traversal: D.S. al Double Coda                        | GP  | M1  | —                                                     | —    | planned |
+| PLAY-107 | Traversal: D.S. al Fine                               | GP  | M1  | —                                                     | —    | planned |
+| PLAY-108 | Traversal: Dal Segno Segno                            | GP  | M1  | —                                                     | —    | planned |
+| PLAY-109 | Traversal: D.S.S. al Coda                             | GP  | M1  | —                                                     | —    | planned |
+| PLAY-110 | Traversal: D.S.S. al Double Coda                      | GP  | M1  | —                                                     | —    | planned |
+| PLAY-111 | Traversal: D.S.S. al Fine                             | GP  | M1  | —                                                     | —    | planned |
+| PLAY-112 | Traversal: To Coda, firing on the first pass inside a repeat and armed by an "al Coda" jump | GP  | M1  | —                                                     | —    | planned |
+| PLAY-113 | Traversal: To Double Coda                             | GP  | M1  | —                                                     | —    | planned |
+| PLAY-114 | Traversal: Fine ends playback only after a jump       | GP  | M1  | —                                                     | —    | planned |
+| PLAY-115 | Track interpretation: automatic let ring              | GP  | M1  | —                                                     | —    | planned |
+| PLAY-116 | Track interpretation: automatic brush on chords       | GP  | M1  | —                                                     | —    | planned |
+| PLAY-117 | Track interpretation: palm-mute intensity             | GP  | M1  | —                                                     | —    | planned |
+| PLAY-118 | Track interpretation: accentuation of strong beats    | GP  | M1  | —                                                     | —    | planned |
+| PLAY-119 | Per-note audio settings (length, timing offset, velocity), including grace notes | GP  | M7  | —                                                     | —    | planned |
+| PLAY-120 | Automation editor: points snapped to beats or bars, drag, delete, clear, text labels | GP  | M7  | —                                                     | —    | planned |
+| PLAY-121 | Automation points either hold (step) or ramp to the next | GP  | M7  | —                                                     | —    | planned |
+| PLAY-122 | Automation: track volume                              | GP  | M7  | —                                                     | —    | planned |
+| PLAY-123 | Automation: track pan                                 | GP  | M7  | —                                                     | —    | planned |
+| PLAY-124 | Automation: master volume                             | GP  | M7  | —                                                     | —    | planned |
+| PLAY-125 | Automation: master pan                                | GP  | M7  | —                                                     | —    | planned |
+| PLAY-126 | Automation: sound change                              | GP  | M7  | —                                                     | —    | planned |
+| PLAY-127 | Per-track automation on/off switches                  | GP  | M7  | —                                                     | —    | planned |
+| PLAY-128 | Level meters per track and on the master              | GP+ | M7  | —                                                     | —    | planned |
+| PLAY-129 | Drum mix: per-piece volume, pan, mute and solo; kit mono or stereo | GP  | M7  | —                                                     | —    | planned |
+| PLAY-130 | Per-track MIDI port and channel routing (one or two channels, percussion on channel 10) | GP  | M7  | —                                                     | —    | planned |
+| PLAY-131 | Up to four MIDI output ports, each testable           | GP  | M7  | —                                                     | —    | planned |
+| PLAY-132 | MIDI output latency compensation                      | GP  | M7  | —                                                     | —    | planned |
+| PLAY-133 | Play a connected MIDI keyboard live through the built-in sounds | GP  | M7  | —                                                     | —    | planned |
+| PLAY-134 | Audible pick scrape and dead slap                     | OT  | M7  | —                                                     | —    | planned |
+| PLAY-135 | Wah open/closed marks drive an auto-wah sweep         | OT  | M7  | —                                                     | —    | planned |
+| PLAY-136 | Choice of colour and style for the cursor and bar highlight | OT  | M1  | —                                                     | —    | planned |
+| PLAY-137 | Track autoswitch: the view follows another part while yours rests | OT  | M6  | —                                                     | —    | planned |
 
 ## Practice and performance
 
@@ -291,6 +444,71 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PRAC-100 | Tuner: microphone pitch detection (YIN / MPM)                   | GP  | M2  | —                                     | —    | planned |
 | PRAC-101 | Tuner: cents readout                                            | GP  | M2  | —                                     | —    | planned |
 | PRAC-102 | Tuner follows the track's tuning (drop / open / custom)         | GP+ | M2  | —                                     | —    | planned |
+| PRAC-103 | Fixed-tempo practice: one BPM ignoring tempo changes (presets, 10–300 BPM) | GP  | M1  | —                                     | —    | planned |
+| PRAC-104 | Speed presets (25–100 %) with one-tap half speed                | GP+ | M1  | —                                     | —    | planned |
+| PRAC-105 | Speed trainer: number of passes at each step                    | GP  | M1  | —                                     | —    | planned |
+| PRAC-106 | Metronome volume; zero gives a silent visual metronome          | GP  | M1  | —                                     | —    | planned |
+| PRAC-107 | Count-in before every loop pass                                 | GP  | M1  | —                                     | —    | planned |
+| PRAC-108 | Keyboard loop control: toggle, resize, jump to the loop start   | GP+ | M1  | —                                     | —    | planned |
+| PRAC-109 | Loop range entered by bar numbers                               | OT  | M1  | —                                     | —    | planned |
+| PRAC-110 | Separate count-in and click volumes; click at half or double the beat | OT  | M1  | —                                     | —    | planned |
+| PRAC-111 | Count-in fitted to the start point: a full bar of the meter, extra beats mid-bar or on a pickup | OT  | M1  | —                                     | —    | planned |
+| PRAC-112 | Polyphonic tuner: every string from one strum, per-string cents, click a string for single mode | GP  | M6  | —                                     | —    | planned |
+| PRAC-113 | Tuner reference pitch (A4 calibration)                          | OT  | M2  | —                                     | —    | planned |
+| PRAC-114 | Tuner chromatic and strobe modes                                | OT  | M2  | —                                     | —    | planned |
+| PRAC-115 | Tuner alternative temperaments                                  | OT  | S   | —                                     | —    | planned |
+| PRAC-116 | Foot-pedal command mapping (USB HID, MIDI pedals, Bluetooth page turners) | GP+ | M6  | —                                     | —    | planned |
+| PRAC-117 | Audio-track formats: MP3, M4A/AAC, WAV, FLAC, AIFF, OGG         | GP  | M6  | —                                     | —    | planned |
+| PRAC-118 | Audio-track panel: show or hide, bypass, replace or remove the file | GP  | M6  | —                                     | —    | planned |
+| PRAC-119 | Waveform overlaid with the score's bar and beat grid and bar numbers | GP  | M6  | —                                     | —    | planned |
+| PRAC-120 | Time ruler and bar blocks under the waveform; drag to select bars | GP  | M6  | —                                     | —    | planned |
+| PRAC-121 | Playable zone with start and end brackets; add bars beyond it   | GP  | M6  | —                                     | —    | planned |
+| PRAC-122 | Audio start offset aligning bar 1 (drag, reset)                 | GP  | M6  | —                                     | —    | planned |
+| PRAC-123 | Sync-point editing: add, drag, remove, clear all; local tempo recomputed | GP  | M6  | —                                     | —    | planned |
+| PRAC-124 | Convert sync points to tempo automation and back                | GP  | M6  | —                                     | —    | planned |
+| PRAC-125 | Audio-track fine tuning in cents                                | GP  | M6  | —                                     | —    | planned |
+| PRAC-126 | Audio-track frequency filters (presets that bring out bass, mid or treble) | GP  | M6  | —                                     | —    | planned |
+| PRAC-127 | Audio-track mixer strip: volume, pan, EQ, mute, solo            | GP  | M6  | —                                     | —    | planned |
+| PRAC-128 | Waveform zoom                                                   | GP  | M6  | —                                     | —    | planned |
+| PRAC-129 | Score selection mirrored on the waveform; press and hold a bar to play it, Shift to loop it | GP  | M6  | —                                     | —    | planned |
+| PRAC-130 | Audio stored inside the document by default, or kept as a linked file | GP  | M6  | —                                     | —    | planned |
+| PRAC-131 | Extract the embedded audio to a file                            | GP  | M6  | —                                     | —    | planned |
+| PRAC-132 | Line-in input gain and monitor level                            | GP  | M6  | —                                     | —    | planned |
+| PRAC-133 | Line-in effect-chain bypass                                     | GP  | M6  | —                                     | —    | planned |
+| PRAC-134 | Line-in noise gate                                              | GP  | M6  | —                                     | —    | planned |
+| PRAC-135 | Line-in limiter                                                 | GP  | M6  | —                                     | —    | planned |
+| PRAC-136 | Live tone follows the score's sound changes at the cursor       | GP  | M6  | —                                     | —    | planned |
+| PRAC-137 | Lock the live tone across tracks and documents                  | GP  | M6  | —                                     | —    | planned |
+| PRAC-138 | Several recordings per piece, each synced, switchable           | OT  | M6  | —                                     | —    | planned |
+| PRAC-139 | Audio track follows unfolded repeats and jumps                  | OT  | M6  | —                                     | —    | planned |
+| PRAC-140 | Click the waveform to seek the score (two-way linking)          | OT  | M6  | —                                     | —    | planned |
+| PRAC-141 | A/B loop points on the waveform                                 | GP+ | M6  | —                                     | —    | planned |
+| PRAC-142 | Tap-to-sync: create sync points by tapping downbeats            | OT  | M6  | —                                     | —    | planned |
+| PRAC-143 | Beat and tempo detection on the audio track with automatic sync points | OT  | M6  | —                                     | —    | planned |
+| PRAC-144 | Metronome follows the synced recording's tempo drift            | OT  | M6  | —                                     | —    | planned |
+| PRAC-145 | Audio-track channel tools: left, right, mono, centre (vocal) reduction | OT  | M6  | —                                     | —    | planned |
+| PRAC-146 | Audio-track octave shift (up to three octaves) to hear low parts | OT  | M6  | —                                     | —    | planned |
+| PRAC-147 | On-device stem separation of the audio track                    | OT  | S   | —                                     | —    | planned |
+| PRAC-148 | Synced video panel (local file) beside the notation: resize, hide, dock | OT  | M6  | —                                     | —    | planned |
+| PRAC-149 | Mirror the synced video for left-handed players                 | OT  | M6  | —                                     | —    | planned |
+| PRAC-150 | Pitch step trainer: transpose by a step on each loop pass       | OT  | M6  | —                                     | —    | planned |
+| PRAC-151 | Speed-trainer end action: hold the target, restart or stop      | OT  | M6  | —                                     | —    | planned |
+| PRAC-152 | Adaptive tempo from play-along accuracy                         | OT  | M6  | —                                     | —    | planned |
+| PRAC-153 | Adaptive difficulty with adjustable levelling speed             | OT  | S   | —                                     | —    | planned |
+| PRAC-154 | Difficulty filters: hide chosen techniques or notes; per-section difficulty | OT  | M6  | —                                     | —    | planned |
+| PRAC-155 | Wait mode: playback waits for the right note                    | OT  | M6  | —                                     | —    | planned |
+| PRAC-156 | Adjustable error tolerance for pitch and timing                 | OT  | M6  | —                                     | —    | planned |
+| PRAC-157 | Chord-change drills (changes per minute)                        | OT  | M6  | —                                     | —    | planned |
+| PRAC-158 | Focus mode: show and play only the looped range                 | OT  | M6  | —                                     | —    | planned |
+| PRAC-159 | Loop by dragging across lyric words                             | OT  | M6  | —                                     | —    | planned |
+| PRAC-160 | Performance scoring: points, streak multiplier, stars per song  | OT  | M6  | —                                     | —    | planned |
+| PRAC-161 | Chord trainer with live feedback                                | OT  | M6  | —                                     | —    | planned |
+| PRAC-162 | Relaxed practice mode and scored performance mode               | OT  | M6  | —                                     | —    | planned |
+| PRAC-163 | Mark a song or section as learned                               | OT  | M6  | —                                     | —    | planned |
+| PRAC-164 | Record yourself (audio, optional video) over the practice track | OT  | M6  | —                                     | —    | planned |
+| PRAC-165 | Practice paths and generated daily challenges, offline          | OT  | S   | —                                     | —    | planned |
+| PRAC-166 | Fretboard and ear-training mini-games                           | OT  | S   | —                                     | —    | planned |
+| PRAC-167 | Spectrum view with note guesses for the audio track             | OT  | M8  | —                                     | —    | planned |
 
 ## Views
 
@@ -310,6 +528,19 @@ The single source of truth for what OpenTabz does. One row per feature.
 | VIEW-012 | Section navigator                                         | OT  | M2  | —       | —    | planned |
 | VIEW-013 | Fullscreen / presentation mode                            | GP  | M2  | —       | —    | planned |
 | VIEW-014 | Shortcut cheat sheet                                      | OT  | M1  | —       | —    | planned |
+| VIEW-015 | Song overview: one cell per bar per track with sections and bar numbers; click to jump, drag to select | GP  | M2  | —       | —    | planned |
+| VIEW-016 | Active-track switcher (dropdown, next/previous-track keys, overview) | GP  | M1  | —       | —    | planned |
+| VIEW-017 | Fretboard note-name labels: off, on hover, always (with octave) | GP+ | M1  | —       | —    | planned |
+| VIEW-018 | Instrument views can show the whole current bar           | GP  | M1  | —       | —    | planned |
+| VIEW-019 | Keyboard view greys keys outside the instrument's range   | GP  | M2  | —       | —    | planned |
+| VIEW-020 | Drum view MIDI mode listing every kit sound, with a GM-only filter | GP  | M2  | —       | —    | planned |
+| VIEW-021 | Drum view labels: never, on hover or always, with MIDI numbers; large labels | GP  | M2  | —       | —    | planned |
+| VIEW-022 | Lyrics-only view with karaoke highlighting; click a word to seek | OT  | M2  | —       | —    | planned |
+| VIEW-023 | Keyboard view split by hand (left, right, both)           | OT  | M2  | —       | —    | planned |
+| VIEW-024 | Orchestral views: violin-family fingerboard, trumpet valves, trombone positions | OT  | S   | —       | —    | planned |
+| VIEW-025 | Note highway (game-style scrolling lanes)                 | OT  | S   | —       | —    | planned |
+| VIEW-026 | Bouncing-ball timing guide                                | OT  | M6  | —       | —    | planned |
+| VIEW-027 | Next-chord preview with countdown                         | OT  | M2  | —       | —    | planned |
 
 ## Editor
 
@@ -363,6 +594,90 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-063 | Native save as .otz                                              | OT  | M4  | —       | —    | planned |
 | EDIT-064 | Save as .gp (Guitar Pro 7/8) with round-trip tests               | GP  | M4  | —       | —    | planned |
 | EDIT-065 | Save as alphaTex                                                 | OT  | M4  | —       | —    | planned |
+| EDIT-066 | Track-creation wizard: family and instrument, name, colour, icon, notations, tuning and sound, each with a preview | GP  | M4  | —       | —    | planned |
+| EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | —    | planned |
+| EDIT-068 | Track icon                                                       | GP  | M4  | —       | —    | planned |
+| EDIT-069 | Split one staff into two (at a pitch, or everything to the upper or lower staff) | GP  | M4  | —       | —    | planned |
+| EDIT-070 | Merge two staves into one (both, upper only, lower only)         | GP  | M4  | —       | —    | planned |
+| EDIT-071 | Tuning preview: play the whole tuning or one string              | GP  | M4  | —       | —    | planned |
+| EDIT-072 | User tuning library: save, rename, delete                        | GP  | M4  | —       | —    | planned |
+| EDIT-073 | Custom tuning label shown in the score                           | GP  | M4  | —       | —    | planned |
+| EDIT-074 | Banjo drone (short fifth) string: fret numbering, fingering, string moves | GP  | M4  | —       | —    | planned |
+| EDIT-075 | Partial capo on chosen strings, combinable with a full capo      | GP  | M4  | —       | —    | planned |
+| EDIT-076 | Stringed or non-stringed track mode                              | GP  | M4  | —       | —    | planned |
+| EDIT-077 | Editing palette: grouped symbol buttons, parameter pop-ups, long-press variants | GP  | M4  | —       | —    | planned |
+| EDIT-078 | Score inspector: information, notation settings, mastering       | GP  | M4  | —       | —    | planned |
+| EDIT-079 | Track inspector: information, notation, tuning, transposition, sound, interpretation | GP  | M4  | —       | —    | planned |
+| EDIT-080 | Click-to-edit: editable elements highlight on hover and open their editor on click | GP  | M4  | —       | —    | planned |
+| EDIT-081 | Selection: drag across beats and bars                            | GP  | M1  | —       | —    | planned |
+| EDIT-082 | Selection handles to grow or shrink a selection                  | GP  | M1  | —       | —    | planned |
+| EDIT-083 | Select a whole track (select all, triple-click)                  | GP  | M1  | —       | —    | planned |
+| EDIT-084 | Keyboard selection by beat, by bar, to the start or end          | GP  | M1  | —       | —    | planned |
+| EDIT-085 | Multi-track bar selection in the overview                        | GP  | M4  | —       | —    | planned |
+| EDIT-086 | Select a whole section                                           | GP  | M1  | —       | —    | planned |
+| EDIT-087 | Edit cursor coloured by voice; inactive voices dimmed and locked | GP  | M4  | —       | —    | planned |
+| EDIT-088 | Multivoice mode: edit all four voices at once                    | GP  | M4  | —       | —    | planned |
+| EDIT-089 | Score-information editor: every header field, notice and instructions, multi-line values | GP  | M4  | —       | —    | planned |
+| EDIT-090 | Master track: song-wide tempo, sections, repeats, directions, key and master automations | GP  | M4  | —       | —    | planned |
+| EDIT-091 | Keyboard entry on standard notation with a chosen string (1–9) or automatic string (0) | GP  | M4  | —       | —    | planned |
+| EDIT-092 | Entry in any shown notation (tab, staff, slash, numbered) updates all of them | GP  | M4  | —       | —    | planned |
+| EDIT-093 | Insert and delete beats; delete a note; clear the selection      | GP  | M4  | —       | —    | planned |
+| EDIT-094 | Repeat the previous beat at the cursor                           | GP  | M4  | —       | —    | planned |
+| EDIT-095 | Cursor moves on when a bar is full, adding a bar at the end of the score | GP  | M4  | —       | —    | planned |
+| EDIT-096 | Notes sound as they are entered                                  | GP  | M4  | —       | —    | planned |
+| EDIT-097 | Note entry by clicking the fretboard, keyboard, drum or scale views | GP  | M4  | —       | —    | planned |
+| EDIT-098 | Slash (rhythm) entry; convert notes to slashes keeping their pitches | GP  | M4  | —       | —    | planned |
+| EDIT-099 | Beat-range copy, cut and paste across bar lines, all voices, between instruments | GP  | M4  | —       | —    | planned |
+| EDIT-100 | Multitrack copy and cut of whole bars                            | GP  | M4  | —       | —    | planned |
+| EDIT-101 | Special paste: repeat count, include the current bar, choose element types | GP  | M4  | —       | —    | planned |
+| EDIT-102 | Move, copy or swap voice contents                                | GP  | M4  | —       | —    | planned |
+| EDIT-103 | Live bar-completeness indicator naming the faulty voice          | GP  | M4  | —       | —    | planned |
+| EDIT-104 | Nested-tuplet entry, inner or outer first                        | GP  | M4  | —       | —    | planned |
+| EDIT-105 | Default beam grouping per time signature                         | GP  | M4  | —       | —    | planned |
+| EDIT-106 | Flip stem direction                                              | GP  | M4  | —       | —    | planned |
+| EDIT-107 | Clefs and clef changes, optionally keeping pitches               | GP  | M4  | —       | —    | planned |
+| EDIT-108 | One- and two-bar simile marks                                    | GP  | M4  | —       | —    | planned |
+| EDIT-109 | Force or prevent a system break at a bar                         | GP  | M4  | —       | —    | planned |
+| EDIT-110 | Accidentals: sharp, flat, natural, double, courtesy              | GP  | M4  | —       | —    | planned |
+| EDIT-111 | Bend editor: pitch curve with draggable points and presets       | GP  | M4  | —       | —    | planned |
+| EDIT-112 | Whammy-bar editor: pitch curve with presets in quarter-tone steps | GP  | M4  | —       | —    | planned |
+| EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |
+| EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | —    | planned |
+| EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | —    | planned |
+| EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | —    | planned |
+| EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | —    | planned |
+| EDIT-118 | Transpose scope: selection or whole score, one track or all      | GP  | M4  | —       | —    | planned |
+| EDIT-119 | MIDI capture settings: chord window, MIDI-guitar channel-to-string mapping, automatic fret choice | GP  | M4  | —       | —    | planned |
+| EDIT-120 | Finalize: document read-only until unlocked                      | GP  | M4  | —       | —    | planned |
+| EDIT-121 | Edit lock: a password is needed to edit                          | GP  | M4  | —       | —    | planned |
+| EDIT-122 | Open lock: password-encrypted documents                          | GP+ | M4  | —       | —    | planned |
+| EDIT-123 | Unsaved-changes guard: modified indicator, confirmation on close | GP  | M4  | —       | —    | planned |
+| EDIT-124 | Recovery of unsaved documents after a crash, reload or closed tab | GP  | M4  | —       | —    | planned |
+| EDIT-125 | Palm-mute assistant: chosen strings across a range               | GP  | M5  | —       | —    | planned |
+| EDIT-126 | Let-ring assistant: chosen strings across a range                | GP  | M5  | —       | —    | planned |
+| EDIT-127 | Bar arranger: re-bar music to fit time signatures, splitting and tying notes | GP  | M5  | —       | —    | planned |
+| EDIT-128 | Bars per system: default count, redistribution, per-system change | GP  | M5  | —       | —    | planned |
+| EDIT-129 | Design mode for single- and multi-track scores                   | GP  | M5  | —       | —    | planned |
+| EDIT-130 | Design mode: drag bar widths, changed bars marked                | GP  | M5  | —       | —    | planned |
+| EDIT-131 | Design mode: drag individual beats                               | GP  | M5  | —       | —    | planned |
+| EDIT-132 | Design mode: alignment guide while dragging                      | GP  | M5  | —       | —    | planned |
+| EDIT-133 | Design mode: reset spacing per system or for the whole score     | GP  | M5  | —       | —    | planned |
+| EDIT-134 | Chord builder: root and quality                                  | GP  | M5  | —       | —    | planned |
+| EDIT-135 | Chord builder: extensions (7, 9, 11, 13)                         | GP  | M5  | —       | —    | planned |
+| EDIT-136 | Chord builder: altered fifths, ninths, elevenths, thirteenths    | GP  | M5  | —       | —    | planned |
+| EDIT-137 | Chord builder: slash-chord bass note                             | GP  | M5  | —       | —    | planned |
+| EDIT-138 | Chord builder: inversions                                        | GP  | M5  | —       | —    | planned |
+| EDIT-139 | Chord builder: omitted tones                                     | GP  | M5  | —       | —    | planned |
+| EDIT-140 | Custom chord names kept exactly as typed                         | GP  | M5  | —       | —    | planned |
+| EDIT-141 | Automatic barre in chord diagrams                                | GP  | M5  | —       | —    | planned |
+| EDIT-142 | Chord preview playback                                           | GP  | M5  | —       | —    | planned |
+| EDIT-143 | Write a diagram's notes into an empty beat                       | GP  | M5  | —       | —    | planned |
+| EDIT-144 | Transpose chord diagrams and names with the notes                | GP  | M5  | —       | —    | planned |
+| EDIT-145 | Scale diagram: insert, resize, reset, delete                     | GP  | M5  | —       | —    | planned |
+| EDIT-146 | Scale-diagram geometry: 3–10 strings, 4–24 frets, start fret, orientation, fret markers | GP  | M5  | —       | —    | planned |
+| EDIT-147 | Scale-diagram dots: shape, colour, short text, text colour       | GP  | M5  | —       | —    | planned |
+| EDIT-148 | Fill a scale diagram from the selected notes                     | GP  | M5  | —       | —    | planned |
+| EDIT-149 | Named, coloured markers at sections, bars or beats               | OT  | M4  | —       | —    | planned |
 
 ## Composition and songwriting
 
@@ -399,6 +714,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | COMP-080 | Exercise generator: scales, arpeggios and chords across positions                                                                         | OT  | M8  | —       | —    | planned |
 | COMP-081 | Speed-building sequences                                                                                                                  | OT  | M8  | —       | —    | planned |
 | COMP-082 | Random riff generator in a key and style                                                                                                  | OT  | M8  | —       | —    | planned |
+| COMP-083 | Save the document as a personal template; rename and delete templates                                                                     | GP  | M5  | —       | —    | planned |
+| COMP-084 | Default template for new documents                                                                                                        | GP  | M5  | —       | —    | planned |
+| COMP-085 | Lint results drawn on the score while editing (red bars and notes)                                                                        | GP  | M5  | —       | —    | planned |
+| COMP-086 | Lint rules switchable one by one                                                                                                          | GP  | M5  | —       | —    | planned |
+| COMP-087 | Score lint: invalid tuplets                                                                                                               | GP  | M5  | —       | —    | planned |
+| COMP-088 | Score lint: unplayable hammer-ons and pull-offs                                                                                           | GP  | M5  | —       | —    | planned |
+| COMP-089 | Score lint: bars playback can never reach                                                                                                 | GP  | M5  | —       | —    | planned |
+| COMP-090 | Scale library: 1,000+ scales and modes, searchable by name and tag                                                                        | GP  | M5  | —       | —    | planned |
+| COMP-091 | Scale details: intervals, step pattern, playback                                                                                          | GP  | M5  | —       | —    | planned |
+| COMP-092 | Scale finder: keys and scales ranked by fit to the selected notes                                                                         | GP  | M5  | —       | —    | planned |
+| COMP-093 | Scale diagrams named automatically and placed freely                                                                                      | OT  | M5  | —       | —    | planned |
+| COMP-094 | Capo suggestion and easier shapes that keep the key                                                                                       | OT  | M5  | —       | —    | planned |
+| COMP-095 | Chord and lyric recognition from audio                                                                                                    | OT  | S   | —       | —    | planned |
+| COMP-096 | Key detection from audio                                                                                                                  | OT  | S   | —       | —    | planned |
+| COMP-097 | Section detection from audio                                                                                                              | OT  | S   | —       | —    | planned |
+| COMP-098 | Sheet-music scanning (OMR) from PDF or photo                                                                                              | OT  | S   | —       | —    | planned |
+| COMP-099 | Accompaniment that follows your live tempo and dynamics                                                                                   | OT  | S   | —       | —    | planned |
 
 ## Audio engine
 
@@ -422,6 +754,32 @@ The single source of truth for what OpenTabz does. One row per feature.
 | AUD-025 | Effects: convolution reverb with permissively licensed IRs                                       | GP  | M7  | —       | —    | planned |
 | AUD-026 | Effects: cabinet simulation                                                                      | GP  | M7  | —       | —    | planned |
 | AUD-027 | Effect presets per instrument family                                                             | GP  | M7  | —       | —    | planned |
+| AUD-028 | Per-track playing style (pick, fingers, picking, slap) shapes the synthesized articulation       | GP  | M7  | —       | —    | planned |
+| AUD-029 | Several sounds per track (e.g. clean and distorted), switched by automation                      | GP  | M7  | —       | —    | planned |
+| AUD-030 | Drum kits by style (rock, metal, jazz, world…) with previews                                     | GP  | M7  | —       | —    | planned |
+| AUD-031 | Drum stroke type: sticks or brushes                                                              | GP  | M7  | —       | —    | planned |
+| AUD-032 | Sound preset library (~1,000 instrument plus effect-chain presets) with a categorised browser    | GP  | M7  | —       | —    | planned |
+| AUD-033 | Signature-style tone presets (clean, overdrive, distortion, jazz…)                               | GP  | M7  | —       | —    | planned |
+| AUD-034 | Sound slots: rename, reorder, delete, copy, paste, save as preset                                | GP  | M7  | —       | —    | planned |
+| AUD-035 | Lock a track's sound over sound automations                                                      | GP  | M7  | —       | —    | planned |
+| AUD-036 | Audition presets live during playback                                                            | GP  | M7  | —       | —    | planned |
+| AUD-037 | Choose the instrument soundbank behind a preset                                                  | GP  | M7  | —       | —    | planned |
+| AUD-038 | Soundbank settings: mono or stereo, microphone position                                          | GP  | M7  | —       | —    | planned |
+| AUD-039 | Effect chain per sound: up to six slots with bypass, presets, copy, paste, reorder               | GP+ | M7  | —       | —    | planned |
+| AUD-040 | Pedalboard view: drag pedals from a browser, reorder, resize, duplicate; heard live              | GP  | M7  | —       | —    | planned |
+| AUD-041 | User sound presets: save, organise, import and export as files                                   | GP  | M7  | —       | —    | planned |
+| AUD-042 | Amp models: guitar combos                                                                        | GP  | M7  | —       | —    | planned |
+| AUD-043 | Amp models: guitar stacks                                                                        | GP  | M7  | —       | —    | planned |
+| AUD-044 | Amp models: small amp and rotary speaker                                                         | GP  | M7  | —       | —    | planned |
+| AUD-045 | Amp models: bass amps                                                                            | GP  | M7  | —       | —    | planned |
+| AUD-046 | Effects: fuzz                                                                                    | GP  | M7  | —       | —    | planned |
+| AUD-047 | Effects: flanger                                                                                 | GP  | M7  | —       | —    | planned |
+| AUD-048 | Effects: phaser                                                                                  | GP  | M7  | —       | —    | planned |
+| AUD-049 | Effects: vibe and tremolo                                                                        | GP  | M7  | —       | —    | planned |
+| AUD-050 | Effects: octaver and pitch shifter                                                               | GP  | M7  | —       | —    | planned |
+| AUD-051 | Effects: volume pedal                                                                            | GP  | M7  | —       | —    | planned |
+| AUD-052 | Effects: wah and auto-wah                                                                        | GP  | M7  | —       | —    | planned |
+| AUD-053 | Master effects chain: compressor/limiter, reverb, EQ with bypass and presets                     | GP  | M7  | —       | —    | planned |
 
 ## Export and print
 
@@ -435,7 +793,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-006 | MP3                                                                   | GP  | M7  | —       | —    | planned |
 | EXP-007 | OGG                                                                   | GP  | M7  | —       | —    | planned |
 | EXP-008 | FLAC                                                                  | GP  | M7  | —       | —    | planned |
-| EXP-009 | Per-track stems                                                       | OT  | M7  | —       | —    | planned |
+| EXP-009 | Per-track stems                                                       | GP  | M7  | —       | —    | planned |
 | EXP-010 | Guitar Pro 7/8 (.gp)                                                  | GP  | M4  | —       | —    | planned |
 | EXP-011 | OpenTabz project (.otz)                                               | OT  | M4  | —       | —    | planned |
 | EXP-012 | alphaTex                                                              | OT  | M4  | —       | —    | planned |
@@ -447,6 +805,22 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EXP-018 | Video: scrolling score with cursor and audio → MP4 / WebM (WebCodecs) | OT  | M7  | —       | —    | planned |
 | EXP-019 | GIF of a selected lick                                                | OT  | M7  | —       | —    | planned |
 | EXP-020 | Round-trip fidelity .gp → OpenTabz → .gp locked by tests              | OT  | M4  | —       | —    | planned |
+| EXP-021 | Guitar Pro 6 (.gpx)                                                   | GP  | M5  | —       | —    | planned |
+| EXP-022 | Guitar Pro 5 (.gp5)                                                   | GP  | M5  | —       | —    | planned |
+| EXP-023 | AIFF                                                                  | GP  | M7  | —       | —    | planned |
+| EXP-024 | MIDI options: muted tracks left out, one or two channels per track    | GP  | M2  | —       | —    | planned |
+| EXP-025 | MIDI round trip keeps decimal tempos and note-level audio settings    | GP  | M5  | —       | —    | planned |
+| EXP-026 | Page choice for PDF and image export: all pages, one page, a range, or the selection | GP  | M2  | —       | —    | planned |
+| EXP-027 | Image export options: resolution and transparent background           | GP  | M2  | —       | —    | planned |
+| EXP-028 | File-name templates with tokens (title, track name, number and count, date, time) and a preview | GP  | M2  | —       | —    | planned |
+| EXP-029 | Audio export of the selected bars only                                | GP  | M2  | —       | —    | planned |
+| EXP-030 | Metronome click and count-in in audio export                          | GP  | M2  | —       | —    | planned |
+| EXP-031 | Audio export applies the current practice speed and transpose         | GP  | M2  | —       | —    | planned |
+| EXP-032 | MP3 settings: quality and bitrate mode (CBR, VBR, ABR)                | GP  | M7  | —       | —    | planned |
+| EXP-033 | Loudness normalization for audio export                               | GP+ | M7  | —       | —    | planned |
+| EXP-034 | LilyPond                                                              | OT  | S   | —       | —    | planned |
+| EXP-035 | ABC notation                                                          | OT  | S   | —       | —    | planned |
+| EXP-036 | MEI                                                                   | OT  | S   | —       | —    | planned |
 
 ## Library, offline and platform
 
@@ -485,6 +859,23 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-042 | Scripts register exporters                                  | OT  | M8  | —       | —    | planned |
 | PLAT-043 | Scripts shareable as files                                  | OT  | M8  | —       | —    | planned |
 | PLAT-044 | Theme API                                                   | OT  | M8  | —       | —    | planned |
+| LIB-010  | Linked local folder re-scanned to keep the library in sync (follows links) | GP+ | M3  | —       | —    | planned |
+| LIB-011  | One home-page search over recents, library, templates and demo scores, with counts per group | GP  | M3  | —       | —    | planned |
+| LIB-012  | Hover or long-press preview: score thumbnail and short audio snippet | GP  | M3  | —       | —    | planned |
+| LIB-013  | Reveal the open document in the library or its linked folder | GP  | M3  | —       | —    | planned |
+| LIB-014  | Library filters by tuning, instruments, key, tempo, difficulty and tags | OT  | M3  | —       | —    | planned |
+| LIB-015  | Library backup and restore as one file                      | OT  | M3  | —       | —    | planned |
+| PLAT-045 | New-version notice with one-click reload                    | GP  | M3  | —       | —    | planned |
+| PLAT-046 | Opt-in preview channel with a way back to stable            | GP  | M3  | —       | —    | planned |
+| PLAT-047 | Supported platforms: current Chromium, Firefox and Safari on Windows, macOS, Linux, ChromeOS, Android and iOS | GP+ | M0  | —       | —    | planned |
+| PLAT-048 | Settings: override a file's own stylesheet, layout, zoom, notation or sound when opening | GP  | M3  | —       | —    | planned |
+| PLAT-049 | Settings: default author details for new documents          | GP  | M4  | —       | —    | planned |
+| PLAT-050 | Settings: editing preferences (diagrams in normal paste, duration-key direction) | GP  | M4  | —       | —    | planned |
+| PLAT-051 | Settings: audio input and output devices with test sound and input level meter | GP  | M6  | —       | —    | planned |
+| PLAT-052 | Selectable Guitar Pro keymap preset covering the full default map | GP  | M4  | —       | —    | planned |
+| PLAT-053 | Fretlight LED-guitar support (WebHID / Web Bluetooth)       | GP  | M8  | —       | —    | planned |
+| PLAT-054 | Fretlight modes: notes at the cursor, current chord, chosen scale; left-handed; fret range | GP  | M8  | —       | —    | planned |
+| PLAT-055 | Embeddable read-only player for other sites                 | OT  | M8  | —       | —    | planned |
 
 ## Workspace and UX
 
@@ -502,6 +893,28 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | —        | —    | planned |
 | UX-021 | Desktop and mobile first-class; no feature removed on mobile                                                                | OT  | M3  | —        | —    | planned |
 | UX-022 | All user-facing strings in one module                                                                                       | OT  | M0  | —        | —    | planned |
+| UX-023 | Localizable UI with language switching without a reload                                                                     | GP+ | M3  | —        | —    | planned |
+| UX-024 | Translations for at least the 13 languages Guitar Pro ships                                                                 | GP  | M8  | —        | —    | planned |
+| UX-025 | Help links: user guide, issue tracker, community                                                                            | GP  | M8  | —        | —    | planned |
+| UX-026 | What's-new area on the home page                                                                                            | GP  | M3  | —        | —    | planned |
+| UX-027 | Choose which home-page sections are shown                                                                                   | GP  | M3  | —        | —    | planned |
+| UX-028 | Optionally reopen the previous session's documents                                                                          | GP  | M3  | —        | —    | planned |
+| UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | —    | planned |
+| UX-030 | Context menus (right-click or long-press) on tracks, bars, symbols, document tabs and the waveform                          | GP  | M3  | —        | —    | planned |
+| UX-031 | Shortcut hints in tooltips, menus and the command palette                                                                   | GP  | M1  | —        | —    | planned |
+| UX-032 | Command palette lists every command; unavailable ones disabled with the reason                                              | GP  | M3  | —        | —    | planned |
+| UX-033 | Command palette search by prefix, abbreviation, alias and localized name                                                    | GP  | M3  | —        | —    | planned |
+| UX-034 | Command palette quick toggles for effects (run again to remove)                                                             | GP  | M4  | —        | —    | planned |
+| UX-035 | Command palette commands with arguments (e.g. tempo 120, bend 1.5, add 4 bars)                                              | GP  | M4  | —        | —    | planned |
+| UX-036 | Command palette argument completion (Tab cycles options)                                                                    | GP  | M4  | —        | —    | planned |
+| UX-037 | Command palette expression text: type a chord, dynamic, key, clef, ottava or direction to insert it                         | GP  | M5  | —        | —    | planned |
+| UX-038 | Command palette jump prefixes for sections and bar numbers                                                                  | GP  | M3  | —        | —    | planned |
+| UX-039 | Command palette shorthand for tuplets (n:m) and time signatures (4/4)                                                       | GP  | M4  | —        | —    | planned |
+| UX-040 | Command palette pattern commands fill a selection (strokes, brush, arpeggio, golpe, fingering, picking, slap/pop, wah)      | GP  | M5  | —        | —    | planned |
+| UX-041 | Command palette command that removes chosen elements or effects from the selection                                          | GP  | M4  | —        | —    | planned |
+| UX-042 | Command palette selection and structure commands (select bars or section, insert or repeat bars, line breaks)               | GP  | M4  | —        | —    | planned |
+| UX-043 | Command palette view and playback commands with values (zoom, speed, transpose, focus, show scale…)                         | GP  | M3  | —        | —    | planned |
+| UX-044 | Command palette stays open for a run of commands (flow mode)                                                                | GP  | M4  | —        | —    | planned |
 
 ## Performance budgets (hard gates)
 
@@ -516,6 +929,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PERF-007 | Pitch-detection feedback < 50 ms                       | OT  | M6  | —         | —    | planned |
 | PERF-008 | Initial JS < 300 KB gzip before the engine chunk       | OT  | M0  | —         | —    | planned |
 | PERF-009 | Zero console errors or warnings in production          | OT  | M0  | —         | —    | planned |
+| PERF-010 | Budgets also met on a low-end reference laptop and a mid-range phone | GP+ | M3  | —         | —    | planned |
 
 ## Project and compliance
 
