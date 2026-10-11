@@ -31,3 +31,6 @@ lighthouse-report/
 # local agent worktrees and tool settings
 .claude/worktrees/
 .claude/settings.local.json
+
+# generated fixtures (pnpm fixtures)
+fixtures/generated/
