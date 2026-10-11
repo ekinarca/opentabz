@@ -43,9 +43,15 @@ export async function renderOffline(
   tex: string | null,
   seconds: number,
   options: RenderOptions = {},
-): Promise<{ left: Float32Array; right: Float32Array; events: SynthEvent[] }> {
+): Promise<{ left: Float32Array; right: Float32Array; events: SynthEvent[]; times: number[] }> {
   const events: SynthEvent[] = [];
-  const host = new SynthHost(event => events.push(event));
+  /** Seconds of audio played when each event was sent. */
+  const times: number[] = [];
+  let now = 0;
+  const host = new SynthHost(event => {
+    events.push(event);
+    times.push(now);
+  });
   const buffers = createRingBuffers(1 << 15);
   host.init(SAMPLE_RATE, new RingWriter(buffers));
   host.handle({ type: 'loadSoundFont', bytes: soundFont() });
@@ -74,6 +80,7 @@ export async function renderOffline(
   const right = new Float32Array(total);
   let sincePing = 0;
   for (let offset = 0; offset < total; offset += QUANTUM) {
+    now = offset / SAMPLE_RATE;
     while (schedule.length > 0 && (schedule[0]?.at ?? Infinity) * SAMPLE_RATE <= offset) {
       const next = schedule.shift();
       if (next !== undefined) host.handle(next.command);
@@ -88,7 +95,7 @@ export async function renderOffline(
   // A voice without samples once rendered NaN (alphaTab patch 0007): every sample must be a number.
   const broken = [left, right].map(channel => channel.findIndex(value => !Number.isFinite(value)));
   expect(broken).toEqual([-1, -1]);
-  return { left, right, events };
+  return { left, right, events, times };
 }
 
 export function rms(samples: Float32Array): number {

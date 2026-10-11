@@ -4,6 +4,7 @@
  */
 import type { MetronomeSettings } from './metronome.ts';
 import type { RingBuffers } from './ring.ts';
+import type { TrainerSettings } from './trainer.ts';
 
 import type { TickRange } from '@opentabz/core/shared';
 
@@ -36,6 +37,10 @@ export type SynthCommand =
       readonly settings: MetronomeSettings;
     }
   | ({ readonly type: 'setCountIn' } & CountInSettings)
+  /** The speed trainer; enabling it starts its run at `from`, as does stopping playback. */
+  | ({ readonly type: 'setTrainer' } & TrainerSettings)
+  /** Passes of a loop to play before playback stops; null repeats endlessly. */
+  | { readonly type: 'setLoopPasses'; readonly passes: number | null }
   /**
    * The metronome without a score: a song of clicks in one meter, played in a loop. Sent again
    * with the same id and meter it changes the tempo without interrupting the clicks.
@@ -102,4 +107,6 @@ export type SynthEvent =
    */
   | { readonly type: 'countIn'; readonly beat: number; readonly beats: number; readonly numerator: number }
   | { readonly type: 'finished' }
+  /** The speed trainer moved the speed on, and the new speed is now heard. */
+  | { readonly type: 'speed'; readonly value: number }
   | { readonly type: 'error'; readonly context: string; readonly message: string };

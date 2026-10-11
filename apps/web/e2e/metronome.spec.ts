@@ -16,11 +16,11 @@ function position(page: Page) {
 async function openSettings(page: Page, isMobile: boolean) {
   if (isMobile) {
     await page.getByRole('button', { name: 'More playback controls' }).click();
-    await page.getByRole('menuitem', { name: 'Metronome and count-in settings…' }).click();
+    await page.getByRole('menuitem', { name: 'Practice settings…' }).click();
   } else {
-    await page.getByRole('button', { name: 'Metronome and count-in settings…' }).click();
+    await page.getByRole('button', { name: 'Practice settings…' }).click();
   }
-  const dialog = page.getByRole('dialog', { name: 'Metronome and count-in' });
+  const dialog = page.getByRole('dialog', { name: 'Practice settings' });
   await expect(dialog).toBeVisible();
   return dialog;
 }
@@ -88,6 +88,67 @@ test.describe('metronome and count-in', () => {
     await expect(position(page)).toHaveAccessibleName(/Bar 1, beat [2-4],|Bar [2-9],/, { timeout: 10_000 });
     await expect(page.getByRole('img', { name: /^Beat [1-4] of 4$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  });
+});
+
+test.describe('loops and the speed trainer', () => {
+  test.skip(({ isMobile }) => isMobile, 'Selects a bar with the keyboard; phones select by touch.');
+
+  const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
+
+  async function loopFirstBar(page: Page): Promise<void> {
+    await openShuffle(page);
+    await page.locator('.ot-scroll:not([hidden])').focus();
+    await page.keyboard.press(`${MOD}+Shift+ArrowRight`);
+    await expect(page.getByRole('toolbar', { name: 'Playback' })).toContainText('Bar 1 selected');
+  }
+
+  test('the speed trainer raises the speed after each pass of the loop', async ({ page }) => {
+    await loopFirstBar(page);
+    const dialog = await openSettings(page, false);
+    const trainer = dialog.getByRole('switch', { name: 'Speed trainer' });
+    await dialog.getByLabel('Start at').fill('200');
+    await dialog.getByLabel('Up to').fill('300');
+    await dialog.getByLabel('Step').fill('50');
+    await dialog.getByLabel('Passes at each speed').fill('1');
+    await trainer.click();
+    await expect(dialog.getByRole('status')).toHaveText('Now 200 %: speed 1 of 3.');
+    await page.keyboard.press('Escape');
+    // The trainer turned the loop on.
+    await expect(page.getByRole('button', { name: 'Loop the selection' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const speed = page.getByRole('button', { name: /^Playback speed: / });
+    await expect(speed).toHaveText('200 %');
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    // A bar at 112 BPM lasts about 1.1 s at 200 %: the speed moves on after each pass.
+    await expect(speed).toHaveText('250 %', { timeout: 10_000 });
+    await expect(speed).toHaveText('300 %', { timeout: 10_000 });
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    // Choosing a speed by hand ends the trainer's run.
+    await speed.click();
+    await page.getByRole('button', { name: '100 %', exact: true }).click();
+    await page.keyboard.press('Escape');
+    const again = await openSettings(page, false);
+    await expect(again.getByRole('switch', { name: 'Speed trainer' })).not.toBeChecked();
+  });
+
+  test('a loop can repeat a set number of times, then stop', async ({ page }) => {
+    await loopFirstBar(page);
+    const dialog = await openSettings(page, false);
+    await dialog.getByLabel('Repeat a loop').selectOption({ label: '2 times, then stop' });
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Loop the selection' }).click();
+    const speed = page.getByRole('button', { name: /^Playback speed: / });
+    await speed.click();
+    await page.getByRole('button', { name: '300 %', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    // Two passes of 0.7 s, then playback stops by itself.
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(position(page)).toHaveAccessibleName(/Bar 1, beat 1,/);
   });
 });
 

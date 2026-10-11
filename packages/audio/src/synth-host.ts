@@ -21,6 +21,7 @@ import {
 import type { CountInSettings, SynthCommand, SynthEvent, SynthPosition, TickRange } from './protocol.ts';
 import { type RingWriter } from './ring.ts';
 import { RingSynthOutput } from './synth-output.ts';
+import { DEFAULT_TRAINER, nextTrainerSpeed, type TrainerSettings } from './trainer.ts';
 
 /** Audio kept ready ahead of the playhead; absorbs scheduling hiccups in the worker. */
 export const SYNTH_BUFFER_MS = 250;
@@ -57,6 +58,15 @@ export class SynthHost {
   private countInNumerator = 4;
   /** Set while the loaded song is the metronome's own song of clicks. */
   private clickTrack: { playbackId: string; numerator: number; denominator: number } | null = null;
+  private trainer: TrainerSettings = DEFAULT_TRAINER;
+  /** Passes generated at the trainer's current speed. */
+  private trainerPasses = 0;
+  /** Passes of a loop to play before stopping (null: endlessly). */
+  private loopPasses: number | null = null;
+  /** The pass of the loop being generated, from 1. */
+  private pass = 1;
+  /** The last of a counted number of passes is under way: looping is off until playback stops. */
+  private lastPass = false;
 
   public constructor(emit: (event: SynthEvent) => void) {
     this.emit = emit;
@@ -80,6 +90,7 @@ export class SynthHost {
         break;
       case 'stop':
         synth.stop();
+        this.restartPasses();
         this.moved(command.id);
         break;
       case 'seek':
@@ -100,6 +111,20 @@ export class SynthHost {
       case 'loadClickTrack':
         this.loadClickTrack(synth, command);
         break;
+      case 'setTrainer':
+        this.trainer = {
+          enabled: command.enabled,
+          from: command.from,
+          to: command.to,
+          step: command.step,
+          passes: command.passes,
+        };
+        this.restartPasses();
+        break;
+      case 'setLoopPasses':
+        this.loopPasses = command.passes;
+        this.restartPasses();
+        break;
       case 'setCountIn':
         this.countIn = {
           enabled: command.enabled,
@@ -113,6 +138,7 @@ export class SynthHost {
         const previous = this.loop.range;
         this.loop = { enabled: command.enabled, range: command.range };
         this.applyLoop(previous);
+        this.restartPasses();
         this.moved(command.id);
         break;
       }
@@ -160,6 +186,8 @@ export class SynthHost {
       });
     });
     synth.stateChanged.on(args => {
+      // After the last of a counted number of passes, the next play loops again.
+      if (args.stopped && this.lastPass) this.restartPasses();
       this.emit({
         type: 'state',
         playing: args.state === alphaTab.synth.PlayerState.Playing,
@@ -179,6 +207,12 @@ export class SynthHost {
     });
     synth.finished.on(() => {
       this.emit({ type: 'finished' });
+    });
+    synth.passGenerated.on(() => {
+      this.nextPass(synth);
+    });
+    synth.heardSpeedChanged.on(speed => {
+      if (this.trainer.enabled) this.emit({ type: 'speed', value: speed });
     });
     synth.countInProgress.on(({ beat, beats }) => {
       this.emit({ type: 'countIn', beat, beats, numerator: this.countInNumerator });
@@ -297,6 +331,41 @@ export class SynthHost {
       if (playing) this.play(synth);
     } catch (error) {
       this.emit({ type: 'error', context: 'midi', message: messageOf(error) });
+    }
+  }
+
+  /**
+   * A new pass of the loop is being generated: the trainer may move the speed on (for the whole
+   * pass), and the last of a counted number of passes ends playback.
+   */
+  private nextPass(synth: alphaTab.synth.AlphaSynth): void {
+    // The metronome on its own just keeps clicking.
+    if (this.clickTrack !== null) return;
+    this.pass += 1;
+    if (this.loopPasses !== null && this.pass >= this.loopPasses) {
+      synth.isLooping = false;
+      this.lastPass = true;
+    }
+    if (!this.trainer.enabled) return;
+    this.trainerPasses += 1;
+    if (this.trainerPasses < Math.max(1, this.trainer.passes)) return;
+    this.trainerPasses = 0;
+    const next = nextTrainerSpeed(synth.playbackSpeed, this.trainer);
+    if (next !== synth.playbackSpeed) synth.playbackSpeed = next;
+  }
+
+  /** Counting passes starts over (and the trainer's run, at its first speed). */
+  private restartPasses(): void {
+    const synth = this.synth;
+    if (synth === null) return;
+    this.pass = 1;
+    this.trainerPasses = 0;
+    if (this.lastPass) {
+      this.lastPass = false;
+      synth.isLooping = this.loop.enabled || this.clickTrack !== null;
+    }
+    if (this.trainer.enabled && this.clickTrack === null && synth.playbackSpeed !== this.trainer.from) {
+      synth.playbackSpeed = this.trainer.from;
     }
   }
 

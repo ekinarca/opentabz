@@ -11,6 +11,7 @@ import {
   fundamental,
   onsets,
   peak,
+  power,
   renderOffline,
   rms,
   window,
@@ -287,5 +288,67 @@ describe('the metronome on its own (click track)', () => {
     expect(peak(left)).toBeLessThan(1e-4);
     const ticks = events.flatMap(event => (event.type === 'position' ? [event.tick] : []));
     expect(ticks.at(-1) ?? 0).toBeGreaterThan(2 * 960);
+  });
+});
+
+describe('speed changes, the speed trainer and counted loops', () => {
+  function trainer(from: number, to: number, step: number, passes: number): Command {
+    return { type: 'setTrainer', enabled: true, from, to, step, passes };
+  }
+
+  it('changes speed while playing without a seek, a skip or a repeat', async () => {
+    const { left, events } = await renderOffline(marimba('r.1 | r.1 | r.1'), 5.5, {
+      before: [metronome(true)],
+      schedule: [{ at: 1.1, command: { type: 'setSpeed', value: 0.5 } }],
+    });
+    const times = clickTimes(left);
+    const gaps = times.slice(1).map((time, index) => time - (times[index] ?? 0));
+    expect(Math.abs((gaps[0] ?? 0) - 0.5)).toBeLessThan(TOLERANCE);
+    expect(Math.abs((gaps.at(-1) ?? 0) - 1)).toBeLessThan(TOLERANCE);
+    // The change lands between two clicks: one gap in between, none shorter or longer.
+    for (const gap of gaps) {
+      expect(gap).toBeGreaterThan(0.5 - TOLERANCE);
+      expect(gap).toBeLessThan(1 + TOLERANCE);
+    }
+    // alphaTab used to seek on every speed change (alphaTab patch 0010).
+    const started = events.findIndex(event => event.type === 'state' && event.playing);
+    const positions = events.slice(started).flatMap(event => (event.type === 'position' ? [event] : []));
+    expect(positions.some(position => position.isSeek)).toBe(false);
+    positions.slice(1).forEach((position, index) => {
+      expect(position.tick).toBeGreaterThanOrEqual(positions[index]?.tick ?? 0);
+    });
+  });
+
+  it('the trainer moves the speed on every N passes, from the first sample of a pass', async () => {
+    // One bar of 4/4 at 120 BPM loops: two passes at 50 %, two at 60 %, then 70 % to the end.
+    const { left, events, times } = await renderOffline(marimba('C5.4 r.4 r.2 | r.1'), 18.5, {
+      before: [loop(0, 1), trainer(0.5, 0.7, 0.1, 2)],
+    });
+    const starts = onsets(left, 0.002);
+    const expected = [0, 4, 8, 8 + 10 / 3, 8 + 20 / 3, 8 + 20 / 3 + 20 / 7];
+    expected.forEach((time, index) => {
+      expect(Math.abs((starts[index] ?? Infinity) - time)).toBeLessThan(TOLERANCE);
+    });
+    // The UI hears about each new speed when it is heard, not before.
+    const speeds = events.flatMap((event, index) =>
+      event.type === 'speed' ? [[event.value, times[index] ?? 0] as const] : [],
+    );
+    expect(speeds.map(([speed]) => speed)).toEqual([0.5, 0.6, 0.7]);
+    const heard = (speed: number) => speeds.find(([value]) => value === speed)?.[1] ?? Infinity;
+    expect(heard(0.6)).toBeGreaterThanOrEqual(8 - 0.03);
+    expect(heard(0.6)).toBeLessThan(8 + 0.05);
+    expect(heard(0.7)).toBeGreaterThanOrEqual(8 + 20 / 3 - 0.03);
+  });
+
+  it('a counted loop plays its passes, stops, and loops again on the next play', async () => {
+    const { left, events } = await renderOffline(marimba('C5.4 r.4 r.2 | E5.1'), 13, {
+      before: [loop(0, 1), { type: 'setLoopPasses', passes: 3 }],
+      schedule: [{ at: 7, command: { type: 'play' } }],
+    });
+    expectOnsets(onsets(left, 0.002), [0, 2, 4, 7, 9, 11]);
+    // Nothing of the second bar: playback stopped after the third pass.
+    expect(power(window(left, 6, 6.9), 659.26)).toBeLessThan(1e-9);
+    const states = events.flatMap(event => (event.type === 'state' ? [event.playing] : []));
+    expect(states.slice(-3)).toEqual([true, false, true]);
   });
 });

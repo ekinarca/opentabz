@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a12109416449 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..5cb70745e98fcd20b330d248373f2619adff1161 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -3619,7 +3619,8 @@ class SynthConstants {
@@ -308,7 +308,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39787,6 +39921,36 @@ class AlphaSynthBase {
+@@ -39787,6 +39921,50 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -319,6 +319,15 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
 +	_playedSamples = 0;
 +	_playingCountIn = false;
 +	_countInPlayedMillis = 0;
++	// OpenTabz patch 0010: speed changes while playing apply from the sample being generated; the
++	// audio before it plays out at the speed it was made with.
++	_heardSpeed = 1;
++	_speedChanges = [];
++	_generationPoint = -1;
++	/** OpenTabz patch 0010: fires while the audio of a new loop pass is generated, before its first sample; a speed set from a handler applies to the whole pass. */
++	passGenerated = new EventEmitter();
++	/** OpenTabz patch 0010: fires when audio made at a new playback speed starts to be heard. */
++	heardSpeedChanged = new EventEmitterOfT();
 +	/** Play the count-in again before every pass of a loop. */
 +	countInEveryLoop = false;
 +	/** Fires while a count-in plays: the click being heard (0-based) and the number of clicks; -1 when it ends. */
@@ -341,11 +350,40 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
 +		this._playedSamples = 0;
 +		this._playingCountIn = this.sequencer.isPlayingCountIn;
 +		this._countInPlayedMillis = 0;
++		this._speedChanges = [];
++		if (this._heardSpeed !== this.sequencer.playbackSpeed) {
++			this._heardSpeed = this.sequencer.playbackSpeed;
++			this.heardSpeedChanged.trigger(this._heardSpeed);
++		}
 +	}
  	get output() {
  		return this._output;
  	}
-@@ -39866,6 +40030,7 @@ class AlphaSynthBase {
+@@ -39841,8 +40019,23 @@ class AlphaSynthBase {
+ 	}
+ 	updatePlaybackSpeed(value) {
+ 		const oldSpeed = this.sequencer.playbackSpeed;
++		if (this.state === PlayerState.Playing && this._isMidiLoaded && !this.sequencer.isPlayingOneTimeMidi) {
++			// OpenTabz patch 0010: no seek; the speed changes from the sample being generated on.
++			if (value === oldSpeed) return;
++			this.sequencer.playbackSpeed = value;
++			this._timePosition = this._timePosition * (oldSpeed / value);
++			this._countInPlayedMillis = this._countInPlayedMillis * (oldSpeed / value);
++			const at = this._generationPoint >= 0 ? this._generationPoint : this._generatedSamples;
++			this._speedChanges.push({ at, speed: value });
++			return;
++		}
+ 		this.sequencer.playbackSpeed = value;
+ 		this.timePosition = this.timePosition * (oldSpeed / value);
++		this._speedChanges = [];
++		if (this._heardSpeed !== value) {
++			this._heardSpeed = value;
++			this.heardSpeedChanged.trigger(value);
++		}
+ 	}
+ 	get loadedMidiInfo() {
+ 		return this._loadedMidiInfo;
+@@ -39866,6 +40059,7 @@ class AlphaSynthBase {
  		if (this.sequencer.isPlayingMain) {
  			this._notPlayedSamples = 0;
  			this.output.resetSamples();
@@ -353,14 +391,19 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40102,15 @@ class AlphaSynthBase {
+@@ -39937,10 +40131,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
 -				if (this.sequencer.isFinished) break;
 +				if (this.sequencer.isFinished) {
 +					// OpenTabz patch 0006: go on with the song (or the loop start) in the same buffer.
-+					if (this._continueSeamlessly(this._generatedSamples + bufferPos)) continue;
++					this._generationPoint = this._generatedSamples + bufferPos;
++					try {
++						if (this._continueSeamlessly(this._generationPoint)) continue;
++					} finally {
++						this._generationPoint = -1;
++					}
 +					break;
 +				}
  			}
@@ -370,7 +413,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40118,79 @@ class AlphaSynthBase {
+@@ -39948,15 +40152,82 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
@@ -379,13 +422,16 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
 +		if (this.sequencer.isPlayingCountIn) {
 +			this.sequencer.resetCountIn();
 +			this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this.metronomeVolume);
-+			const time = this.sequencer.currentTime;
++			// Segment times are song times (without speed): the speed may change before they are heard.
++			const songTime = this.sequencer.mainCurrentTime * this.sequencer.playbackSpeed;
 +			this.sequencer.advanceCurrent(overshoot);
-+			this._segments.push({ at, countIn: false, time, wrapped: false });
++			this._segments.push({ at, countIn: false, songTime, wrapped: false });
 +			return true;
 +		}
 +		if (this.sequencer.isPlayingMain && this.isLooping) {
 +			const startTick = this.playbackRange ? this.playbackRange.startTick : 0;
++			// OpenTabz patch 0010: a speed set for the new pass applies from its first sample.
++			this.passGenerated.trigger();
 +			const startTime = this.sequencer.mainTickPositionToTimePosition(startTick);
 +			this.sequencer.mainSeek(startTime);
 +			const countIn = this.countInEveryLoop && this._countInVolume > 0;
@@ -394,7 +440,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
 +				this.synthesizer.setupMetronomeChannel(this.sequencer.metronomeChannel, this._countInVolume);
 +			}
 +			this.sequencer.advanceCurrent(overshoot);
-+			this._segments.push({ at, countIn, time: startTime, wrapped: true });
++			this._segments.push({ at, countIn, songTime: startTime * this.sequencer.playbackSpeed, wrapped: true });
 +			return true;
 +		}
 +		return false;
@@ -435,7 +481,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  			Logger.debug("AlphaSynth", "Starting countin");
 +			// Count in from where the listener is, not from where generation got to.
 +			const pending = this._segments.find((segment) => !segment.countIn);
-+			const resume = this._playingCountIn ? pending ? pending.time : this.sequencer.mainCurrentTime : this._timePosition;
++			const resume = this._playingCountIn ? pending ? pending.songTime / this.sequencer.playbackSpeed : this.sequencer.mainCurrentTime : this._timePosition;
 +			this.sequencer.resetCountIn();
 +			this.sequencer.mainSeek(resume);
 +			this._notPlayedSamples = 0;
@@ -450,7 +496,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  		}
  		this.output.play();
  		return true;
-@@ -39992,6 +40226,9 @@ class AlphaSynthBase {
+@@ -39992,6 +40263,9 @@ class AlphaSynthBase {
  		this._notPlayedSamples = 0;
  		this.sequencer.stop();
  		this.synthesizer.noteOffAll(true);
@@ -460,7 +506,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40240,7 @@ class AlphaSynthBase {
+@@ -40003,6 +40277,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -468,7 +514,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +40320,53 @@ class AlphaSynthBase {
+@@ -40082,16 +40357,65 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
@@ -502,31 +548,43 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
 +		this._notPlayedSamples -= remaining;
 +		while (remaining > 0) {
 +			const next = this._segments.length > 0 ? this._segments[0] : null;
-+			const chunk = next === null ? remaining : Math.min(remaining, Math.max(0, next.at - this._playedSamples));
++			const change = this._speedChanges.length > 0 ? this._speedChanges[0] : null;
++			let chunk = remaining;
++			if (next !== null) chunk = Math.min(chunk, Math.max(0, next.at - this._playedSamples));
++			if (change !== null) chunk = Math.min(chunk, Math.max(0, change.at - this._playedSamples));
 +			if (chunk > 0) {
 +				this._playedSamples += chunk;
 +				remaining -= chunk;
-+				const millis = chunk / SynthConstants.AudioChannels / this.synthesizer.outSampleRate * 1e3;
++				// OpenTabz patch 0010: audio made at another speed than the current one moves the song on at its own rate.
++				const millis = chunk / SynthConstants.AudioChannels / this.synthesizer.outSampleRate * 1e3 * (this._heardSpeed / this.sequencer.playbackSpeed);
 +				if (this._playingCountIn) this._reportCountIn(millis);
 +				else this._reportPlayed(this._timePosition + millis, false);
++			}
++			if (change !== null && this._playedSamples >= change.at) {
++				this._speedChanges.shift();
++				if (this._heardSpeed !== change.speed) {
++					this._heardSpeed = change.speed;
++					this.heardSpeedChanged.trigger(change.speed);
++				}
 +			}
 +			if (next !== null && this._playedSamples >= next.at) {
 +				this._segments.shift();
 +				if (this._playingCountIn && !next.countIn) this.countInProgress.trigger({ beat: -1, beats: 0 });
 +				this._playingCountIn = next.countIn;
 +				if (next.wrapped) this.finished.trigger();
++				const time = next.songTime / this.sequencer.playbackSpeed;
 +				if (next.countIn) {
 +					this._countInPlayedMillis = 0;
-+					this._timePosition = next.time;
++					this._timePosition = time;
 +					this.countInProgress.trigger({ beat: 0, beats: this.sequencer.countInClicks });
-+				} else this._reportPlayed(next.time, false);
++				} else this._reportPlayed(time, false);
 +			}
 +		}
 +		if (this._segments.length === 0) this.checkForFinish();
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +40703,7 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +40752,7 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
@@ -534,7 +592,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -65583,7 +65859,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +65908,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -546,15 +604,22 @@ index b6203da6066c95efcf66298fe48a690f144597a5..ecf7a5f76059ec71a9c4da5b1f04a121
  //#endregion
  //#region src/exporter/ScoreExporter.ts
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..ffdf6dd94befd042de3027ea90d65b3a2fb2bad1 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..9663e6816d82d8312cabbf7b81df4d9a059a775d 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
-@@ -128,6 +128,19 @@ declare class AlphaSynthBase implements IAlphaSynth {
+@@ -128,6 +128,26 @@ declare class AlphaSynthBase implements IAlphaSynth {
      protected updateMasterVolume(value: number): void;
      get metronomeVolume(): number;
      set metronomeVolume(value: number);
 +    /** OpenTabz patch 0006: play the count-in again before every pass of a loop. */
 +    countInEveryLoop: boolean;
++    /**
++     * OpenTabz patch 0010: fires while the audio of a new loop pass is generated, before its first
++     * sample; a playback speed set from a handler applies to the whole pass.
++     */
++    readonly passGenerated: IEventEmitter;
++    /** OpenTabz patch 0010: fires when audio made at a new playback speed starts to be heard. */
++    readonly heardSpeedChanged: IEventEmitterOfT<number>;
 +    /** OpenTabz patch 0006: the count-in click being heard (0-based) and the number of clicks; beat -1 when it ends. */
 +    readonly countInProgress: IEventEmitterOfT<{
 +        beat: number;
@@ -569,7 +634,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..ffdf6dd94befd042de3027ea90d65b3a
      get countInVolume(): number;
      set countInVolume(value: number);
      get midiEventsPlayedFilter(): MidiEventType[];
-@@ -167,6 +180,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
+@@ -167,6 +187,13 @@ declare class AlphaSynthBase implements IAlphaSynth {
      setChannelMute(channel: number, mute: boolean): void;
      resetChannelStates(): void;
      setChannelSolo(channel: number, solo: boolean): void;

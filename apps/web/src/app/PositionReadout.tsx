@@ -1,6 +1,7 @@
 import { Button, Popover, PopoverContent, PopoverTrigger, Tooltip } from '@opentabz/ui';
 import { useId, useRef, useState } from 'react';
 import {
+  barNumberRange,
   beatInBar,
   findBarOccurrence,
   occurrence,
@@ -37,11 +38,17 @@ export function PositionReadout({
   const timeline = usePlayer(state => state.timeline);
   const selection = usePlayer(state => state.selection);
   const seek = usePlayer(state => state.seek);
+  const setSelection = usePlayer(state => state.setSelection);
+  const setLoop = usePlayer(state => state.setLoop);
   const open = useUi(state => state.panel === 'goto');
   const setPanelOpen = useUi(state => state.setPanelOpen);
   const [barText, setBarText] = useState('');
+  const [loopFrom, setLoopFrom] = useState('');
+  const [loopTo, setLoopTo] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
+  const loopFromId = useId();
+  const loopToId = useId();
 
   const bar = timeline === null ? null : occurrence(timeline, findBarOccurrence(timeline, tick));
   const masterBar = bar === null ? undefined : doc.summary.masterBars[bar.masterBarIndex];
@@ -79,7 +86,12 @@ export function PositionReadout({
       open={open}
       onOpenChange={next => {
         setPanelOpen('goto', next);
-        if (next) setBarText(bar === null ? '' : String(bar.masterBarIndex + 1));
+        if (next) {
+          const current = bar === null ? '' : String(bar.masterBarIndex + 1);
+          setBarText(current);
+          setLoopFrom(selected === null ? current : String(selected.first + 1));
+          setLoopTo(selected === null ? current : String(selected.last + 1));
+        }
       }}
     >
       <Tooltip label={strings.transport.goTo} shortcut={shortcutHint('go-to')}>
@@ -155,6 +167,58 @@ export function PositionReadout({
           <Button type="submit" variant="primary">
             {strings.transport.goToSubmit}
           </Button>
+        </form>
+        <form
+          className="mt-3 flex items-end gap-2"
+          aria-label={strings.transport.loopBars}
+          onSubmit={event => {
+            event.preventDefault();
+            const from = Number.parseInt(loopFrom, 10);
+            const to = Number.parseInt(loopTo, 10);
+            const valid = (number: number) => Number.isInteger(number) && number >= 1 && number <= barCount;
+            if (timeline === null || !valid(from) || !valid(to)) return;
+            const range = barNumberRange(timeline, from - 1, to - 1);
+            if (range === null) return;
+            setSelection(range);
+            setLoop(true);
+            setPanelOpen('goto', false);
+          }}
+        >
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <label htmlFor={loopFromId} className="text-[12px] font-medium text-ink-muted">
+              {strings.transport.loopBarsFrom}
+            </label>
+            <input
+              id={loopFromId}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={barCount}
+              value={loopFrom}
+              onChange={event => {
+                setLoopFrom(event.target.value);
+              }}
+              className="h-9 w-full rounded-[var(--radius-control)] border border-line bg-surface px-2.5 font-mono text-[14px] text-ink tabular-nums outline-none focus-visible:border-accent"
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <label htmlFor={loopToId} className="text-[12px] font-medium text-ink-muted">
+              {strings.transport.loopBarsTo}
+            </label>
+            <input
+              id={loopToId}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={barCount}
+              value={loopTo}
+              onChange={event => {
+                setLoopTo(event.target.value);
+              }}
+              className="h-9 w-full rounded-[var(--radius-control)] border border-line bg-surface px-2.5 font-mono text-[14px] text-ink tabular-nums outline-none focus-visible:border-accent"
+            />
+          </div>
+          <Button type="submit">{strings.transport.loopBarsSubmit}</Button>
         </form>
         {sections.length > 0 && (
           <div className="mt-3">

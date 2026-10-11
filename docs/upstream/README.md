@@ -18,6 +18,7 @@ available as source: the patch file is that source.
 | [0007](0007-drum-kits-on-any-channel.md)    | Drum kits on any channel (bank 127); unloaded samples stay silent                  | A metronome needs its own drum channel; unloaded drum samples rendered NaN | not yet  |
 | [0008](0008-centered-channels.md)           | Channels that ignore the SoundFont's region pans                                   | Woodblock and hi-hat clicks came out of one ear                            | not yet  |
 | [0009](0009-replace-midi-while-playing.md)  | Replace the song while it plays, keeping the position by tick                      | A new metronome pattern or tempo stuttered and restarted                   | not yet  |
+| [0010](0010-speed-changes-while-playing.md) | Change the speed while playing without a seek; per-pass and heard-speed events     | Speed changes stuttered; a speed trainer could not step on pass boundaries | not yet  |
 
 ## Working on a patch
 

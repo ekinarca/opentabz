@@ -29,6 +29,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   count-in of one or two bars with its own volume, shown large on screen, fitted to where
   playback starts (mid-bar starts count the beats before them), optionally before every loop
   pass. Changing the pattern while playing never interrupts it. Settings are remembered.
+- **Speed trainer and counted loops.** While a loop repeats, the speed trainer moves from a
+  start to a target speed in steps after a set number of passes at each speed, exactly at the
+  start of a pass; a loop can also repeat a set number of times and stop. Loops can be set by
+  typing bar numbers. Speed changes while playing no longer stutter.
 - **Standalone metronome.** Tempo from 10 to 400 BPM by typing, buttons, slider or tap tempo
   (button or T), any meter up to 16 beats, with the beat display and the same sounds and
   patterns; the open song waits and comes back when it closes.
@@ -50,8 +54,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   errors (0002), faster XML parsing for large Guitar Pro 7+ files (0003), a fix that makes
   Capella files open at all (0004), 10 % playback speed (0005), count-ins and loop passes that
   switch while audio is generated, without gaps or drift (0006), drum kits on any channel and
-  silence instead of `NaN` for unloaded samples (0007), centred channels (0008) and replacing
-  the song while it plays (0009). See [docs/upstream/](docs/upstream/).
+  silence instead of `NaN` for unloaded samples (0007), centred channels (0008), replacing
+  the song while it plays (0009) and speed changes without a seek (0010). See [docs/upstream/](docs/upstream/).
 
 ### Fixed
 

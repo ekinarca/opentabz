@@ -10,6 +10,7 @@ import {
   type MetronomeSettings,
   type MetronomeSound,
 } from '@opentabz/audio/metronome';
+import { DEFAULT_TRAINER, type TrainerSettings } from '@opentabz/audio/trainer';
 import { create } from 'zustand';
 
 export const PRACTICE_STORAGE_KEY = 'opentabz.practice.v1';
@@ -27,6 +28,14 @@ export const MAX_PATTERN = 16;
 export const POLYRHYTHMS = [0, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 /** Bar drops above this would leave too little to play along with. */
 export const MAX_BEAT_DROP = 0.9;
+/** Choices for how many times a loop plays (null: endlessly). */
+export const LOOP_PASSES = [null, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20] as const;
+export type LoopPasses = (typeof LOOP_PASSES)[number];
+/** Speed trainer limits, in speed (1 = 100 %). */
+export const TRAINER_MIN = 0.1;
+export const TRAINER_MAX = 3;
+export const MAX_TRAINER_STEP = 0.5;
+export const MAX_TRAINER_PASSES = 20;
 
 export interface PracticeSettings {
   readonly metronome: boolean;
@@ -41,6 +50,10 @@ export interface PracticeSettings {
   readonly toolBpm: number;
   readonly toolNumerator: number;
   readonly toolDenominator: Denominator;
+  /** How many times a loop plays before playback stops (null: endlessly). */
+  readonly loopPasses: LoopPasses;
+  /** The speed trainer; it always starts off (only its numbers are kept). */
+  readonly trainer: TrainerSettings;
 }
 
 export const DEFAULT_PRACTICE: PracticeSettings = {
@@ -54,6 +67,8 @@ export const DEFAULT_PRACTICE: PracticeSettings = {
   toolBpm: 100,
   toolNumerator: 4,
   toolDenominator: 4,
+  loopPasses: null,
+  trainer: DEFAULT_TRAINER,
 };
 
 const LEVELS: readonly MetronomeLevel[] = ['accent', 'normal', 'soft', 'off'];
@@ -91,6 +106,27 @@ export function parseClick(value: unknown): MetronomeSettings {
   };
 }
 
+export function parseTrainer(value: unknown): TrainerSettings {
+  const fallback = DEFAULT_TRAINER;
+  if (typeof value !== 'object' || value === null) return fallback;
+  const raw = value as Partial<Record<keyof TrainerSettings, unknown>>;
+  const speed = (input: unknown, otherwise: number) =>
+    typeof input === 'number' && Number.isFinite(input) && input >= TRAINER_MIN && input <= TRAINER_MAX
+      ? Math.round(input * 100) / 100
+      : otherwise;
+  const step = raw.step;
+  return {
+    enabled: false,
+    from: speed(raw.from, fallback.from),
+    to: speed(raw.to, fallback.to),
+    step:
+      typeof step === 'number' && step >= 0.01 && step <= MAX_TRAINER_STEP
+        ? Math.round(step * 100) / 100
+        : fallback.step,
+    passes: integer(raw.passes, fallback.passes, 1, MAX_TRAINER_PASSES),
+  };
+}
+
 export function parsePractice(raw: string | null): PracticeSettings {
   const fallback = DEFAULT_PRACTICE;
   if (raw === null) return fallback;
@@ -108,6 +144,8 @@ export function parsePractice(raw: string | null): PracticeSettings {
       toolBpm: integer(value.toolBpm, fallback.toolBpm, MIN_BPM, MAX_BPM),
       toolNumerator: integer(value.toolNumerator, fallback.toolNumerator, 1, MAX_NUMERATOR),
       toolDenominator: oneOf(value.toolDenominator, DENOMINATORS, fallback.toolDenominator),
+      loopPasses: oneOf(value.loopPasses, LOOP_PASSES, fallback.loopPasses),
+      trainer: parseTrainer(value.trainer),
     };
   } catch {
     return fallback;
@@ -152,6 +190,7 @@ function save(settings: PracticeSettings): void {
 interface PracticeStore extends PracticeSettings {
   readonly set: (patch: Partial<PracticeSettings>) => void;
   readonly setClick: (patch: Partial<MetronomeSettings>) => void;
+  readonly setTrainer: (patch: Partial<TrainerSettings>) => void;
 }
 
 function settingsOf(state: PracticeSettings): PracticeSettings {
@@ -166,6 +205,8 @@ function settingsOf(state: PracticeSettings): PracticeSettings {
     toolBpm: state.toolBpm,
     toolNumerator: state.toolNumerator,
     toolDenominator: state.toolDenominator,
+    loopPasses: state.loopPasses,
+    trainer: state.trainer,
   };
 }
 
@@ -177,6 +218,10 @@ export const usePractice = create<PracticeStore>((set, get) => ({
   },
   setClick: patch => {
     set(state => ({ click: { ...state.click, ...patch } }));
+    save(settingsOf(get()));
+  },
+  setTrainer: patch => {
+    set(state => ({ trainer: { ...state.trainer, ...patch } }));
     save(settingsOf(get()));
   },
 }));

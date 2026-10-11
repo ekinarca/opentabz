@@ -210,6 +210,21 @@ describe('navigation lookups', () => {
     expect(occurrenceOfMasterBar(timeline, 9)).toBeNull();
   });
 
+  it('turns bar numbers into a played range, through repeats', async () => {
+    const { barNumberRange } = await import('./timeline-lookup.ts');
+    const tex =
+      '\\tempo 120\n\\track "Flute" {instrument flute}\n\\staff {score}\nC4.1 | \\ro D4.1 | \\rc 2 E4.1 | F4.1';
+    const { score } = openScore(new TextEncoder().encode(tex), 'repeat.atex');
+    const { timeline } = generatePlayback(score, 'test');
+    // Bars 2–3 are one pass of the repeat; either order works.
+    expect(barNumberRange(timeline, 1, 2)).toEqual({ startTick: 3840, endTick: 11520 });
+    expect(barNumberRange(timeline, 2, 1)).toEqual({ startTick: 3840, endTick: 11520 });
+    // Bars 2–4 run through both passes.
+    expect(barNumberRange(timeline, 1, 3)).toEqual({ startTick: 3840, endTick: 23040 });
+    expect(barNumberRange(timeline, 0, 0)).toEqual({ startTick: 0, endTick: 3840 });
+    expect(barNumberRange(timeline, 0, 9)).toBeNull();
+  });
+
   it('counts beats in the meter, with pickups counted from the end', async () => {
     const { beatInBar } = await import('./timeline-lookup.ts');
     const full = { index: 0, startTick: 0, endTick: 3840, masterBarIndex: 0, firstSlice: 0, sliceCount: 1 };

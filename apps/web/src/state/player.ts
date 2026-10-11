@@ -127,6 +127,14 @@ function sendCountIn(engine: AudioEngine, practice: PracticeSettings): void {
   });
 }
 
+function sendTrainer(engine: AudioEngine, practice: PracticeSettings): void {
+  engine.send({ type: 'setTrainer', ...practice.trainer });
+}
+
+function sendLoopPasses(engine: AudioEngine, practice: PracticeSettings): void {
+  engine.send({ type: 'setLoopPasses', passes: practice.loopPasses });
+}
+
 function sendClickTrack(engine: AudioEngine, playbackId: string, practice: PracticeSettings): void {
   engine.send({
     type: 'loadClickTrack',
@@ -156,6 +164,8 @@ usePractice.subscribe((state, previous) => {
   ) {
     sendCountIn(engine, state);
   }
+  if (state.trainer !== previous.trainer) sendTrainer(engine, state);
+  if (state.loopPasses !== previous.loopPasses) sendLoopPasses(engine, state);
   if (
     clickTrackId !== null &&
     (state.toolBpm !== previous.toolBpm ||
@@ -194,6 +204,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
         }
         dispatch(event.playing ? { type: 'play' } : { type: 'pause' });
         if (!event.playing) set({ countInBeat: null });
+        break;
+      case 'speed':
+        // The speed trainer moved on: the new speed is being heard.
+        set(state => ({ speed: event.value, tempo: (state.tempo / state.speed) * event.value }));
         break;
       case 'countIn':
         set({
@@ -289,7 +303,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
         engine.send({ type: 'setSpeed', value: speed });
         sendMetronome(engine, practice);
         sendCountIn(engine, practice);
+        sendLoopPasses(engine, practice);
         engine.send({ type: 'setLoop', enabled: loop, range: null, id: nextMove() });
+        sendTrainer(engine, practice);
         engine.send({ type: 'setMasterVolume', value: volume });
         applyMix(useDocuments.getState().docs.find(candidate => candidate.key === doc.key) ?? doc);
         set({ timeline, endTime: result.type === 'midiLoaded' ? result.endTime : 0 });
@@ -411,6 +427,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
     setSpeed: speed => {
       const value = clampSpeed(speed);
+      // Choosing a speed by hand ends the speed trainer's run.
+      const practice = usePractice.getState();
+      if (practice.trainer.enabled) practice.setTrainer({ enabled: false });
       audio().send({ type: 'setSpeed', value });
       // The live tempo includes the speed; it follows at once, not with the next position.
       set(state => ({ speed: value, tempo: (state.tempo / state.speed) * value }));

@@ -2,7 +2,7 @@ import { IconButton, Popover, PopoverContent, PopoverTrigger, Slider, Tooltip } 
 import { Minus, Plus } from 'lucide-react';
 import { useRef } from 'react';
 import { clampSpeed, MAX_SPEED, MIN_SPEED, SPEED_PRESETS, usePlayer } from '../state/player.ts';
-import { TAP_RESET_MS, tapTempo } from '../state/practice.ts';
+import { TAP_RESET_MS, tapTempo, usePractice } from '../state/practice.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { shortcutHint, SPEED_STEP } from './keymap.ts';
@@ -14,6 +14,7 @@ export function SpeedControl() {
   const open = useUi(state => state.panel === 'speed');
   const setPanelOpen = useUi(state => state.setPanelOpen);
   const label = strings.transport.speedValue(speed);
+  const trainerOn = usePractice(state => state.trainer.enabled);
   const taps = useRef<number[]>([]);
   // Tap tempo: the speed that turns the score's tempo here into the tapped one.
   const tap = () => {
@@ -38,7 +39,7 @@ export function SpeedControl() {
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-label={`${strings.transport.speed}: ${label}`}
+            aria-label={`${strings.transport.speed}: ${label}${trainerOn ? `, ${strings.transport.speedTrainerOn}` : ''}`}
             className={`h-9 min-w-[52px] rounded-[var(--radius-control)] px-1.5 font-mono text-[13px] tabular-nums hover:bg-sunken sm:min-w-[64px] sm:px-2 ${
               speed === 1 ? 'text-ink' : 'bg-accent-soft text-accent'
             }`}

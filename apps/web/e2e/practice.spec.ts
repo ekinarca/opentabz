@@ -96,8 +96,8 @@ test.describe('practice controls', () => {
     await page.keyboard.press(`${MOD}+g`);
     const dialog = page.getByRole('dialog', { name: 'Go to' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel('Bar')).toBeFocused();
-    await dialog.getByLabel('Bar').fill('5');
+    await expect(dialog.getByLabel('Bar', { exact: true })).toBeFocused();
+    await dialog.getByLabel('Bar', { exact: true }).fill('5');
     await page.keyboard.press('Enter');
     await expect(position(page)).toHaveAccessibleName(/Bar 5, beat 1,/);
     await position(page).click();
@@ -111,6 +111,23 @@ test.describe('practice controls', () => {
     await expect(position(page)).toHaveAccessibleName(/Bar 13, beat 1,/);
     await page.keyboard.press('Alt+PageUp');
     await expect(position(page)).toHaveAccessibleName(/Bar 9, beat 1,/);
+  });
+
+  test('loops a range of bars typed by number', async ({ page }) => {
+    await openShuffle(page);
+    await page.keyboard.press(`${MOD}+g`);
+    const dialog = page.getByRole('dialog', { name: 'Go to' });
+    await dialog.getByLabel('From bar').fill('3');
+    await dialog.getByLabel('To bar').fill('4');
+    await dialog.getByRole('button', { name: 'Loop', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    const toolbar = page.getByRole('toolbar', { name: 'Playback' });
+    await expect(toolbar).toContainText('Bars 3–4 selected');
+    await expect(page.getByRole('button', { name: 'Loop the selection' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(position(page)).toHaveAccessibleName(/Bar 3, beat 1,/);
   });
 
   test('extends a selection with the keyboard and selects everything', async ({ page }) => {

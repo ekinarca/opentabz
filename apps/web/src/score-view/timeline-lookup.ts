@@ -418,6 +418,20 @@ export function occurrenceOfMasterBar(
   return first;
 }
 
+/**
+ * The range from bar number `first` to bar number `last` (master bar indexes, both included, in
+ * either order) as played: the first pass through `first`, up to the next pass through `last`.
+ */
+export function barNumberRange(timeline: PlaybackTimeline, first: number, last: number): TickRange | null {
+  const from = Math.min(first, last);
+  const to = Math.max(first, last);
+  const start = occurrenceOfMasterBar(timeline, from);
+  if (start === null) return null;
+  const end = occurrenceOfMasterBar(timeline, to, start.startTick);
+  if (end === null || end.endTick <= start.startTick) return null;
+  return { startTick: start.startTick, endTick: end.endTick };
+}
+
 export interface Meter {
   readonly numerator: number;
   readonly denominator: number;
