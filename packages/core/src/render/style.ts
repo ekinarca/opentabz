@@ -78,6 +78,9 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     voiceColors: false,
     flatBeams: false,
     flatDrumBeams: false,
+    clefOnEverySystem: true,
+    timeSignatureOnEverySystem: false,
+    timeSignatureAtSections: false,
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
@@ -231,6 +234,9 @@ export function applyScoreStyle(
       case 'voiceColors':
       case 'flatBeams':
       case 'flatDrumBeams':
+      case 'clefOnEverySystem':
+      case 'timeSignatureOnEverySystem':
+      case 'timeSignatureAtSections':
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
@@ -299,6 +305,9 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.dashQuarterRests = style.dashQuarterRests;
   settings.notation.flatBeams = style.flatBeams;
   settings.notation.flatDrumBeams = style.flatDrumBeams;
+  settings.notation.clefOnEverySystem = style.clefOnEverySystem;
+  settings.notation.timeSignatureOnEverySystem = style.timeSignatureOnEverySystem;
+  settings.notation.timeSignatureAtSections = style.timeSignatureAtSections;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

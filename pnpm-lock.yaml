@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@coderline/alphatab@1.8.4':
-    hash: 87c96c50feaa7602bcba1e53df362528a137009d5b692c9a2ae6f5862e4554ae
+    hash: f6a962edeefa6ec9d4892534c65eb88c9c4ef533413fdb8e735edd5aaee61ef3
     path: patches/@coderline__alphatab@1.8.4.patch
 
 importers:
@@ -48,7 +48,7 @@ importers:
     dependencies:
       '@coderline/alphatab':
         specifier: 1.8.4
-        version: 1.8.4(patch_hash=87c96c50feaa7602bcba1e53df362528a137009d5b692c9a2ae6f5862e4554ae)
+        version: 1.8.4(patch_hash=f6a962edeefa6ec9d4892534c65eb88c9c4ef533413fdb8e735edd5aaee61ef3)
       '@fontsource-variable/instrument-sans':
         specifier: 5.3.0
         version: 5.3.0
@@ -136,7 +136,7 @@ importers:
     dependencies:
       '@coderline/alphatab':
         specifier: 1.8.4
-        version: 1.8.4(patch_hash=87c96c50feaa7602bcba1e53df362528a137009d5b692c9a2ae6f5862e4554ae)
+        version: 1.8.4(patch_hash=f6a962edeefa6ec9d4892534c65eb88c9c4ef533413fdb8e735edd5aaee61ef3)
       '@opentabz/core':
         specifier: workspace:*
         version: link:../core
@@ -155,7 +155,7 @@ importers:
     dependencies:
       '@coderline/alphatab':
         specifier: 1.8.4
-        version: 1.8.4(patch_hash=87c96c50feaa7602bcba1e53df362528a137009d5b692c9a2ae6f5862e4554ae)
+        version: 1.8.4(patch_hash=f6a962edeefa6ec9d4892534c65eb88c9c4ef533413fdb8e735edd5aaee61ef3)
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -2980,7 +2980,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@coderline/alphatab@1.8.4(patch_hash=87c96c50feaa7602bcba1e53df362528a137009d5b692c9a2ae6f5862e4554ae)': {}
+  '@coderline/alphatab@1.8.4(patch_hash=f6a962edeefa6ec9d4892534c65eb88c9c4ef533413fdb8e735edd5aaee61ef3)': {}
 
   '@eslint-community/eslint-utils@4.10.1(eslint@9.39.5(jiti@2.7.0))':
     dependencies:

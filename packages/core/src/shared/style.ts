@@ -68,6 +68,11 @@ export interface ScoreStyle {
   /** Beams drawn level in standard notation, and in drum notation (REND-246). */
   readonly flatBeams: boolean;
   readonly flatDrumBeams: boolean;
+  /** The clef on every system, or the first only (REND-231). */
+  readonly clefOnEverySystem: boolean;
+  /** The time signature on every system, and at every section (REND-231). */
+  readonly timeSignatureOnEverySystem: boolean;
+  readonly timeSignatureAtSections: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
   /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
@@ -141,6 +146,9 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   voiceColors: false,
   flatBeams: false,
   flatDrumBeams: false,
+  clefOnEverySystem: true,
+  timeSignatureOnEverySystem: false,
+  timeSignatureAtSections: false,
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,

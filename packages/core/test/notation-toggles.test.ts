@@ -206,6 +206,42 @@ describe('level beams (REND-246)', () => {
   });
 });
 
+describe('clefs and time signatures at the start of systems and sections (REND-231)', () => {
+  // Twelve bars of 3/4 over several systems, a section from the seventh.
+  const bars = Array.from(
+    { length: 12 },
+    (_, index) => `${index === 6 ? '\\section "Bridge" ' : ''}C4 D4 E4 |`,
+  );
+  const tex = `\\track "Flute"\n\\staff {score}\n\\ts (3 4)\n:4 ${bars.join(' ')}`;
+  const view = (changes: Partial<ScoreStyle> = {}) =>
+    engraveTex(tex, { width: 500, style: { ...DEFAULT_SCORE_STYLE, ...changes } });
+  const count = (engraving: Engraving, name: string) =>
+    glyphs(engraving.marks).filter(glyph => glyph === name).length;
+  const systems = (engraving: Engraving) => new Set(engraving.bars.map(bar => bar.system)).size;
+
+  it('writes the clef on every system, or on the first only', () => {
+    const usual = view();
+    expect(systems(usual)).toBeGreaterThan(2);
+    expect(count(usual, 'GClef')).toBe(systems(usual));
+    expect(count(view({ clefOnEverySystem: false }), 'GClef')).toBe(1);
+  });
+
+  it('writes the time signature where it starts, on every system, or at sections too', () => {
+    const usual = view();
+    // A 3 over a 4, once.
+    expect(count(usual, 'TimeSig3')).toBe(1);
+    const every = view({ timeSignatureOnEverySystem: true });
+    expect(count(every, 'TimeSig3')).toBe(systems(every));
+    const sections = view({ timeSignatureAtSections: true });
+    expect(count(sections, 'TimeSig3')).toBe(2);
+    const seventh = sections.bars.find(bar => bar.index === 6);
+    const signs = sections.marks.filter(mark => mark.name === 'TimeSig3');
+    expect(
+      signs.some(sign => seventh !== undefined && sign.x >= seventh.left && sign.x < seventh.right),
+    ).toBe(true);
+  });
+});
+
 describe('transposing instruments (REND-032)', () => {
   // A B♭ clarinet's part is written a whole tone above what sounds: C major sounds, D major reads.
   const clarinet = [

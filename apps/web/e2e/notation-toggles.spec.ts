@@ -3,7 +3,8 @@
  * (REND-210), with their decimals or rounded (REND-240); C and cut C, the pitch a bend reaches,
  * the rests of the lower voices and tuplet brackets (REND-248); arpeggio arrowheads, a trill's
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
- * the tablature (REND-250); level beams (REND-246); in the score on screen.
+ * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
+ * systems (REND-231); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -188,4 +189,25 @@ test('beams drawn level on request', async ({ page }) => {
     .getByRole('switch', { name: 'Level beams on the staff' })
     .click();
   await expect.poll(sloped).toBe(0);
+});
+
+test('the clef on every system or the first only, the time signature on every system', async ({ page }) => {
+  await openHome(page);
+  await page.getByRole('button', { name: 'a blues shuffle' }).click();
+  await expectScore(page);
+  const count = async (codePoint: number) =>
+    (await scoreTexts(page)).join('').split(String.fromCodePoint(codePoint)).length - 1;
+  // Treble clefs (the guitar's an octave down) and the 4s of 4/4.
+  const clefs = async () => (await count(0xe050)) + (await count(0xe052));
+  const fours = () => count(0xe084);
+  await expect.poll(clefs).toBeGreaterThan(1);
+  const signed = await fours();
+  expect(signed).toBe(2);
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'Clef on every system' }).click();
+  await expect.poll(clefs).toBe(1);
+  await dialog.getByRole('switch', { name: 'Time signature on every system' }).click();
+  await expect.poll(fours).toBeGreaterThan(signed);
 });

@@ -185,6 +185,27 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.clefOnEverySystem}
+            checked={style.clefOnEverySystem}
+            onCheckedChange={clefOnEverySystem => {
+              set({ clefOnEverySystem });
+            }}
+          />
+          <Switch
+            label={s.timeSignatureOnEverySystem}
+            checked={style.timeSignatureOnEverySystem}
+            onCheckedChange={timeSignatureOnEverySystem => {
+              set({ timeSignatureOnEverySystem });
+            }}
+          />
+          <Switch
+            label={s.timeSignatureAtSections}
+            checked={style.timeSignatureAtSections}
+            onCheckedChange={timeSignatureAtSections => {
+              set({ timeSignatureAtSections });
+            }}
+          />
+          <Switch
             label={s.extendBarLines}
             checked={style.extendBarLines}
             onCheckedChange={extendBarLines => {
