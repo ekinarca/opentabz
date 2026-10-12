@@ -180,6 +180,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   tenor saxophone reads in; the stylesheet shows or hides tempo marks (with their decimals, 92.5,
   or rounded) and lyrics. Bracketed
   comments in lyrics stay out of the score.
+- **Sound changes in the score.** Where a Guitar Pro 7 or 8 file changes a track's sound (clean
+  to overdriven at the chorus), the score writes the new sound's label over the beat it changes
+  on, in the file's own words; a change the file hides stays unwritten, and the copy with
+  repeats written out keeps the labels.
 - **Chord names in a style.** Chord names in the score and the chords panel as written, or
   spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
 - **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard
@@ -283,8 +287,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
-  (0049), fingering as asked (0050), tablature that skips notes without a string (0051), and
-  drum tablature (0052). See [docs/upstream/](docs/upstream/).
+  (0049), fingering as asked (0050), tablature that skips notes without a string (0051), drum
+  tablature (0052), and sound-change labels (0053). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

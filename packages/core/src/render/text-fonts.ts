@@ -34,7 +34,7 @@ const ELEMENTS: Readonly<Record<TextElement, readonly alphaTab.NotationElement[]
   trackNames: [N.TrackNames],
   tuning: [N.GuitarTuning],
   sections: [N.EffectMarker],
-  text: [N.EffectText],
+  text: [N.EffectText, N.EffectSoundChange],
   chordNames: [N.EffectChordNames, N.ChordDiagrams],
   chordFrets: [N.ChordDiagramFretboardNumbers],
   lyrics: [N.EffectLyrics],

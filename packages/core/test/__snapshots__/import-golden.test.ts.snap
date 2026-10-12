@@ -1,14 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`every fixture imports to the same score > alphatab/audio/audio-generation.gp 1`] = `"ce95ee0b2e046284"`;
+exports[`every fixture imports to the same score > alphatab/audio/audio-generation.gp 1`] = `"130ddcc0c35b8f75"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/cursor-snapping.gp 1`] = `"ad4c8d0d7dbe34ca"`;
+exports[`every fixture imports to the same score > alphatab/audio/cursor-snapping.gp 1`] = `"312ba9a1add59dd2"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/grace-beats.gp 1`] = `"9160958f75861412"`;
+exports[`every fixture imports to the same score > alphatab/audio/grace-beats.gp 1`] = `"6db75b4417e00f0d"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/ornaments.gp 1`] = `"f17f09c5fe773eec"`;
+exports[`every fixture imports to the same score > alphatab/audio/ornaments.gp 1`] = `"889b67fdda707db0"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/rasgueado.gp 1`] = `"a10f0b06c776cf2a"`;
+exports[`every fixture imports to the same score > alphatab/audio/rasgueado.gp 1`] = `"ebea316e0d80522a"`;
 
 exports[`every fixture imports to the same score > alphatab/audio/repeat-close.gp5 1`] = `"08efaa7e0c099a84"`;
 
@@ -18,13 +18,13 @@ exports[`every fixture imports to the same score > alphatab/audio/repeat-close-m
 
 exports[`every fixture imports to the same score > alphatab/audio/repeat-close-without-start-at-beginning.gp5 1`] = `"8730d33b385974e9"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/syncpoints-testfile.gp 1`] = `"fdfe59745bb1629e"`;
+exports[`every fixture imports to the same score > alphatab/audio/syncpoints-testfile.gp 1`] = `"3406462dd45150e3"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/syncpoints-testfile-backingtrack.gp 1`] = `"f184ab5e67e9f2ed"`;
+exports[`every fixture imports to the same score > alphatab/audio/syncpoints-testfile-backingtrack.gp 1`] = `"732e232bb6da44c4"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/tied-bend-hammer.gp 1`] = `"6f6238e0bedd252f"`;
+exports[`every fixture imports to the same score > alphatab/audio/tied-bend-hammer.gp 1`] = `"7b114839b436b05f"`;
 
-exports[`every fixture imports to the same score > alphatab/corrupt/healthy.gp 1`] = `"b935205cf8b402f3"`;
+exports[`every fixture imports to the same score > alphatab/corrupt/healthy.gp 1`] = `"12a28a6eaceb1d74"`;
 
 exports[`every fixture imports to the same score > alphatab/corrupt/healthy.gp5 1`] = `"0da3568cb65a9ab3"`;
 
@@ -264,185 +264,185 @@ exports[`every fixture imports to the same score > alphatab/guitarpro6/tuplets.g
 
 exports[`every fixture imports to the same score > alphatab/guitarpro6/vibrato.gpx 1`] = `"f7c3c13da50c8bd4"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/accentuations.gp 1`] = `"4fb1351c54825c57"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/accentuations.gp 1`] = `"e6337218295a9d17"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/anacrusis.gp 1`] = `"513ec84df882a3f3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/anacrusis.gp 1`] = `"cb5cd863475033cc"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/beaming-mode.gp 1`] = `"603d541acf184aa3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/beaming-mode.gp 1`] = `"41a4a26901c84e6e"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/beat-lyrics.gp 1`] = `"6f9428eeb2815ed8"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/beat-lyrics.gp 1`] = `"01d07845d57dfbd9"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/bends.gp 1`] = `"c4e8fc1fee33dd13"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/bends.gp 1`] = `"bbb9fbb0db55f5cf"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/bends-advanced.gp 1`] = `"c606d25e9b561741"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/bends-advanced.gp 1`] = `"21039f1f063a2574"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/chord-no-diagram.gp 1`] = `"b95b69bd6a9a58d7"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/chord-no-diagram.gp 1`] = `"215299df0d3424b2"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/chords.gp 1`] = `"8890f7ba8a0387e3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/chords.gp 1`] = `"957bb35a176415e7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/colors.gp 1`] = `"ccf569905f0aa2a9"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/colors.gp 1`] = `"9a85dacb291740f1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/compressed.gp 1`] = `"5280abd4bc17296c"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/compressed.gp 1`] = `"c9890db8ea5341c6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/dead.gp 1`] = `"eec00d342d5a4d10"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/dead.gp 1`] = `"492ec3cad88b43e1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/effects.gp 1`] = `"152495e466aa293d"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/effects.gp 1`] = `"b14a63ef0b1de626"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/fermata.gp 1`] = `"4bcf6d14d591b363"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/fermata.gp 1`] = `"72e2f68d38a249cb"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/fingering.gp 1`] = `"68a406c884ef17c1"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/fingering.gp 1`] = `"f6c21c181d30a5ed"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/grace.gp 1`] = `"d8510b6e39e3116b"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/grace.gp 1`] = `"de2bb578a522beef"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/hammer.gp 1`] = `"1323554e6d9d8d20"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/hammer.gp 1`] = `"fe1b9d3bebc86151"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/harmonics.gp 1`] = `"070fe85b23bd364a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/harmonics.gp 1`] = `"4edb8abd1d7981dd"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/key-signatures.gp 1`] = `"613ddbc7abba98ea"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/key-signatures.gp 1`] = `"8f9384d435be3cc0"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-1.gp 1`] = `"80941562c550c8ed"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-1.gp 1`] = `"d4442488e4be1689"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-1-3.gp 1`] = `"5652cea3fe6cf50b"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-1-3.gp 1`] = `"f5f6b6b761eca445"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-2.gp 1`] = `"72c641f19a1fc6fb"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-2.gp 1`] = `"86711032305543d0"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-all.gp 1`] = `"fe79601b1a81da34"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/layout-configuration-multi-track-all.gp 1`] = `"cfe72550ab027d5c"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/left-hand-tap.gp 1`] = `"db287c1687c2e46e"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/left-hand-tap.gp 1`] = `"f9e6876aad56ff67"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/lyrics-null.gp 1`] = `"61b3b32f62c5e27c"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/lyrics-null.gp 1`] = `"8f7e331925ff42f7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/lyrics-template.gp 1`] = `"37be8cf34715a2c4"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/lyrics-template.gp 1`] = `"417a30b615c8dab7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/notes.gp 1`] = `"5ae9b24eb999c022"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/notes.gp 1`] = `"593210f4548d87ff"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/other-effects.gp 1`] = `"73e0f27599343379"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/other-effects.gp 1`] = `"7996f74e290efc18"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/ottavia.gp 1`] = `"d89cb6a882dc3fe3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/ottavia.gp 1`] = `"ead1f8eed67a7df6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/pick-slide.gp 1`] = `"b96aea84b15f2c90"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/pick-slide.gp 1`] = `"285fb3135e98fd61"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/program-change.gp 1`] = `"33fc372bfdf9b1b6"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/program-change.gp 1`] = `"2cbdf213f3f64caa"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/ranges.gp 1`] = `"cfb4839fe8b5fd60"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/ranges.gp 1`] = `"a1f9504d54f8ed45"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close.gp 1`] = `"6952853a326cab60"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close.gp 1`] = `"533f8aba487eac5d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close-alternate-endings.gp 1`] = `"d92a8fb9b1092569"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close-alternate-endings.gp 1`] = `"9ab494cfbf97bab7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close-multi.gp 1`] = `"96f413c7f358f01e"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/repeat-close-multi.gp 1`] = `"5fddc1ef11e52cd2"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/score-info.gp 1`] = `"cff663b3427091ef"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/score-info.gp 1`] = `"17e1e5cd3cf6ac95"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/simile-mark.gp 1`] = `"f7beee2e8cb85231"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/simile-mark.gp 1`] = `"1507dff85e0b1953"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/slash.gp 1`] = `"f8258a04f60b4f42"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/slash.gp 1`] = `"18d5c79c3549dcf3"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/slides.gp 1`] = `"32da14fc18778470"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/slides.gp 1`] = `"e158a5e970ea3ede"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/strings.gp 1`] = `"c279645baa796b3a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/strings.gp 1`] = `"d120a18bb844f78d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/strokes.gp 1`] = `"c69e5ab09d9413fd"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/strokes.gp 1`] = `"cd5dec1e5d910af3"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/time-signatures.gp 1`] = `"3642c5570c3940bf"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/time-signatures.gp 1`] = `"bce04184390353a7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/track-balance.gp 1`] = `"087efe6b086bf2d8"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/track-balance.gp 1`] = `"274f52d80fba99e1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/track-volume.gp 1`] = `"f1a2132009767e81"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/track-volume.gp 1`] = `"af248a6e57aa5ea8"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/tremolo.gp 1`] = `"e1bbf11f0f839431"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/tremolo.gp 1`] = `"4205cd3c12a8d992"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/tremolo-vibrato.gp 1`] = `"d8e8e9037b0e8598"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/tremolo-vibrato.gp 1`] = `"e01ea167c3c8fa5c"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/trills.gp 1`] = `"81b94697a201dd16"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/trills.gp 1`] = `"d081934ba73f271e"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/tuplets.gp 1`] = `"d114ebe8676d58a8"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/tuplets.gp 1`] = `"90eb2bf165b9a63a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/vibrato.gp 1`] = `"f7b5fe3f491ebc00"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/vibrato.gp 1`] = `"865ce5350de87bf1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/whammy-advanced.gp 1`] = `"76c78f93017c9c35"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/whammy-advanced.gp 1`] = `"fd73e10737e34dd3"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/bank.gp 1`] = `"c558cde294e2370c"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/bank.gp 1`] = `"205a5605f4642d07"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/bank-change.gp 1`] = `"6f91bf26a9cf63c9"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/bank-change.gp 1`] = `"192da3ee3b92d5c3"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-all.gp 1`] = `"7bfcdbe9f2158b55"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-all.gp 1`] = `"f7a94de4f9579b48"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-first.gp 1`] = `"ccd7de8f9e0b74b2"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-first.gp 1`] = `"f426c6971fa70503"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-hide.gp 1`] = `"c9e2fbb9797f5ac1"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/barnumbers-hide.gp 1`] = `"5c92f493d5e68b5d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/beaming-mode.gp 1`] = `"e10debcba493ef98"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/beaming-mode.gp 1`] = `"1a92220b19ff32b6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/beat-tempo-change.gp 1`] = `"555311a58578cfc1"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/beat-tempo-change.gp 1`] = `"19b8d8f6323a68fa"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/custom-beaming.gp 1`] = `"c5f4a760dbb63e1e"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/custom-beaming.gp 1`] = `"3423a16c92f4c467"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/directions.gp 1`] = `"f48e0a1fff4af6f3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/directions.gp 1`] = `"33a01804bae18eef"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/e.gp 1`] = `"716253d4393a20cd"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/e.gp 1`] = `"ae9f4b54a864668d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/eb-ks.gp 1`] = `"3e9f7db713d1a95e"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/eb-ks.gp 1`] = `"fb987c69350c9873"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/extended-barlines.gp 1`] = `"6044380577bc60cc"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/extended-barlines.gp 1`] = `"424a3b72205c6bdf"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/harmonics-lowercase.gp 1`] = `"bc7121131dcf666b"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/harmonics-lowercase.gp 1`] = `"21486f45ee486fa1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/header-footer.gp 1`] = `"7e6ca3bf4dbf2b13"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/header-footer.gp 1`] = `"75f3bc3b374244e7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/hide-diagrams.gp 1`] = `"64d9dca7a12cb53a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/hide-diagrams.gp 1`] = `"0d23e5fa54a28f60"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/hide-tuning.gp 1`] = `"aeb97a9ee48be4e2"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/hide-tuning.gp 1`] = `"96ef0b241daeefa6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-1.gp 1`] = `"60c66deda2df43db"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-1.gp 1`] = `"2ea9bd5b71e4ec23"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-1-3.gp 1`] = `"11ee652b3bb8047a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-1-3.gp 1`] = `"6d880783c9f742f3"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-2.gp 1`] = `"f620356333e640ca"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-2.gp 1`] = `"e0d3f909cb777042"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-all.gp 1`] = `"4992b50ac6eec216"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-configuration-multi-track-all.gp 1`] = `"698aa0cf5ef7a4f7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/multibar-rest.gp 1`] = `"ddcd9e2b16d95683"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/multibar-rest.gp 1`] = `"5adfb6f6c47c7a7e"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/show-diagrams-in-score.gp 1`] = `"d2d6d333dd94a301"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/show-diagrams-in-score.gp 1`] = `"b27134aaae329c79"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/slash.gp 1`] = `"db7e821efe53ad7d"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/slash.gp 1`] = `"401fd21b51c6ef2d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/timer.gp 1`] = `"a745993a5a642cad"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/timer.gp 1`] = `"2d2a1bec02d0a235"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/track-names.gp 1`] = `"c2a45de140c3ef6c"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/track-names.gp 1`] = `"bf25e1f10c3774fe"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/track-names-hidden.gp 1`] = `"faea8f481e1f06b5"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/track-names-hidden.gp 1`] = `"02d802072649f91a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-a.gp 1`] = `"5b2df3de8ac2bc44"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-a.gp 1`] = `"e298f02c839f0b14"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-ab.gp 1`] = `"5abe36afd0eef72d"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-ab.gp 1`] = `"5c4e476becc86af8"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-b.gp 1`] = `"5f5b8861314dea6c"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-b.gp 1`] = `"7a0504f7a4f9ed08"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-bb.gp 1`] = `"9703bb192f9d8949"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-bb.gp 1`] = `"26c47ae2698f439e"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-c.gp 1`] = `"190274a2eb5802c5"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-c.gp 1`] = `"d4c725d647f2116d"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-cb.gp 1`] = `"7759e74e3193bcd9"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-cb.gp 1`] = `"a04a4a931183b8e1"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-csharp.gp 1`] = `"4cf31cba576f08e4"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-csharp.gp 1`] = `"dd0a1aeff9167858"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-d.gp 1`] = `"090fc379f4a5c9a9"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-d.gp 1`] = `"4ce15f300e0a11ae"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-db.gp 1`] = `"86058397d0859f5a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-db.gp 1`] = `"4ab1d206a43ce0e8"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-e.gp 1`] = `"28d846c6465699d6"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-e.gp 1`] = `"0aff8ac1b41126cc"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-eb.gp 1`] = `"8703ab87724338cb"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-eb.gp 1`] = `"ccc5ee3ab1d128c8"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-f.gp 1`] = `"86a004f5d01d1871"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-f.gp 1`] = `"7204e6254e0d7879"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-fsharp.gp 1`] = `"23627bc93071b868"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-fsharp.gp 1`] = `"76feb3e94a639d15"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-g.gp 1`] = `"300c197000298f08"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-g.gp 1`] = `"95c4596b1d13d81a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-gb.gp 1`] = `"f9d6bb38c7c29022"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/transposition-tonality-gb.gp 1`] = `"d6e1fc32080c4f33"`;
 
 exports[`every fixture imports to the same score > alphatab/lyrics/template.gpx 1`] = `"f7179b73042d42b0"`;
 

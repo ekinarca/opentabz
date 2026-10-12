@@ -61,6 +61,7 @@ available as source: the patch file is that source.
 | [0050](0050-fingering-display.md)                    | Fingering as asked                                                                 | Guitar Pro labels, places and sizes fingering                              | not yet  |
 | [0051](0051-tab-notes-without-strings.md)            | Tablature skips notes without a string                                             | A pitched part shown as tab may have notes no string reaches               | not yet  |
 | [0052](0052-drum-tablature.md)                       | Drum tablature                                                                     | Guitar Pro shows a drum kit as tablature with MIDI numbers                 | not yet  |
+| [0053](0053-sound-change-labels.md)                  | Sound-change labels                                                                | Guitar Pro writes a sound's label where the sound changes                  | not yet  |
 
 ## Working on a patch
 
