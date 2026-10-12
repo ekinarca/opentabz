@@ -979,6 +979,36 @@ export function playNoteAtCaret(key: string, string: number, fret: number): bool
   });
 }
 
+/**
+ * A key played on the keyboard view (EDIT-097): its pitch written at the caret's beat, on the
+ * caret's string while a fret up to the 24th plays it there, else the nearest string free; the
+ * same note played again is taken away.
+ */
+export function playPitchAtCaret(key: string, pitch: number): boolean {
+  if (!editingOf(key).on) return false;
+  return act(key, () => {
+    const found = atCaret(key);
+    const doc = docOf(key);
+    if (found === null || doc === null) return;
+    const { caret, editing } = found;
+    const staff = doc.summary.tracks[caret.track]?.staves[caret.staff];
+    const row = editing.beats === null ? null : rowOf(editing.beats, caret.beatId);
+    if (staff === undefined || row === null) return;
+    const { tuning, capo } = staff;
+    const open = (string: number): number => (tuning[tuning.length - string] ?? 0) + capo;
+    const sounding = row.notes.find(note => note.string > 0 && open(note.string) + note.fret === pitch);
+    if (sounding !== undefined) {
+      playNoteAtCaret(key, sounding.string, sounding.fret);
+      return;
+    }
+    const strings = Array.from({ length: tuning.length }, (_, index) => index + 1)
+      .filter(string => string === caret.string || !row.notes.some(note => note.string === string))
+      .sort((a, b) => Math.abs(a - caret.string) - Math.abs(b - caret.string));
+    const string = strings.find(candidate => pitch - open(candidate) >= 0 && pitch - open(candidate) <= 24);
+    if (string !== undefined) playNoteAtCaret(key, string, pitch - open(string));
+  });
+}
+
 /** Writes the beat before the caret's over it again (Guitar Pro's C, EDIT-094); the caret goes on. */
 export function repeatBeat(key: string): boolean {
   return act(key, () => {

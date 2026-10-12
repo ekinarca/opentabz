@@ -897,3 +897,18 @@ test('a note clicked on the fretboard is written at the caret, and taken away cl
   await neck.click({ position: point });
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
 });
+
+test('a key clicked on the keyboard view is written at the caret, on a string that plays it (EDIT-097)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await viewTool(page, 'Keyboard');
+  // A4: the high E string's 5th fret.
+  const key = page.getByRole('region', { name: 'Keyboard', exact: true }).locator('[data-pitch="69"]');
+  await key.click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+  await key.click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+});

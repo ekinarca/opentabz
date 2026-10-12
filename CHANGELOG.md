@@ -231,7 +231,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   track, and `C` repeats the beat before at the caret, as in Guitar Pro. Delete clears the notes
   selected, `Shift Delete` takes the beats away, `Ctrl Delete` the bars. What is copied can be
   pasted in another score open.
-  Drums paste on drum tracks only, and notes only on a track with strings enough.
+  Pasted on another instrument, notes keep their pitches (other strings, a bass, a piano); between
+  drums and notes only the rhythm is kept, as rests, as Guitar Pro pastes.
 - **Transpose.** The edit bar's Transpose… moves notes up or down by any number of semitones —
   what is selected (or the caret's beat), the caret's track or every track — and the command
   palette raises or lowers them a semitone or an octave. Notes on strings keep their strings while
@@ -245,7 +246,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   (three to thirteen in the time of two, four or eight), the stems' direction and the beam to the
   next beat (as the meter groups it, broken or joined) of the beats selected or the caret's, the fretting
   and picking fingers of the caret's note, its spelling in standard notation (with a sharp, a
-  flat or a natural; every note selected, with a selection), and the text above the beat.
+  flat, a natural or a double sharp or flat; every note selected, with a selection), and the text
+  above the beat.
 - **Harmonize.** "Harmonize…" gives each note selected, or of the caret's beat, another a third,
   a sixth or an octave above or below it, in the bar's key, on the nearest string with room; tied
   notes keep their harmony tied.
@@ -263,9 +265,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   and Fine at a bar, and a jump at its end (D.C., D.S., D.S.S. and their al Coda, al Double Coda
   and al Fine, To Coda), which playback follows; and starts a new system at a bar, on the page and
   on screen.
-- **Write on the fretboard.** While the score is edited, a click on the fretboard writes that
-  string and fret at the caret's beat, and a click on a note written takes it away, as in Guitar
-  Pro.
+- **Write on the fretboard and the keyboard.** While the score is edited, a click on the
+  fretboard writes that string and fret at the caret's beat, a click on the keyboard view that
+  note on the caret's string (or the nearest one that plays it), and a click on a note written
+  takes it away, as in Guitar Pro.
 - **Hear the notes written.** A setting plays each fret written while editing, as the instrument
   would.
 - **Duplicate a track.** The track dialog's Duplicate puts a copy of the track in after it, its

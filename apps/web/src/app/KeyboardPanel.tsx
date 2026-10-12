@@ -20,6 +20,7 @@ import '../instrument-view/keyboard.css';
 import { useTrackNotes } from '../instrument-view/use-track-notes.ts';
 import { useViewNotes, useWidth, type NotesAt } from '../instrument-view/use-view-notes.ts';
 import type { OpenDocument } from '../state/documents.ts';
+import { playPitchAtCaret, useEditing } from '../state/editing.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { Field } from './MetronomeSettingsForm.tsx';
@@ -93,6 +94,7 @@ export function KeyboardPanel({ doc }: { readonly doc: OpenDocument }) {
   const preferredHand = usePreferences(state => state.keyboardHand);
   const cursorColor = usePreferences(state => state.cursorColor);
   const setPreferences = usePreferences(state => state.set);
+  const editing = useEditing(state => state.docs[doc.key]?.on === true);
   const track = doc.summary.tracks[doc.activeTrack] ?? doc.summary.tracks[0];
   const staves = track === undefined ? [] : pitchedStaves(track);
   const rightStaff = staves[0] ?? 0;
@@ -180,6 +182,13 @@ export function KeyboardPanel({ doc }: { readonly doc: OpenDocument }) {
               available={width}
               labels={labels}
               description={describe(trackName, notes)}
+              onPlay={
+                editing
+                  ? pitch => {
+                      playPitchAtCaret(doc.key, pitch);
+                    }
+                  : undefined
+              }
             />
           )
         )}

@@ -1,4 +1,5 @@
 import { NOTE_DEAD } from '@opentabz/core/shared';
+import type { MouseEvent } from 'react';
 import {
   noteName,
   type FretboardNotes,
@@ -62,7 +63,10 @@ export function PianoKeys({
   available,
   labels,
   description,
+  onPlay,
 }: {
+  /** While the score is edited, a click writes the key clicked (its MIDI note). */
+  readonly onPlay?: ((pitch: number) => void) | undefined;
   readonly span: KeyRange;
   readonly range: KeyRange;
   readonly notes: FretboardNotes;
@@ -151,6 +155,16 @@ export function PianoKeys({
       role="img"
       aria-label={description}
       className="ot-keys block"
+      {...(onPlay === undefined
+        ? {}
+        : {
+            onClick: (event: MouseEvent<SVGSVGElement>) => {
+              const key = (event.target as Element).closest('[data-pitch]');
+              const pitch = Number(key?.getAttribute('data-pitch'));
+              if (key !== null && Number.isInteger(pitch)) onPlay(pitch);
+            },
+            'data-editing': '',
+          })}
     >
       {keys.filter(place => !place.black).map(key)}
       {keys.filter(place => place.black).map(key)}

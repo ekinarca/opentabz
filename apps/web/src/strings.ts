@@ -1438,6 +1438,8 @@ export const strings = {
       sharp: 'With a sharp',
       flat: 'With a flat',
       natural: 'With a natural',
+      'double-sharp': 'With a double sharp',
+      'double-flat': 'With a double flat',
     },
     textLabel: 'Text above the beat',
     textHint: 'Shown above the beat, such as “let ring” or “a tempo”. Empty: none.',
