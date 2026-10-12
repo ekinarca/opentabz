@@ -362,6 +362,11 @@ export const strings = {
       latency === null
         ? 'Not started yet: press Play.'
         : `Output delay ${Math.round(latency)} ms · audio skipped ${Math.round(missed)} ms`,
+    notation: 'Notation',
+    newStaves: 'Staves of scores opened from now on',
+    newConcertPitch: 'Transposing instruments at concert pitch',
+    newConcertPitchHint: 'In scores opened from now on; each score’s Staves menu changes its own.',
+    newStylesheet: 'Stylesheet of scores opened from now on',
     views: 'Instrument views',
     leftHanded: 'Left-handed fretboard and chord diagrams',
     invertedTab: 'Lowest string on top of the tablature',

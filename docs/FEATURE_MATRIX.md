@@ -851,7 +851,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-024 | WCAG 2.2 AA audit passed                                    | OT  | M3  | —       | —    | planned |
 | PLAT-030 | Settings: theme                                             | GP  | M0  | — | apps/web/e2e/app.spec.ts | done |
 | PLAT-031 | Settings: default layout and workspace                      | GP  | M3  | —       | —    | planned |
-| PLAT-032 | Settings: notation preferences                              | GP  | M2  | —       | —    | planned |
+| PLAT-032 | Settings: notation preferences                              | GP  | M2  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/settings.spec.ts | done |
 | PLAT-033 | Settings: synth and sound-pack selection                    | GP  | M7  | —       | —    | planned |
 | PLAT-034 | Settings: audio latency hint                                | OT  | M1  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/settings.spec.ts | done |
 | PLAT-035 | Settings: left-handed                                       | GP  | M1  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/fretboard.spec.ts | done |

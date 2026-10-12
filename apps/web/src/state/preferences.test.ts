@@ -108,6 +108,12 @@ describe('preferences', () => {
     });
   });
 
+  it('read back concert pitch for the scores opened from now on (PLAT-032), off at first', () => {
+    expect(FALLBACK.concertPitch).toBe(false);
+    expect(parsePreferences(JSON.stringify({ concertPitch: true }), FALLBACK).concertPitch).toBe(true);
+    expect(parsePreferences(JSON.stringify({ concertPitch: 1 }), FALLBACK).concertPitch).toBe(false);
+  });
+
   it('read back the tablature the other way up (REND-315), off at first', () => {
     expect(FALLBACK.invertedTab).toBe(false);
     expect(parsePreferences(JSON.stringify({ invertedTab: true }), FALLBACK).invertedTab).toBe(true);

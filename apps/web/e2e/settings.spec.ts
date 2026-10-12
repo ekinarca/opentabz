@@ -66,6 +66,43 @@ test.describe('settings', () => {
     await expect(dialog.getByRole('radio', { name: 'Steadiest' })).toHaveAttribute('aria-checked', 'true');
   });
 
+  test('scores open with the staves, concert pitch and stylesheet chosen (PLAT-032)', async ({ page }) => {
+    await openHome(page);
+    const dialog = await openSettings(page);
+    await dialog
+      .getByRole('radiogroup', { name: 'Staves of scores opened from now on' })
+      .getByRole('radio', { name: 'Tab', exact: true })
+      .click();
+    await dialog.getByRole('switch', { name: 'Transposing instruments at concert pitch' }).click();
+    await dialog.getByLabel('Stylesheet of scores opened from now on').selectOption('look:compact');
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    await expect(page.getByRole('button', { name: /^Staves: / })).toHaveText(/Tab/);
+    await page.getByRole('button', { name: /^Staves: / }).click();
+    await expect(page.getByRole('menuitemcheckbox', { name: 'Concert pitch' })).toBeChecked();
+    await page.keyboard.press('Escape');
+    // Compact: four fifths of the size.
+    await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'Stylesheet' }).getByRole('slider', { name: 'Scale' }),
+    ).toHaveAttribute('aria-valuetext', '80 %');
+
+    // Remembered.
+    await page.reload();
+    const again = await openSettings(page);
+    await expect(
+      again
+        .getByRole('radiogroup', { name: 'Staves of scores opened from now on' })
+        .getByRole('radio', { name: 'Tab', exact: true }),
+    ).toHaveAttribute('aria-checked', 'true');
+    await expect(
+      again.getByRole('switch', { name: 'Transposing instruments at concert pitch' }),
+    ).toBeChecked();
+    await expect(again.getByLabel('Stylesheet of scores opened from now on')).toHaveValue('look:compact');
+  });
+
   test('the tablature the other way up, the lowest string on top (REND-315)', async ({ page }) => {
     await openShuffle(page);
     /** The first beat's two frets in the tablature: the A string's 0 and the D string's 2, by height. */

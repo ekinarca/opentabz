@@ -8,6 +8,7 @@ import {
   LOOK_IDS,
   saveStylesheet,
   setDefaultStylesheet,
+  type SavedStylesheet,
   type StylesheetChoice,
 } from '../state/stylesheets.ts';
 import { strings } from '../strings.ts';
@@ -16,15 +17,39 @@ import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 const s = strings.stylesheet.choices;
 
 /** A stylesheet choice as an option value, and back. */
-function valueOf(choice: StylesheetChoice | null): string {
+export function valueOf(choice: StylesheetChoice | null): string {
   if (choice === null) return 'file';
   return 'look' in choice ? `look:${choice.look}` : `saved:${choice.saved}`;
 }
 
-function choiceOf(value: string): StylesheetChoice | null {
+export function choiceOf(value: string): StylesheetChoice | null {
   const look = LOOK_IDS.find(id => value === `look:${id}`);
   if (look !== undefined) return { look };
   return value.startsWith('saved:') ? { saved: value.slice('saved:'.length) } : null;
+}
+
+/** The bundled looks and the stylesheets of one's own, as options of a select. */
+export function StylesheetOptions({ saved }: { readonly saved: readonly SavedStylesheet[] }) {
+  return (
+    <>
+      <optgroup label={s.looks}>
+        {LOOK_IDS.map(look => (
+          <option key={look} value={`look:${look}`}>
+            {s.lookNames[look]}
+          </option>
+        ))}
+      </optgroup>
+      {saved.length > 0 && (
+        <optgroup label={s.own}>
+          {saved.map(entry => (
+            <option key={entry.id} value={`saved:${entry.id}`}>
+              {entry.name}
+            </option>
+          ))}
+        </optgroup>
+      )}
+    </>
+  );
 }
 
 /**
@@ -49,26 +74,7 @@ export function StylesheetChoices({
     setStored(loadStylesheets());
   };
 
-  const options = (
-    <>
-      <optgroup label={s.looks}>
-        {LOOK_IDS.map(look => (
-          <option key={look} value={`look:${look}`}>
-            {s.lookNames[look]}
-          </option>
-        ))}
-      </optgroup>
-      {stored.saved.length > 0 && (
-        <optgroup label={s.own}>
-          {stored.saved.map(entry => (
-            <option key={entry.id} value={`saved:${entry.id}`}>
-              {entry.name}
-            </option>
-          ))}
-        </optgroup>
-      )}
-    </>
-  );
+  const options = <StylesheetOptions saved={stored.saved} />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">

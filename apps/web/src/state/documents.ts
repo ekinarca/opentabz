@@ -189,7 +189,7 @@ function initialView(summary: DocSummary): DocViewState {
     systemsLayout: summary.hasModelLayout ? 'model' : 'auto',
     staffDisplay: preferences.staffDisplay,
     staves: [],
-    concertPitch: false,
+    concertPitch: preferences.concertPitch,
     zoom: 1,
     autoFit: true,
     fit: null,

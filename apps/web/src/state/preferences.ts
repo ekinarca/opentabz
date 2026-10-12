@@ -63,6 +63,8 @@ export interface Preferences {
   /** How the pages sit on screen in the page layout. */
   readonly pageArrangement: PageArrangement;
   readonly staffDisplay: StaffDisplay;
+  /** Transposing instruments written at concert pitch in scores opened from now on (PLAT-032). */
+  readonly concertPitch: boolean;
   /** Shortcuts on a single character key (−, =, ?): can be turned off (WCAG 2.2 SC 2.1.4). */
   readonly singleKeyShortcuts: boolean;
   readonly scrollMode: ScrollMode;
@@ -129,6 +131,7 @@ export function defaultPreferences(locale: string): Preferences {
     page: pageSetup(defaultPaper(locale)),
     pageArrangement: 'vertical',
     staffDisplay: 'default',
+    concertPitch: false,
     singleKeyShortcuts: true,
     scrollMode: 'continuous',
     scrollOffset: 0.18,
@@ -224,6 +227,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
         value.staffDisplay === 'tab'
           ? value.staffDisplay
           : fallback.staffDisplay,
+      concertPitch: typeof value.concertPitch === 'boolean' ? value.concertPitch : fallback.concertPitch,
       singleKeyShortcuts:
         typeof value.singleKeyShortcuts === 'boolean'
           ? value.singleKeyShortcuts
@@ -308,6 +312,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       page: state.page,
       pageArrangement: state.pageArrangement,
       staffDisplay: state.staffDisplay,
+      concertPitch: state.concertPitch,
       singleKeyShortcuts: state.singleKeyShortcuts,
       scrollMode: state.scrollMode,
       scrollOffset: state.scrollOffset,

@@ -62,7 +62,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   interpretation does; changes apply while playing and are remembered for the file. A track whose
   notes all ring on says "let ring throughout" over its first bar, on screen and on paper.
 - **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
-  breaks up), with the output's delay and any audio it had to skip shown live; left-handed
+  breaks up), with the output's delay and any audio it had to skip shown live; what scores
+  opened from now on start with (their staves, concert pitch, their stylesheet); left-handed
   playing, which mirrors the fretboard and every chord diagram (in the score, on paper and in
   the chords panel) with the highest string on the left; the tablature the other way up, its
   lowest string on top as players see the neck; single-key shortcuts.

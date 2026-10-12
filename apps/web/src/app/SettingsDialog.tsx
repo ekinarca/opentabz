@@ -1,10 +1,13 @@
+import { STAFF_DISPLAYS } from '@opentabz/core/shared';
 import { Dialog, SegmentedControl, Switch } from '@opentabz/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { getAudioEngine } from '../audio/audio-engine.ts';
 import { AUDIO_LATENCIES, usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
-import { Field } from './MetronomeSettingsForm.tsx';
+import { loadStylesheets, setDefaultStylesheet } from '../state/stylesheets.ts';
+import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
+import { choiceOf, StylesheetOptions, valueOf } from './StylesheetChoices.tsx';
 
 const s = strings.settings;
 
@@ -28,7 +31,7 @@ function OutputStats() {
 
 /**
  * Settings that are not about one score: how much the audio output buffers (with what it does
- * now), the left-handed fretboard and single-key shortcuts.
+ * now), what scores opened from now on start with, the instrument views and the keyboard.
  */
 export function SettingsDialog() {
   const open = useUi(state => state.panel === 'settings');
@@ -65,6 +68,7 @@ export function SettingsDialog() {
           </Field>
           {open && <OutputStats />}
         </section>
+        <NotationSettings />
         <section className="flex flex-col gap-3" aria-labelledby="settings-views">
           <h3
             id="settings-views"
@@ -105,5 +109,57 @@ export function SettingsDialog() {
         </section>
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * Notation preferences (PLAT-032): the staves, concert pitch and stylesheet that scores opened
+ * from now on start with.
+ */
+function NotationSettings() {
+  const preferences = usePreferences();
+  const [stylesheets, setStylesheets] = useState(loadStylesheets);
+  const stylesheetId = useId();
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="settings-notation">
+      <h3
+        id="settings-notation"
+        className="text-[12px] font-semibold tracking-[0.08em] text-ink-faint uppercase"
+      >
+        {s.notation}
+      </h3>
+      <Field label={s.newStaves}>
+        <SegmentedControl
+          label={s.newStaves}
+          value={preferences.staffDisplay}
+          segments={STAFF_DISPLAYS.map(value => ({ value, label: strings.staffDisplays[value] }))}
+          onValueChange={staffDisplay => {
+            preferences.set({ staffDisplay });
+          }}
+        />
+      </Field>
+      <Switch
+        label={s.newConcertPitch}
+        hint={s.newConcertPitchHint}
+        checked={preferences.concertPitch}
+        onCheckedChange={concertPitch => {
+          preferences.set({ concertPitch });
+        }}
+      />
+      <Field label={s.newStylesheet} htmlFor={stylesheetId}>
+        <select
+          id={stylesheetId}
+          value={valueOf(stylesheets.default)}
+          onChange={event => {
+            setDefaultStylesheet(choiceOf(event.target.value));
+            setStylesheets(loadStylesheets());
+          }}
+          className={`${SELECT_CLASS} w-full`}
+        >
+          <option value="file">{strings.stylesheet.choices.asInFile}</option>
+          <StylesheetOptions saved={stylesheets.saved} />
+        </select>
+      </Field>
+    </section>
   );
 }
