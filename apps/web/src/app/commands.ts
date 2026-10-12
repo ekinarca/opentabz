@@ -9,8 +9,9 @@ import { LAYOUT_KINDS, NOTE_NAMES, STAFF_DISPLAYS, SYSTEMS_LAYOUTS } from '@open
 import { ORIENTATIONS, PAGE_ARRANGEMENTS, PAPER_IDS, type PageSetup } from '../score-view/pagination.ts';
 import { occurrenceOfMasterBar } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '../state/documents.ts';
-import { editingOf } from '../state/editing.ts';
+import { editingOf, transposeNotes } from '../state/editing.ts';
 import { openBarDialog } from './BarDialog.tsx';
+import { openTransposeDialog } from './TransposeDialog.tsx';
 import { openTrackDialog } from './TrackDialog.tsx';
 import { newScore } from './new-score.ts';
 import { requestClose } from './save.ts';
@@ -61,6 +62,13 @@ function activeDocument(): OpenDocument | null {
 
 function needsScore(): string | null {
   return activeDocument() === null ? p.reasons.noScore : null;
+}
+
+/** Why an editing command cannot run: no score, or the score is not being edited. */
+function whileEditing(): string | null {
+  const doc = activeDocument();
+  if (doc === null) return p.reasons.noScore;
+  return editingOf(doc.key).on ? null : p.reasons.notEditing;
 }
 
 function aliasesOf(id: string): readonly string[] {
@@ -275,6 +283,35 @@ export function paletteCommands(mod: string = modKey()): Command[] {
         if (doc !== null) openBarDialog(doc.key);
       },
     },
+    {
+      id: 'transpose-notes',
+      label: strings.transposeDialog.open,
+      aliases: aliasesOf('transpose-notes'),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openTransposeDialog(doc.key);
+      },
+    },
+    ...(
+      [
+        ['semitone-up', strings.transposeDialog.semitoneUp, 1],
+        ['semitone-down', strings.transposeDialog.semitoneDown, -1],
+        ['octave-up', strings.transposeDialog.octaveUpCommand, 12],
+        ['octave-down', strings.transposeDialog.octaveDownCommand, -12],
+      ] as const
+    ).map(([id, label, semitones]) => ({
+      id,
+      label,
+      aliases: aliasesOf(id),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) transposeNotes(doc.key, semitones);
+      },
+    })),
     {
       id: 'new-score',
       label: strings.home.newScore,

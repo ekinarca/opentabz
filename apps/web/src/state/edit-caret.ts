@@ -5,13 +5,23 @@
  * a beat is comes from the track's beats as the engine lists them (TrackBeats).
  */
 import {
+  BEAMING_ORDER,
   BEAT_EMPTY,
   DURATION_VALUES,
+  DYNAMICS,
+  FINGERS,
   MAX_FRET,
+  SPELLING_ORDER,
+  TRACK_BEAT_MARK_STRIDE,
   TRACK_BEAT_NOTE_STRIDE,
   TRACK_BEATS_STRIDE,
+  TRACK_NOTE_MARK_STRIDE,
+  type Beaming,
   type BeatAddress,
   type DurationValue,
+  type Dynamic,
+  type Finger,
+  type Spelling,
   type TrackBeats,
 } from '@opentabz/core/shared';
 
@@ -39,23 +49,45 @@ export interface BeatRow {
   /** Where the beat ends in its bar, and how long the bar is, in ticks. */
   readonly end: number;
   readonly barLength: number;
+  /** Its dynamics, its beam to the next beat and its text; null where none of the editor's. */
+  readonly dynamics: Dynamic | null;
+  readonly beaming: Beaming | null;
+  readonly text: string | null;
   /** The beat's notes: string (1 the lowest), fret and techniques (TECHNIQUE_… flags). */
-  readonly notes: readonly { readonly string: number; readonly fret: number; readonly flags: number }[];
+  readonly notes: readonly NoteRow[];
+}
+
+export interface NoteRow {
+  readonly string: number;
+  readonly fret: number;
+  readonly flags: number;
+  readonly leftFinger?: Finger;
+  readonly rightFinger?: Finger;
+  readonly spelling?: Spelling | null;
 }
 
 function rowAt(beats: TrackBeats, index: number): BeatRow {
   const at = index * TRACK_BEATS_STRIDE;
   const value = (offset: number): number => beats.beats[at + offset] ?? 0;
   const firstNote = value(8);
-  const notes = Array.from({ length: value(9) }, (_, note) => {
+  const notes = Array.from({ length: value(9) }, (_, note): NoteRow => {
     const noteAt = (firstNote + note) * TRACK_BEAT_NOTE_STRIDE;
+    const markAt = (firstNote + note) * TRACK_NOTE_MARK_STRIDE;
     return {
       string: beats.notes[noteAt] ?? 0,
       fret: beats.notes[noteAt + 1] ?? 0,
       flags: beats.notes[noteAt + 2] ?? 0,
+      leftFinger: FINGERS[beats.noteMarks[markAt] ?? 0] ?? 'none',
+      rightFinger: FINGERS[beats.noteMarks[markAt + 1] ?? 0] ?? 'none',
+      spelling: SPELLING_ORDER[beats.noteMarks[markAt + 2] ?? 0] ?? null,
     };
   });
+  const marks = index * TRACK_BEAT_MARK_STRIDE;
+  const beatId = value(0);
   return {
+    dynamics: DYNAMICS[beats.beatMarks[marks] ?? -1] ?? null,
+    beaming: BEAMING_ORDER[beats.beatMarks[marks + 1] ?? -1] ?? null,
+    text: beats.texts.find(([id]) => id === beatId)?.[1] ?? null,
     beatId: value(0),
     staff: value(1),
     bar: value(2),
@@ -170,6 +202,30 @@ export function stepCaretString(caret: Caret, strings: number, up: boolean, inve
   const higher = up !== inverted;
   const string = Math.min(strings, Math.max(1, caret.string + (higher ? 1 : -1)));
   return { ...caret, string };
+}
+
+/**
+ * The string a note moves to at its pitch (EDIT-052), as the engine moves it: the next string
+ * higher or lower in pitch that its beat leaves free and that has a fret for it; null when none.
+ * `tuning` is the open strings' MIDI notes, the highest string first.
+ */
+export function stringFor(
+  row: BeatRow,
+  tuning: readonly number[],
+  string: number,
+  higher: boolean,
+): number | null {
+  const note = row.notes.find(candidate => candidate.string === string);
+  if (note === undefined) return null;
+  const open = (each: number): number => tuning[tuning.length - each] ?? 0;
+  const pitch = open(string) + note.fret;
+  const step = higher ? 1 : -1;
+  for (let other = string + step; other >= 1 && other <= tuning.length; other += step) {
+    const fret = pitch - open(other);
+    if (fret < 0 || fret > MAX_FRET) return null;
+    if (!row.notes.some(candidate => candidate.string === other)) return other;
+  }
+  return null;
 }
 
 /** A fret typed a moment ago, which a second digit may extend (1 then 2 is 12). */

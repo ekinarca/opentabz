@@ -8,6 +8,8 @@ import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { BarDialog } from './BarDialog.tsx';
+import { TransposeDialog } from './TransposeDialog.tsx';
+import { MarksDialog } from './MarksDialog.tsx';
 import { CloseGuardDialog } from './CloseGuardDialog.tsx';
 import { RecoverDialog } from './RecoverDialog.tsx';
 import { TrackDialog } from './TrackDialog.tsx';
@@ -131,6 +133,8 @@ export function App() {
         <UpdateNotice />
         <CloseGuardDialog />
         <BarDialog />
+        <TransposeDialog />
+        <MarksDialog />
         <TrackDialog />
         <RecoverDialog />
         <Notices />

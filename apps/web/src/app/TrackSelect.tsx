@@ -34,7 +34,7 @@ export function TrackSelect({
         onChange={event => {
           setActiveTrack(doc.key, Number(event.target.value));
         }}
-        className={`${SELECT_CLASS} h-8 max-w-[min(260px,40vw)] ${compact ? 'max-md:w-[76px]' : ''}`}
+        className={`${SELECT_CLASS} h-8 max-w-[min(260px,40vw)] ${compact ? 'max-md:w-[76px] md:max-w-[180px]' : ''}`}
       >
         {doc.summary.tracks.map(candidate => (
           <option key={candidate.index} value={candidate.index}>

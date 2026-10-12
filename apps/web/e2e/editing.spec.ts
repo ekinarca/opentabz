@@ -618,3 +618,122 @@ test('what is selected is copied and pasted at the caret, and a track duplicated
   await expect(track.locator('option')).toHaveCount(5);
   await expect(track.locator('option').nth(1)).toHaveText('2. Rhythm Guitar');
 });
+
+test('notes are transposed by semitones and octaves, and moved from string to string at their pitch (EDIT-050 … EDIT-052)', async ({
+  page,
+  isMobile,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 3', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 3');
+
+  // Nothing selected: the caret's beat, a tone up.
+  await editTool(page, 'Transpose…');
+  const dialog = page.getByRole('dialog', { name: 'Transpose' });
+  await expect(dialog.getByLabel('Semitones')).toHaveValue('2');
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+  await editTool(page, 'Transpose…');
+  await dialog.getByRole('button', { name: 'Octave up' }).click();
+  await expect(dialog.getByLabel('Semitones')).toHaveValue('12');
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 17');
+
+  if (!isMobile) {
+    // Guitar Pro's Ctrl Alt ↓ and ↑: a string down at its pitch, the caret with it, and back.
+    const mod = await primary(page);
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press(`${mod}+Alt+ArrowDown`);
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 2, fret 22');
+    await page.keyboard.press(`${mod}+Alt+ArrowUp`);
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 17');
+  }
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  if (!isMobile) await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  if (!isMobile) await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+});
+
+test('dynamics, beams, fingering, spelling and text for a note and its beat, directions from the bar dialog (EDIT-012, EDIT-013, EDIT-025, EDIT-043)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 5', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+  const marks = page.getByRole('dialog', { name: 'Note and beat' });
+  const open = async () => {
+    await editBar(page).getByRole('button', { name: 'Techniques' }).click();
+    await page.getByRole('menuitem', { name: 'Dynamics, beam, fingering, spelling, text…' }).click();
+    await expect(marks).toBeVisible();
+  };
+  await open();
+  await marks.getByLabel('Dynamics').selectOption({ label: 'pp, very soft' });
+  await marks.getByRole('radio', { name: 'Broken' }).click();
+  await marks.getByLabel('Fretting hand').selectOption({ label: '3, ring' });
+  await marks.getByLabel('Picking hand').selectOption({ label: 'i, index' });
+  await marks.getByLabel('Spelling').selectOption({ label: 'With a flat' });
+  await marks.getByLabel('Text above the beat').fill('a tempo');
+  await marks.getByRole('button', { name: 'Apply' }).click();
+  await expect(marks).toBeHidden();
+  await expect.poll(() => firstSystemWrites(page, 'a tempo')).toBe(true);
+  // Read back as set, as one edit.
+  await open();
+  await expect(marks.getByLabel('Dynamics')).toHaveValue('pp');
+  await expect(marks.getByRole('radio', { name: 'Broken' })).toHaveAttribute('aria-checked', 'true');
+  await expect(marks.getByLabel('Fretting hand')).toHaveValue('ring');
+  await expect(marks.getByLabel('Picking hand')).toHaveValue('index');
+  await expect(marks.getByLabel('Spelling')).toHaveValue('flat');
+  await expect(marks.getByLabel('Text above the beat')).toHaveValue('a tempo');
+  await marks.getByRole('button', { name: 'Cancel', exact: true }).first().click();
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => firstSystemWrites(page, 'a tempo')).toBe(false);
+
+  // A Segno at the bar, and a D.S. al Fine at its end.
+  await editTool(page, 'Bar properties');
+  const bar = page.getByRole('dialog', { name: 'Bar 1' });
+  await bar.getByRole('checkbox', { name: 'Segno', exact: true }).check();
+  await bar.getByLabel('Jump', { exact: true }).selectOption({ label: 'D.S. al Fine' });
+  await bar.getByRole('button', { name: 'Apply' }).click();
+  await expect(bar).toBeHidden();
+  await expect.poll(() => firstSystemWrites(page, 'D.S. al Fine')).toBe(true);
+  await editTool(page, 'Bar properties');
+  await expect(bar.getByRole('checkbox', { name: 'Segno', exact: true })).toBeChecked();
+  await expect(bar.getByLabel('Jump', { exact: true })).toHaveValue('dal-segno-al-fine');
+});
+
+test('the caret writes in voices 2 to 4, put in the staff as needed (EDIT-011)', async ({
+  page,
+  isMobile,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  // From the Voice menu, or on a phone the "More editing tools" menu.
+  await editBar(page)
+    .getByRole('button', { name: isMobile ? 'More editing tools' : 'Voice 1' })
+    .click();
+  await page.getByRole('menuitemradio', { name: 'Voice 2' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, voice 2, string 1, nothing written');
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 7', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, voice 2, string 1, fret 7');
+  // The first voice is as it was; undone, the voice put in goes too, the caret back in the first.
+  if (!isMobile) {
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press(`${await primary(page)}+1`);
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  }
+  const undo = editBar(page).getByRole('button', { name: 'Undo', exact: true });
+  await undo.click();
+  await undo.click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await expect(undo).toBeDisabled();
+});

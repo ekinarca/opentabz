@@ -146,7 +146,7 @@ export function MenuRadioItem({
 }: {
   readonly value: string;
   readonly children: ReactNode;
-  readonly hint?: string;
+  readonly hint?: string | undefined;
 }) {
   return (
     <DropdownMenu.RadioItem className={ITEM} value={value}>

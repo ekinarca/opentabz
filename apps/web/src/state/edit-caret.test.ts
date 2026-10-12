@@ -13,6 +13,7 @@ import {
   stepCaretString,
   steppedDuration,
   stepRight,
+  stringFor,
   typedFret,
   voiceRows,
   type Caret,
@@ -110,5 +111,38 @@ describe('keys', () => {
     // A double whole note and a 128th step in among them.
     expect(steppedDuration(-2, false)).toBe(1);
     expect(steppedDuration(128, true)).toBe(64);
+  });
+});
+
+describe('a note moved from string to string (EDIT-052)', () => {
+  // Standard tuning, the highest string first.
+  const TUNING = [64, 59, 55, 50, 45, 40];
+
+  it('goes to the next string free with a fret for its pitch, either way', () => {
+    // Beat 1: fret 3 on string 5 (the B string): lower, the G string's 7th; the high E has no fret
+    // that low.
+    const row = rowOf(beats(), 1);
+    if (row === null) throw new Error('No beat 1.');
+    expect(stringFor(row, TUNING, 5, false)).toBe(4);
+    expect(stringFor(row, TUNING, 5, true)).toBeNull();
+    expect(stringFor({ ...row, notes: [{ string: 4, fret: 5, flags: 0 }] }, TUNING, 4, true)).toBe(5);
+    // No note there; no lower string than the low E.
+    expect(stringFor(row, TUNING, 2, true)).toBeNull();
+    expect(stringFor({ ...row, notes: [{ string: 1, fret: 0, flags: 0 }] }, TUNING, 1, false)).toBeNull();
+    // A string played is passed.
+    expect(
+      stringFor(
+        {
+          ...row,
+          notes: [
+            { string: 5, fret: 3, flags: 0 },
+            { string: 4, fret: 2, flags: 0 },
+          ],
+        },
+        TUNING,
+        5,
+        false,
+      ),
+    ).toBe(3);
   });
 });

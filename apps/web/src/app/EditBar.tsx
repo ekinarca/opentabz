@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from '@opentabz/ui';
 import {
+  ArrowUpDown,
   BetweenVerticalStart,
   Check,
   ClipboardPaste,
@@ -33,6 +34,7 @@ import {
   Eraser,
   FoldHorizontal,
   Hash,
+  Layers,
   ListPlus,
   Plus,
   Redo2,
@@ -70,6 +72,7 @@ import {
   redoEdit,
   selectAllToEdit,
   selectBarAtCaret,
+  selectVoice,
   setDurationAtCaret,
   toggleDotAtCaret,
   toggleEditing,
@@ -80,6 +83,8 @@ import {
 } from '../state/editing.ts';
 import { strings } from '../strings.ts';
 import { openBarDialog } from './BarDialog.tsx';
+import { openTransposeDialog } from './TransposeDialog.tsx';
+import { openMarksDialog } from './MarksDialog.tsx';
 import { DurationIcon } from './icons.tsx';
 import { focusScore, shortcutHint } from './keymap.ts';
 import { saveDocument } from './save.ts';
@@ -115,6 +120,24 @@ function backToScore(event: Event): void {
   focusScore();
 }
 
+/** The voices to write in, the caret's checked. */
+function VoiceItems({ docKey, voice }: { readonly docKey: string; readonly voice: number }) {
+  return (
+    <MenuRadioGroup<string>
+      value={String(voice)}
+      onValueChange={value => {
+        selectVoice(docKey, Number(value));
+      }}
+    >
+      {[0, 1, 2, 3].map(index => (
+        <MenuRadioItem key={index} value={String(index)} hint={shortcutHint(`voice-${String(index + 1)}`)}>
+          {e.voice(index + 1)}
+        </MenuRadioItem>
+      ))}
+    </MenuRadioGroup>
+  );
+}
+
 function Divider() {
   return <div className="mx-1 h-6 w-px shrink-0 bg-line max-md:hidden" aria-hidden />;
 }
@@ -128,6 +151,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
   const ready = row !== null;
   const key = doc.key;
   const selected = editing.selection !== null;
+  const voice = caret?.voice ?? 0;
   const copied = useClipboard(state => state.clip !== null);
 
   return (
@@ -161,6 +185,25 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           }}
         />
       </div>
+      {/* The voice the caret writes in (EDIT-011). */}
+      <Menu>
+        <Tooltip label={e.voices} shortcut={shortcutHint(`voice-${String(voice + 1)}`)}>
+          <MenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={e.voice(voice + 1)}
+              disabled={!ready}
+              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2 text-[13px] font-medium text-ink-muted tabular-nums hover:bg-sunken hover:text-ink disabled:pointer-events-none disabled:opacity-40 max-md:hidden"
+            >
+              <Layers size={16} aria-hidden />
+              {voice + 1}
+            </button>
+          </MenuTrigger>
+        </Tooltip>
+        <MenuContent onCloseAutoFocus={backToScore}>
+          <VoiceItems docKey={key} voice={voice} />
+        </MenuContent>
+      </Menu>
       <Divider />
       <IconButton
         onMouseDown={keepFocus}
@@ -356,10 +399,10 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           openBarDialog(key);
         }}
       />
-      {/* What is selected copied, cut, and pasted at the caret (EDIT-020). */}
+      {/* What is selected copied, cut, and pasted at the caret (EDIT-020); on narrower screens, in the menu. */}
       <IconButton
         onMouseDown={keepFocus}
-        className="max-xl:hidden"
+        className="max-2xl:hidden"
         label={e.copy}
         shortcut={shortcutHint('copy')}
         icon={<Copy size={18} aria-hidden />}
@@ -370,7 +413,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-xl:hidden"
+        className="max-2xl:hidden"
         label={e.cut}
         shortcut={shortcutHint('cut')}
         icon={<Scissors size={18} aria-hidden />}
@@ -381,7 +424,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-xl:hidden"
+        className="max-2xl:hidden"
         label={e.paste}
         shortcut={shortcutHint('paste')}
         icon={<ClipboardPaste size={18} aria-hidden />}
@@ -447,6 +490,10 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               {strings.shortcuts.actions[toggle]}
             </MenuCheckboxItem>
           ))}
+          <MenuSeparator />
+          <MenuItem disabled={!ready} onSelect={() => openMarksDialog(key)}>
+            {e.marks}
+          </MenuItem>
         </MenuContent>
       </Menu>
       <Divider />
@@ -459,13 +506,13 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           : caret === null || row === null
             ? ''
             : // Strings counted from the highest, as players count them.
-              e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret)}
+              e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret, caret.voice + 1)}
       </p>
       <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2 md:pl-2">
         {dirty && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-muted">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
-            <span className="max-xl:sr-only">{e.unsaved}</span>
+            <span className="max-2xl:sr-only">{e.unsaved}</span>
           </span>
         )}
         <Button
@@ -486,7 +533,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               <button
                 type="button"
                 aria-label={e.more}
-                className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink xl:hidden"
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink"
               >
                 <Ellipsis size={18} aria-hidden />
               </button>
@@ -500,6 +547,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             >
               {e.redo}
             </MenuItem>
+            <MenuSeparator />
+            <MenuLabel>{e.voices}</MenuLabel>
+            <VoiceItems docKey={key} voice={voice} />
             <MenuSeparator />
             <MenuItem
               icon={<SquareDashedMousePointer size={16} aria-hidden />}
@@ -529,6 +579,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               onSelect={() => pasteAtCaret(key)}
             >
               {e.paste}
+            </MenuItem>
+            <MenuItem icon={<ArrowUpDown size={16} aria-hidden />} onSelect={() => openTransposeDialog(key)}>
+              {strings.transposeDialog.open}
             </MenuItem>
             <MenuSeparator />
             <MenuItem

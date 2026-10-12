@@ -35,12 +35,28 @@ export type SelectionMark =
     };
 
 /** The rows of the caret's voice from the anchor's beat to the caret's, in order; null when gone. */
-function selectedRows(beats: TrackBeats, caret: Caret, anchor: number): BeatRow[] | null {
+export function selectedRows(beats: TrackBeats, caret: Caret, anchor: number): BeatRow[] | null {
   const rows = voiceRows(beats, caret.staff, caret.voice);
   const from = rows.findIndex(row => row.beatId === anchor);
   const to = rows.findIndex(row => row.beatId === caret.beatId);
   if (from < 0 || to < 0) return null;
   return rows.slice(Math.min(from, to), Math.max(from, to) + 1);
+}
+
+/**
+ * The beats of the caret's voice an action on the caret's beat acts on: those selected (in the
+ * caret's track, for bars), else the caret's.
+ */
+export function actedRows(selection: EditSelection | null, caret: Caret, beats: TrackBeats): BeatRow[] {
+  const own = rowOf(beats, caret.beatId);
+  if (selection === null) return own === null ? [] : [own];
+  if (selection.kind === 'beats')
+    return selectedRows(beats, caret, selection.anchor) ?? (own === null ? [] : [own]);
+  const [fromBar, toBar] = [
+    Math.min(selection.fromBar, selection.toBar),
+    Math.max(selection.fromBar, selection.toBar),
+  ];
+  return voiceRows(beats, caret.staff, caret.voice).filter(row => row.bar >= fromBar && row.bar <= toBar);
 }
 
 /** Whether a selection is still there to use: its anchor's beat is in the caret's voice. */

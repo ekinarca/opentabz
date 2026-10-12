@@ -12,6 +12,7 @@ import {
   METER_DENOMINATORS,
   MIN_TEMPO,
   TRIPLET_FEELS,
+  type BarDirection,
   type BarLine,
   type BarProperties,
   type BarState,
@@ -40,6 +41,32 @@ export function openBarDialog(key: string): boolean {
   return true;
 }
 
+/** The places a jump goes to, written at a bar (EDIT-025). */
+const PLACES = ['segno', 'segno-segno', 'coda', 'double-coda', 'fine'] as const;
+type Place = (typeof PLACES)[number];
+
+/** The jumps written at the end of a bar: at most one a bar. */
+const JUMPS = [
+  'da-capo',
+  'da-capo-al-coda',
+  'da-capo-al-double-coda',
+  'da-capo-al-fine',
+  'dal-segno',
+  'dal-segno-al-coda',
+  'dal-segno-al-double-coda',
+  'dal-segno-al-fine',
+  'dal-segno-segno',
+  'dal-segno-segno-al-coda',
+  'dal-segno-segno-al-double-coda',
+  'dal-segno-segno-al-fine',
+  'da-coda',
+  'da-double-coda',
+] as const;
+
+function isPlace(direction: BarDirection): direction is Place {
+  return (PLACES as readonly string[]).includes(direction);
+}
+
 const NUMERATORS = Array.from({ length: 32 }, (_, index) => index + 1);
 const SIGNATURES = Array.from({ length: 15 }, (_, index) => index - 7);
 const ENDINGS = Array.from({ length: MAX_ENDINGS }, (_, index) => index + 1);
@@ -62,6 +89,8 @@ export function barChanges(was: BarState, now: BarState): BarProperties {
   if (was.freeTime !== now.freeTime) changes.freeTime = now.freeTime;
   if (was.tripletFeel !== now.tripletFeel) changes.tripletFeel = now.tripletFeel;
   if (was.anacrusis !== now.anacrusis) changes.anacrusis = now.anacrusis;
+  if ([...was.directions].sort().join() !== [...now.directions].sort().join())
+    changes.directions = now.directions;
   return changes;
 }
 
@@ -386,6 +415,45 @@ export function BarDialog() {
               }}
             />
           )}
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-1 text-[13px] font-semibold text-ink">{s.directions}</legend>
+            <div role="group" aria-label={s.places} className="flex flex-wrap gap-x-4 gap-y-2">
+              {PLACES.map(place => (
+                <label key={place} className="inline-flex items-center gap-2 text-[13px] text-ink">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-[var(--ot-accent,currentColor)]"
+                    checked={now.directions.includes(place)}
+                    onChange={event => {
+                      const others = now.directions.filter(direction => direction !== place);
+                      update({ directions: event.target.checked ? [...others, place] : others });
+                    }}
+                  />
+                  {s.placeNames[place]}
+                </label>
+              ))}
+            </div>
+            <Field label={s.jump} htmlFor={`${id}-jump`}>
+              <select
+                id={`${id}-jump`}
+                value={now.directions.find(direction => !isPlace(direction)) ?? 'none'}
+                onChange={event => {
+                  const jump = JUMPS.find(candidate => candidate === event.target.value);
+                  const places = now.directions.filter(isPlace);
+                  update({ directions: jump === undefined ? places : [...places, jump] });
+                }}
+                className={INPUT_CLASS}
+              >
+                <option value="none">{s.jumpNames.none}</option>
+                {JUMPS.map(jump => (
+                  <option key={jump} value={jump}>
+                    {s.jumpNames[jump]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </fieldset>
         </div>
       )}
     </Dialog>

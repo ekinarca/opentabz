@@ -81,7 +81,8 @@ the string the next fret is written on, and the keys below come before their oth
 arrows move the caret, `-` and `+` change the note's length, as in Guitar Pro); they work whatever
 the single-key setting. Undo and redo work whenever there is something to undo or redo. Past the last beat of a
 bar with room left, `→` puts a rest there for the next note; past the score's last beat, a bar.
-The techniques' keys are Guitar Pro 8's: each turns its technique on or off on the caret's note, or
+Some browsers keep `Ctrl 1` to `4` (`⌘ 1` to `4`) for their tabs; installed, OpenTabz gets them,
+and the edit bar's Voice menu chooses the voice anywhere. The techniques' keys are Guitar Pro 8's: each turns its technique on or off on the caret's note, or
 its beat.
 
 | Action                                         | Windows and Linux                       | macOS                                   |
@@ -100,6 +101,12 @@ its beat.
 | Delete the beat, or the beats selected         | `Shift Delete`                          | `⌘ -`                                   |
 | Insert a bar                                   | `Insert`                                | `⌘ +`                                   |
 | Delete the bar, or the bars selected           | `Ctrl Delete`                           | `⌃ -`                                   |
+| Write in voice 1                               | `Ctrl 1`                                | `⌘ 1`                                   |
+| Write in voice 2                               | `Ctrl 2`                                | `⌘ 2`                                   |
+| Write in voice 3                               | `Ctrl 3`                                | `⌘ 3`                                   |
+| Write in voice 4                               | `Ctrl 4`                                | `⌘ 4`                                   |
+| Move the note a string up, at its pitch        | `Ctrl Alt ↑`                            | `⌘ ⌥ ↑`                                 |
+| Move the note a string down, at its pitch      | `Ctrl Alt ↓`                            | `⌘ ⌥ ↓`                                 |
 | Copy the selection                             | `Ctrl C`                                | `⌘ C`                                   |
 | Cut the selection                              | `Ctrl X`                                | `⌘ X`                                   |
 | Paste at the caret                             | `Ctrl V`                                | `⌘ V`                                   |

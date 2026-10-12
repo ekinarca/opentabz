@@ -557,16 +557,16 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-007 | MIDI real-time recording with quantize and click                 | OT  | M4  | —       | —    | planned |
 | EDIT-008 | Text entry (alphaTex superset)                                   | OT  | M5  | —       | —    | planned |
 | EDIT-010 | Durations, dots, tuplets, ties, rests                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
-| EDIT-011 | Up to 4 voices                                                   | GP  | M4  | —       | —    | planned |
-| EDIT-012 | Beam control                                                     | GP  | M4  | —       | —    | planned |
-| EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | —    | planned |
+| EDIT-011 | Up to 4 voices                                                   | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-012 | Beam control                                                     | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-014 | Every effect and articulation editable with a shortcut           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-021 | Time and key signatures                                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-022 | Tempo and tempo ramps                                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-023 | Repeats and alternate endings                                    | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-024 | Markers / sections                                               | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
-| EDIT-025 | Directions                                                       | GP  | M5  | —       | —    | planned |
+| EDIT-025 | Directions                                                       | GP  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-026 | Barline types                                                    | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-027 | Free time, swing feel, anacrusis                                 | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-030 | Tracks: add / remove / reorder / duplicate                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -579,10 +579,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-040 | Chord library and custom diagram editor                          | GP  | M5  | —       | —    | planned |
 | EDIT-041 | Chord-name recognition from notes                                | GP  | M5  | —       | —    | planned |
 | EDIT-042 | Lyrics editor with syllable alignment and counting               | GP+ | M5  | —       | —    | planned |
-| EDIT-043 | Text, fingering and dynamics editing                             | GP  | M4  | —       | —    | planned |
-| EDIT-050 | Transpose selection                                              | GP  | M4  | —       | —    | planned |
-| EDIT-051 | Octave shift                                                     | GP  | M4  | —       | —    | planned |
-| EDIT-052 | Move notes across strings                                        | GP  | M4  | —       | —    | planned |
+| EDIT-043 | Text, fingering and dynamics editing                             | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-050 | Transpose selection                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-051 | Octave shift                                                     | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-052 | Move notes across strings                                        | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-053 | Automatic re-fret / fingering                                    | GP  | M5  | —       | —    | planned |
 | EDIT-054 | Convert between tunings and instruments (drop D, bass, ukulele…) | GP+ | M5  | —       | —    | planned |
 | EDIT-055 | Harmonize (3rds / 6ths / octaves)                                | OT  | M5  | —       | —    | planned |
@@ -648,7 +648,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | —    | planned |
 | EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | —    | planned |
 | EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | —    | planned |
-| EDIT-118 | Transpose scope: selection or whole score, one track or all      | GP  | M4  | —       | —    | planned |
+| EDIT-118 | Transpose scope: selection or whole score, one track or all      | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-119 | MIDI capture settings: chord window, MIDI-guitar channel-to-string mapping, automatic fret choice | GP  | M4  | —       | —    | planned |
 | EDIT-120 | Finalize: document read-only until unlocked                      | GP  | M4  | —       | —    | planned |
 | EDIT-121 | Edit lock: a password is needed to edit                          | GP  | M4  | —       | —    | planned |
@@ -674,7 +674,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-141 | Automatic barre in chord diagrams                                | GP  | M5  | —       | —    | planned |
 | EDIT-142 | Chord preview playback                                           | GP  | M5  | —       | —    | planned |
 | EDIT-143 | Write a diagram's notes into an empty beat                       | GP  | M5  | —       | —    | planned |
-| EDIT-144 | Transpose chord diagrams and names with the notes                | GP  | M5  | —       | —    | planned |
+| EDIT-144 | Transpose chord diagrams and names with the notes                | GP  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-145 | Scale diagram: insert, resize, reset, delete                     | GP  | M5  | —       | —    | planned |
 | EDIT-146 | Scale-diagram geometry: 3–10 strings, 4–24 frets, start fret, orientation, fret markers | GP  | M5  | —       | —    | planned |
 | EDIT-147 | Scale-diagram dots: shape, colour, short text, text colour       | GP  | M5  | —       | —    | planned |

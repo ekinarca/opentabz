@@ -230,6 +230,26 @@ All notable changes to OpenTabz are recorded here. The format follows
   bars are added at the end when needed. Delete clears the notes selected, `Shift Delete` takes
   the beats away, `Ctrl Delete` the bars. What is copied can be pasted in another score open.
   Drums paste on drum tracks only, and notes only on a track with strings enough.
+- **Transpose.** The edit bar's Transpose… moves notes up or down by any number of semitones —
+  what is selected (or the caret's beat), the caret's track or every track — and the command
+  palette raises or lowers them a semitone or an octave. Notes on strings keep their strings while
+  the frets allow, else go to the nearest string with room; tied notes follow; drums stay as they
+  are; chord diagrams and names move too, unless asked not to (a diagram that would leave the
+  neck moves an octave the other way). What is selected stays selected, to move again. `Ctrl Alt ↑` and `↓` (`⌘ ⌥` on a Mac), as
+  in Guitar Pro, move the caret's note to the next string up or down at its pitch, the caret with
+  it.
+- **Dynamics, beams, fingering, spelling and text.** The Techniques menu's note and beat dialog
+  sets, as one edit, the dynamics (ppp to fff, marked and played) and the beam to the next beat
+  (as the meter groups it, broken or joined) of the beats selected or the caret's, the fretting
+  and picking fingers of the caret's note, its spelling in standard notation (with a sharp, a
+  flat or a natural; every note selected, with a selection), and the text above the beat.
+- **Four voices.** The edit bar's Voice menu, or `Ctrl 1` to `4` (`⌘` on a Mac) as in Guitar Pro,
+  puts the caret in another voice of its staff, on the beat sounding with its own; a voice the
+  staff does not have yet is put in, empty, as an edit to undo. The caret says which voice it
+  writes in.
+- **Directions.** The bar dialog writes Segno, Segno segno, Coda, Double coda and Fine at a bar,
+  and a jump at its end (D.C., D.S., D.S.S. and their al Coda, al Double Coda and al Fine, To
+  Coda), which playback follows.
 - **Duplicate a track.** The track dialog's Duplicate puts a copy of the track in after it, its
   notes, chord diagrams and lyrics and all, on MIDI channels of its own.
 - **Nothing lost.** Changes not saved are kept on the device as they are made, the file and its
