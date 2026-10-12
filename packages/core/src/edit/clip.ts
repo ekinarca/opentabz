@@ -508,12 +508,19 @@ function reach(transaction: Transaction, bar: number): void {
  * lines: each bar keeps its length where the beats meet its bar line, and is filled with rests where
  * they end before. Bars are put in at the end when the score is too short.
  */
-function pasteBeats(transaction: Transaction, at: BeatAddress, copy: alphaTab.model.Score): void {
+function pasteBeats(
+  transaction: Transaction,
+  at: BeatAddress,
+  copy: alphaTab.model.Score,
+  times: number,
+): void {
   const { score } = transaction;
   const staff = staffAt(score, at.track, at.staff);
   const copied = copy.tracks[0]?.staves[0];
   if (copied === undefined) throw new EditError('What was copied cannot be read.');
-  const beats = copied.bars.flatMap(bar => bar.voices[0]?.beats ?? []).filter(beat => !beat.isEmpty);
+  const once = copied.bars.flatMap(bar => bar.voices[0]?.beats ?? []).filter(beat => !beat.isEmpty);
+  // Pasted as many times as asked, one after the other.
+  const beats = Array.from({ length: times }, () => once).flat();
   const total = beats.reduce((sum, beat) => sum + beat.displayDuration, 0);
   const start = staff.bars[at.bar]?.voices[at.voice];
   if (start === undefined) throw new EditError(`No voice at ${JSON.stringify(at)}.`);
@@ -618,9 +625,16 @@ function pasteBars(transaction: Transaction, at: BeatAddress, copy: alphaTab.mod
   }
 }
 
-/** Writes what was copied from a beat on (EDIT-020). */
-export function paste(transaction: Transaction, at: BeatAddress, clip: Clip): void {
+/** The most times what was copied is pasted at once. */
+export const MAX_PASTE_TIMES = 99;
+
+/** Writes what was copied from a beat on (EDIT-020), as many times as asked one after another (EDIT-101). */
+export function paste(transaction: Transaction, at: BeatAddress, clip: Clip, times = 1): void {
+  if (!Number.isInteger(times) || times < 1 || times > MAX_PASTE_TIMES)
+    throw new EditError(`No pasting ${String(times)} times.`);
   const copy = readClip(clip);
-  if (clip.kind === 'beats') pasteBeats(transaction, at, copy);
-  else pasteBars(transaction, at, copy);
+  if (clip.kind === 'beats') pasteBeats(transaction, at, copy, times);
+  else
+    for (let time = 0; time < times; time++)
+      pasteBars(transaction, { ...at, bar: at.bar + time * copy.masterBars.length }, copy);
 }

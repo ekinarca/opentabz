@@ -626,7 +626,13 @@ export type EditCommand =
    * are, across bar lines; bars over the bars from the beat's on, in its track and the next ones.
    * Bars are put in at the end when the score is too short.
    */
-  | { readonly kind: 'paste'; readonly at: BeatAddress; readonly clip: Clip }
+  | {
+      readonly kind: 'paste';
+      readonly at: BeatAddress;
+      readonly clip: Clip;
+      /** How many times, one after another (EDIT-101); once unless said. */
+      readonly times?: number;
+    }
   /**
    * The notes of a selection a number of semitones higher or lower (EDIT-050, EDIT-051): a note on
    * strings keeps its string while the frets allow, else goes to the nearest string that has room;

@@ -441,7 +441,7 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       removeSelection(transaction, command.selection);
       return;
     case 'paste':
-      paste(transaction, command.at, command.clip);
+      paste(transaction, command.at, command.clip, command.times);
       return;
     case 'transpose':
       transpose(transaction, command.selection, command);

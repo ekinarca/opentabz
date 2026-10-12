@@ -811,6 +811,29 @@ describe('copy and paste (EDIT-020)', () => {
     expect(written(score, 0).slice(0, 4)).toEqual(['9.1:8', '2.1:8', '1.1:8', '2.1:8']);
   });
 
+  it('pastes as many times as asked, one after another (EDIT-101)', () => {
+    const score = texScore(EIGHTHS);
+    const editor = editorOf(score);
+    const clip = copySelection(score, beats([0, 0], [0, 1]));
+    editor.apply([{ kind: 'paste', at: { ...AT, beat: 2 }, clip, times: 3 }]);
+    expect(written(score, 0)).toEqual([
+      '1.1:8',
+      '2.1:8',
+      '1.1:8',
+      '2.1:8',
+      '1.1:8',
+      '2.1:8',
+      '1.1:8',
+      '2.1:8',
+    ]);
+    // Whole bars, twice: the score grows to hold them.
+    const bar = copySelection(score, { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 1, toBar: 1 });
+    editor.apply([{ kind: 'paste', at: { ...AT, bar: 1 }, clip: bar, times: 2 }]);
+    expect(score.masterBars).toHaveLength(3);
+    expect(written(score, 2)).toEqual(['0.6:1']);
+    expect(() => editor.apply([{ kind: 'paste', at: AT, clip, times: 0 }])).toThrow('No pasting 0 times.');
+  });
+
   it('pastes across a bar line, filling what the beats leave of a bar with rests', () => {
     const score = texScore(EIGHTHS);
     const editor = editorOf(score);
@@ -1605,6 +1628,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
       return { kind: 'move-track', track: pick(count), to: pick(count) };
     }
     case 10: {
+      const at = pick(score.masterBars.length);
       const properties: BarProperties[] = [
         { meter: { numerator: 1 + pick(7), denominator: [2, 4, 8][pick(3)] ?? 4 } },
         { key: { signature: pick(15) - 7, minor: random() < 0.5 } },
@@ -1618,11 +1642,11 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
         { tripletFeel: random() < 0.5 ? 'triplet-8th' : 'none' },
         { directions: BAR_DIRECTIONS.filter(() => random() < 0.15) },
         { systemBreak: random() < 0.5 },
-        { beamGroups: beamGroupsFor(score.masterBars[pick(score.masterBars.length)], random) },
+        { beamGroups: beamGroupsFor(score.masterBars[at], random) },
       ];
       return {
         kind: 'set-bar',
-        bar: pick(score.masterBars.length),
+        bar: at,
         properties: properties[pick(properties.length)] ?? {},
       };
     }
@@ -1833,7 +1857,12 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
         voice: other === staff ? voice.index : 0,
         beat: pick((other === staff ? (target?.voices[voice.index] ?? into) : into).beats.length),
       };
-      return { kind: 'paste', at, clip: structuredClone(clip) };
+      return {
+        kind: 'paste',
+        at,
+        clip: structuredClone(clip),
+        ...(random() < 0.2 ? { times: 2 + pick(3) } : {}),
+      };
     }
   }
 }
