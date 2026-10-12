@@ -45,11 +45,13 @@ import {
   type PaperId,
 } from '../score-view/pagination.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
+import { useEditing } from '../state/editing.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
+import { EditBar } from './EditBar.tsx';
 import { writeOutRepeats } from './unfold.ts';
 import { useFolding } from './use-folding.ts';
 import { enterFullScreen } from './full-screen.ts';
@@ -548,6 +550,9 @@ export function Workspace() {
   // The lyrics in place of the score (VIEW-022).
   const lyricsOnly = useUi(state => state.lyricsOnly) && lyrics;
   const fullScreen = useUi(state => state.fullScreen);
+  const editingActive = useEditing(state =>
+    activeKey === null ? false : (state.docs[activeKey]?.on ?? false),
+  );
   usePlaybackForActiveDocument(active);
 
   return (
@@ -569,6 +574,7 @@ export function Workspace() {
             }}
           />
         ))}
+      {active !== null && editingActive && !fullScreen && <EditBar doc={active} />}
       {docs.map(doc => (
         <ScoreHost key={doc.key} doc={doc} hidden={doc.key !== activeKey || lyricsOnly} />
       ))}

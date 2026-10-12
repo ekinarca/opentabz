@@ -101,6 +101,8 @@ interface DocumentsState {
   /** Shows a document, or the home page when `key` is null. */
   readonly activate: (key: string | null) => void;
   readonly updateView: (key: string, patch: Partial<DocViewState>) => void;
+  /** The document as edited (EDIT-001): its summary as the engine gives it after the edit. */
+  readonly setSummary: (key: string, summary: DocSummary) => void;
   readonly updateMix: (key: string, trackIndex: number, patch: Partial<TrackMix>) => void;
   readonly setFocus: (key: string, trackIndex: number | null) => void;
   /** Makes a track the active one; while one track is shown, the score shows the new one. */
@@ -277,7 +279,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           intakeMark,
         };
         set(state => ({ docs: [...state.docs, doc] }));
-        void restoreMix(key, bytes, summary.tracks.length);
+        if (source.blank !== true) void restoreMix(key, bytes, summary.tracks.length);
         lastOpened = key;
         if (summary.truncated) get().notify({ ...strings.notices.truncated(loaded.name), tone: 'warning' });
         else if (summary.extensionMismatch) {
@@ -313,6 +315,10 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
 
   activate: key => {
     if (key === null || get().docs.some(doc => doc.key === key)) set({ activeKey: key });
+  },
+
+  setSummary: (key, summary) => {
+    set(state => ({ docs: state.docs.map(doc => (doc.key === key ? { ...doc, summary } : doc)) }));
   },
 
   updateView: (key, patch) => {

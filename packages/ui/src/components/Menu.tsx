@@ -13,16 +13,22 @@ const ITEM =
 export function MenuContent({
   children,
   align = 'start',
+  onCloseAutoFocus,
 }: {
   readonly children: ReactNode;
   readonly align?: 'start' | 'center' | 'end';
+  /** Where the focus goes as the menu closes (its trigger, unless this prevents it). */
+  readonly onCloseAutoFocus?: (event: Event) => void;
 }) {
   return (
     <DropdownMenu.Portal>
       <DropdownMenu.Content
         align={align}
+        {...(onCloseAutoFocus === undefined ? {} : { onCloseAutoFocus })}
         sideOffset={6}
-        className="ot-pop-in z-50 min-w-[220px] rounded-[10px] border border-line bg-raised p-1 shadow-[var(--shadow-popover)]"
+        collisionPadding={8}
+        // A long menu scrolls within the room the screen leaves it (a phone held up).
+        className="ot-pop-in z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[220px] overflow-y-auto rounded-[10px] border border-line bg-raised p-1 shadow-[var(--shadow-popover)]"
       >
         {children}
       </DropdownMenu.Content>

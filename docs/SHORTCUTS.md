@@ -68,6 +68,62 @@ appears below with the same keys. Press `?` in the app to see the same list.
 | Select everything                            | `Ctrl A`          | `⌘ A`      |
 | Clear the selection, or leave full screen    | `Esc`             | `Esc`      |
 
+## Editing
+
+`F2` starts editing the score shown, and stops. While it is edited, a caret marks the beat and
+the string the next fret is written on, and the keys below come before their other meanings (the
+arrows move the caret, `-` and `+` change the note's length, as in Guitar Pro); they work whatever
+the single-key setting. Undo and redo work whenever there is something to undo or redo. Past the last beat of a
+bar with room left, `→` puts a rest there for the next note; past the score's last beat, a bar.
+The techniques' keys are Guitar Pro 8's: each turns its technique on or off on the caret's note, or
+its beat.
+
+| Action                                         | Windows and Linux                       | macOS                                   |
+| ---------------------------------------------- | --------------------------------------- | --------------------------------------- |
+| Edit the score, or stop                        | `F2`                                    | `F2`                                    |
+| Undo                                           | `Ctrl Z`                                | `⌘ Z`                                   |
+| Redo                                           | `Ctrl Shift Z` or `Ctrl Y`              | `⌘ ⇧ Z` or `⌘ Y`                        |
+| Write a fret (two digits quickly for 10 to 99) | `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` | `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` |
+| Caret to the previous beat                     | `←`                                     | `←`                                     |
+| Caret to the next beat                         | `→`                                     | `→`                                     |
+| Caret to the line above                        | `↑`                                     | `↑`                                     |
+| Caret to the line below                        | `↓`                                     | `↓`                                     |
+| Caret to the previous bar                      | `Ctrl ←`                                | `⌘ ←`                                   |
+| Caret to the next bar                          | `Ctrl →`                                | `⌘ →`                                   |
+| Delete the note                                | `Backspace` or `Delete`                 | `Backspace` or `Delete`                 |
+| Delete the beat                                | `Shift Delete`                          | `⌘ -`                                   |
+| Insert a bar                                   | `Insert`                                | `⌘ +`                                   |
+| Delete the bar                                 | `Ctrl Delete`                           | `⌃ -`                                   |
+| Insert a beat                                  | `Ctrl Insert`                           | `⌃ +`                                   |
+| Longer note                                    | `-` or `_`                              | `-` or `_`                              |
+| Shorter note                                   | `+` or `=`                              | `+` or `=`                              |
+| Dotted or not                                  | `.`                                     | `.`                                     |
+| Double-dotted or not                           | `Ctrl .`                                | `⌘ .`                                   |
+| Rest                                           | `R`                                     | `R`                                     |
+| Triplet                                        | `/`                                     | `/`                                     |
+| Tie the note                                   | `L`                                     | `L`                                     |
+| Hammer-on or pull-off                          | `H`                                     | `H`                                     |
+| Legato slide                                   | `S`                                     | `S`                                     |
+| Bend                                           | `B`                                     | `B`                                     |
+| Vibrato                                        | `V`                                     | `V`                                     |
+| Vibrato with the tremolo bar                   | `W`                                     | `W`                                     |
+| Palm mute on the note                          | `P`                                     | `P`                                     |
+| Palm mute on the beat                          | `Shift P`                               | `⇧ P`                                   |
+| Let ring                                       | `I`                                     | `I`                                     |
+| Dead note                                      | `X`                                     | `X`                                     |
+| Ghost note                                     | `O`                                     | `O`                                     |
+| Natural harmonic                               | `Y`                                     | `Y`                                     |
+| Accent                                         | `;`                                     | `;`                                     |
+| Heavy accent                                   | `:`                                     | `:`                                     |
+| Staccato                                       | `!`                                     | `!`                                     |
+| Slap                                           | `$`                                     | `$`                                     |
+| Tapping                                        | `)`                                     | `)`                                     |
+| Fade in                                        | `<`                                     | `<`                                     |
+| Fade out                                       | `>`                                     | `>`                                     |
+| Tremolo picking                                | `"`                                     | `"`                                     |
+| Downstroke                                     | `Shift D`                               | `⇧ D`                                   |
+| Upstroke                                       | `Shift U`                               | `⇧ U`                                   |
+
 ## View
 
 | Action                  | Windows and Linux    | macOS            |
@@ -84,10 +140,11 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Files
 
-| Action          | Windows and Linux | macOS |
-| --------------- | ----------------- | ----- |
-| Open files      | `Ctrl O`          | `⌘ O` |
-| Print the score | `Ctrl P`          | `⌘ P` |
+| Action                          | Windows and Linux | macOS |
+| ------------------------------- | ----------------- | ----- |
+| Open files                      | `Ctrl O`          | `⌘ O` |
+| Save as a Guitar Pro file (.gp) | `Ctrl S`          | `⌘ S` |
+| Print the score                 | `Ctrl P`          | `⌘ P` |
 
 ## Help
 

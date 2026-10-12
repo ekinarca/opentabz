@@ -60,3 +60,47 @@ export function ChordIcon({ size = 18 }: { readonly size?: number }) {
     </svg>
   );
 }
+
+/**
+ * A note of a duration (1 a whole note … 64 a sixty-fourth), for the edit bar: hollow heads for the
+ * whole and half notes, a stem from the half on, a flag more for each halving from the eighth on.
+ */
+export function DurationIcon({
+  value,
+  size = 18,
+  dotted = false,
+}: {
+  readonly value: number;
+  readonly size?: number;
+  readonly dotted?: boolean;
+}) {
+  const hollow = value <= 2;
+  const flags = value >= 8 ? Math.round(Math.log2(value / 4)) : 0;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <ellipse
+        cx="9"
+        cy="17.5"
+        rx="3.9"
+        ry="2.7"
+        transform="rotate(-22 9 17.5)"
+        fill={hollow ? 'none' : 'currentColor'}
+      />
+      {value >= 2 && <path d="M12.6 16.6V3" />}
+      {Array.from({ length: flags }, (_, flag) => (
+        <path key={flag} d={`M12.6 ${String(3 + flag * 3)}c0 2.4 4.6 3 4.6 6.2`} />
+      ))}
+      {dotted && <circle cx="19.5" cy="17.5" r="1.5" fill="currentColor" stroke="none" />}
+    </svg>
+  );
+}

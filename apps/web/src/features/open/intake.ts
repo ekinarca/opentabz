@@ -14,6 +14,8 @@ export type IntakeResult =
 export interface IntakeSource {
   readonly name: string;
   readonly load: () => Promise<IntakeResult>;
+  /** A new score (COMP-001): not a file to open again from the recent scores. */
+  readonly blank?: boolean;
 }
 
 function error(code: OpenError['code'], fileName: string, byteLength: number, detail: string): IntakeResult {

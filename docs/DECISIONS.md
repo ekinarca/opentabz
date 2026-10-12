@@ -130,6 +130,8 @@ lead engineer; the owner is consulted only on fixtures, deploy access and licens
   could not be edited, so the button would lead to a dead end — a stub by the covenant's rules.
 - **Decision:** M0–M3 home: drop zone, Open, and original demo scores. **New** appears in M4 with
   templates and note entry. This is a reordering, not a scope reduction.
+- **Done:** M4 brings note entry and **New score** (a blank guitar score, edited at once); the
+  templates follow in M5 (COMP-002).
 
 ## ADR-0012 — Styling: Tailwind CSS 4 + CSS custom properties + Radix primitives
 

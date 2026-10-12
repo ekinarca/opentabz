@@ -14,6 +14,26 @@ import {
   type Occurrence,
 } from '../score-view/timeline-lookup.ts';
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
+import {
+  deleteBarAtCaret,
+  deleteBeatAtCaret,
+  deleteNoteAtCaret,
+  insertBarAtCaret,
+  insertBeatAtCaret,
+  moveCaret,
+  redoEdit,
+  restAtCaret,
+  stepDurationAtCaret,
+  toggleBeatTechnique,
+  toggleDotAtCaret,
+  toggleDoubleDotAtCaret,
+  toggleNoteTechnique,
+  togglePalmMuteBeat,
+  toggleEditing,
+  typeFret,
+  undoEdit,
+  type CaretMove,
+} from '../state/editing.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { usePractice } from '../state/practice.ts';
 import { usePreferences } from '../state/preferences.ts';
@@ -21,9 +41,10 @@ import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { leaveFullScreen, toggleFullScreen } from './full-screen.ts';
 import { pickFiles } from './open-actions.ts';
+import { saveDocument } from './save.ts';
 import { modKey } from './platform.ts';
 
-export type ShortcutGroup = 'playback' | 'navigation' | 'selection' | 'view' | 'files' | 'help';
+export type ShortcutGroup = 'playback' | 'navigation' | 'selection' | 'editing' | 'view' | 'files' | 'help';
 
 export interface KeyBinding {
   /** `KeyboardEvent.key`, letters in lower case. */
@@ -39,6 +60,11 @@ export interface KeyBinding {
   readonly alt?: boolean;
   /** Control as well as ⌘ (⌃⌘F): such a binding is for Apple platforms only. */
   readonly ctrl?: boolean;
+  /**
+   * The platform the binding is for, where Guitar Pro's keys differ (a Mac has no Insert key):
+   * Apple platforms, or the others.
+   */
+  readonly platform?: 'apple' | 'pc';
 }
 
 export interface Shortcut {
@@ -50,8 +76,16 @@ export interface Shortcut {
   readonly needsScore: boolean;
   /** Also while typing in a text field. */
   readonly inTextFields?: boolean;
-  /** Returns whether the key was handled (otherwise it keeps its usual meaning). */
-  readonly run: () => boolean;
+  /**
+   * Only while the score is being edited (EDIT-004), before the keys' other meanings; its single
+   * keys then work whatever the single-key setting, the score being written.
+   */
+  readonly editing?: boolean;
+  /**
+   * Returns whether the key was handled; otherwise the next action on the same keys is tried, or
+   * the key keeps its usual meaning. Given the key pressed, when one was.
+   */
+  readonly run: (key?: KeyInput) => boolean;
 }
 
 /** Speed change per key press (Guitar Pro's − and + keys). */
@@ -281,7 +315,263 @@ export function zoomStep(zoom: number, direction: 1 | -1): number {
 
 const s = strings.shortcuts.actions;
 
+/** Runs an editing action on the document shown, if any. */
+function onActive(action: (key: string) => boolean): boolean {
+  const doc = activeDocument();
+  return doc !== null && action(doc.key);
+}
+
+/** Moves the editor's caret on the document shown. */
+function caret(move: CaretMove): () => boolean {
+  return () => onActive(key => moveCaret(key, move, usePreferences.getState().invertedTab));
+}
+
+/** The score shown, focused, for the keys that follow to edit it. */
+export function focusScore(): void {
+  const doc = activeDocument();
+  if (doc === null) return;
+  document.querySelector<HTMLElement>(`[data-doc="${CSS.escape(doc.key)}"]`)?.focus({ preventScroll: true });
+}
+
+const DIGITS: readonly KeyBinding[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(key => ({
+  key,
+}));
+
+/** The editor's keys (EDIT-004, EDIT-060), first: while editing, they come before other meanings. */
+const EDITING: readonly Shortcut[] = [
+  {
+    id: 'edit-mode',
+    group: 'editing',
+    label: s.editMode,
+    bindings: [{ key: 'F2' }],
+    needsScore: true,
+    run: () =>
+      onActive(key => {
+        void toggleEditing(key);
+        focusScore();
+        return true;
+      }),
+  },
+  {
+    id: 'undo',
+    group: 'editing',
+    label: s.undo,
+    bindings: [{ key: 'z', mod: true }],
+    needsScore: true,
+    run: () => onActive(undoEdit),
+  },
+  {
+    id: 'redo',
+    group: 'editing',
+    label: s.redo,
+    bindings: [
+      { key: 'z', mod: true, shift: true },
+      { key: 'y', mod: true },
+    ],
+    needsScore: true,
+    run: () => onActive(redoEdit),
+  },
+  {
+    id: 'write-fret',
+    group: 'editing',
+    label: s.writeFret,
+    bindings: DIGITS,
+    needsScore: true,
+    editing: true,
+    run: key =>
+      key !== undefined && /^[0-9]$/.test(key.key) && onActive(doc => typeFret(doc, Number(key.key))),
+  },
+  {
+    id: 'caret-left',
+    group: 'editing',
+    label: s.caretLeft,
+    bindings: [{ key: 'ArrowLeft' }],
+    needsScore: true,
+    editing: true,
+    run: caret('left'),
+  },
+  {
+    id: 'caret-right',
+    group: 'editing',
+    label: s.caretRight,
+    bindings: [{ key: 'ArrowRight' }],
+    needsScore: true,
+    editing: true,
+    run: caret('right'),
+  },
+  {
+    id: 'caret-up',
+    group: 'editing',
+    label: s.caretUp,
+    bindings: [{ key: 'ArrowUp' }],
+    needsScore: true,
+    editing: true,
+    run: caret('up'),
+  },
+  {
+    id: 'caret-down',
+    group: 'editing',
+    label: s.caretDown,
+    bindings: [{ key: 'ArrowDown' }],
+    needsScore: true,
+    editing: true,
+    run: caret('down'),
+  },
+  {
+    id: 'caret-bar-left',
+    group: 'editing',
+    label: s.caretBarLeft,
+    bindings: [{ key: 'ArrowLeft', mod: true }],
+    needsScore: true,
+    editing: true,
+    run: caret('bar-left'),
+  },
+  {
+    id: 'caret-bar-right',
+    group: 'editing',
+    label: s.caretBarRight,
+    bindings: [{ key: 'ArrowRight', mod: true }],
+    needsScore: true,
+    editing: true,
+    run: caret('bar-right'),
+  },
+  {
+    id: 'delete-note',
+    group: 'editing',
+    label: s.deleteNote,
+    bindings: [{ key: 'Backspace' }, { key: 'Delete' }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(deleteNoteAtCaret),
+  },
+  {
+    id: 'delete-beat',
+    group: 'editing',
+    label: s.deleteBeat,
+    // Guitar Pro's keys: Shift Del, ⌘ − on a Mac.
+    bindings: [
+      { key: 'Delete', shift: true, platform: 'pc' },
+      { key: '-', mod: true, platform: 'apple' },
+    ],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(deleteBeatAtCaret),
+  },
+  {
+    id: 'insert-bar',
+    group: 'editing',
+    label: s.insertBar,
+    // Guitar Pro's keys: Ins, ⌘ + on a Mac.
+    bindings: [
+      { key: 'Insert', platform: 'pc' },
+      { key: '+', mod: true, platform: 'apple' },
+    ],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(insertBarAtCaret),
+  },
+  {
+    id: 'delete-bar',
+    group: 'editing',
+    label: s.deleteBar,
+    // Guitar Pro's keys: Ctrl Del, ⌃ − on a Mac.
+    bindings: [
+      { key: 'Delete', mod: true, platform: 'pc' },
+      { key: '-', ctrl: true },
+    ],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(deleteBarAtCaret),
+  },
+  {
+    id: 'insert-beat',
+    group: 'editing',
+    label: s.insertBeat,
+    // Guitar Pro's keys: Ctrl Ins, ⌃ + on a Mac.
+    bindings: [
+      { key: 'Insert', mod: true, platform: 'pc' },
+      { key: '+', ctrl: true },
+    ],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(insertBeatAtCaret),
+  },
+  {
+    id: 'duration-longer',
+    group: 'editing',
+    label: s.durationLonger,
+    // As in Guitar Pro: − lengthens the note, + shortens it.
+    bindings: [{ key: '-' }, { key: '_' }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => stepDurationAtCaret(key, true)),
+  },
+  {
+    id: 'duration-shorter',
+    group: 'editing',
+    label: s.durationShorter,
+    bindings: [{ key: '+' }, { key: '=' }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => stepDurationAtCaret(key, false)),
+  },
+  {
+    id: 'dot',
+    group: 'editing',
+    label: s.dot,
+    bindings: [{ key: '.' }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(toggleDotAtCaret),
+  },
+];
+
+/** An editing shortcut that turns a technique on or off, Guitar Pro's keys (EDIT-014). */
+function technique(
+  id: string,
+  label: string,
+  bindings: readonly KeyBinding[],
+  run: (key: string) => boolean,
+): Shortcut {
+  return { id, group: 'editing', label, bindings, needsScore: true, editing: true, run: () => onActive(run) };
+}
+
+/** Guitar Pro 8's keys for rhythm and techniques (its "Durations", "Ties", "Tuplets" and "Playing Effects"). */
+const TECHNIQUES: readonly Shortcut[] = [
+  technique('double-dot', s.doubleDot, [{ key: '.', mod: true }], toggleDoubleDotAtCaret),
+  technique('rest', s.rest, [{ key: 'r' }], restAtCaret),
+  technique('triplet', s.triplet, [{ key: '/' }], key => toggleBeatTechnique(key, 'triplet')),
+  technique('tie', s.tie, [{ key: 'l' }], key => toggleNoteTechnique(key, 'tie')),
+  technique('hammer', s.hammer, [{ key: 'h' }], key => toggleNoteTechnique(key, 'hammer')),
+  technique('slide', s.slide, [{ key: 's' }], key => toggleNoteTechnique(key, 'slide')),
+  technique('bend', s.bend, [{ key: 'b' }], key => toggleNoteTechnique(key, 'bend')),
+  technique('vibrato', s.vibrato, [{ key: 'v' }], key => toggleNoteTechnique(key, 'vibrato')),
+  technique('bar-vibrato', s.barVibrato, [{ key: 'w' }], key => toggleBeatTechnique(key, 'barVibrato')),
+  technique('palm-mute', s.palmMute, [{ key: 'p' }], key => toggleNoteTechnique(key, 'palmMute')),
+  technique('palm-mute-beat', s.palmMuteBeat, [{ key: 'p', shift: true }], togglePalmMuteBeat),
+  technique('let-ring', s.letRing, [{ key: 'i' }], key => toggleNoteTechnique(key, 'letRing')),
+  technique('dead', s.dead, [{ key: 'x' }], key => toggleNoteTechnique(key, 'dead')),
+  technique('ghost', s.ghost, [{ key: 'o' }], key => toggleNoteTechnique(key, 'ghost')),
+  technique('harmonic', s.harmonic, [{ key: 'y' }], key => toggleNoteTechnique(key, 'harmonic')),
+  technique('accent', s.accent, [{ key: ';' }], key => toggleNoteTechnique(key, 'accent')),
+  technique('heavy-accent', s.heavyAccent, [{ key: ':' }], key => toggleNoteTechnique(key, 'heavyAccent')),
+  technique('staccato', s.staccato, [{ key: '!' }], key => toggleNoteTechnique(key, 'staccato')),
+  technique('slap', s.slap, [{ key: '$' }], key => toggleBeatTechnique(key, 'slap')),
+  technique('tap', s.tap, [{ key: ')' }], key => toggleBeatTechnique(key, 'tap')),
+  technique('fade-in', s.fadeIn, [{ key: '<' }], key => toggleBeatTechnique(key, 'fadeIn')),
+  technique('fade-out', s.fadeOut, [{ key: '>' }], key => toggleBeatTechnique(key, 'fadeOut')),
+  technique('tremolo', s.tremolo, [{ key: '"' }], key => toggleBeatTechnique(key, 'tremolo')),
+  technique('stroke-down', s.strokeDown, [{ key: 'd', shift: true }], key =>
+    toggleBeatTechnique(key, 'strokeDown'),
+  ),
+  technique('stroke-up', s.strokeUp, [{ key: 'u', shift: true }], key =>
+    toggleBeatTechnique(key, 'strokeUp'),
+  ),
+];
+
 export const SHORTCUTS: readonly Shortcut[] = [
+  ...EDITING,
+  ...TECHNIQUES,
   {
     id: 'play-pause',
     group: 'playback',
@@ -669,6 +959,19 @@ export const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    id: 'save',
+    group: 'files',
+    label: s.save,
+    bindings: [{ key: 's', mod: true }],
+    needsScore: true,
+    inTextFields: true,
+    run: () =>
+      onActive(key => {
+        void saveDocument(key);
+        return true;
+      }),
+  },
+  {
     id: 'print',
     group: 'files',
     label: s.print,
@@ -727,6 +1030,7 @@ export interface KeyInput {
 
 /** Whether a binding exists on a platform whose primary modifier is ⌘ (`apple`). */
 export function onPlatform(binding: KeyBinding, apple: boolean): boolean {
+  if (binding.platform !== undefined && (binding.platform === 'apple') !== apple) return false;
   return binding.ctrl !== true || apple;
 }
 
@@ -812,7 +1116,8 @@ export function sameBinding(a: KeyBinding, b: KeyBinding): boolean {
     (a.mod === true) === (b.mod === true) &&
     (a.shift === true) === (b.shift === true) &&
     (a.alt === true) === (b.alt === true) &&
-    (a.ctrl === true) === (b.ctrl === true)
+    (a.ctrl === true) === (b.ctrl === true) &&
+    (a.platform ?? null) === (b.platform ?? null)
   );
 }
 
@@ -844,16 +1149,22 @@ export function bindingFromKey(event: KeyInput, apple: boolean): KeyBinding | nu
   };
 }
 
-/** The other shortcut, if any, that a binding already belongs to. */
+/**
+ * The other shortcut, if any, that a binding already belongs to at the same moments: the editor's
+ * own keys, while a score is edited, come before the others' and take nothing from them.
+ */
 export function shortcutUsing(
   binding: KeyBinding,
   except: string,
   overrides: KeyOverrides = usePreferences.getState().keyBindings,
 ): Shortcut | null {
+  const editing = SHORTCUTS.find(shortcut => shortcut.id === except)?.editing === true;
   return (
     SHORTCUTS.find(
       shortcut =>
-        shortcut.id !== except && bindingsOf(shortcut, overrides).some(other => sameBinding(other, binding)),
+        shortcut.id !== except &&
+        (shortcut.editing === true) === editing &&
+        bindingsOf(shortcut, overrides).some(other => sameBinding(other, binding)),
     ) ?? null
   );
 }

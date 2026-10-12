@@ -9,6 +9,9 @@ import { LAYOUT_KINDS, NOTE_NAMES, STAFF_DISPLAYS, SYSTEMS_LAYOUTS } from '@open
 import { ORIENTATIONS, PAGE_ARRANGEMENTS, PAPER_IDS, type PageSetup } from '../score-view/pagination.ts';
 import { occurrenceOfMasterBar } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '../state/documents.ts';
+import { editingOf } from '../state/editing.ts';
+import { newScore } from './new-score.ts';
+import { requestClose } from './save.ts';
 import { MAX_TRANSPOSE } from '../state/mixer-memory.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { THEME_PREFERENCES, usePreferences, type Preferences } from '../state/preferences.ts';
@@ -203,30 +206,36 @@ export function goToMasterBar(index: number): boolean {
 
 /** The commands of the shortcut table, with their keys, and those without keys. */
 export function paletteCommands(mod: string = modKey()): Command[] {
-  const fromShortcuts = SHORTCUTS.filter(shortcut => shortcut.id !== 'command-palette').map(
-    (shortcut): Command => {
-      const binding = platformBindings(shortcut, mod)[0];
-      return {
-        id: shortcut.id,
-        label: shortcut.label,
-        aliases: aliasesOf(shortcut.id),
-        keys: binding === undefined ? null : formatBinding(binding, mod),
-        unavailable: () => {
-          if (shortcut.needsScore && activeDocument() === null) return p.reasons.noScore;
-          if (
-            shortcut.id === 'clear-selection' &&
-            usePlayer.getState().selection === null &&
-            !useUi.getState().fullScreen
-          )
-            return p.reasons.noSelection;
-          return null;
-        },
-        run: () => {
-          shortcut.run();
-        },
-      };
-    },
-  );
+  // A fret is written by its digits, not from the palette.
+  const fromShortcuts = SHORTCUTS.filter(
+    shortcut => shortcut.id !== 'command-palette' && shortcut.id !== 'write-fret',
+  ).map((shortcut): Command => {
+    const binding = platformBindings(shortcut, mod)[0];
+    return {
+      id: shortcut.id,
+      label: shortcut.label,
+      aliases: aliasesOf(shortcut.id),
+      keys: binding === undefined ? null : formatBinding(binding, mod),
+      unavailable: () => {
+        const doc = activeDocument();
+        if (shortcut.needsScore && doc === null) return p.reasons.noScore;
+        const editing = editingOf(doc?.key ?? null);
+        if (shortcut.editing === true && !editing.on) return p.reasons.notEditing;
+        if (shortcut.id === 'undo' && !editing.canUndo) return p.reasons.nothingToUndo;
+        if (shortcut.id === 'redo' && !editing.canRedo) return p.reasons.nothingToRedo;
+        if (
+          shortcut.id === 'clear-selection' &&
+          usePlayer.getState().selection === null &&
+          !useUi.getState().fullScreen
+        )
+          return p.reasons.noSelection;
+        return null;
+      },
+      run: () => {
+        shortcut.run();
+      },
+    };
+  });
   const c = p.commands;
   const others: Command[] = [
     opens('export', c.export, 'export'),
@@ -234,6 +243,16 @@ export function paletteCommands(mod: string = modKey()): Command[] {
     opens('practice', c.practice, 'practice'),
     opens('about', strings.topBar.about, 'about', () => null),
     opens('open-url', strings.home.openUrl, 'url', () => null),
+    {
+      id: 'new-score',
+      label: strings.home.newScore,
+      aliases: aliasesOf('new-score'),
+      keys: null,
+      unavailable: () => null,
+      run: () => {
+        void newScore();
+      },
+    },
     opens('song-info', strings.toolbar.songInfo, 'songInfo'),
     opens('page-setup', strings.pageSetup.open, 'pageSetup'),
     opens('track-staves', strings.trackStaves.title, 'trackStaves'),
@@ -441,7 +460,7 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       unavailable: needsScore,
       run: () => {
         const doc = activeDocument();
-        if (doc !== null) useDocuments.getState().close(doc.key);
+        if (doc !== null) requestClose(doc.key);
       },
     },
   ];

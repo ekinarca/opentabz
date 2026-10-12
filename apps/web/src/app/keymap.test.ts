@@ -75,20 +75,28 @@ describe('keymap', () => {
     expect(matches({ key: 'ArrowLeft', shift: true }, key('ArrowLeft', { shiftKey: true }), true)).toBe(true);
   });
 
-  it('has unique ids and no two shortcuts on the same keys', () => {
+  it('has unique ids and no two shortcuts on the same keys, while editing or not', () => {
     expect(new Set(SHORTCUTS.map(shortcut => shortcut.id)).size).toBe(SHORTCUTS.length);
-    const seen = new Map<string, string>();
-    for (const shortcut of SHORTCUTS) {
-      for (const binding of shortcut.bindings) {
-        const id = JSON.stringify([
-          binding.key,
-          binding.mod === true,
-          binding.shift === true,
-          binding.alt === true,
-          binding.ctrl === true,
-        ]);
-        expect(seen.get(id), `${shortcut.id} and ${seen.get(id) ?? ''} share ${id}`).toBeUndefined();
-        seen.set(id, shortcut.id);
+    // Keys may mean one thing while the score is edited and another otherwise (← moves the caret,
+    // or the player), never two things at once.
+    for (const editing of [false, true]) {
+      const seen = new Map<string, string>();
+      // While editing, the editor's keys come first and the others on the same keys wait.
+      const first = SHORTCUTS.filter(shortcut =>
+        editing ? shortcut.group === 'editing' : shortcut.editing !== true,
+      );
+      for (const shortcut of first) {
+        for (const binding of shortcut.bindings) {
+          const id = JSON.stringify([
+            binding.key,
+            binding.mod === true,
+            binding.shift === true,
+            binding.alt === true,
+            binding.ctrl === true,
+          ]);
+          expect(seen.get(id), `${shortcut.id} and ${seen.get(id) ?? ''} share ${id}`).toBeUndefined();
+          seen.set(id, shortcut.id);
+        }
       }
     }
   });
@@ -251,8 +259,12 @@ describe('keys of one’s own (PLAT-036)', () => {
     expect(loop !== undefined && sameBinding({ key: 'F9' }, loop.bindings[0] ?? { key: '' })).toBe(true);
   });
 
-  it('tells which action already has the keys', () => {
+  it('tells which action already has the keys, at the same moments', () => {
     expect(shortcutUsing({ key: ' ' }, 'loop', {})?.id).toBe('play-pause');
+    // ← moves the player, and the caret while a score is edited: neither takes it from the other.
+    expect(shortcutUsing({ key: 'ArrowLeft' }, 'loop', {})?.id).toBe('beat-previous');
+    expect(shortcutUsing({ key: 'ArrowLeft' }, 'caret-right', {})?.id).toBe('caret-left');
+    expect(shortcutUsing({ key: 'z', mod: true }, 'loop', {})?.id).toBe('undo');
     expect(shortcutUsing({ key: ' ' }, 'play-pause', {})).toBeNull();
     // Taken from Play, Space is the loop's alone.
     expect(shortcutUsing({ key: ' ' }, 'stop', { 'play-pause': [], loop: [{ key: ' ' }] })?.id).toBe('loop');

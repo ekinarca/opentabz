@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LocateFixed } from 'lucide-react';
 import { getEngine } from '../engine/instance.ts';
+import { CaretOverlay, type CaretMark } from '../score-view/caret-overlay.ts';
 import { forgetPainted, markPainted } from '../score-view/first-paint.ts';
 import { pageGeometry } from '../score-view/pagination.ts';
 import { PlaybackCursor, type CursorOptions } from '../score-view/playback-cursor.ts';
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
+import { editingOf, setCaretAt, useEditing, type DocEditing } from '../state/editing.ts';
 import { usePlayer } from '../state/player.ts';
 import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { scoreFields } from '../state/score-fields.ts';
@@ -14,6 +16,26 @@ import { ringingTracks } from '../state/mixer-memory.ts';
 import { prepareMusicFont } from '../state/music-fonts.ts';
 import { usePreferences, type Preferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
+
+/** Where the editor's caret is drawn, while the score is edited. */
+function caretMark(editing: DocEditing): CaretMark | null {
+  const { caret } = editing;
+  return !editing.on || caret === null
+    ? null
+    : { track: caret.track, staff: caret.staff, beatId: caret.beatId, string: caret.string };
+}
+
+function sameMark(a: CaretMark | null, b: CaretMark | null): boolean {
+  return (
+    a === b ||
+    (a !== null &&
+      b !== null &&
+      a.track === b.track &&
+      a.staff === b.staff &&
+      a.beatId === b.beatId &&
+      a.string === b.string)
+  );
+}
 
 function cursorOptions(preferences: Preferences): CursorOptions {
   return {
@@ -46,6 +68,8 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   const drumKey = usePreferences(state => state.drumKey);
   const leftHanded = usePreferences(state => state.leftHanded);
   const invertedTab = usePreferences(state => state.invertedTab);
+  // Each edit, undo or redo lays the score out again from the bar changed (EDIT-001).
+  const edits = useEditing(state => state.docs[doc.key]?.changes ?? 0);
   const coloring = useMemo(
     () => noteColoring({ noteColors: colorMode, notePalette, stringColors }),
     [colorMode, notePalette, stringColors],
@@ -58,7 +82,13 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     let measured = false;
     let cursor: PlaybackCursor | null = null;
     let selection: SelectionOverlay | null = null;
+    let caretOverlay: CaretOverlay | null = null;
     const onGesture = (gesture: ScoreGesture) => {
+      // While editing, a click puts the caret on the beat and the string clicked (EDIT-002).
+      if (gesture.type === 'tap' && !gesture.extend && gesture.count === 1 && editingOf(key).on) {
+        const spot = caretOverlay?.spotAt(gesture.x, gesture.y) ?? null;
+        if (spot !== null) setCaretAt(key, spot);
+      }
       const player = usePlayer.getState();
       if (player.docKey !== key || cursor === null || selection === null) return;
       switch (gesture.type) {
@@ -119,6 +149,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       onLayout: () => {
         selection?.onLayout();
         cursor?.onLayout();
+        caretOverlay?.onLayout();
       },
       onGesture,
       onError: error => {
@@ -130,6 +161,16 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       },
     });
     viewRef.current = view;
+    const caretLayer = new CaretOverlay(view);
+    caretOverlay = caretLayer;
+    let mark = caretMark(editingOf(key));
+    caretLayer.set(mark, usePreferences.getState().invertedTab, false);
+    const unsubscribeEditing = useEditing.subscribe(state => {
+      const next = caretMark(state.docs[key] ?? editingOf(null));
+      if (sameMark(next, mark)) return;
+      mark = next;
+      caretLayer.set(next, usePreferences.getState().invertedTab, true);
+    });
     cursor = new PlaybackCursor(view, setFollowPaused);
     cursorRef.current = cursor;
     const playbackCursor = cursor;
@@ -137,8 +178,9 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       useDocuments.getState().docs.find(candidate => candidate.key === key)?.summary.masterBars ?? [],
     );
     playbackCursor.setOptions(cursorOptions(usePreferences.getState()));
-    const unsubscribePreferences = usePreferences.subscribe(state => {
+    const unsubscribePreferences = usePreferences.subscribe((state, previous) => {
       playbackCursor.setOptions(cursorOptions(state));
+      if (state.invertedTab !== previous.invertedTab) caretLayer.set(mark, state.invertedTab, false);
     });
     const selectionOverlay = new SelectionOverlay(view, {
       onChange: (range, final) => {
@@ -172,6 +214,8 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       if (gestureEnd !== null) clearTimeout(gestureEnd);
       unsubscribe();
       unsubscribePreferences();
+      unsubscribeEditing();
+      caretLayer.dispose();
       selectionOverlay.dispose();
       playbackCursor.dispose();
       view.dispose();
@@ -245,6 +289,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
         trackIndexes: doc.view.trackIndexes,
         zoom: doc.view.zoom,
         fields,
+        edits,
       });
     };
     // A music font other than Bravura is loaded and made known to the engine first; should it
@@ -253,7 +298,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     return () => {
       current = false;
     };
-  }, [doc.engineId, doc.view, fields, coloring, aids, letRing, drumKey, leftHanded, invertedTab]);
+  }, [doc.engineId, doc.view, fields, coloring, aids, letRing, drumKey, leftHanded, invertedTab, edits]);
 
   return (
     <div hidden={hidden} className="relative flex min-h-0 flex-1 flex-col">

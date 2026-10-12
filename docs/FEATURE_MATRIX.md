@@ -549,19 +549,19 @@ The single source of truth for what OpenTabz does. One row per feature.
 | ID       | Feature                                                          | Src | M   | Fixture | Test | Status  |
 | -------- | ---------------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
 | EDIT-001 | UI-agnostic command layer (commands, inverses, serialization)    | OT  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts | done |
-| EDIT-002 | Note entry with the mouse on tablature                           | GP  | M4  | —       | —    | planned |
+| EDIT-002 | Note entry with the mouse on tablature                           | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, apps/web/src/score-view/caret-geometry.test.ts | done |
 | EDIT-003 | Note entry with the mouse on standard notation                   | GP  | M4  | —       | —    | planned |
-| EDIT-004 | Keyboard entry: fret numbers, duration keys, arrow navigation    | GP  | M4  | —       | —    | planned |
-| EDIT-005 | Guitar Pro–compatible default shortcuts where sensible           | GP  | M4  | —       | —    | planned |
+| EDIT-004 | Keyboard entry: fret numbers, duration keys, arrow navigation    | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, apps/web/src/state/edit-caret.test.ts | done |
+| EDIT-005 | Guitar Pro–compatible default shortcuts where sensible           | GP  | M4  | —       | apps/web/src/app/keymap.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-006 | MIDI keyboard step entry                                         | GP  | M4  | —       | —    | planned |
 | EDIT-007 | MIDI real-time recording with quantize and click                 | OT  | M4  | —       | —    | planned |
 | EDIT-008 | Text entry (alphaTex superset)                                   | OT  | M5  | —       | —    | planned |
-| EDIT-010 | Durations, dots, tuplets, ties, rests                            | GP  | M4  | —       | —    | planned |
+| EDIT-010 | Durations, dots, tuplets, ties, rests                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-011 | Up to 4 voices                                                   | GP  | M4  | —       | —    | planned |
 | EDIT-012 | Beam control                                                     | GP  | M4  | —       | —    | planned |
 | EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | —    | planned |
-| EDIT-014 | Every effect and articulation editable with a shortcut           | GP  | M4  | —       | —    | planned |
-| EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | —    | planned |
+| EDIT-014 | Every effect and articulation editable with a shortcut           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-021 | Time and key signatures                                          | GP  | M4  | —       | —    | planned |
 | EDIT-022 | Tempo and tempo ramps                                            | GP  | M4  | —       | —    | planned |
 | EDIT-023 | Repeats and alternate endings                                    | GP  | M4  | —       | —    | planned |
@@ -590,11 +590,11 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-057 | Simplify for beginners                                           | OT  | M5  | —       | —    | planned |
 | EDIT-058 | Quantize                                                         | OT  | M5  | —       | —    | planned |
 | EDIT-059 | Mirror                                                           | OT  | M5  | —       | —    | planned |
-| EDIT-060 | Unlimited undo / redo                                            | GP+ | M4  | —       | —    | planned |
+| EDIT-060 | Unlimited undo / redo                                            | GP+ | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-061 | Autosave                                                         | GP  | M4  | —       | —    | planned |
 | EDIT-062 | Version history with diffs                                       | OT  | M5  | —       | —    | planned |
 | EDIT-063 | Native save as .otz                                              | OT  | M4  | —       | —    | planned |
-| EDIT-064 | Save as .gp (Guitar Pro 7/8) with round-trip tests               | GP  | M4  | —       | —    | planned |
+| EDIT-064 | Save as .gp (Guitar Pro 7/8) with round-trip tests               | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, packages/core/test/save-gp.test.ts | done |
 | EDIT-065 | Save as alphaTex                                                 | OT  | M4  | —       | —    | planned |
 | EDIT-066 | Track-creation wizard: family and instrument, name, colour, icon, notations, tuning and sound, each with a preview | GP  | M4  | —       | —    | planned |
 | EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | —    | planned |
@@ -653,7 +653,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-120 | Finalize: document read-only until unlocked                      | GP  | M4  | —       | —    | planned |
 | EDIT-121 | Edit lock: a password is needed to edit                          | GP  | M4  | —       | —    | planned |
 | EDIT-122 | Open lock: password-encrypted documents                          | GP+ | M4  | —       | —    | planned |
-| EDIT-123 | Unsaved-changes guard: modified indicator, confirmation on close | GP  | M4  | —       | —    | planned |
+| EDIT-123 | Unsaved-changes guard: modified indicator, confirmation on close | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
 | EDIT-124 | Recovery of unsaved documents after a crash, reload or closed tab | GP  | M4  | —       | —    | planned |
 | EDIT-125 | Palm-mute assistant: chosen strings across a range               | GP  | M5  | —       | —    | planned |
 | EDIT-126 | Let-ring assistant: chosen strings across a range                | GP  | M5  | —       | —    | planned |
@@ -685,7 +685,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                                                                                                   | Src | M   | Fixture | Test | Status  |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
-| COMP-001 | New document: blank                                                                                                                       | GP  | M4  | —       | —    | planned |
+| COMP-001 | New document: blank                                                                                                                       | GP  | M4  | —       | packages/core/test/blank.test.ts, apps/web/e2e/editing.spec.ts | done |
 | COMP-002 | Templates: solo guitar, acoustic + vocal, rock band, metal 7/8-string, jazz trio, classical, bass, ukulele, drums only, piano, lead sheet | GP+ | M5  | —       | —    | planned |
 | COMP-003 | Lead-sheet / chord-chart mode                                                                                                             | OT  | M5  | —       | —    | planned |
 | COMP-004 | Convert chord chart ⇄ full score                                                                                                          | OT  | M5  | —       | —    | planned |
@@ -884,7 +884,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | ID     | Feature                                                                                                                     | Src | M   | Fixture  | Test | Status  |
 | ------ | --------------------------------------------------------------------------------------------------------------------------- | --- | --- | -------- | ---- | ------- |
 | UX-001 | Home page is the drop zone; no onboarding, sign-up or modal before the first note                                           | OT  | M0  | — | apps/web/e2e/open.spec.ts | done |
-| UX-002 | **New** button on the home page; blank page to first note in under five seconds                                             | OT  | M4  | —        | —    | planned |
+| UX-002 | **New** button on the home page; blank page to first note in under five seconds                                             | OT  | M4  | —        | apps/web/e2e/editing.spec.ts | done |
 | UX-003 | Original demo scores openable from the home page                                                                            | OT  | M0  | alphatex/demos | apps/web/e2e/open.spec.ts | done |
 | UX-010 | Dockable workspace (score, fretboard, mixer, tuner, chord palette, lyrics, arrangement, piano roll, drum grid, text editor) | OT  | M3  | —        | —    | planned |
 | UX-011 | Drag, dock and pop out panels                                                                                               | OT  | M3  | —        | —    | planned |

@@ -300,6 +300,25 @@ function restyle(key: string): void {
   }, RESTYLE_DELAY_MS);
 }
 
+/**
+ * The song generated again from a score just edited (EDIT-001) and swapped in where it plays; its
+ * timeline, where the beats now are, replaces the old one.
+ */
+export async function regenerateSong(key: string): Promise<void> {
+  const { docKey, timeline } = usePlayer.getState();
+  const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
+  if (docKey !== key || timeline === null || doc === undefined) return;
+  const next = await getEngine().call('preparePlayback', {
+    docId: doc.engineId,
+    playbackId: timeline.playbackId,
+    interpretations: interpretations(doc),
+    replace: true,
+  });
+  const current = usePlayer.getState();
+  if (current.docKey === key && current.timeline?.playbackId === next.playbackId)
+    usePlayer.setState({ timeline: next });
+}
+
 // Keep the synthesizer in step with mixer changes of the loaded document.
 useDocuments.subscribe((state, previous) => {
   const key = usePlayer.getState().docKey;

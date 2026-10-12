@@ -17,21 +17,26 @@ import {
   Command,
   Download,
   Ellipsis,
+  FilePlus2,
   FolderOpen,
   Keyboard,
   Palette,
+  PencilLine,
   Printer,
   Settings,
   X,
 } from 'lucide-react';
 import { useDocuments } from '../state/documents.ts';
+import { isDirty, toggleEditing, useEditing } from '../state/editing.ts';
 import { THEME_PREFERENCES, usePreferences, type ThemePreference } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { pickFiles } from './open-actions.ts';
 import { modKey } from './platform.ts';
 import { MetronomeIcon, TuningForkIcon } from './icons.tsx';
-import { shortcutHint } from './keymap.ts';
+import { focusScore, shortcutHint } from './keymap.ts';
 import { openMetronomeTool } from './MetronomeTool.tsx';
+import { newScore } from './new-score.ts';
+import { requestClose } from './save.ts';
 import { openTuner } from './TunerTool.tsx';
 import { useUi } from '../state/ui.ts';
 
@@ -39,7 +44,7 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
   const docs = useDocuments(state => state.docs);
   const activeKey = useDocuments(state => state.activeKey);
   const activate = useDocuments(state => state.activate);
-  const close = useDocuments(state => state.close);
+  const editing = useEditing(state => state.docs);
   const theme = usePreferences(state => state.theme);
   const setPreferences = usePreferences(state => state.set);
 
@@ -70,6 +75,8 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
             {docs.map(doc => {
               const active = doc.key === activeKey;
               const name = doc.summary.title.trim().length > 0 ? doc.summary.title : doc.source.name;
+              const edited = editing[doc.key];
+              const dirty = edited !== undefined && isDirty(edited);
               return (
                 <li key={doc.key} className="flex shrink-0 items-center">
                   <div
@@ -85,16 +92,19 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
                         activate(doc.key);
                       }}
                       aria-current={active ? 'page' : undefined}
+                      aria-label={dirty ? strings.editing.tabUnsaved(name) : undefined}
                       title={doc.source.name}
-                      className="max-w-[220px] truncate pr-1 pl-3 text-[13px] font-medium"
+                      className="flex max-w-[220px] items-center gap-1.5 truncate pr-1 pl-3 text-[13px] font-medium"
                     >
-                      {name}
+                      {/* Changes not saved (EDIT-123). */}
+                      {dirty && <span className="size-2 shrink-0 rounded-full bg-accent" aria-hidden />}
+                      <span className="truncate">{name}</span>
                     </button>
                     <Tooltip label={strings.topBar.close(name)}>
                       <button
                         type="button"
                         onClick={() => {
-                          close(doc.key);
+                          requestClose(doc.key);
                         }}
                         aria-label={strings.topBar.close(name)}
                         className="mr-1 inline-flex size-6 items-center justify-center rounded-md text-ink-faint hover:bg-sunken hover:text-ink"
@@ -112,10 +122,32 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
       <div className={docs.length > 0 ? 'flex items-center gap-1' : 'ml-auto flex items-center gap-1'}>
         {!home && (
           <IconButton
+            label={strings.topBar.newScore}
+            icon={<FilePlus2 size={18} aria-hidden />}
+            onClick={() => {
+              void newScore();
+            }}
+            className="max-md:hidden"
+          />
+        )}
+        {!home && (
+          <IconButton
             label={strings.topBar.openFile}
             shortcut={`${modKey()}+O`}
             icon={<FolderOpen size={18} aria-hidden />}
             onClick={pickFiles}
+          />
+        )}
+        {!home && activeKey !== null && (
+          <IconButton
+            label={strings.editing.edit}
+            shortcut={shortcutHint('edit-mode')}
+            icon={<PencilLine size={18} aria-hidden />}
+            pressed={editing[activeKey]?.on ?? false}
+            onClick={() => {
+              void toggleEditing(activeKey);
+              focusScore();
+            }}
           />
         )}
         {!home && activeKey !== null && (

@@ -7,8 +7,10 @@ import { reopenLastSession } from '../state/reopen.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
+import { CloseGuardDialog } from './CloseGuardDialog.tsx';
 import { CommandPalette } from './CommandPalette.tsx';
 import { takeReopenOnce } from './pwa.ts';
+import { guardUnload } from './save.ts';
 import { UpdateNotice } from './UpdateNotice.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { leaveFullScreen, useFullScreenSync } from './full-screen.ts';
@@ -50,6 +52,14 @@ export function App() {
 
   useEffect(() => {
     onEngineRestart(() => void useDocuments.getState().reopenAll());
+  }, []);
+
+  // Leaving with changes not saved: the browser asks first (EDIT-123).
+  useEffect(() => {
+    window.addEventListener('beforeunload', guardUnload);
+    return () => {
+      window.removeEventListener('beforeunload', guardUnload);
+    };
   }, []);
 
   // The scores open last time, when the settings ask (UX-028), or once after a new version.
@@ -116,6 +126,7 @@ export function App() {
         <MetronomeTool />
         <TunerTool />
         <UpdateNotice />
+        <CloseGuardDialog />
         <Notices />
       </ToastProvider>
     </TooltipProvider>

@@ -73,6 +73,11 @@ export interface ScoreViewState {
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
   readonly fields: ScoreFields;
+  /**
+   * How many times the score was edited, undone or redone (EDIT-001): each time, it is laid out
+   * again from the bar changed, the music before it staying as it is drawn.
+   */
+  readonly edits: number;
 }
 
 export interface ScoreViewLayoutInfo {
@@ -290,6 +295,11 @@ export class ScoreView {
 
     const options = this.engineOptions(state);
     if (options === null) return;
+    // The score edited: laid out again with the same options, the systems unchanged kept.
+    if (previous !== null && previous.docId === state.docId && previous.edits !== state.edits) {
+      void this.requestLayout(options, true);
+      return;
+    }
     if (this.requestedOptions === null || !sameOptions(this.requestedOptions, options)) {
       // Zooming a reflowing layout waits for the gesture to settle; everything else is immediate.
       const onlyZoomReflow =
@@ -626,7 +636,8 @@ export class ScoreView {
     }, RELAYOUT_DELAY_MS);
   }
 
-  private async requestLayout(options: ViewOptions): Promise<void> {
+  /** `edited`: after an edit, what is drawn stays until what replaces it is painted. */
+  private async requestLayout(options: ViewOptions, edited = false): Promise<void> {
     const state = this.state;
     if (state === null) return;
     const seq = ++this.layoutSeq;
@@ -640,7 +651,7 @@ export class ScoreView {
         options,
       });
       if (seq !== this.layoutSeq || this.disposed) return;
-      this.apply(layout, anchor);
+      this.apply(layout, anchor, edited);
       // Request to placed partials, for the "local operations under 100 ms" budget.
       performance.clearMeasures('ot:layout');
       performance.measure('ot:layout', { start: started, end: performance.now() });
@@ -651,9 +662,12 @@ export class ScoreView {
     }
   }
 
-  private apply(layout: ViewLayout, anchor: Anchor | null): void {
+  private apply(layout: ViewLayout, anchor: Anchor | null, edited = false): void {
     const state = this.state;
     if (state === null) return;
+    // After an edit, the systems before the bar changed keep their ids and their markup; the
+    // others show what they showed until they are painted again, so that nothing flickers.
+    const drawn = edited ? this.drawnMarkup() : null;
     this.generation = layout.generation;
     this.scoreBounds = layout.bounds;
     this.viewLayout = layout;
@@ -689,11 +703,23 @@ export class ScoreView {
       element.style.height = `${partial.height}px`;
       fragment.append(element);
       this.elements.set(partial.id, element);
+      const kept = drawn?.byId.get(partial.id);
+      if (kept !== undefined) {
+        this.svgCache.set(partial.id, kept);
+        element.innerHTML = kept;
+      } else if (drawn !== null && partial.firstBar >= 0) {
+        const stale = drawn.byBar.get(partial.firstBar);
+        if (stale !== undefined) {
+          element.innerHTML = stale;
+          element.dataset['stale'] = '';
+        }
+      }
     }
     this.partialsLayer.append(fragment);
     for (const element of this.elements.values()) this.intersection.observe(element);
 
-    this.restoreAnchor(anchor);
+    // After an edit the music before the bar changed stays where it is, and the view with it.
+    if (!edited) this.restoreAnchor(anchor);
     this.events.onLayout?.({
       generation: layout.generation,
       pages: sheetLayout.pages.length,
@@ -807,7 +833,27 @@ export class ScoreView {
     return this.disposed;
   }
 
+  /** The markup drawn now, by partial and by the bar a system starts with. */
+  private drawnMarkup(): { byId: Map<string, string>; byBar: Map<number, string> } {
+    const byId = new Map<string, string>();
+    const byBar = new Map<number, string>();
+    for (const [id, element] of this.elements) {
+      if (element.firstChild === null || element.dataset['stale'] !== undefined) continue;
+      const svg = element.innerHTML;
+      byId.set(id, svg);
+      const firstBar = Number(element.dataset['firstBar'] ?? -1);
+      if (firstBar >= 0) byBar.set(firstBar, svg);
+    }
+    return { byId, byBar };
+  }
+
   private attach(element: HTMLDivElement, svg: string): void {
+    // What a system showed before an edit gives way to what it shows now.
+    if (element.dataset['stale'] !== undefined) {
+      delete element.dataset['stale'];
+      element.innerHTML = svg;
+      return;
+    }
     if (element.firstChild !== null) return;
     // alphaTab escapes all text from files; CSP additionally forbids inline handlers.
     element.innerHTML = svg;

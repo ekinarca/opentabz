@@ -184,6 +184,36 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Write in the score.** `F2`, or the pencil in the top bar, edits the score shown, as Guitar
+  Pro does: a caret marks the beat, and the string of the tablature, the next fret is written
+  on. The keys are Guitar Pro 8's: digits write frets (two typed quickly write 10 to 99), the
+  arrows move the caret from beat to beat, bar to bar and string to string, `-` makes a note
+  longer and `+` shorter, `.` dots it, `Backspace` takes the note away, `Ctrl Insert` (`⌃ +` on
+  a Mac) puts a beat in and `Shift Delete` (`⌘ -`) takes it away, `Insert` (`⌘ +`) puts a bar in
+  and `Ctrl Delete` (`⌃ -`) takes it away, in every track. Past the last beat of a bar with room
+  left, `→` puts a rest there for the next note, and past the score's last beat, a bar. A click
+  puts the caret on the beat and the string clicked. The edit bar does the same with buttons,
+  frets to tap on a phone included, and chooses the track edited. Every edit can be undone and
+  done again, as far back as wanted; the score, its sound and the instrument views follow each
+  one, the score laid out again only from the bar changed.
+- **Techniques, with Guitar Pro's keys.** While a score is edited, Guitar Pro 8's keys turn
+  techniques on and off on the caret's note: `L` tie (on a string with nothing written, it holds
+  the note before on), `H` hammer-on or pull-off, `S` legato slide, `B` bend (a whole tone), `V`
+  vibrato, `P` palm mute (`Shift P` on every note of the beat), `I` let ring, `X` dead note, `O`
+  ghost note, `Y` natural harmonic, `;` accent, `:` heavy accent, `!` staccato; and on its beat:
+  `/` triplet, `W` vibrato with the tremolo bar, `$` slap, `)` tapping, `<` and `>` fade in and
+  out, `"` tremolo picking, `Shift D` and `Shift U` down- and upstrokes. `R` makes the beat a
+  rest and `Ctrl .` (`⌘ .`) double-dots it. The edit bar's Techniques menu shows which are on
+  and turns them on and off by touch.
+- **A new score.** "New score", on the home page, in the top bar or in the command palette,
+  opens a blank score (a guitar in standard tuning, in standard notation and tablature, sixteen
+  empty bars of 4/4 at 120) edited at once, the caret on its first bar: the first note is a key
+  away. New scores are not kept among the recent scores.
+- **Save as a Guitar Pro file.** `Ctrl S` (`⌘ S`) saves the score, edited or not, as a Guitar
+  Pro 7/8 file (.gp), the format Guitar Pro saves; every sample score keeps its music, saved and
+  opened again. A score with changes not saved says so on its tab and in the edit bar, asks
+  before it is closed (save and close, close without saving, or keep it open), and the browser
+  asks before the page is left.
 - **Keys of one's own.** The shortcut sheet (`?`) changes any action's keys: click them and press
   the new ones. Keys another action has are taken from it only when asked, one action's keys or
   every key can be put back, and the keys are kept on this device; tooltips and the command

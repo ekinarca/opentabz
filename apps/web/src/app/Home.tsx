@@ -12,7 +12,7 @@
  * frames never go through React.
  */
 import { LogoMark } from '@opentabz/ui';
-import { Link2 } from 'lucide-react';
+import { FilePlus2, Link2 } from 'lucide-react';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useDocuments } from '../state/documents.ts';
 import { usePreferences } from '../state/preferences.ts';
@@ -20,6 +20,7 @@ import { useRecentScores } from '../state/recent-scores.ts';
 import { recentSource } from '../state/session.ts';
 import { strings } from '../strings.ts';
 import { DEMOS, demoSource } from './demos.ts';
+import { newScore } from './new-score.ts';
 import { pickFiles } from './open-actions.ts';
 import { modKey } from './platform.ts';
 
@@ -831,6 +832,17 @@ export function Home({
                     <kbd aria-hidden className="ot-cta-kbd">
                       {strings.home.openFileShortcut(mod)}
                     </kbd>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void newScore();
+                    }}
+                    disabled={pending}
+                    className="ot-secondary"
+                  >
+                    <FilePlus2 size={17} aria-hidden />
+                    {strings.home.newScore}
                   </button>
                   <button type="button" onClick={onOpenUrl} className="ot-secondary">
                     <Link2 size={17} aria-hidden />

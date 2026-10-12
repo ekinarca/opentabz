@@ -4,6 +4,7 @@
  */
 import { useEffect } from 'react';
 import { useDocuments } from '../state/documents.ts';
+import { editingOf } from '../state/editing.ts';
 import { usePreferences } from '../state/preferences.ts';
 import {
   bindingsOf,
@@ -79,39 +80,52 @@ interface ShortcutContext {
   readonly apple: boolean;
   /** Keys set in the shortcut sheet (PLAT-036). */
   readonly overrides?: KeyOverrides;
+  /** The score shown is being edited (EDIT-004). */
+  readonly editing?: boolean;
 }
 
-/** The shortcut a key event triggers, given where focus is, or null. */
-export function shortcutFor(event: KeyboardEvent, context: ShortcutContext): Shortcut | null {
+/** The shortcuts a key event may trigger, given where focus is, the first to try first. */
+export function shortcutsFor(event: KeyboardEvent, context: ShortcutContext): Shortcut[] {
   const target = event.target;
   const inLayer = insideLayer(target);
   const typing = isTextField(target);
   const control = controlKind(target);
+  const found: Shortcut[] = [];
   for (const shortcut of SHORTCUTS) {
     if (shortcut.needsScore && !context.hasScore) continue;
+    if (shortcut.editing === true && context.editing !== true) continue;
     for (const binding of bindingsOf(shortcut, context.overrides ?? {})) {
       if (!matches(binding, event, context.apple)) continue;
       if (typing && shortcut.inTextFields !== true) continue;
       if (inLayer && shortcut.inTextFields !== true) continue;
       if (control !== null && !allowedOn(control, binding)) continue;
-      if (!context.singleKeyShortcuts && isCharacterBinding(binding)) continue;
-      return shortcut;
+      if (!context.singleKeyShortcuts && isCharacterBinding(binding) && shortcut.editing !== true) continue;
+      found.push(shortcut);
+      break;
     }
   }
-  return null;
+  return found;
+}
+
+/** The shortcut a key event triggers first, given where focus is, or null. */
+export function shortcutFor(event: KeyboardEvent, context: ShortcutContext): Shortcut | null {
+  return shortcutsFor(event, context)[0] ?? null;
 }
 
 export function useShortcuts(): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing) return;
-      const shortcut = shortcutFor(event, {
-        hasScore: useDocuments.getState().activeKey !== null,
+      const { activeKey } = useDocuments.getState();
+      const shortcuts = shortcutsFor(event, {
+        hasScore: activeKey !== null,
         singleKeyShortcuts: usePreferences.getState().singleKeyShortcuts,
         apple: modKey() === '⌘',
         overrides: usePreferences.getState().keyBindings,
+        editing: editingOf(activeKey).on,
       });
-      if (shortcut?.run() === true) event.preventDefault();
+      // The first action that takes the key; the others on the same keys are for other moments.
+      if (shortcuts.some(shortcut => shortcut.run(event))) event.preventDefault();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {

@@ -18,7 +18,15 @@ import {
 } from './keymap.ts';
 import { modKey } from './platform.ts';
 
-const GROUPS: readonly ShortcutGroup[] = ['playback', 'navigation', 'selection', 'view', 'files', 'help'];
+const GROUPS: readonly ShortcutGroup[] = [
+  'playback',
+  'navigation',
+  'selection',
+  'editing',
+  'view',
+  'files',
+  'help',
+];
 const e = strings.shortcuts.edit;
 
 /**

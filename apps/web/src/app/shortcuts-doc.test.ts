@@ -14,7 +14,8 @@ describe('docs/SHORTCUTS.md', () => {
     for (const binding of shortcut.bindings) {
       if (onPlatform(binding, false)) expect(others).toContain(`\`${formatBinding(binding, 'Ctrl')}\``);
       else expect(others).not.toContain(`\`${formatBinding(binding, 'Ctrl')}\``);
-      expect(apple).toContain(`\`${formatBinding(binding, '⌘')}\``);
+      if (onPlatform(binding, true)) expect(apple).toContain(`\`${formatBinding(binding, '⌘')}\``);
+      else expect(apple).not.toContain(`\`${formatBinding(binding, '⌘')}\``);
     }
   });
 });

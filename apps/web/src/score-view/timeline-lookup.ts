@@ -100,6 +100,19 @@ export function findSlice(timeline: PlaybackTimeline, bar: Occurrence, tick: num
   return result ?? slice(timeline, bar.firstSlice);
 }
 
+/** Beat ids of a track sounding at a tick (begun then or before, still held), in timeline order. */
+export function beatsSoundingAt(timeline: PlaybackTimeline, tick: number, track: number): number[] {
+  const bar = occurrence(timeline, findBarOccurrence(timeline, tick));
+  const target = bar === null ? null : findSlice(timeline, bar, tick);
+  if (target === null) return [];
+  const result: number[] = [];
+  for (let item = target.firstItem; item < target.firstItem + target.itemCount; item++) {
+    const base = item * TIMELINE_ITEM_STRIDE;
+    if (timeline.items[base + 1] === track) result.push(timeline.items[base] ?? -1);
+  }
+  return result;
+}
+
 /**
  * Beat ids of the visible tracks that start at the beginning of `slice`, in timeline order.
  * A slice where every visible beat was already sounding (a held note) returns an empty list.

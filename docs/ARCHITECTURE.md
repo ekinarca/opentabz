@@ -336,7 +336,8 @@ settings and the standalone metronome's tempo and meter, persisted the same way;
 the synth worker as they happen), `recent-scores` (the scores opened lately, their bytes in
 IndexedDB on the device only, to open again from the home page and to reopen the last session,
 whose open scores `session` keeps in `localStorage` by fingerprint; both forgotten when the user
-turns them off) and `player` (transport, timeline, position, speed, count-in progress, the
+turns them off), `editing` (per document: editing or not, the caret by beat id and string, the
+edits made and undone, and the version saved) and `player` (transport, timeline, position, speed, count-in progress, the
 standalone metronome, loop, selection, volume). The transport is an explicit,
 typed finite-state machine (`unloaded → loading → ready ⇄ playing`, `error`) with an exhaustive
 transition table under test (`transport-machine.ts`).

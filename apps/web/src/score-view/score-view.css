@@ -151,6 +151,34 @@
   cursor: pointer;
 }
 
+/* The editor's caret (EDIT-004): the string of the beat the next fret is written on ---------- */
+
+.ot-edit-caret {
+  --ot-px: calc(1px / var(--ot-zoom, 1));
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: calc(2 * var(--ot-px)) solid var(--ot-accent);
+  border-radius: calc(3 * var(--ot-px));
+  background: color-mix(in oklab, var(--ot-accent) 16%, transparent);
+  box-shadow: 0 0 calc(8 * var(--ot-px)) color-mix(in oklab, var(--ot-accent) 45%, transparent);
+  will-change: transform;
+}
+
+.ot-edit-caret[data-on='beat'] {
+  background: color-mix(in oklab, var(--ot-accent) 9%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ot-edit-caret {
+    transition:
+      transform 70ms ease-out,
+      width 70ms ease-out,
+      height 70ms ease-out;
+  }
+}
+
 /* Selection (the playback range) ------------------------------------------------------------ */
 
 .ot-sheet {
