@@ -45,6 +45,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   const letRing = useMemo(() => ringingTracks(doc.mix), [doc.mix]);
   const drumKey = usePreferences(state => state.drumKey);
   const leftHanded = usePreferences(state => state.leftHanded);
+  const invertedTab = usePreferences(state => state.invertedTab);
   const coloring = useMemo(
     () => noteColoring({ noteColors: colorMode, notePalette, stringColors }),
     [colorMode, notePalette, stringColors],
@@ -240,6 +241,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
         letRing,
         drumKey,
         leftHanded,
+        invertedTab,
         trackIndexes: doc.view.trackIndexes,
         zoom: doc.view.zoom,
         fields,
@@ -251,7 +253,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     return () => {
       current = false;
     };
-  }, [doc.engineId, doc.view, fields, coloring, aids, letRing, drumKey, leftHanded]);
+  }, [doc.engineId, doc.view, fields, coloring, aids, letRing, drumKey, leftHanded, invertedTab]);
 
   return (
     <div hidden={hidden} className="relative flex min-h-0 flex-1 flex-col">

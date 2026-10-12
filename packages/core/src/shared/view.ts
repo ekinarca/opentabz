@@ -75,6 +75,8 @@ export interface ViewOptions {
   readonly drumKey?: boolean;
   /** Chord diagrams mirrored for left-handed players, the highest string on the left (REND-314). */
   readonly leftHanded?: boolean;
+  /** The tablature's strings the other way up, the lowest on top (REND-315). */
+  readonly invertedTab?: boolean;
   /** Width available to the score in layout units (CSS px at 100 % zoom). */
   readonly width: number;
   /** Size of the notation relative to alphaTab's default (stylesheet scale, 1 = 100 %). */

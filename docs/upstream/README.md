@@ -57,6 +57,7 @@ available as source: the patch file is that source.
 | [0046](0046-slash-notation.md)                       | Slash notation as asked                                                            | Guitar Pro hides its line and barlines, and writes single notes’ frets     | not yet  |
 | [0047](0047-written-pitch.md)                        | Notes written apart from where they sound, string by string                        | Guitar Pro writes guitars as if in standard tuning without a capo          | not yet  |
 | [0048](0048-lyrics-place.md)                         | Where the lyrics go                                                                | Guitar Pro puts them above or below the staves                             | not yet  |
+| [0049](0049-inverted-tab.md)                         | The tablature the other way up                                                     | Some players read the lowest string on top                                 | not yet  |
 
 ## Working on a patch
 

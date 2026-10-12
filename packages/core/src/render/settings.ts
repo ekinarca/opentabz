@@ -43,6 +43,7 @@ export function createRenderSettings(options: ViewOptions): alphaTab.Settings {
   resources.scoreInfoColor = color(SCORE_COLOR_SENTINELS.info);
   if (options.style !== undefined) applyStyleSettings(settings, options.style);
   settings.notation.leftHandedDiagrams = options.leftHanded === true;
+  settings.notation.invertedTab = options.invertedTab === true;
   return settings;
 }
 

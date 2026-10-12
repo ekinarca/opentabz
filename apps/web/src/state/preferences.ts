@@ -105,6 +105,8 @@ export interface Preferences {
   readonly noteLabels: NoteLabels;
   /** Instrument views mirrored for left-handed players. */
   readonly leftHanded: boolean;
+  /** The tablature's strings the other way up, the lowest on top (REND-315). */
+  readonly invertedTab: boolean;
   readonly audioLatency: AudioLatency;
   /** How exported files are named, with tokens (see export/file-names.ts). */
   readonly exportFileName: string;
@@ -153,6 +155,7 @@ export function defaultPreferences(locale: string): Preferences {
     fretboardShow: 'next',
     noteLabels: 'hover',
     leftHanded: false,
+    invertedTab: false,
     audioLatency: 'interactive',
     exportFileName: '%T',
   };
@@ -261,6 +264,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       fretboardShow: oneOf(value.fretboardShow, FRETBOARD_SHOWS, fallback.fretboardShow),
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
+      invertedTab: typeof value.invertedTab === 'boolean' ? value.invertedTab : fallback.invertedTab,
       audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
       exportFileName:
         typeof value.exportFileName === 'string' && value.exportFileName.length <= MAX_FILE_NAME_TEMPLATE
@@ -330,6 +334,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       fretboardShow: state.fretboardShow,
       noteLabels: state.noteLabels,
       leftHanded: state.leftHanded,
+      invertedTab: state.invertedTab,
       audioLatency: state.audioLatency,
       exportFileName: state.exportFileName,
     });

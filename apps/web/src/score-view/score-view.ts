@@ -67,6 +67,8 @@ export interface ScoreViewState {
   readonly drumKey: boolean;
   /** Chord diagrams mirrored, the highest string on the left (REND-314). */
   readonly leftHanded: boolean;
+  /** The tablature's lowest string on top (REND-315). */
+  readonly invertedTab: boolean;
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
@@ -601,6 +603,7 @@ export class ScoreView {
       ...(state.letRing.length === 0 ? {} : { letRing: state.letRing }),
       ...(state.drumKey ? { drumKey: true } : {}),
       ...(state.leftHanded ? { leftHanded: true } : {}),
+      ...(state.invertedTab ? { invertedTab: true } : {}),
       width,
       notationScale: 1,
       // The pages' header and footer are drawn here: changing them needs no new layout.
@@ -908,6 +911,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     sameIndexes(a.letRing, b.letRing) &&
     a.drumKey === b.drumKey &&
     a.leftHanded === b.leftHanded &&
+    a.invertedTab === b.invertedTab &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -932,6 +936,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     sameIndexes(a.letRing, b.letRing) &&
     a.drumKey === b.drumKey &&
     a.leftHanded === b.leftHanded &&
+    a.invertedTab === b.invertedTab &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );

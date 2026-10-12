@@ -66,6 +66,36 @@ test.describe('settings', () => {
     await expect(dialog.getByRole('radio', { name: 'Steadiest' })).toHaveAttribute('aria-checked', 'true');
   });
 
+  test('the tablature the other way up, the lowest string on top (REND-315)', async ({ page }) => {
+    await openShuffle(page);
+    /** The first beat's two frets in the tablature: the A string's 0 and the D string's 2, by height. */
+    const firstBeat = () =>
+      page
+        .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+        .first()
+        .evaluate(element => {
+          const texts = [...element.querySelectorAll('text')].filter(text => /^[02]$/.test(text.textContent));
+          const xs = texts.map(text => Number(text.getAttribute('x')));
+          // Beats lie left to right; the first beat's frets share the leftmost x.
+          const first = Math.min(...xs.filter(x => xs.filter(other => Math.abs(other - x) < 1).length === 2));
+          const at = (fret: string) =>
+            Number(
+              texts
+                .find(
+                  text => text.textContent === fret && Math.abs(Number(text.getAttribute('x')) - first) < 1,
+                )
+                ?.getAttribute('y'),
+            );
+          return at('0') - at('2');
+        });
+    // As usual the A string's 0 lies under the D string's 2.
+    await expect.poll(firstBeat).toBeGreaterThan(0);
+    const dialog = await openSettings(page);
+    await dialog.getByRole('switch', { name: 'Lowest string on top of the tablature' }).click();
+    await page.keyboard.press('Escape');
+    await expect.poll(firstBeat).toBeLessThan(0);
+  });
+
   test('the left-handed fretboard and single-key shortcuts are settings too', async ({ page }) => {
     await openShuffle(page);
     const dialog = await openSettings(page);

@@ -108,6 +108,12 @@ describe('preferences', () => {
     });
   });
 
+  it('read back the tablature the other way up (REND-315), off at first', () => {
+    expect(FALLBACK.invertedTab).toBe(false);
+    expect(parsePreferences(JSON.stringify({ invertedTab: true }), FALLBACK).invertedTab).toBe(true);
+    expect(parsePreferences(JSON.stringify({ invertedTab: 'yes' }), FALLBACK).invertedTab).toBe(false);
+  });
+
   it('read back the drum key shown or not (REND-318), off at first', () => {
     expect(FALLBACK.drumKey).toBe(false);
     expect(parsePreferences(JSON.stringify({ drumKey: true }), FALLBACK).drumKey).toBe(true);

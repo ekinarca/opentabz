@@ -64,7 +64,8 @@ All notable changes to OpenTabz are recorded here. The format follows
 - **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
   breaks up), with the output's delay and any audio it had to skip shown live; left-handed
   playing, which mirrors the fretboard and every chord diagram (in the score, on paper and in
-  the chords panel) with the highest string on the left; single-key shortcuts.
+  the chords panel) with the highest string on the left; the tablature the other way up, its
+  lowest string on top as players see the neck; single-key shortcuts.
 - **Fretboard.** The active track's neck under the score: any number of strings (3 to 10) and
   tunings, a capo, the notes being played lit in the cursor colour, with the next notes to play
   as rings or the rest of the bar in a lighter colour; dead notes, harmonics and ghost notes
@@ -274,8 +275,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   and rests of four voices (0042), artificial harmonics in the tablature as asked (0043) and the
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
-  sound, string by string (0047), and where the lyrics go (0048). See
-  [docs/upstream/](docs/upstream/).
+  sound, string by string (0047), where the lyrics go (0048), and the tablature the other way up
+  (0049). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

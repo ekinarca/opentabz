@@ -79,6 +79,14 @@ export function SettingsDialog() {
               preferences.set({ leftHanded });
             }}
           />
+          <Switch
+            label={s.invertedTab}
+            hint={s.invertedTabHint}
+            checked={preferences.invertedTab}
+            onCheckedChange={invertedTab => {
+              preferences.set({ invertedTab });
+            }}
+          />
         </section>
         <section className="flex flex-col gap-3" aria-labelledby="settings-keyboard">
           <h3

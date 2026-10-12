@@ -364,6 +364,8 @@ export const strings = {
         : `Output delay ${Math.round(latency)} ms · audio skipped ${Math.round(missed)} ms`,
     views: 'Instrument views',
     leftHanded: 'Left-handed fretboard and chord diagrams',
+    invertedTab: 'Lowest string on top of the tablature',
+    invertedTabHint: 'As you look down at the neck while playing.',
     keyboard: 'Keyboard',
   },
 
