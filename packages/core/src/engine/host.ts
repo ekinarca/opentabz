@@ -5,6 +5,8 @@
 import { blankScore } from '../document/blank.ts';
 import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
+import { readBarProperties } from '../edit/bar-properties.ts';
+import { readTrackProperties } from '../edit/tracks.ts';
 import { EditError } from '../edit/commands.ts';
 import { collectTrackBeats } from '../edit/track-beats.ts';
 import { ScoreEditor, type EditResult } from '../edit/editor.ts';
@@ -23,7 +25,7 @@ import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackBeats } from '../shared/beats.ts';
 import type { TrackChords } from '../shared/chords.ts';
-import type { EditOutcome } from '../shared/edit.ts';
+import type { BarState, EditOutcome, TrackState } from '../shared/edit.ts';
 import type { TrackDrums } from '../shared/drums.ts';
 import type { ScoreOverview } from '../shared/overview.ts';
 import type { TrackLyrics } from '../shared/lyrics.ts';
@@ -208,7 +210,24 @@ export class EngineHost implements EngineMethods {
       canRedo: document.editor?.canRedo ?? false,
       revision: document.editor?.revision ?? 0,
       summary: document.summary,
+      trackOrigins: result?.trackOrigins ?? null,
     };
+  }
+
+  public trackProperties(args: EngineArgs<'trackProperties'>): TrackState {
+    const { score } = this.document(args.docId);
+    const track = score.tracks[args.track];
+    if (track === undefined) throw new EngineHostError(`No track ${String(args.track)}.`);
+    return readTrackProperties(track);
+  }
+
+  public barProperties(args: EngineArgs<'barProperties'>): BarState {
+    try {
+      return readBarProperties(this.document(args.docId).score, args.bar);
+    } catch (error) {
+      if (error instanceof EditError) throw new EngineHostError(error.message);
+      throw error;
+    }
   }
 
   public trackBeats(args: EngineArgs<'trackBeats'>): TrackBeats {

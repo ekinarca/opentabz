@@ -42,9 +42,15 @@ function same(a: unknown, b: unknown): boolean {
   return false;
 }
 
-function stateOf(target: object): State {
+/** An object's fields as they are now: all of them, or only those named. */
+function stateOf(target: object, keys: ReadonlySet<string> | null = null): State {
   const state = new Map<string, unknown>();
-  for (const [key, value] of Object.entries(target)) state.set(key, copied(value));
+  if (keys === null) {
+    for (const [key, value] of Object.entries(target)) state.set(key, copied(value));
+    return state;
+  }
+  for (const key of keys)
+    state.set(key, Object.hasOwn(target, key) ? copied(Reflect.get(target, key)) : ABSENT);
   return state;
 }
 
@@ -70,10 +76,45 @@ export class Patch {
 /** The objects an edit may change, as they were before it. */
 export class Journal {
   private readonly before = new Map<object, State>();
+  /** Objects kept by some of their fields only: those an edit may change (a bar's place, say). */
+  private readonly fields = new Map<object, Set<string>>();
 
   /** Keeps an object as it is now, unless it is kept already (as it was earlier). */
   public keep(target: object): void {
+    const some = this.fields.get(target);
+    if (some !== undefined) {
+      // Kept by some fields: now all of them, those kept keeping their earlier values.
+      const was = this.before.get(target);
+      const all = new Map(stateOf(target));
+      for (const key of some) all.set(key, was?.has(key) === true ? was.get(key) : ABSENT);
+      this.before.set(target, all);
+      this.fields.delete(target);
+      return;
+    }
     if (!this.before.has(target)) this.before.set(target, stateOf(target));
+  }
+
+  /**
+   * Keeps some of an object's fields as they are now (cheaper than the whole object, for the many
+   * bars a bar put in renumbers), unless they are kept already.
+   */
+  public keepFields(target: object, keys: readonly string[]): void {
+    const some = this.fields.get(target);
+    if (some === undefined) {
+      if (this.before.has(target)) return;
+      const set = new Set(keys);
+      this.fields.set(target, set);
+      this.before.set(target, stateOf(target, set));
+      return;
+    }
+    const was = this.before.get(target);
+    if (was === undefined) return;
+    const added = keys.filter(key => !some.has(key));
+    if (added.length === 0) return;
+    const state = new Map(was);
+    for (const [key, value] of stateOf(target, new Set(added))) state.set(key, value);
+    for (const key of added) some.add(key);
+    this.before.set(target, state);
   }
 
   /** What changed since the objects were kept: the fields that undo it and those that redo it. */
@@ -81,7 +122,7 @@ export class Journal {
     const undo = new Map<object, State>();
     const redo = new Map<object, State>();
     for (const [target, was] of this.before) {
-      const now = stateOf(target);
+      const now = stateOf(target, this.fields.get(target) ?? null);
       const undoFields = new Map<string, unknown>();
       const redoFields = new Map<string, unknown>();
       for (const key of new Set([...was.keys(), ...now.keys()])) {

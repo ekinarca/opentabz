@@ -4,7 +4,7 @@
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
 import type { TrackBeats } from './beats.ts';
-import type { EditCommand, EditOutcome } from './edit.ts';
+import type { BarState, EditCommand, EditOutcome, TrackState } from './edit.ts';
 import type { OpenError } from './open-error.ts';
 import type { TrackChords } from './chords.ts';
 import type { TrackDrums } from './drums.ts';
@@ -69,6 +69,10 @@ export interface EngineMethods {
   undo(args: { readonly docId: string }): EditOutcome;
   /** Makes a document's last edit undone again. */
   redo(args: { readonly docId: string }): EditOutcome;
+  /** A track's properties as they are (EDIT-030 … EDIT-036), for the editor's track dialog. */
+  trackProperties(args: { readonly docId: string; readonly track: number }): TrackState;
+  /** A bar's properties as they are (EDIT-021 … EDIT-027), for the editor's bar dialog. */
+  barProperties(args: { readonly docId: string; readonly bar: number }): BarState;
   /** Every beat of one track, where it is and what it holds, for the editor's caret. */
   trackBeats(args: { readonly docId: string; readonly trackIndex: number }): TrackBeats;
   /** A document as it is now, edited or not, as a Guitar Pro 7/8 file (EDIT-064). */

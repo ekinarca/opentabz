@@ -24,3 +24,4 @@ export * from './reading-aids.ts';
 export * from './music-font.ts';
 export * from './edit.ts';
 export * from './beats.ts';
+export * from './track-colors.ts';

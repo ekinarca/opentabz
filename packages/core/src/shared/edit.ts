@@ -59,6 +59,107 @@ export type Tuplet = 'none' | 'triplet';
 export type Fade = 'none' | 'in' | 'out' | 'swell';
 export type Stroke = 'none' | 'up' | 'down';
 
+export type TripletFeel =
+  'none' | 'triplet-8th' | 'triplet-16th' | 'dotted-8th' | 'dotted-16th' | 'scottish-8th' | 'scottish-16th';
+
+export const TRIPLET_FEELS: readonly TripletFeel[] = [
+  'none',
+  'triplet-8th',
+  'triplet-16th',
+  'dotted-8th',
+  'dotted-16th',
+  'scottish-8th',
+  'scottish-16th',
+];
+
+export type BarLine =
+  'automatic' | 'double' | 'final' | 'heavy' | 'dashed' | 'dotted' | 'short' | 'tick' | 'none';
+
+export const BAR_LINES: readonly BarLine[] = [
+  'automatic',
+  'double',
+  'final',
+  'heavy',
+  'dashed',
+  'dotted',
+  'short',
+  'tick',
+  'none',
+];
+
+/** The note values a time signature may count in. */
+export const METER_DENOMINATORS: readonly number[] = [1, 2, 4, 8, 16, 32];
+
+/** The slowest and fastest tempo written (quarter notes a minute). */
+export const MIN_TEMPO = 10;
+export const MAX_TEMPO = 999;
+
+/** How many times a repeat may be played, and how many alternate endings a bar may belong to. */
+export const MAX_REPEATS = 99;
+export const MAX_ENDINGS = 8;
+
+/** A bar's properties (EDIT-021 … EDIT-027), for every track: each one given is set. */
+export interface BarProperties {
+  /** The time signature, from this bar to the next one with a meter of its own. */
+  readonly meter?: { readonly numerator: number; readonly denominator: number };
+  /** The key (−7 seven flats … 7 seven sharps), major or minor, to the next change of key. */
+  readonly key?: { readonly signature: number; readonly minor: boolean };
+  /** A tempo from the start of the bar (quarter notes a minute), or none. */
+  readonly tempo?: number | null;
+  /** The tempo changes gradually from this bar's to the next one written (a ramp, accel. or rit.). */
+  readonly tempoRamp?: boolean;
+  readonly repeatStart?: boolean;
+  /** How many times the repeat ending at this bar is played: 0 when none ends here, else 2 or more. */
+  readonly repeatCount?: number;
+  /** The passes through a repeat this bar is played on (an alternate ending): a bit per pass, 1 the first. */
+  readonly alternateEndings?: number;
+  /** A section starting at this bar ("A", "Verse"), or none. */
+  readonly section?: { readonly marker: string; readonly text: string } | null;
+  /** The bar line at its end, in every staff: automatic (single, or a repeat's), double, final… */
+  readonly barLine?: BarLine;
+  /** Played out of time, its meter in brackets. */
+  readonly freeTime?: boolean;
+  readonly tripletFeel?: TripletFeel;
+  /** A pickup bar, as long as its notes (the first bar only). */
+  readonly anacrusis?: boolean;
+}
+
+/** A bar's properties as they are (all of them). */
+export type BarState = Required<BarProperties>;
+
+/** The most strings a staff may have, and the frets a capo may sit on. */
+export const MAX_STRINGS = 10;
+export const MAX_CAPO = 24;
+
+/** A track's instrument and how it is written (EDIT-030 … EDIT-036): each one given is set. */
+export interface TrackProperties {
+  readonly name?: string;
+  readonly shortName?: string;
+  /** A CSS colour, #rrggbb. */
+  readonly color?: string;
+  /** General MIDI program, 0–127. */
+  readonly program?: number;
+  /** Its first staff's strings, as MIDI note numbers from the highest; none for a staff without strings. */
+  readonly tuning?: readonly number[];
+  readonly capo?: number;
+  /** Semitones the part is written above how it sounds (a transposing instrument: 12 for a guitar). */
+  readonly transposition?: number;
+}
+
+/** A track put in (EDIT-030). */
+export interface NewTrack {
+  readonly name: string;
+  readonly shortName: string;
+  readonly program: number;
+  /** MIDI note numbers from the highest string; none for an instrument without strings. */
+  readonly tuning: readonly number[];
+  readonly percussion: boolean;
+  readonly color?: string;
+}
+
+/** A track's properties as they are. */
+export type TrackState = Required<TrackProperties> & { readonly percussion: boolean };
+
 /** A beat's techniques (EDIT-014): each one given is set. */
 export interface BeatTechniques {
   /** Three in the time of two (/), or none. */
@@ -103,7 +204,17 @@ export type EditCommand =
   /** A note's techniques set (EDIT-014). */
   | { readonly kind: 'set-note'; readonly at: NoteAddress; readonly techniques: NoteTechniques }
   /** A beat's techniques set (EDIT-014). */
-  | { readonly kind: 'set-beat'; readonly at: BeatAddress; readonly techniques: BeatTechniques };
+  | { readonly kind: 'set-beat'; readonly at: BeatAddress; readonly techniques: BeatTechniques }
+  /** A bar's properties set, in every track (EDIT-021 … EDIT-027). */
+  | { readonly kind: 'set-bar'; readonly bar: number; readonly properties: BarProperties }
+  /** A track put in at a place among the others (the end: the number of tracks), its bars empty. */
+  | { readonly kind: 'add-track'; readonly at: number; readonly track: NewTrack }
+  /** A track taken away; a score keeps at least one. */
+  | { readonly kind: 'remove-track'; readonly track: number }
+  /** A track moved to another place among the others. */
+  | { readonly kind: 'move-track'; readonly track: number; readonly to: number }
+  /** A track's properties set. */
+  | { readonly kind: 'set-track'; readonly track: number; readonly properties: TrackProperties };
 
 /** What an edit, an undo or a redo did to a document. */
 export interface EditOutcome {
@@ -120,4 +231,9 @@ export interface EditOutcome {
   readonly revision: number;
   /** The document as it is now. */
   readonly summary: DocSummary;
+  /**
+   * Where each track was before, when tracks were put in, taken away or moved: by track, its index
+   * before (−1 for a track put in); null when the tracks are as they were.
+   */
+  readonly trackOrigins: readonly number[] | null;
 }

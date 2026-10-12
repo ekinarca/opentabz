@@ -43,6 +43,10 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.undo(message.args as EngineRequestMessage<'undo'>['args']);
     case 'redo':
       return host.redo(message.args as EngineRequestMessage<'redo'>['args']);
+    case 'trackProperties':
+      return host.trackProperties(message.args as EngineRequestMessage<'trackProperties'>['args']);
+    case 'barProperties':
+      return host.barProperties(message.args as EngineRequestMessage<'barProperties'>['args']);
     case 'trackBeats':
       return host.trackBeats(message.args as EngineRequestMessage<'trackBeats'>['args']);
     case 'saveDocument':

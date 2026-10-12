@@ -7,6 +7,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import type { FormatId } from '../shared/formats.ts';
+import { TRACK_COLORS } from '../shared/track-colors.ts';
 
 /** Formats whose files give each track its colour. */
 const COLORED_FORMATS: ReadonlySet<FormatId> = new Set<FormatId>(['gp3', 'gp4', 'gp5', 'gpx', 'gp', 'gpif']);
@@ -14,16 +15,7 @@ const COLORED_FORMATS: ReadonlySet<FormatId> = new Set<FormatId>(['gp3', 'gp4', 
 /** The colour alphaTab gives a track that no file coloured. */
 const UNCOLORED = new alphaTab.model.Color(200, 0, 0, 255).rgba;
 
-/** Colours for tracks the file did not colour, by track. */
-export const TRACK_COLORS = [
-  '#0072B2',
-  '#E69F00',
-  '#009E73',
-  '#CC79A7',
-  '#56B4E9',
-  '#D55E00',
-  '#F0E442',
-] as const;
+export { TRACK_COLORS } from '../shared/track-colors.ts';
 
 /** Gives the tracks a file left uncoloured a colour each, by their place in the score. */
 export function colorTracks(score: alphaTab.model.Score, format: FormatId): void {

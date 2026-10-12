@@ -12,6 +12,7 @@ import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
 import {
   DURATION_VALUES,
+  type BarProperties,
   type BeatAddress,
   type BeatTechniques,
   type EditCommand,
@@ -312,6 +313,125 @@ describe('commands', () => {
     expect(() => editor.apply([{ kind: 'set-beat', at: AT, techniques: { tremolo: 9 } }])).toThrow(EditError);
   });
 
+  it('sets a bar’s meter and key to the next bar with its own, and its tempo, repeats and section', () => {
+    const score = texScore('\\track "Guitar" 3.3.1 | 3.3.1 | 3.3.1 | \\ts 3 4 3.3.2 {d} | 3.3.2 {d}');
+    const editor = editorOf(score);
+    editor.apply([
+      {
+        kind: 'set-bar',
+        bar: 1,
+        properties: { meter: { numerator: 6, denominator: 8 }, key: { signature: -3, minor: true } },
+      },
+    ]);
+    expect(
+      score.masterBars.map(
+        bar => `${String(bar.timeSignatureNumerator)}/${String(bar.timeSignatureDenominator)}`,
+      ),
+    ).toEqual(['4/4', '6/8', '6/8', '3/4', '3/4']);
+    expect(score.tracks[0]?.staves[0]?.bars.map(bar => bar.keySignature)).toEqual([0, -3, -3, -3, -3]);
+    expect(score.tracks[0]?.staves[0]?.bars[2]?.keySignatureType).toBe(alphaTab.model.KeySignatureType.Minor);
+    editor.apply([
+      {
+        kind: 'set-bar',
+        bar: 2,
+        properties: {
+          tempo: 90,
+          repeatStart: true,
+          section: { marker: 'B', text: 'Chorus' },
+          barLine: 'double',
+        },
+      },
+    ]);
+    editor.apply([{ kind: 'set-bar', bar: 3, properties: { repeatCount: 3, tripletFeel: 'triplet-8th' } }]);
+    const bar = score.masterBars[2];
+    expect(bar?.tempoAutomations[0]?.value).toBe(90);
+    expect(bar?.section?.text).toBe('Chorus');
+    expect(bar?.repeatGroup.masterBars.map(each => each.index)).toEqual([2, 3, 4]);
+    expect(score.masterBars[3]?.repeatCount).toBe(3);
+    expect(score.tracks[0]?.staves[0]?.bars[2]?.barLineRight).toBe(alphaTab.model.BarLineStyle.LightLight);
+    expect(() => editor.apply([{ kind: 'set-bar', bar: 1, properties: { anacrusis: true } }])).toThrow(
+      EditError,
+    );
+    expect(() => editor.apply([{ kind: 'set-bar', bar: 1, properties: { repeatCount: 1 } }])).toThrow(
+      'A repeat is played at least twice.',
+    );
+    expect(() =>
+      editor.apply([{ kind: 'set-bar', bar: 1, properties: { meter: { numerator: 4, denominator: 3 } } }]),
+    ).toThrow(EditError);
+    editor.undo();
+    editor.undo();
+    expect(score.masterBars[2]?.tempoAutomations).toHaveLength(0);
+    expect(score.masterBars[2]?.isRepeatStart).toBe(false);
+  });
+
+  it('puts tracks in, moves them and takes them away, saying where each was', () => {
+    const score = texScore('\\track "Guitar" 3.3.1 | 5.3.1 \\track "Bass" 3.4.1 | 5.4.1');
+    const editor = editorOf(score);
+    const names = () => score.tracks.map(track => `${String(track.index)}:${track.name}`);
+    const bass = {
+      name: 'Bass 2',
+      shortName: 'B2',
+      program: 33,
+      tuning: [43, 38, 33, 28],
+      percussion: false,
+    };
+    expect(editor.apply([{ kind: 'add-track', at: 1, track: bass }])?.trackOrigins).toEqual([0, -1, 1]);
+    expect(names()).toEqual(['0:Guitar', '1:Bass 2', '2:Bass']);
+    const added = score.tracks[1];
+    expect(added?.staves[0]?.bars).toHaveLength(2);
+    expect(added?.staves[0]?.bars.every(bar => bar.isEmpty)).toBe(true);
+    expect(added?.staves[0]?.tuning).toEqual([43, 38, 33, 28]);
+    // On MIDI channels of its own.
+    const channels = score.tracks.flatMap(track => [track.playbackInfo.primaryChannel]);
+    expect(new Set(channels).size).toBe(3);
+    expect(editor.apply([{ kind: 'move-track', track: 0, to: 2 }])?.trackOrigins).toEqual([1, 2, 0]);
+    expect(names()).toEqual(['0:Bass 2', '1:Bass', '2:Guitar']);
+    expect(editor.apply([{ kind: 'remove-track', track: 1 }])?.trackOrigins).toEqual([0, 2]);
+    expect(names()).toEqual(['0:Bass 2', '1:Guitar']);
+    expect(editor.undo()?.trackOrigins).toEqual([0, -1, 1]);
+    expect(names()).toEqual(['0:Bass 2', '1:Bass', '2:Guitar']);
+    editor.undo();
+    editor.undo();
+    expect(names()).toEqual(['0:Guitar', '1:Bass']);
+    expect(() => editor.apply([{ kind: 'remove-track', track: 9 }])).toThrow(EditError);
+  });
+
+  it('sets a track’s name, colour, sound, tuning, capo and transposition', () => {
+    const score = texScore('\\track "Guitar" 3.1.1 | 5.6.1');
+    const editor = editorOf(score);
+    editor.apply([
+      {
+        kind: 'set-track',
+        track: 0,
+        properties: {
+          name: 'Lead',
+          shortName: 'Ld.',
+          color: '#336699',
+          program: 30,
+          tuning: [64, 59, 55, 50, 45, 38],
+          capo: 2,
+          transposition: 12,
+        },
+      },
+    ]);
+    const track = score.tracks[0];
+    expect(track?.name).toBe('Lead');
+    expect(track?.color.r).toBe(0x33);
+    expect(track?.playbackInfo.program).toBe(30);
+    expect(track?.staves[0]?.tuning).toEqual([64, 59, 55, 50, 45, 38]);
+    expect(track?.staves[0]?.capo).toBe(2);
+    // The note on the lowest string sounds a tone lower in drop D.
+    const low = score.tracks[0]?.staves[0]?.bars[1]?.voices[0]?.beats[0]?.notes[0];
+    expect(low?.realValue).toBe(38 + 5 + 2);
+    // Fewer strings than notes are written on: refused.
+    expect(() =>
+      editor.apply([{ kind: 'set-track', track: 0, properties: { tuning: [64, 59, 55, 50] } }]),
+    ).toThrow('Notes are written on a string the new tuning does not have: move them first.');
+    editor.undo();
+    expect(score.tracks[0]?.name).toBe('Guitar');
+    expect(score.tracks[0]?.staves[0]?.tuning).toEqual([64, 59, 55, 50, 45, 40]);
+  });
+
   it('refuses frets on a drum staff', () => {
     const score = texScore(
       '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:4 (KickHit HiHatClosed) HiHatClosed',
@@ -400,7 +520,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
   };
   const string = 1 + pick(staff.tuning.length);
   const notes = voice.beats[index]?.notes.filter(note => note.isStringed) ?? [];
-  switch (pick(10)) {
+  switch (pick(12)) {
     case 0:
       return { kind: 'set-fret', at: { ...at, string }, fret: pick(25) };
     case 1: {
@@ -448,6 +568,43 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
       return note === undefined
         ? { kind: 'set-note', at: { ...at, string }, techniques: { tie: true } }
         : { kind: 'set-note', at: { ...at, string: note.string }, techniques: chosen };
+    }
+    case 11: {
+      const count = score.tracks.length;
+      const kind = pick(3);
+      if (kind === 0)
+        return {
+          kind: 'add-track',
+          at: pick(count + 1),
+          track: {
+            name: 'Added',
+            shortName: 'Add.',
+            program: 25,
+            tuning: [64, 59, 55, 50, 45, 40],
+            percussion: false,
+          },
+        };
+      if (kind === 1 && count > 1) return { kind: 'remove-track', track: pick(count) };
+      return { kind: 'move-track', track: pick(count), to: pick(count) };
+    }
+    case 10: {
+      const properties: BarProperties[] = [
+        { meter: { numerator: 1 + pick(7), denominator: [2, 4, 8][pick(3)] ?? 4 } },
+        { key: { signature: pick(15) - 7, minor: random() < 0.5 } },
+        { tempo: random() < 0.3 ? null : 40 + pick(200) },
+        { repeatStart: random() < 0.5 },
+        { repeatCount: random() < 0.5 ? 0 : 2 + pick(3) },
+        { alternateEndings: pick(4) },
+        { section: random() < 0.5 ? null : { marker: 'A', text: 'Verse' } },
+        { barLine: random() < 0.5 ? 'double' : 'automatic' },
+        { freeTime: random() < 0.5 },
+        { tripletFeel: random() < 0.5 ? 'triplet-8th' : 'none' },
+      ];
+      return {
+        kind: 'set-bar',
+        bar: pick(score.masterBars.length),
+        properties: properties[pick(properties.length)] ?? {},
+      };
     }
     case 9: {
       const techniques: BeatTechniques[] = [
@@ -505,7 +662,8 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
     for (let edit = 0; edit < EDITS; edit++) {
       const command = randomCommand(score, random);
       if (command === null) break;
-      editor.apply([command]);
+      // An edit that changes nothing (a track moved to where it is) is not one to undo.
+      if (editor.apply([command]) === null) continue;
       const state = stateOf(score);
       expect(state.links, `edit ${String(edit)}: ${JSON.stringify(command)}`).not.toContain('detached');
       expect(links(reopened(score)), `edit ${String(edit)} opened afresh: ${JSON.stringify(command)}`).toBe(

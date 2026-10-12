@@ -3,6 +3,7 @@
  * tablature, bars of 4/4 at 120 quarter notes a minute, each empty until something is written in it.
  */
 import * as alphaTab from '@coderline/alphatab';
+import { TRACK_COLORS } from './track-colors.ts';
 
 /** How many bars a blank score starts with. */
 export const BLANK_BARS = 16;
@@ -19,6 +20,7 @@ export function blankScore(title: string): alphaTab.model.Score {
   const track = new alphaTab.model.Track();
   track.name = 'Guitar';
   track.shortName = 'Gtr.';
+  track.color = alphaTab.model.Color.fromJson(TRACK_COLORS[0]) ?? track.color;
   track.playbackInfo.program = STEEL_GUITAR;
   track.playbackInfo.primaryChannel = 0;
   track.playbackInfo.secondaryChannel = 1;

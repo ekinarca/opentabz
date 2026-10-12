@@ -7,14 +7,42 @@ import { MAX_FRET, type BeatAddress, type DurationValue, type EditCommand } from
 import { EditError } from './error.ts';
 import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
+import { setBarProperties } from './bar-properties.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
+import { newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
 
 export { EditError };
+
+/** Where a master bar is, and how it is linked to the others: what a bar put in changes. */
+const MASTER_BAR_PLACE = ['index', 'score', 'previousMasterBar', 'nextMasterBar', 'start', 'repeatGroup'];
+
+/** A master bar's own properties (EDIT-021 … EDIT-027). */
+const MASTER_BAR_PROPERTIES = [
+  'timeSignatureNumerator',
+  'timeSignatureDenominator',
+  'timeSignatureCommon',
+  'tempoAutomations',
+  'isRepeatStart',
+  'repeatCount',
+  'alternateEndings',
+  'section',
+  'isFreeTime',
+  'tripletFeel',
+  'isAnacrusis',
+];
+
+/** Where a staff's bar is, and how it is linked to the others. */
+const BAR_PLACE = ['index', 'staff', 'previousBar', 'nextBar'];
+
+/** A staff bar's own properties set with the master bar's: its key, its bar line. */
+const BAR_PROPERTIES = ['keySignature', 'keySignatureType', 'barLineRight'];
 
 /** An edit being made: what it changes is kept before it changes, bar by bar. */
 export class Transaction {
   private readonly changed = new Map<alphaTab.model.Staff, { from: number; to: number }>();
   private engraved = Number.POSITIVE_INFINITY;
+  /** Bars changed for every staff alike (a tempo, a repeat), their staves' notes as they were. */
+  private marked = false;
 
   public constructor(
     public readonly score: alphaTab.model.Score,
@@ -24,6 +52,11 @@ export class Transaction {
   /** The bars changed, staff by staff. */
   public get regions(): Region[] {
     return [...this.changed].map(([staff, { from, to }]) => ({ staff, from, to }));
+  }
+
+  /** Whether the edit changed nothing. */
+  public get isEmpty(): boolean {
+    return this.changed.size === 0 && !this.marked;
   }
 
   /** The first master bar whose engraving changed, before the edit and after it. */
@@ -38,14 +71,55 @@ export class Transaction {
   public touchBars(bar: number): void {
     const { journal, score } = this;
     journal.keep(score);
-    for (const masterBar of score.masterBars) journal.keep(masterBar);
+    for (const masterBar of score.masterBars) journal.keepFields(masterBar, MASTER_BAR_PLACE);
     for (const track of score.tracks) {
       for (const staff of track.staves) {
         journal.keep(staff);
-        for (const staffBar of staff.bars) journal.keep(staffBar);
+        for (const staffBar of staff.bars) journal.keepFields(staffBar, BAR_PLACE);
         this.touch(staff, Math.min(bar, staff.bars.length - 1));
       }
     }
+  }
+
+  /** The layout changes from `bar` on, for every staff alike (tracks put in, moved, taken away). */
+  public mark(bar: number): void {
+    this.marked = true;
+    this.engraved = Math.min(this.engraved, bar);
+  }
+
+  /** Keeps the score's tracks as they are, about to be put in, taken away or moved. */
+  public touchTracks(): void {
+    const { journal, score } = this;
+    journal.keep(score);
+    journal.keep(score.stylesheet);
+    for (const track of score.tracks) journal.keepFields(track, ['index']);
+  }
+
+  /** Keeps a track's own properties as they are, about to change. */
+  public touchTrack(track: alphaTab.model.Track): void {
+    const { journal } = this;
+    journal.keep(track);
+    journal.keep(track.playbackInfo);
+    for (const staff of track.staves) journal.keep(staff);
+  }
+
+  /**
+   * Keeps every bar's properties as they are, about to change from `bar` on (a meter or a key
+   * runs on to the next change), and the repeat groups: the staves' notes are not touched, so the
+   * layout follows from `bar` without working their notes out again.
+   */
+  public touchBarProperties(bar: number): void {
+    const { journal, score } = this;
+    journal.keep(score);
+    for (const masterBar of score.masterBars)
+      journal.keepFields(masterBar, [...MASTER_BAR_PLACE, ...MASTER_BAR_PROPERTIES]);
+    for (const track of score.tracks) {
+      for (const staff of track.staves) {
+        for (const staffBar of staff.bars.slice(bar)) journal.keepFields(staffBar, BAR_PROPERTIES);
+      }
+    }
+    this.marked = true;
+    this.engraved = Math.min(this.engraved, bar);
   }
 
   /**
@@ -317,6 +391,70 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       const beat = beatAt(score, command.at);
       transaction.touch(beat.voice.bar.staff, command.at.bar);
       setBeatTechniques(beat, command.techniques);
+      return;
+    }
+    case 'set-bar': {
+      if (score.masterBars[command.bar] === undefined) throw new EditError(`No bar ${String(command.bar)}.`);
+      transaction.touchBarProperties(command.bar);
+      // A new meter moves the beats in their bars: the staves are worked out again.
+      if (command.properties.meter !== undefined) {
+        for (const track of score.tracks)
+          for (const staff of track.staves) transaction.touch(staff, command.bar);
+      }
+      setBarProperties(score, command.bar, command.properties);
+      score.rebuildRepeatGroups();
+      return;
+    }
+    case 'add-track': {
+      const at = command.at;
+      if (!Number.isInteger(at) || at < 0 || at > score.tracks.length)
+        throw new EditError(`No place for a track at ${String(at)}.`);
+      transaction.touchTracks();
+      const track = newTrack(score, command.track);
+      const origins = score.tracks.map((_, index) => index);
+      origins.splice(at, 0, -1);
+      score.tracks.splice(at, 0, track);
+      reindexTracks(score, origins);
+      // Its staff worked out, and everything laid out again.
+      for (const staff of track.staves) transaction.touch(staff, 0);
+      transaction.mark(0);
+      return;
+    }
+    case 'remove-track': {
+      trackAt(score, command.track);
+      if (score.tracks.length === 1) throw new EditError('A score keeps at least one track.');
+      transaction.touchTracks();
+      const origins = score.tracks.map((_, index) => index).filter(index => index !== command.track);
+      score.tracks.splice(command.track, 1);
+      reindexTracks(score, origins);
+      transaction.mark(0);
+      return;
+    }
+    case 'move-track': {
+      const track = trackAt(score, command.track);
+      const to = command.to;
+      if (!Number.isInteger(to) || to < 0 || to >= score.tracks.length)
+        throw new EditError(`No place ${String(to)}.`);
+      if (to === command.track) return;
+      transaction.touchTracks();
+      const origins = score.tracks.map((_, index) => index);
+      origins.splice(command.track, 1);
+      origins.splice(to, 0, command.track);
+      score.tracks.splice(command.track, 1);
+      score.tracks.splice(to, 0, track);
+      reindexTracks(score, origins);
+      transaction.mark(0);
+      return;
+    }
+    case 'set-track': {
+      const track = trackAt(score, command.track);
+      transaction.touchTrack(track);
+      setTrackProperties(track, command.properties);
+      // A new tuning moves every note's pitch: the track's staves are worked out again.
+      if (command.properties.tuning !== undefined || command.properties.capo !== undefined) {
+        for (const staff of track.staves) transaction.touch(staff, 0);
+      }
+      transaction.mark(0);
       return;
     }
     case 'remove-bar': {

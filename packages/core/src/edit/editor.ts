@@ -13,6 +13,21 @@ import { refinish, refinishStaves, type Region } from './refinish.ts';
 export interface EditResult {
   /** The first master bar whose engraving may have changed, to lay out again from. */
   readonly firstChangedMasterBar: number;
+  /** Where each track was before (−1: put in), when tracks were put in, taken away or moved. */
+  readonly trackOrigins?: readonly number[];
+}
+
+/** Where each track was before, when they are not as they were. */
+function trackOrigins(
+  before: readonly alphaTab.model.Track[],
+  after: readonly alphaTab.model.Track[],
+): number[] | null {
+  const origins = after.map(track => before.indexOf(track));
+  return origins.length === before.length && origins.every((from, to) => from === to) ? null : origins;
+}
+
+function withOrigins(result: EditResult, origins: number[] | null): EditResult {
+  return origins === null ? result : { ...result, trackOrigins: origins };
 }
 
 interface Step {
@@ -60,6 +75,7 @@ export class ScoreEditor {
 
   /** Makes an edit, which can then be undone; what was undone can no longer be redone. */
   public apply(commands: readonly EditCommand[]): EditResult | null {
+    const tracks = [...this.score.tracks];
     const transaction = new Transaction(this.score, new Journal());
     try {
       for (const command of commands) runCommand(transaction, command);
@@ -68,34 +84,36 @@ export class ScoreEditor {
       transaction.journal.changes().undo.apply();
       throw error;
     }
+    if (transaction.isEmpty) return null;
     const regions = transaction.regions;
-    if (regions.length === 0) return null;
     refinish(this.score, regions, this.settings, true);
     const { undo, redo } = transaction.journal.changes();
     const result = { firstChangedMasterBar: transaction.firstChangedMasterBar() };
     this.revisions += 1;
     this.done.push({ revision: this.revisions, undo, redo, regions, result });
     this.undone.length = 0;
-    return result;
+    return withOrigins(result, trackOrigins(tracks, this.score.tracks));
   }
 
   /** Undoes the last edit, or nothing (null) when there is none. */
   public undo(): EditResult | null {
     const step = this.done.pop();
     if (step === undefined) return null;
+    const tracks = [...this.score.tracks];
     step.undo.apply();
     refinish(this.score, step.regions, this.settings, false);
     this.undone.push(step);
-    return step.result;
+    return withOrigins(step.result, trackOrigins(tracks, this.score.tracks));
   }
 
   /** Makes the last edit undone again, or nothing (null) when there is none. */
   public redo(): EditResult | null {
     const step = this.undone.pop();
     if (step === undefined) return null;
+    const tracks = [...this.score.tracks];
     step.redo.apply();
     refinish(this.score, step.regions, this.settings, false);
     this.done.push(step);
-    return step.result;
+    return withOrigins(step.result, trackOrigins(tracks, this.score.tracks));
   }
 }
