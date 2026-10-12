@@ -49,7 +49,9 @@ export function applyStaffDisplay(
         showSlash: staff.showSlash,
         showNumbered: staff.showNumbered,
       });
-      const tablatureAvailable = staff.isStringed && !staff.isPercussion;
+      // Strings, real or given for the render: a pitched part's (REND-190), and a drum kit's lines
+      // when its own tablature is asked for (REND-191).
+      const tablatureAvailable = staff.isStringed && (!staff.isPercussion || chosen?.tablature === true);
       if (chosen !== undefined) {
         staff.showStandardNotation = chosen.standard;
         staff.showTablature = chosen.tablature && tablatureAvailable;

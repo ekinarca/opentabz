@@ -186,7 +186,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
   one another; one choice in the menu applies to every track again. Exports print the same. A
   keyboard, voice or orchestral part can be shown as tablature too, its notes placed on a
-  guitar's strings (or a bass's), each chord's on strings of their own near the hand.
+  guitar's strings (or a bass's), each chord's on strings of their own near the hand. Drums can
+  be shown as a drum tablature: a line for each sound they play, from the cymbals on top to the
+  kick at the bottom, each hit written as its MIDI number.
 - **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
   (keeping the size of text and chord diagrams if asked), the rhythmic spacing, the staff lines'
   thickness, the space between systems, the first system's indent, brackets (none, a track's
@@ -281,8 +283,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
-  (0049), fingering as asked (0050), and tablature that skips notes without a string (0051).
-  See [docs/upstream/](docs/upstream/).
+  (0049), fingering as asked (0050), tablature that skips notes without a string (0051), and
+  drum tablature (0052). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

@@ -1,7 +1,8 @@
 /**
- * Tablature for any pitched instrument (REND-190): a piano part shown as tablature on a guitar's
- * strings, each note of a chord on a string of its own at a fret that sounds it, near the hand's
- * place; notes no string reaches left out; the score itself left as it was.
+ * Tablature for any instrument: a piano part shown as tablature on a guitar's strings (REND-190),
+ * each note of a chord on a string of its own at a fret that sounds it, near the hand's place;
+ * notes no string reaches left out; a drum kit as a drum tablature (REND-191), a line for each
+ * sound, its hits written as their MIDI numbers; the score itself left as it was.
  */
 import { describe, expect, it } from 'vitest';
 import { fretChord, MAX_FRET } from '../src/render/fretting.ts';
@@ -111,5 +112,70 @@ describe('a piano part as tablature (REND-190)', () => {
     expect(notes.every(note => !note.isStringed)).toBe(true);
     expect(tabbed.score.tracks[0]?.staves[0]?.tuning).toEqual([]);
     expect(tablature(plain)).toEqual([]);
+  });
+});
+
+const DRUMS = [
+  '\\track "Drums" {instrument percussion}',
+  '\\articulation defaults',
+  ':8 (KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatClosed',
+  '(KickHit HiHatClosed) HiHatClosed (SnareHit HiHatClosed) HiHatOpen |',
+].join('\n');
+
+/** The drum tablature's numbers, each with its line (0 the top one) of the last `count`. */
+function drumTablature(view: Engraving, count: number) {
+  const system = view.marks.filter(mark => mark.partial === 'system');
+  const lines = [
+    ...new Set(
+      system
+        .filter(mark => mark.kind === 'rect' && mark.height < 2 && mark.width > 5)
+        .map(mark => Math.round(mark.y * 10) / 10),
+    ),
+  ].sort((a, b) => a - b);
+  const tab = lines.slice(-count);
+  return system
+    .filter(mark => mark.kind === 'text' && /^\d+$/.test(mark.name) && mark.y >= (tab[0] ?? 0) - 3)
+    .map(mark => ({
+      line: tab.reduce(
+        (best, y, index) => (Math.abs(y - mark.y) < Math.abs((tab[best] ?? 0) - mark.y) ? index : best),
+        0,
+      ),
+      number: Number(mark.name),
+    }));
+}
+
+describe('a drum kit as tablature (REND-191)', () => {
+  it('gives each sound a line, cymbals on top and the kick at the bottom, its hits their MIDI numbers', () => {
+    const numbers = drumTablature(engraveTex(DRUMS, { staves: WITH_TAB }), 4);
+    // Twelve hits: seven closed hi-hats, two snares, two kicks and an open hi-hat.
+    expect(numbers).toHaveLength(12);
+    const lines = new Map<number, Set<number>>();
+    for (const { line, number } of numbers) lines.set(number, (lines.get(number) ?? new Set()).add(line));
+    // Each sound on a line of its own: the open hi-hat, the closed one, the snare, the kick (the
+    // acoustic bass drum, 35, as it plays).
+    expect([...lines.entries()].sort((a, b) => a[0] - b[0])).toEqual([
+      [35, new Set([3])],
+      [38, new Set([2])],
+      [42, new Set([1])],
+      [46, new Set([0])],
+    ]);
+    expect(numbers.filter(({ number }) => number === 42)).toHaveLength(7);
+  });
+
+  it('leaves the kit as it was, and its staff when every track is shown as tablature', () => {
+    const plain = engraveTex(DRUMS);
+    const tabbed = engraveTex(DRUMS, { staves: WITH_TAB });
+    const heads = (view: Engraving) =>
+      view.marks
+        .filter(mark => mark.partial === 'system' && mark.name.startsWith('Notehead'))
+        .map(mark => mark.name);
+    expect(heads(tabbed)).toEqual(heads(plain));
+    const notes = tabbed.beats().flatMap(beat => beat.notes);
+    expect(notes.every(note => note.isPercussion && note.string === -1 && note.fret === -1)).toBe(true);
+    expect(tabbed.score.tracks[0]?.staves[0]?.tuning).toEqual([]);
+    // Only its own choice gives a kit a tablature: the Staves menu's leaves it its staff.
+    const all = engraveTex(DRUMS, { staffDisplay: 'tab' });
+    expect(drumTablature(all, 4)).toEqual([]);
+    expect(heads(all)).toEqual(heads(plain));
   });
 });

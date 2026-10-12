@@ -60,6 +60,7 @@ available as source: the patch file is that source.
 | [0049](0049-inverted-tab.md)                         | The tablature the other way up                                                     | Some players read the lowest string on top                                 | not yet  |
 | [0050](0050-fingering-display.md)                    | Fingering as asked                                                                 | Guitar Pro labels, places and sizes fingering                              | not yet  |
 | [0051](0051-tab-notes-without-strings.md)            | Tablature skips notes without a string                                             | A pitched part shown as tab may have notes no string reaches               | not yet  |
+| [0052](0052-drum-tablature.md)                       | Drum tablature                                                                     | Guitar Pro shows a drum kit as tablature with MIDI numbers                 | not yet  |
 
 ## Working on a patch
 

@@ -7,7 +7,10 @@ const s = strings.trackStaves;
 const KINDS = ['standard', 'tablature', 'slash', 'numbered'] as const;
 type Kind = (typeof KINDS)[number];
 
-/** Whether a track can show tablature: strings, and not a drum kit. */
+/**
+ * Whether a track takes the Staves menu's tablature: strings, and not a drum kit, whose tablature
+ * is chosen for it alone (REND-191).
+ */
 function stringed(track: TrackSummary): boolean {
   return track.staves.some(staff => staff.stringCount > 0 && !staff.isPercussion);
 }
@@ -37,8 +40,9 @@ export function shownStaves(
 }
 
 /**
- * The kinds of staff each track shows (REND-031): standard notation, tablature (for any pitched
- * part, REND-190), rhythm slashes and numbered notation, chosen track by track.
+ * The kinds of staff each track shows (REND-031): standard notation, tablature (for any part: a
+ * pitched one, REND-190; a drum kit, REND-191), rhythm slashes and numbered notation, chosen track
+ * by track.
  */
 export function TrackStavesDialog({
   doc,
@@ -98,10 +102,11 @@ export function TrackStavesDialog({
               const name = track.name.trim().length > 0 ? track.name : track.shortName;
               const shown = shownStaves(track, staffDisplay, staves);
               const drums = track.staves.every(staff => staff.isPercussion);
-              // Any pitched part can be shown as tablature (REND-190): on a guitar's strings.
+              // Any part can be shown as tablature: a pitched one on a guitar's strings (REND-190), a
+              // drum kit with its hits' MIDI numbers (REND-191).
               const unavailable: Readonly<Record<Kind, boolean>> = {
                 standard: false,
-                tablature: drums,
+                tablature: false,
                 slash: false,
                 numbered: drums,
               };
