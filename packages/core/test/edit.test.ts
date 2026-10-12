@@ -12,6 +12,7 @@ import { moveChordName } from '../src/edit/transpose.ts';
 import { harmonyOf } from '../src/edit/harmonize.ts';
 import { readBarProperties } from '../src/edit/bar-properties.ts';
 import { collectTrackBeats } from '../src/edit/track-beats.ts';
+import { SPELLING_ORDER } from '../src/shared/beats.ts';
 import { EditError } from '../src/edit/commands.ts';
 import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
@@ -706,22 +707,31 @@ describe('copy and paste (EDIT-020)', () => {
     expect(frets(0)).toEqual([1, 2, 3]);
   });
 
-  it('refuses to paste drums on strings, or notes on strings a track does not have', () => {
+  it('pastes across instruments: by pitch on other strings, the rhythm alone between drums and notes', () => {
     const score = texScore(
       '\\track "Guitar" 1.1.4 2.6.4 r.2\n\\track "Bass"\n\\tuning (G2 D2 A1 E1) 3.4.1\n' +
         '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:1 KickHit',
     );
     const editor = editorOf(score);
+    const first = (track: number, index = 0) =>
+      score.tracks[track]?.staves[0]?.bars[0]?.voices[0]?.beats[index];
+    // The guitar's F4 (high E string, 1st fret) on the bass: its G string's 22nd fret.
     const high = copySelection(score, beats([0, 0], [0, 0]));
-    expect(() => editor.apply([{ kind: 'paste', at: { ...AT, track: 1 }, clip: high }])).toThrow(
-      'This track has fewer strings than the notes copied are written on.',
-    );
+    editor.apply([{ kind: 'paste', at: { ...AT, track: 1 }, clip: high }]);
+    expect(first(1)?.notes.map(note => [note.string, note.fret])).toEqual([[4, 22]]);
+    expect(first(1)?.notes[0]?.realValue).toBe(first(0)?.notes[0]?.realValue);
+    // The guitar's F♯2 on the bass's E string, as high as its own string was low.
     const low = copySelection(score, beats([0, 1], [0, 1]));
     editor.apply([{ kind: 'paste', at: { ...AT, track: 1 }, clip: low }]);
-    expect(score.tracks[1]?.staves[0]?.bars[0]?.voices[0]?.beats[0]?.notes[0]?.fret).toBe(2);
-    expect(() => editor.apply([{ kind: 'paste', at: { ...AT, track: 2 }, clip: low }])).toThrow(
-      'Notes on strings are pasted on a track with strings.',
-    );
+    expect(first(1)?.notes.map(note => [note.string, note.fret])).toEqual([[1, 14]]);
+    // On drums, the rhythm alone: a quarter rest, and rests to the end of the bar it took.
+    editor.apply([{ kind: 'paste', at: { ...AT, track: 2 }, clip: low }]);
+    const drums = score.tracks[2]?.staves[0]?.bars[0]?.voices[0]?.beats ?? [];
+    expect(drums.map(each => [each.isRest, each.duration])).toEqual([
+      [true, alphaTab.model.Duration.Quarter],
+      [true, alphaTab.model.Duration.Half],
+      [true, alphaTab.model.Duration.Quarter],
+    ]);
     const unreadable = { ...low, score: { tracks: 'none' } };
     expect(() => editor.apply([{ kind: 'paste', at: AT, clip: unreadable }])).toThrow(
       'What was copied cannot be read.',
@@ -1039,7 +1049,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
           leftFinger: FINGERS[pick(FINGERS.length)] ?? 'none',
           rightFinger: FINGERS[pick(FINGERS.length)] ?? 'none',
         },
-        { spelling: (['auto', 'sharp', 'flat', 'natural'] as const)[pick(4)] ?? 'auto' },
+        { spelling: SPELLING_ORDER[pick(SPELLING_ORDER.length)] ?? 'auto' },
       ];
       const chosen = techniques[pick(techniques.length)] ?? {};
       return note === undefined
@@ -1219,15 +1229,17 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
         if (error instanceof EditError) return null;
         throw error;
       }
-      // Pasted somewhere in the same staff and voice, as plain data, as the page keeps it.
-      const target = staff.bars[pick(staff.bars.length)];
-      const into = target?.voices[voice.index] ?? voice;
+      // Pasted somewhere, in the same staff or another (another instrument, drums), as plain
+      // data, as the page keeps it.
+      const other = random() < 0.3 ? (staves[pick(staves.length)] ?? staff) : staff;
+      const target = other.bars[pick(other.bars.length)];
+      const into = target?.voices[0] ?? voice;
       const at = {
-        track: staff.track.index,
-        staff: staff.index,
+        track: other.track.index,
+        staff: other.index,
         bar: into.bar.index,
-        voice: voice.index,
-        beat: pick(into.beats.length),
+        voice: other === staff ? voice.index : 0,
+        beat: pick((other === staff ? (target?.voices[voice.index] ?? into) : into).beats.length),
       };
       return { kind: 'paste', at, clip: structuredClone(clip) };
     }

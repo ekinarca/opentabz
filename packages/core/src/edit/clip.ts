@@ -7,12 +7,15 @@
  * patch 0061), joined to nothing; each paste copies them again.
  */
 import * as alphaTab from '@coderline/alphatab';
-import type { BeatAddress, Clip, Selection } from '../shared/edit.ts';
+import { MAX_FRET, type BeatAddress, type Clip, type Selection } from '../shared/edit.ts';
 import { detach, detachBar, emptyBeats, ensureVoices, insertBar, removeBar } from './bars.ts';
 import type { Transaction } from './commands.ts';
 import { EditError } from './error.ts';
 
 const { BeatCloner, Duration, JsonConverter, PercussionMapper } = alphaTab.model;
+
+/** The highest fret a note pasted by its pitch keeps to while a string allows. */
+const PLAYABLE_FRET = 24;
 
 /** Ticks in a quarter note, as alphaTab counts them. */
 const QUARTER = 960;
@@ -165,6 +168,7 @@ function copyStaff(
 ): alphaTab.model.Staff {
   const copied = new alphaTab.model.Staff();
   copied.isPercussion = staff.isPercussion;
+  copied.capo = staff.capo;
   copied.stringTuning = new alphaTab.model.Tuning(
     staff.stringTuning.name,
     [...staff.stringTuning.tunings],
@@ -325,28 +329,89 @@ export function removeSelection(transaction: Transaction, selection: Selection):
   clearSelection(transaction, selection);
 }
 
-/** The highest string a note of the beats is written on; 0 without strings. */
-function highestString(beats: Iterable<alphaTab.model.Beat>): number {
-  let highest = 0;
-  for (const beat of beats)
-    for (const note of beat.notes) if (note.isStringed) highest = Math.max(highest, note.string);
-  return highest;
+/**
+ * How the copy's beats are written on a staff, as Guitar Pro pastes across instruments: as they
+ * are on the same strings, by their pitches on other strings or on a staff without strings, and
+ * between drums and notes as their rhythm only (rests).
+ */
+type Writing = 'same' | 'pitch' | 'rhythm';
+
+function writingFor(staff: alphaTab.model.Staff, copied: alphaTab.model.Staff): Writing {
+  if (staff.isPercussion !== copied.isPercussion) return 'rhythm';
+  if (staff.isPercussion) return 'same';
+  const same =
+    staff.capo === copied.capo &&
+    staff.tuning.length === copied.tuning.length &&
+    staff.tuning.every((pitch, index) => pitch === copied.tuning[index]);
+  return same ? 'same' : 'pitch';
 }
 
-/** Checks that a staff can be written the copy's beats: drums on drums, notes on its strings. */
-function checkWriting(
+/** The pitch a note of a staff sounds, written (its capo too), or null for a drum. */
+function pitchOf(staff: alphaTab.model.Staff, note: alphaTab.model.Note): number | null {
+  if (note.isStringed && staff.tuning.length > 0)
+    return (staff.tuning[staff.tuning.length - note.string] ?? 0) + staff.capo + note.fret;
+  if (note.isPiano) return note.octave * 12 + note.tone;
+  return null;
+}
+
+/**
+ * A copy's beat written by its notes' pitches on a staff: on strings, the highest note first,
+ * each on the free string nearest its own with a fret up to the 24th (else as far as the frets
+ * go); without strings, as notes. A note no string plays is left out.
+ */
+function byPitch(
   staff: alphaTab.model.Staff,
   copied: alphaTab.model.Staff,
-  beats: Iterable<alphaTab.model.Beat>,
-): void {
-  if (copied.isPercussion !== staff.isPercussion)
-    throw new EditError(
-      copied.isPercussion
-        ? 'Drums are pasted on a drum track.'
-        : 'Notes on strings are pasted on a track with strings.',
-    );
-  if (!copied.isPercussion && highestString(beats) > staff.tuning.length)
-    throw new EditError('This track has fewer strings than the notes copied are written on.');
+  beat: alphaTab.model.Beat,
+): alphaTab.model.Beat {
+  const written = copyBeat(beat);
+  const notes = [...written.notes].map(note => ({ note, pitch: pitchOf(copied, note) }));
+  for (const { note } of notes) written.removeNote(note);
+  const strings = staff.tuning.length;
+  const taken = new Set<number>();
+  for (const { note, pitch } of notes.sort((a, b) => (b.pitch ?? 0) - (a.pitch ?? 0))) {
+    if (pitch === null) continue;
+    if (strings === 0) {
+      note.string = -1;
+      note.fret = -1;
+      note.octave = Math.floor(pitch / 12);
+      note.tone = pitch % 12;
+      written.addNote(note);
+      continue;
+    }
+    const open = (string: number): number => (staff.tuning[strings - string] ?? 0) + staff.capo;
+    const preferred = note.isStringed ? Math.min(note.string, strings) : strings;
+    const order = Array.from({ length: strings }, (_, index) => index + 1)
+      .filter(string => !taken.has(string))
+      .sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred));
+    const fits = (string: number, highest: number): boolean =>
+      pitch - open(string) >= 0 && pitch - open(string) <= highest;
+    const string =
+      order.find(candidate => fits(candidate, PLAYABLE_FRET)) ??
+      order.find(candidate => fits(candidate, MAX_FRET));
+    if (string === undefined) continue;
+    taken.add(string);
+    note.string = string;
+    note.fret = pitch - open(string);
+    note.octave = -1;
+    note.tone = -1;
+    written.addNote(note);
+  }
+  written.notes.forEach((note, index) => {
+    note.index = index;
+  });
+  return written;
+}
+
+/** A copy's beat as its rhythm only: a rest as long; a grace note, nothing. */
+function rhythmOf(beat: alphaTab.model.Beat): alphaTab.model.Beat | null {
+  if (beat.graceType !== alphaTab.model.GraceType.None) return null;
+  const rest = new alphaTab.model.Beat();
+  rest.duration = beat.duration;
+  rest.dots = beat.dots;
+  rest.tupletNumerator = beat.tupletNumerator;
+  rest.tupletDenominator = beat.tupletDenominator;
+  return rest;
 }
 
 /** The copy's chord diagrams, added to a staff that has none by their ids. */
@@ -395,12 +460,19 @@ function articulationIn(
   return track.percussionArticulations.length - 1;
 }
 
-/** A copy of one of the copy's beats, for a staff: its drum notes on the staff's articulations. */
+/**
+ * A copy of one of the copy's beats, for a staff, as written there (see `Writing`): drum notes on
+ * the staff's articulations. Null for a grace note whose rhythm only is written.
+ */
 function beatFor(
   transaction: Transaction,
   staff: alphaTab.model.Staff,
+  source: alphaTab.model.Staff,
   beat: alphaTab.model.Beat,
-): alphaTab.model.Beat {
+): alphaTab.model.Beat | null {
+  const writing = writingFor(staff, source);
+  if (writing === 'rhythm') return rhythmOf(beat);
+  if (writing === 'pitch') return byPitch(staff, source, beat);
   const copied = copyBeat(beat);
   if (!staff.isPercussion) return copied;
   beat.notes.forEach((note, index) => {
@@ -442,7 +514,6 @@ function pasteBeats(transaction: Transaction, at: BeatAddress, copy: alphaTab.mo
   const copied = copy.tracks[0]?.staves[0];
   if (copied === undefined) throw new EditError('What was copied cannot be read.');
   const beats = copied.bars.flatMap(bar => bar.voices[0]?.beats ?? []).filter(beat => !beat.isEmpty);
-  checkWriting(staff, copied, beats);
   const total = beats.reduce((sum, beat) => sum + beat.displayDuration, 0);
   const start = staff.bars[at.bar]?.voices[at.voice];
   if (start === undefined) throw new EditError(`No voice at ${JSON.stringify(at)}.`);
@@ -500,7 +571,8 @@ function pasteBeats(transaction: Transaction, at: BeatAddress, copy: alphaTab.mo
   let slot = 0;
   for (const beat of beats) {
     while (slot < slots.length - 1 && (filled[slot] ?? 0) >= (slots[slot]?.room ?? 0)) slot++;
-    slots[slot]?.beats.push(beatFor(transaction, staff, beat));
+    const written = beatFor(transaction, staff, copied, beat);
+    if (written !== null) slots[slot]?.beats.push(written);
     filled[slot] = (filled[slot] ?? 0) + beat.displayDuration;
   }
   slots.forEach((each, index) => {
@@ -525,12 +597,6 @@ function pasteBars(transaction: Transaction, at: BeatAddress, copy: alphaTab.mod
       return staff === undefined ? [] : [{ staff, copied }];
     }),
   );
-  for (const { staff, copied } of pairs)
-    checkWriting(
-      staff,
-      copied,
-      copied.bars.flatMap(bar => bar.voices.flatMap(voice => voice.beats)),
-    );
   reach(transaction, at.bar + copy.masterBars.length - 1);
   for (const { staff, copied } of pairs) {
     addChords(transaction, staff, copied);
@@ -543,7 +609,7 @@ function pasteBars(transaction: Transaction, at: BeatAddress, copy: alphaTab.mod
         const voice = voiceOf(transaction, bar, index);
         const beats = source.beats
           .filter(beat => !beat.isEmpty)
-          .map(beat => beatFor(transaction, staff, beat));
+          .flatMap(beat => beatFor(transaction, staff, copied, beat) ?? []);
         voice.beats = beats.length > 0 ? place(voice, beats) : emptyBeats(voice);
       });
       // Voices the bars copied did not have are left empty.

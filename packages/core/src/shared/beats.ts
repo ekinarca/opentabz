@@ -26,7 +26,7 @@ export interface TrackBeats {
   readonly beatMarks: Int32Array;
   /**
    * Per note, as `notes` lists them: [fretting finger, picking finger (their index in FINGERS),
-   * spelling (0 automatic, 1 sharp, 2 flat, 3 natural, −1 another)].
+   * spelling (its index in SPELLING_ORDER, −1 another)].
    */
   readonly noteMarks: Int32Array;
   /** The text written above beats: [beatId, text]. */
@@ -42,7 +42,7 @@ export const TRACK_NOTE_MARK_STRIDE = 3;
 export const BEAMING_ORDER = ['auto', 'split', 'join'] as const;
 
 /** Spelling as `noteMarks` numbers it. */
-export const SPELLING_ORDER = ['auto', 'sharp', 'flat', 'natural'] as const;
+export const SPELLING_ORDER = ['auto', 'sharp', 'flat', 'natural', 'double-sharp', 'double-flat'] as const;
 
 /** The beat of an empty bar, which holds its place until something is written. */
 export const BEAT_EMPTY = 1;

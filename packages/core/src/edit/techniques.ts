@@ -67,6 +67,8 @@ export const SPELLINGS: Readonly<Record<Spelling, alphaTab.model.NoteAccidentalM
   sharp: NoteAccidentalMode.ForceSharp,
   flat: NoteAccidentalMode.ForceFlat,
   natural: NoteAccidentalMode.ForceNatural,
+  'double-sharp': NoteAccidentalMode.ForceDoubleSharp,
+  'double-flat': NoteAccidentalMode.ForceDoubleFlat,
 };
 
 /** The longest text written above a beat. */

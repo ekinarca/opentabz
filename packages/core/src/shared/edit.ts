@@ -121,7 +121,7 @@ export const FINGERS: readonly Finger[] = ['none', 'thumb', 'index', 'middle', '
 export type Beaming = 'auto' | 'split' | 'join';
 
 /** How a note is spelled in standard notation: as the key has it, or with a sharp, a flat, a natural (EDIT-013). */
-export type Spelling = 'auto' | 'sharp' | 'flat' | 'natural';
+export type Spelling = 'auto' | 'sharp' | 'flat' | 'natural' | 'double-sharp' | 'double-flat';
 
 /** A direction written at a bar (EDIT-025): a place jumped to, or a jump. */
 export type BarDirection =
