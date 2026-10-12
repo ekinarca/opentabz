@@ -1,7 +1,12 @@
 import {
   BRACKET_MODES,
   CHORD_SPELLINGS,
+  FINGERING_PLACES,
+  LEFT_FINGER_LABELS,
   LYRICS_PLACES,
+  RIGHT_FINGER_LABELS,
+  STYLE_FINGERING_SIZE,
+  TAB_FINGERING_PLACES,
   sameScoreStyle,
   STYLE_DIAGRAM_SIZE,
   STYLE_DIAGRAM_SPACING,
@@ -591,6 +596,10 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
           <TextFontsSection style={style} set={set} />
         </Section>
 
+        <Section title={s.sections.fingering}>
+          <FingeringFields style={style} set={set} />
+        </Section>
+
         <Section title={s.sections.techniqueLabels} wide>
           <TechniqueLabelsSection style={style} set={set} />
         </Section>
@@ -780,6 +789,71 @@ function TabRhythmFields({
           </Field>
         </>
       )}
+    </>
+  );
+}
+
+/**
+ * Fingering (REND-252): the left and right hands' labels, where it goes on the staff and in the
+ * tablature, and its size.
+ */
+function FingeringFields({
+  style,
+  set,
+}: {
+  readonly style: ScoreStyle;
+  readonly set: (patch: Partial<ScoreStyle>) => void;
+}) {
+  return (
+    <>
+      <Field label={s.leftHandFingerLabels}>
+        <SegmentedControl
+          label={s.leftHandFingerLabels}
+          value={style.leftHandFingerLabels}
+          segments={LEFT_FINGER_LABELS.map(value => ({ value, label: s.leftHandFingerLabelSets[value] }))}
+          onValueChange={leftHandFingerLabels => {
+            set({ leftHandFingerLabels });
+          }}
+        />
+      </Field>
+      <Field label={s.rightHandFingerLabels}>
+        <SegmentedControl
+          label={s.rightHandFingerLabels}
+          value={style.rightHandFingerLabels}
+          segments={RIGHT_FINGER_LABELS.map(value => ({ value, label: s.rightHandFingerLabelSets[value] }))}
+          onValueChange={rightHandFingerLabels => {
+            set({ rightHandFingerLabels });
+          }}
+        />
+      </Field>
+      <Field label={s.fingeringPosition}>
+        <SegmentedControl
+          label={s.fingeringPosition}
+          value={style.fingeringPosition}
+          segments={FINGERING_PLACES.map(value => ({ value, label: s.fingeringPositions[value] }))}
+          onValueChange={fingeringPosition => {
+            set({ fingeringPosition });
+          }}
+        />
+      </Field>
+      <Field label={s.tabFingeringPosition}>
+        <SegmentedControl
+          label={s.tabFingeringPosition}
+          value={style.tabFingeringPosition}
+          segments={TAB_FINGERING_PLACES.map(value => ({ value, label: s.tabFingeringPositions[value] }))}
+          onValueChange={tabFingeringPosition => {
+            set({ tabFingeringPosition });
+          }}
+        />
+      </Field>
+      <FactorField
+        label={s.fingeringSize}
+        value={style.fingeringSize}
+        range={STYLE_FINGERING_SIZE}
+        onChange={fingeringSize => {
+          set({ fingeringSize });
+        }}
+      />
     </>
   );
 }

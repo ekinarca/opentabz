@@ -5,7 +5,7 @@
  * music engraved or handwritten, on screen and in exported pages (REND-241). The chord diagrams'
  * size and spacing (REND-227), kept with the text as the score is scaled (REND-223). The words
  * printed for techniques (REND-242). The tuning legend, or the strings before the tablature
- * (REND-225). Where the lyrics go (REND-239).
+ * (REND-225). Where the lyrics go (REND-239). Fingering's labels and place (REND-252).
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -325,6 +325,56 @@ test('the lyrics under the staff, or above the staves (REND-239)', async ({ page
     .getByRole('radio', { name: 'Above the staves' })
     .click();
   await expect.poll(side).toBe(-1);
+});
+
+test('fingering labelled and placed as asked (REND-252)', async ({ page }) => {
+  await openHome(page);
+  await page.getByRole('button', { name: 'an arpeggio study' }).click();
+  await expectScore(page);
+  /** How often a SMuFL fingering letter is written in the score. */
+  const count = async (codePoint: number) =>
+    (await page.locator('.ot-scroll:not([hidden]) .ot-partials text').allTextContents())
+      .join('')
+      .split(String.fromCodePoint(codePoint)).length - 1;
+  const P = 0xed17;
+  const T = 0xed18;
+  // The study's right hand: p i m a.
+  await expect.poll(() => count(P)).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog
+    .getByRole('radiogroup', { name: 'Right-hand fingers' })
+    .getByRole('radio', { name: 't i m a o' })
+    .click();
+  // The thumb a t now.
+  await expect.poll(() => count(P)).toBe(0);
+  await expect.poll(() => count(T)).toBeGreaterThan(0);
+  /** Whether the first system's fingering all lies above its staff. */
+  const above = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+      .first()
+      .evaluate((element, letter) => {
+        const top = Math.min(
+          ...[...element.querySelectorAll('rect')]
+            .filter(
+              rect => Number(rect.getAttribute('height')) < 2 && Number(rect.getAttribute('width')) > 60,
+            )
+            .map(rect => Number(rect.getAttribute('y'))),
+        );
+        const marks = [...element.querySelectorAll('g.at')]
+          .filter(group => group.textContent === letter)
+          .map(group =>
+            Number(/translate\([^ ]+ ([^)]+)\)/.exec(group.getAttribute('transform') ?? '')?.[1]),
+          );
+        return marks.length > 0 && marks.every(y => y < top);
+      }, String.fromCodePoint(T));
+  expect(await above()).toBe(false);
+  await dialog
+    .getByRole('radiogroup', { name: 'On the staff' })
+    .getByRole('radio', { name: 'Above' })
+    .click();
+  await expect.poll(above).toBe(true);
 });
 
 const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));

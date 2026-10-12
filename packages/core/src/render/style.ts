@@ -91,6 +91,12 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     slashStaffLines: true,
     slashBarLines: true,
     slashSingleNoteFrets: false,
+    // Fingering as alphaTab engraves it: before the notes, t and p i m a c.
+    leftHandFingerLabels: 't1234',
+    rightHandFingerLabels: 'pimac',
+    fingeringPosition: 'before',
+    tabFingeringPosition: 'none',
+    fingeringSize: 1,
     dashQuarterRests: false,
     voiceColors: false,
     flatBeams: false,
@@ -278,6 +284,11 @@ export function applyScoreStyle(
       case 'slashStaffLines':
       case 'slashBarLines':
       case 'slashSingleNoteFrets':
+      case 'leftHandFingerLabels':
+      case 'rightHandFingerLabels':
+      case 'fingeringPosition':
+      case 'tabFingeringPosition':
+      case 'fingeringSize':
       case 'dashQuarterRests':
       case 'voiceColors':
       case 'flatBeams':
@@ -378,6 +389,12 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.slashStaffLines = style.slashStaffLines;
   settings.notation.slashBarLines = style.slashBarLines;
   settings.notation.slashSingleNoteFrets = style.slashSingleNoteFrets;
+  // Fingering's labels, places and size (REND-252).
+  settings.notation.leftHandFingerLabels = style.leftHandFingerLabels;
+  settings.notation.rightHandFingerLabels = style.rightHandFingerLabels;
+  settings.notation.fingeringPosition = style.fingeringPosition;
+  settings.notation.tabFingeringPosition = style.tabFingeringPosition;
+  settings.notation.fingeringScale = style.fingeringSize;
   settings.notation.dashQuarterRests = style.dashQuarterRests;
   settings.notation.flatBeams = style.flatBeams;
   settings.notation.flatDrumBeams = style.flatDrumBeams;

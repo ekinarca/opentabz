@@ -58,6 +58,7 @@ available as source: the patch file is that source.
 | [0047](0047-written-pitch.md)                        | Notes written apart from where they sound, string by string                        | Guitar Pro writes guitars as if in standard tuning without a capo          | not yet  |
 | [0048](0048-lyrics-place.md)                         | Where the lyrics go                                                                | Guitar Pro puts them above or below the staves                             | not yet  |
 | [0049](0049-inverted-tab.md)                         | The tablature the other way up                                                     | Some players read the lowest string on top                                 | not yet  |
+| [0050](0050-fingering-display.md)                    | Fingering as asked                                                                 | Guitar Pro labels, places and sizes fingering                              | not yet  |
 
 ## Working on a patch
 

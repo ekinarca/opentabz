@@ -216,6 +216,43 @@ describe('styles remembered per song', () => {
     expect(parseStyle(older)?.lyricsPlace).toBe('between');
   });
 
+  it('reads how fingering is written (REND-252), as usual for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        leftHandFingerLabels: 'T1234',
+        rightHandFingerLabels: 'timao',
+        fingeringPosition: 'above',
+        tabFingeringPosition: 'below',
+        fingeringSize: 1.5,
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({
+      leftHandFingerLabels: 'T1234',
+      rightHandFingerLabels: 'timao',
+      fingeringPosition: 'above',
+      tabFingeringPosition: 'below',
+      fingeringSize: 1.5,
+    });
+    expect(parseStyle({ ...stored, rightHandFingerLabels: 'pimaz' })).toBeNull();
+    expect(parseStyle({ ...stored, fingeringSize: 5 })).toBeNull();
+    const {
+      leftHandFingerLabels: _left,
+      rightHandFingerLabels: _right,
+      fingeringPosition: _position,
+      tabFingeringPosition: _tab,
+      fingeringSize: _size,
+      ...older
+    } = stored;
+    expect(parseStyle(older)).toMatchObject({
+      leftHandFingerLabels: 't1234',
+      rightHandFingerLabels: 'pimac',
+      fingeringPosition: 'before',
+      tabFingeringPosition: 'none',
+      fingeringSize: 1,
+    });
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

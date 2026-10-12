@@ -7,12 +7,16 @@ import {
   BRACKET_MODES,
   CHORD_SPELLINGS,
   DEFAULT_SCORE_STYLE,
+  FINGERING_PLACES,
   FONT_SIZE,
   isMusicFontId,
+  LEFT_FINGER_LABELS,
   LYRICS_PLACES,
   PAGE_LINES,
+  RIGHT_FINGER_LABELS,
   STYLE_DIAGRAM_SIZE,
   STYLE_DIAGRAM_SPACING,
+  STYLE_FINGERING_SIZE,
   STYLE_INDENT_MM,
   STYLE_LINE_THICKNESS,
   STYLE_SCALE,
@@ -27,6 +31,7 @@ import {
   TITLE_ELEMENTS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  TAB_FINGERING_PLACES,
   TAB_RHYTHM_PLACES,
   TAB_RHYTHMS,
   TUNING_DETAILS,
@@ -206,6 +211,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     chordDiagramsOnTopSpacing: STYLE_DIAGRAM_SPACING,
     chordDiagramsInScoreSize: STYLE_DIAGRAM_SIZE,
     chordDiagramsInScoreSpacing: STYLE_DIAGRAM_SPACING,
+    fingeringSize: STYLE_FINGERING_SIZE,
   } as const;
   const measures = Object.fromEntries(
     (Object.keys(laterMeasures) as (keyof typeof laterMeasures)[]).map(key => [
@@ -244,6 +250,25 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
       raw.tuningLayout === undefined ? fallback.tuningLayout : oneOf(raw.tuningLayout, TUNING_LAYOUTS),
   };
   if (Object.values(tuning).some(entry => entry === null)) return null;
+  const fingering = {
+    leftHandFingerLabels:
+      raw.leftHandFingerLabels === undefined
+        ? fallback.leftHandFingerLabels
+        : oneOf(raw.leftHandFingerLabels, LEFT_FINGER_LABELS),
+    rightHandFingerLabels:
+      raw.rightHandFingerLabels === undefined
+        ? fallback.rightHandFingerLabels
+        : oneOf(raw.rightHandFingerLabels, RIGHT_FINGER_LABELS),
+    fingeringPosition:
+      raw.fingeringPosition === undefined
+        ? fallback.fingeringPosition
+        : oneOf(raw.fingeringPosition, FINGERING_PLACES),
+    tabFingeringPosition:
+      raw.tabFingeringPosition === undefined
+        ? fallback.tabFingeringPosition
+        : oneOf(raw.tabFingeringPosition, TAB_FINGERING_PLACES),
+  };
+  if (Object.values(fingering).some(entry => entry === null)) return null;
   const lyricsPlace =
     raw.lyricsPlace === undefined ? fallback.lyricsPlace : oneOf(raw.lyricsPlace, LYRICS_PLACES);
   if (lyricsPlace === null) return null;
@@ -277,6 +302,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     tabRhythm,
     tabRhythmVoices,
     lyricsPlace,
+    ...(fingering as { [K in keyof typeof fingering]: NonNullable<(typeof fingering)[K]> }),
     titleBlock,
     textBlocks,
     pages,

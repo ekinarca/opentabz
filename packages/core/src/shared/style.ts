@@ -39,6 +39,22 @@ export type TextOrientation = (typeof TEXT_ORIENTATIONS)[number];
 export const TAB_RHYTHMS = ['auto', 'always', 'never'] as const;
 export type TabRhythm = (typeof TAB_RHYTHMS)[number];
 
+/** How left-hand fingers are labelled, the thumb's letter first (REND-252). */
+export const LEFT_FINGER_LABELS = ['t1234', 'T1234', 'p1234'] as const;
+export type LeftFingerLabels = (typeof LEFT_FINGER_LABELS)[number];
+
+/** How right-hand fingers are labelled, thumb to little finger (REND-252). */
+export const RIGHT_FINGER_LABELS = ['pimac', 'pimax', 'pimae', 'timao'] as const;
+export type RightFingerLabels = (typeof RIGHT_FINGER_LABELS)[number];
+
+/** Where fingering goes on the staff (REND-252). */
+export const FINGERING_PLACES = ['before', 'above', 'below'] as const;
+export type FingeringPlace = (typeof FINGERING_PLACES)[number];
+
+/** Where fingering goes in the tablature (REND-252). */
+export const TAB_FINGERING_PLACES = ['none', 'above', 'below'] as const;
+export type TabFingeringPlace = (typeof TAB_FINGERING_PLACES)[number];
+
 /** Where a voice's rhythm goes in the tablature (REND-244). */
 export const TAB_RHYTHM_PLACES = ['below', 'above', 'none'] as const;
 export type TabRhythmPlace = (typeof TAB_RHYTHM_PLACES)[number];
@@ -116,6 +132,16 @@ export interface ScoreStyle {
   readonly slashBarLines: boolean;
   /** A single note's fret and string under its slash (REND-229). */
   readonly slashSingleNoteFrets: boolean;
+  /** How left-hand fingers are labelled (REND-252). */
+  readonly leftHandFingerLabels: LeftFingerLabels;
+  /** How right-hand fingers are labelled (REND-252). */
+  readonly rightHandFingerLabels: RightFingerLabels;
+  /** Where fingering goes on the staff (REND-252). */
+  readonly fingeringPosition: FingeringPlace;
+  /** Where fingering goes in the tablature (REND-252). */
+  readonly tabFingeringPosition: TabFingeringPlace;
+  /** The size of fingering, 1 = as usual (REND-252). */
+  readonly fingeringSize: number;
   /** Quarter rests in the tablature written as a dash (REND-250). */
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
@@ -211,6 +237,7 @@ export const STYLE_SYSTEM_SPACING = { min: 0, max: 4 } as const;
 export const STYLE_INDENT_MM = { min: 0, max: 50 } as const;
 export const STYLE_DIAGRAM_SIZE = { min: 0.5, max: 2 } as const;
 export const STYLE_DIAGRAM_SPACING = { min: 0, max: 3 } as const;
+export const STYLE_FINGERING_SIZE = { min: 0.5, max: 2 } as const;
 
 /** alphaTab's own defaults, for scores that bring no stylesheet. */
 export const DEFAULT_SCORE_STYLE: ScoreStyle = {
@@ -239,6 +266,11 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   slashStaffLines: true,
   slashBarLines: true,
   slashSingleNoteFrets: false,
+  leftHandFingerLabels: 't1234',
+  rightHandFingerLabels: 'pimac',
+  fingeringPosition: 'before',
+  tabFingeringPosition: 'none',
+  fingeringSize: 1,
   dashQuarterRests: false,
   voiceColors: false,
   flatBeams: false,
