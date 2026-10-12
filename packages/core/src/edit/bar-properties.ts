@@ -62,6 +62,11 @@ const KEYS: readonly alphaTab.model.KeySignature[] = [
   KeySignature.CSharp,
 ];
 
+/** A key by its sharps (flats below 0), from seven flats to seven sharps. */
+export function keySignatureOf(sharps: number): alphaTab.model.KeySignature {
+  return KEYS[sharps + 7] ?? KeySignature.C;
+}
+
 const BAR_LINE_STYLES: Readonly<Record<BarLine, alphaTab.model.BarLineStyle>> = {
   automatic: BarLineStyle.Automatic,
   double: BarLineStyle.LightLight,

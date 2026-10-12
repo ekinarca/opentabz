@@ -5,10 +5,12 @@
  * note it holds on, to its string.
  */
 import type * as alphaTab from '@coderline/alphatab';
-import { MAX_FRET, MAX_TRANSPOSE, type NoteAddress, type Selection } from '../shared/edit.ts';
+import { MAX_DEGREES, MAX_FRET, MAX_TRANSPOSE, type NoteAddress, type Selection } from '../shared/edit.ts';
+import { keySignatureOf } from './bar-properties.ts';
 import { beatsOf, copyChord } from './clip.ts';
 import type { Transaction } from './commands.ts';
 import { EditError } from './error.ts';
+import { byDegrees, byInterval, fifthsOf, movedKey } from './spelling.ts';
 
 /** The highest fret a transposed note keeps its string to; past it, a string with room is looked for. */
 const PLAYABLE_FRET = 24;
@@ -149,22 +151,22 @@ function transposeChords(
   }
 }
 
+/** How a note moves: semitones, and the spelling it is then written with (as it was, when none). */
+interface Shift {
+  readonly semitones: number;
+  readonly mode?: alphaTab.model.NoteAccidentalMode;
+}
+
 /**
- * Moves the notes of a selection `semitones` higher (lower when negative), and with `chords` the
- * chord diagrams its beats name.
+ * Moves the notes of `beats` as `shift` says of each; a note held on by a tie follows the note it
+ * holds on, to its string and spelling. Drums stay as they are.
  */
-export function transpose(
+export function shiftNotes(
   transaction: Transaction,
-  selection: Selection,
-  semitones: number,
-  chords = false,
+  beats: readonly alphaTab.model.Beat[],
+  shift: (note: alphaTab.model.Note) => Shift,
 ): void {
-  if (!Number.isInteger(semitones) || Math.abs(semitones) > MAX_TRANSPOSE)
-    throw new EditError(`No transposition of ${String(semitones)} semitones.`);
-  if (semitones === 0) return;
-  const { score } = transaction;
-  const beats = beatsOf(score, selection);
-  // Where each note moved to, for the notes tied to it.
+  // Where each note moved to (its string, or 0 without one), for the notes tied to it.
   const moved = new Map<alphaTab.model.Note, number>();
   for (const beat of beats) {
     const staff = beat.voice.bar.staff;
@@ -175,14 +177,17 @@ export function transpose(
       if (note.isTieDestination && note.tieOrigin !== null) {
         // It sounds the note it holds on: moved with it, else as it is.
         const string = moved.get(note.tieOrigin);
-        if (string !== undefined && string !== note.string) {
+        if (string === undefined) continue;
+        if (note.isStringed && string !== note.string) {
           if (beat.getNoteOnString(string) !== null)
             throw new EditError('A tied note cannot follow its note to a string already played.');
           restring(note, string);
         }
-        if (string !== undefined) moved.set(note, string);
+        note.accidentalMode = note.tieOrigin.accidentalMode;
+        moved.set(note, string);
         continue;
       }
+      const { semitones, mode } = shift(note);
       if (note.isStringed && staff.tuning.length > 0) {
         const place = placeOf(staff, note, semitones);
         if (place === null)
@@ -199,9 +204,85 @@ export function transpose(
         if (value < 0 || value > TOP) throw new EditError('A note would go past the notes MIDI plays.');
         note.octave = Math.floor(value / 12);
         note.tone = value % 12;
+        moved.set(note, 0);
+      } else continue;
+      if (mode !== undefined) note.accidentalMode = mode;
+    }
+  }
+}
+
+/** How a transposition moves a selection's notes (EDIT-050, EDIT-051, EDIT-116, EDIT-117). */
+export interface Transposition {
+  /** Semitones higher (lower below 0). */
+  readonly semitones: number;
+  /** The interval's letters (a major third up: 2), the notes spelled by it. */
+  readonly letters?: number;
+  /** Steps of each bar's scale instead of semitones. */
+  readonly degrees?: number;
+  /** The selected bars' keys moved too. */
+  readonly keys?: boolean;
+  /** The chord diagrams the beats name moved too (EDIT-144). */
+  readonly chords?: boolean;
+}
+
+/**
+ * The key a bar's moves to with its notes: by the interval, with `letters`; else to the one of its
+ * two spellings with fewer accidentals (C major up a semitone: D♭ major, not C♯).
+ */
+function keyMoved(key: number, semitones: number, letters: number | undefined): number {
+  if (letters !== undefined) return movedKey(key, fifthsOf(semitones, letters));
+  const fifths = (((semitones * 7) % 12) + 12) % 12;
+  if (fifths === 0) return key;
+  const sharper = key + fifths;
+  const flatter = sharper - 12;
+  return Math.abs(flatter) < Math.abs(sharper) ? flatter : sharper;
+}
+
+/**
+ * Moves the notes of a selection: `semitones` higher (lower when negative), spelled by the interval
+ * with `letters`; or by `degrees` of each bar's scale, keeping the accidentals written. With `keys`,
+ * the keys of a selection of bars move with them; with `chords`, the chord diagrams its beats name.
+ */
+export function transpose(transaction: Transaction, selection: Selection, how: Transposition): void {
+  const { semitones, letters, degrees = 0, keys = false, chords = false } = how;
+  if (!Number.isInteger(semitones) || Math.abs(semitones) > MAX_TRANSPOSE)
+    throw new EditError(`No transposition of ${String(semitones)} semitones.`);
+  if (!Number.isInteger(degrees) || Math.abs(degrees) > MAX_DEGREES)
+    throw new EditError(`No transposition of ${String(degrees)} steps.`);
+  if (letters !== undefined && (!Number.isInteger(letters) || Math.abs(letters) > MAX_DEGREES))
+    throw new EditError(`No interval of ${String(letters)} letters.`);
+  if (degrees !== 0 && (semitones !== 0 || letters !== undefined || keys || chords))
+    throw new EditError('Notes move by steps of their scale alone, in their keys.');
+  if (keys && selection.kind !== 'bars') throw new EditError('Keys move with whole bars.');
+  if (semitones === 0 && degrees === 0) return;
+  const { score } = transaction;
+  const beats = beatsOf(score, selection);
+  // Each bar's key after the edit.
+  const newKeys = new Map<alphaTab.model.Bar, number>();
+  if (keys && selection.kind === 'bars') {
+    for (const track of score.tracks.slice(selection.fromTrack, selection.toTrack + 1)) {
+      for (const staff of track.staves) {
+        if (staff.isPercussion) continue;
+        for (const bar of staff.bars.slice(selection.fromBar, selection.toBar + 1)) {
+          transaction.touch(staff, bar.index);
+          newKeys.set(bar, keyMoved(bar.keySignature, semitones, letters));
+        }
       }
     }
   }
+  shiftNotes(transaction, beats, note => {
+    const bar = note.beat.voice.bar;
+    const key: number = bar.keySignature;
+    const written = note.displayValueWithoutBend;
+    if (degrees !== 0) {
+      const moved = byDegrees(written, key, note.accidentalMode, degrees);
+      return { semitones: moved.value - written, mode: moved.mode };
+    }
+    if (letters === undefined) return { semitones };
+    const moved = byInterval(written, key, note.accidentalMode, semitones, letters, newKeys.get(bar) ?? key);
+    return { semitones, mode: moved.mode };
+  });
+  for (const [bar, key] of newKeys) bar.keySignature = keySignatureOf(key);
   if (chords) transposeChords(transaction, beats, semitones);
 }
 

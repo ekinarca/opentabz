@@ -10,6 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { copySelection } from '../src/edit/clip.ts';
 import { moveChordName } from '../src/edit/transpose.ts';
 import { harmonyOf } from '../src/edit/harmonize.ts';
+import { byDegrees, byInterval, fifthsOf, movedKey, spell } from '../src/edit/spelling.ts';
+import { readStaffBar } from '../src/edit/staff-bars.ts';
 import { readBarProperties } from '../src/edit/bar-properties.ts';
 import { collectTrackBeats } from '../src/edit/track-beats.ts';
 import { SPELLING_ORDER } from '../src/shared/beats.ts';
@@ -18,10 +20,13 @@ import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
 import {
   BAR_DIRECTIONS,
+  CLEF_OTTAVAS,
+  CLEFS,
   DURATION_VALUES,
   DYNAMICS,
   FINGERS,
   HARMONIES,
+  SIMILES,
   STEMS,
   TUPLETS,
   type BarProperties,
@@ -1037,6 +1042,146 @@ describe('transposing and moving notes from string to string (EDIT-050 … EDIT-
   });
 });
 
+const { NoteAccidentalMode: Mode } = alphaTab.model;
+
+/** A staff's notes as pitches, bar by bar, beat by beat, lowest first. */
+function pitches(score: alphaTab.model.Score, bar: number): number[][] {
+  return (score.tracks[0]?.staves[0]?.bars[bar]?.voices[0]?.beats ?? []).map(each =>
+    each.notes.map(note => note.realValue).sort((a, b) => a - b),
+  );
+}
+
+describe('notes spelled and moved by letters (EDIT-107, EDIT-116, EDIT-117)', () => {
+  it('spells a pitch as alphaTab does: the key’s accidental, else sharps, else as asked', () => {
+    // C♯4 in C major; D♭4 in F major (a key with flats); as a flat when asked.
+    expect(spell(61, 0, Mode.Default)).toEqual({ step: 35, accidental: 1 });
+    expect(spell(61, -1, Mode.Default)).toEqual({ step: 36, accidental: -1 });
+    expect(spell(61, 0, Mode.ForceFlat)).toEqual({ step: 36, accidental: -1 });
+    // F in C♯ major (seven sharps) is E♯; B in C♭ major is C♭ — in the octave above.
+    expect(spell(65, 7, Mode.Default)).toEqual({ step: 37, accidental: 1 });
+    expect(spell(59, -7, Mode.Default)).toEqual({ step: 35, accidental: -1 });
+  });
+
+  it('moves by steps of the key, keeping the accidentals written', () => {
+    // C major: C up two steps is E; C♯ is E♯, spelled with a sharp; B♭ down one is A♭.
+    expect(byDegrees(60, 0, Mode.Default, 2)).toEqual({ value: 64, mode: Mode.Default });
+    expect(byDegrees(61, 0, Mode.Default, 2)).toEqual({ value: 65, mode: Mode.ForceSharp });
+    expect(byDegrees(70, 0, Mode.ForceFlat, -1)).toEqual({ value: 68, mode: Mode.ForceFlat });
+    // A major: A up a sixth is F♯, down a step G♯; an octave is seven steps.
+    expect(byDegrees(57, 3, Mode.Default, 5).value).toBe(66);
+    expect(byDegrees(57, 3, Mode.Default, -1).value).toBe(56);
+    expect(byDegrees(57, 3, Mode.Default, 7).value).toBe(69);
+  });
+
+  it('moves by an interval, spelled by its letters, and keys by its fifths', () => {
+    // A major third up from C♯ is E♯, a diminished fourth F.
+    expect(byInterval(61, 0, Mode.Default, 4, 2, 0)).toEqual({ value: 65, mode: Mode.ForceSharp });
+    expect(byInterval(61, 0, Mode.Default, 4, 3, 0)).toEqual({ value: 65, mode: Mode.Default });
+    expect(fifthsOf(2, 1)).toBe(2);
+    expect(fifthsOf(3, 2)).toBe(-3);
+    expect(fifthsOf(6, 3)).toBe(6);
+    expect(fifthsOf(6, 4)).toBe(-6);
+    expect(fifthsOf(-2, -1)).toBe(-2);
+    expect(movedKey(5, 4)).toBe(-3);
+    expect(movedKey(-6, -3)).toBe(3);
+  });
+
+  it('transposes notes by steps of each bar’s scale (EDIT-117)', () => {
+    const score = texScore('\\track "Guitar" 0.3.4 2.4.4 1.3.4 r.4 | 2.3.1');
+    const bars = score.tracks[0]?.staves[0]?.bars ?? [];
+    // The second bar in A major.
+    const second = bars[1];
+    if (second !== undefined) second.keySignature = alphaTab.model.KeySignature.A;
+    const editor = editorOf(score);
+    const all: Selection = { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 0, toBar: 1 };
+    editor.apply([{ kind: 'transpose', selection: all, semitones: 0, degrees: 2 }]);
+    // G3 → B3, E3 → G3, G♯3 → B♯3 (written with its sharp); A3 in A major → C♯4.
+    expect(pitches(score, 0)).toEqual([[59], [55], [60], []]);
+    expect(beat(score, 0, 2).notes[0]?.accidentalMode).toBe(Mode.ForceSharp);
+    expect(pitches(score, 1)).toEqual([[61]]);
+    expect(() => editor.apply([{ kind: 'transpose', selection: all, semitones: 2, degrees: 1 }])).toThrow(
+      'Notes move by steps of their scale alone, in their keys.',
+    );
+  });
+
+  it('transposes by an interval, spelling the notes and moving the keys (EDIT-116)', () => {
+    const score = texScore('\\track "Guitar" 2.2.2 6.3.2 | 3.2.1');
+    const editor = editorOf(score);
+    const all: Selection = { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 0, toBar: 1 };
+    // C♯4 a major third up: E♯4, with its sharp; C major's key goes to E major.
+    editor.apply([{ kind: 'transpose', selection: all, semitones: 4, letters: 2, keys: true }]);
+    expect(pitches(score, 0)).toEqual([[65], [65]]);
+    expect(beat(score, 0, 0).notes[0]?.accidentalMode).toBe(Mode.ForceSharp);
+    expect(score.tracks[0]?.staves[0]?.bars.map(bar => bar.keySignature)).toEqual([4, 4]);
+    editor.undo();
+    // A semitone up with no interval named: the key with fewer accidentals, D♭ major.
+    editor.apply([{ kind: 'transpose', selection: all, semitones: 1, keys: true }]);
+    expect(score.tracks[0]?.staves[0]?.bars.map(bar => bar.keySignature)).toEqual([-5, -5]);
+    // Keys move with whole bars only.
+    expect(() =>
+      editor.apply([{ kind: 'transpose', selection: beats([0, 0], [0, 0]), semitones: 2, keys: true }]),
+    ).toThrow('Keys move with whole bars.');
+  });
+});
+
+describe('clefs and simile marks (EDIT-107, EDIT-108)', () => {
+  const at = { track: 0, staff: 0 };
+
+  it('changes a clef to the next change of clef, the notes keeping their pitches or places', () => {
+    const score = texScore('\\track "Guitar" 12.1.1 | 12.1.1 | 12.1.1');
+    const bars = score.tracks[0]?.staves[0]?.bars ?? [];
+    const third = bars[2];
+    if (third !== undefined) third.clef = alphaTab.model.Clef.C3;
+    const editor = editorOf(score);
+    expect(readStaffBar(score, 0, 0, 0)).toEqual({ clef: 'treble', clefOttava: 'none', simile: 'none' });
+    editor.apply([{ kind: 'set-staff-bar', ...at, bar: 0, properties: { clef: 'bass' } }]);
+    expect(bars.map(bar => readStaffBar(score, 0, 0, bar.index).clef)).toEqual(['bass', 'bass', 'alto']);
+    expect(pitches(score, 0)).toEqual([[76]]);
+    editor.undo();
+    // Their places kept: the high E's line in the treble clef is the bass clef's G, two octaves
+    // down, on the G string.
+    editor.apply([{ kind: 'set-staff-bar', ...at, bar: 0, properties: { clef: 'bass', keepPlaces: true } }]);
+    expect(pitches(score, 0)).toEqual([[55]]);
+    expect(written(score, 0)).toEqual(['0.3:1']);
+    expect(pitches(score, 2)).toEqual([[76]]);
+    editor.undo();
+    // An octave clef, places kept: the notes sound an octave lower.
+    editor.apply([
+      { kind: 'set-staff-bar', ...at, bar: 1, properties: { clefOttava: '8vb', keepPlaces: true } },
+    ]);
+    expect([pitches(score, 0), pitches(score, 1)]).toEqual([[[76]], [[64]]]);
+    expect(() =>
+      editor.apply([{ kind: 'set-staff-bar', ...at, bar: 0, properties: { clef: 'soprano' as 'alto' } }]),
+    ).toThrow('No clef "soprano".');
+  });
+
+  it('marks a bar, or two, as played as those before them, their notes taken away', () => {
+    const score = texScore('\\track "Guitar" 1.1.1 | 2.1.1 | 3.1.1 | 4.1.1 | 5.1.1');
+    const editor = editorOf(score);
+    const marks = () => [0, 1, 2, 3, 4].map(bar => readStaffBar(score, 0, 0, bar).simile);
+    expect(() =>
+      editor.apply([{ kind: 'set-staff-bar', ...at, bar: 0, properties: { simile: 'one-bar' } }]),
+    ).toThrow('A simile mark repeats the bar before it: the first bar has none.');
+    editor.apply([{ kind: 'set-staff-bar', ...at, bar: 1, properties: { simile: 'one-bar' } }]);
+    expect(marks()).toEqual(['none', 'one-bar', 'none', 'none', 'none']);
+    expect(written(score, 1)).toEqual(['-']);
+    editor.apply([{ kind: 'set-staff-bar', ...at, bar: 3, properties: { simile: 'two-bar' } }]);
+    expect(marks()).toEqual(['none', 'one-bar', 'none', 'two-bar', 'two-bar']);
+    expect(written(score, 4)).toEqual(['-']);
+    // The second bar of a two-bar mark takes the whole mark away; the notes stay taken.
+    editor.apply([{ kind: 'set-staff-bar', ...at, bar: 4, properties: { simile: 'none' } }]);
+    expect(marks()).toEqual(['none', 'one-bar', 'none', 'none', 'none']);
+    expect(() =>
+      editor.apply([{ kind: 'set-staff-bar', ...at, bar: 4, properties: { simile: 'two-bar' } }]),
+    ).toThrow('A two-bar simile mark repeats the two bars before it, over two bars.');
+    editor.undo();
+    editor.undo();
+    editor.undo();
+    expect(marks()).toEqual(['none', 'none', 'none', 'none', 'none']);
+    expect(written(score, 1)).toEqual(['2.1:1']);
+  });
+});
+
 describe('undo and redo', () => {
   it('undoes and redoes edits in turn; a new edit forgets what was undone', () => {
     const score = texScore('\\track "Guitar" 3.3 5.3 7.3 8.3');
@@ -1262,7 +1407,7 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(13)) {
+  switch (pick(14)) {
     case 12:
       return { kind: 'set-score', info: { title: random() < 0.5 ? '' : 'Retitled', artist: 'Someone' } };
     case 11:
@@ -1326,8 +1471,34 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
               beat: pick(voice.beats.length),
             },
           };
-    case 5:
+    case 5: {
+      const how = pick(3);
+      if (how === 0) return { kind: 'transpose', selection, semitones: 0, degrees: pick(15) - 7 };
+      if (how === 1)
+        return {
+          kind: 'transpose',
+          selection,
+          semitones: pick(25) - 12,
+          letters: pick(15) - 7,
+          keys: selection.kind === 'bars' && random() < 0.5,
+        };
       return { kind: 'transpose', selection, semitones: pick(25) - 12, chords: random() < 0.5 };
+    }
+    case 13:
+      return {
+        kind: 'set-staff-bar',
+        track: staff.track.index,
+        staff: staff.index,
+        bar: bar.index,
+        properties:
+          random() < 0.5
+            ? { simile: SIMILES[pick(SIMILES.length)] ?? 'none' }
+            : {
+                clef: CLEFS[pick(CLEFS.length)] ?? 'treble',
+                clefOttava: CLEF_OTTAVAS[pick(CLEF_OTTAVAS.length)] ?? 'none',
+                keepPlaces: random() < 0.5,
+              },
+      };
     case 6: {
       const notes = voice.beats.flatMap(each => each.notes.filter(note => note.isStringed));
       const note = notes[pick(notes.length)];
@@ -1430,6 +1601,7 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
             'set-track',
             'harmonize',
             'set-drum',
+            'set-staff-bar',
           ].includes(command.kind)
         )
           throw error;

@@ -6,6 +6,7 @@ import { blankScore } from '../document/blank.ts';
 import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
 import { readBarProperties } from '../edit/bar-properties.ts';
+import { readStaffBar } from '../edit/staff-bars.ts';
 import { copySelection } from '../edit/clip.ts';
 import { readTrackProperties } from '../edit/tracks.ts';
 import { EditError } from '../edit/commands.ts';
@@ -26,7 +27,7 @@ import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackBeats } from '../shared/beats.ts';
 import type { TrackChords } from '../shared/chords.ts';
-import type { BarState, Clip, EditOutcome, TrackState } from '../shared/edit.ts';
+import type { BarState, Clip, EditOutcome, StaffBarState, TrackState } from '../shared/edit.ts';
 import type { TrackDrums } from '../shared/drums.ts';
 import type { ScoreOverview } from '../shared/overview.ts';
 import type { TrackLyrics } from '../shared/lyrics.ts';
@@ -242,6 +243,15 @@ export class EngineHost implements EngineMethods {
   public barProperties(args: EngineArgs<'barProperties'>): BarState {
     try {
       return readBarProperties(this.document(args.docId).score, args.bar);
+    } catch (error) {
+      if (error instanceof EditError) throw new EngineHostError(error.message);
+      throw error;
+    }
+  }
+
+  public staffBarProperties(args: EngineArgs<'staffBarProperties'>): StaffBarState {
+    try {
+      return readStaffBar(this.document(args.docId).score, args.track, args.staff, args.bar);
     } catch (error) {
       if (error instanceof EditError) throw new EngineHostError(error.message);
       throw error;

@@ -267,6 +267,43 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(host.barProperties({ docId, bar: 4 }).systemBreak).toBe(false);
   });
 
+  it('writes clefs and simile marks in a staff’s bars, and reads them back (EDIT-107, EDIT-108)', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const at = { docId, track: 0, staff: 0 };
+    // SMuFL's one-bar repeat and F clef, as the SVG writes them.
+    const REPEAT = `&#${String(0xe500)};`;
+    const BASS = `&#${String(0xe062)};`;
+    expect(systemSvg(host, docId, 1).svg).not.toContain(REPEAT);
+    host.edit({
+      docId,
+      commands: [{ kind: 'set-staff-bar', track: 0, staff: 0, bar: 1, properties: { simile: 'one-bar' } }],
+    });
+    expect(host.staffBarProperties({ ...at, bar: 1 }).simile).toBe('one-bar');
+    expect(systemSvg(host, docId, 1).svg).toContain(REPEAT);
+    expect(systemSvg(host, docId, 1).svg).not.toContain(BASS);
+    host.edit({
+      docId,
+      commands: [{ kind: 'set-staff-bar', track: 0, staff: 0, bar: 0, properties: { clef: 'bass' } }],
+    });
+    expect(host.staffBarProperties({ ...at, bar: 5 }).clef).toBe('bass');
+    expect(systemSvg(host, docId, 1).svg).toContain(BASS);
+    host.undo({ docId });
+    host.undo({ docId });
+    expect(host.staffBarProperties({ ...at, bar: 1 })).toEqual({
+      clef: 'treble',
+      clefOttava: 'none',
+      simile: 'none',
+    });
+    expect(systemSvg(host, docId, 1).svg).not.toContain(REPEAT);
+    expect(() => host.staffBarProperties({ ...at, bar: 99 })).toThrow('No bar 99 in staff 0 of track 0.');
+  });
+
   it('copies bars from one document and pastes them in another (EDIT-020)', () => {
     const host = new EngineHost();
     const shuffle = host.open({

@@ -76,6 +76,9 @@ export const MAX_VOICES = 4;
 /** The most semitones a transposition moves notes (four octaves). */
 export const MAX_TRANSPOSE = 48;
 
+/** The most steps of a scale a diatonic transposition moves notes, and letters an interval spans (four octaves). */
+export const MAX_DEGREES = 28;
+
 export type SlideOut = 'none' | 'legato' | 'shift' | 'out-down' | 'out-up';
 export type Vibrato = 'none' | 'slight' | 'wide';
 export type Harmonic = 'none' | 'natural' | 'artificial' | 'pinch' | 'tap' | 'semi' | 'feedback';
@@ -264,6 +267,35 @@ export interface BarProperties {
 /** A bar's properties as they are (all of them). */
 export type BarState = Required<BarProperties>;
 
+/**
+ * A clef (EDIT-107): treble (G on the second line), bass (F on the fourth), alto and tenor (C on
+ * the third and the fourth), or neutral, for drums.
+ */
+export type Clef = 'treble' | 'bass' | 'alto' | 'tenor' | 'neutral';
+export const CLEFS: readonly Clef[] = ['treble', 'bass', 'alto', 'tenor', 'neutral'];
+
+/** Octaves a clef sounds above (15ma, 8va) or below (8vb, 15mb) what it writes: a guitar's sounds 8vb. */
+export type ClefOttava = '15ma' | '8va' | 'none' | '8vb' | '15mb';
+export const CLEF_OTTAVAS: readonly ClefOttava[] = ['15ma', '8va', 'none', '8vb', '15mb'];
+
+/** A simile mark (EDIT-108): a bar played as the one before it, or two bars as the two before them. */
+export type Simile = 'none' | 'one-bar' | 'two-bar';
+export const SIMILES: readonly Simile[] = ['none', 'one-bar', 'two-bar'];
+
+/** A staff's own properties at a bar (EDIT-107, EDIT-108): each one given is set. */
+export interface StaffBarProperties {
+  /** The clef, from the bar to the staff's next change of clef. */
+  readonly clef?: Clef;
+  readonly clefOttava?: ClefOttava;
+  /** With a new clef, the notes keep their places on the staff, their pitches changing; else their pitches. */
+  readonly keepPlaces?: boolean;
+  /** A simile mark at the bar (a two-bar one over it and the next), the bars' notes taken away. */
+  readonly simile?: Simile;
+}
+
+/** A staff's own properties at a bar, as they are. */
+export type StaffBarState = Required<Omit<StaffBarProperties, 'keepPlaces'>>;
+
 /** The most strings a staff may have, and the frets a capo may sit on. */
 export const MAX_STRINGS = 10;
 export const MAX_CAPO = 24;
@@ -434,14 +466,28 @@ export type EditCommand =
   /**
    * The notes of a selection a number of semitones higher or lower (EDIT-050, EDIT-051): a note on
    * strings keeps its string while the frets allow, else goes to the nearest string that has room;
-   * drums stay as they are. With `chords`, the chord diagrams and names of its beats move too
-   * (EDIT-144).
+   * drums stay as they are. With `letters`, the interval's (a major third: 2, down: −2), the notes
+   * are spelled by it (EDIT-116): C♯ a major third up is E♯. With `degrees` instead of semitones,
+   * they move by steps of each bar's scale, keeping the accidentals written (EDIT-117). With `keys`,
+   * a selection of bars has its keys moved too; with `chords`, the chord diagrams and names of its
+   * beats (EDIT-144).
    */
   | {
       readonly kind: 'transpose';
       readonly selection: Selection;
       readonly semitones: number;
+      readonly letters?: number;
+      readonly degrees?: number;
+      readonly keys?: boolean;
       readonly chords?: boolean;
+    }
+  /** A staff's own properties at a bar set: its clef, a simile mark (EDIT-107, EDIT-108). */
+  | {
+      readonly kind: 'set-staff-bar';
+      readonly track: number;
+      readonly staff: number;
+      readonly bar: number;
+      readonly properties: StaffBarProperties;
     }
   /**
    * A drum sound on a beat of a drum staff (EDIT-034, EDIT-115), or taken off: the sound by its

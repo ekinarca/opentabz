@@ -4,7 +4,15 @@
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
 import type { TrackBeats } from './beats.ts';
-import type { BarState, Clip, EditCommand, EditOutcome, Selection, TrackState } from './edit.ts';
+import type {
+  BarState,
+  Clip,
+  EditCommand,
+  EditOutcome,
+  Selection,
+  StaffBarState,
+  TrackState,
+} from './edit.ts';
 import type { OpenError } from './open-error.ts';
 import type { TrackChords } from './chords.ts';
 import type { TrackDrums } from './drums.ts';
@@ -75,6 +83,13 @@ export interface EngineMethods {
   trackProperties(args: { readonly docId: string; readonly track: number }): TrackState;
   /** A bar's properties as they are (EDIT-021 … EDIT-027), for the editor's bar dialog. */
   barProperties(args: { readonly docId: string; readonly bar: number }): BarState;
+  /** A staff's own properties at a bar: its clef, a simile mark (EDIT-107, EDIT-108). */
+  staffBarProperties(args: {
+    readonly docId: string;
+    readonly track: number;
+    readonly staff: number;
+    readonly bar: number;
+  }): StaffBarState;
   /** Every beat of one track, where it is and what it holds, for the editor's caret. */
   trackBeats(args: { readonly docId: string; readonly trackIndex: number }): TrackBeats;
   /** A document as it is now, edited or not, as a Guitar Pro 7/8 file (EDIT-064). */
