@@ -68,6 +68,7 @@ available as source: the patch file is that source.
 | [0057](0057-tab-slurs-outer-notes.md)                | A chord's tablature slurs over its outer notes, or each note's                     | Guitar Pro's stylesheet chooses                                            | not yet  |
 | [0058](0058-bar-bounds-staff-lines.md)               | A bar's bounds name their staff and where its lines are                            | The editor's caret sits on a string of the tablature                       | not yet  |
 | [0059](0059-long-bends-saved.md)                     | Long bend and whammy curves are saved, as the nearest Guitar Pro 7 curve           | Saving a Guitar Pro 5 score as .gp left its longer bends out               | not yet  |
+| [0060](0060-partial-layout-resize.md)                | A resize after a partial layout flows each bar once                                | Setting a time signature, then resizing, hung painting on a phone          | not yet  |
 
 ## Working on a patch
 

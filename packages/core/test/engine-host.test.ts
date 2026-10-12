@@ -180,6 +180,33 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(lastBar()).toBe(bars - 1);
   });
 
+  it('after an edit laid out from its system, lays out a narrower view with each bar once (alphaTab patch 0060)', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const bars = opened.summary.masterBars.length;
+    const layOut = (width: number) => {
+      const layout = host.layoutView({ viewId: 'v', docId, options: { ...VIEW, width } });
+      const systems = layout.partials.filter(p => p.kind === 'system');
+      const painted = host.paint({ viewId: 'v', generation: layout.generation, ids: systems.map(p => p.id) });
+      expect(painted.partials).toHaveLength(systems.length);
+      return systems.reduce((count, p) => count + p.lastBar - p.firstBar + 1, 0);
+    };
+    expect(layOut(412)).toBe(bars);
+    // A new time signature moves where every later bar starts.
+    host.edit({
+      docId,
+      commands: [{ kind: 'set-bar', bar: 0, properties: { meter: { numerator: 3, denominator: 4 } } }],
+    });
+    expect(layOut(412)).toBe(bars);
+    expect(layOut(383)).toBe(bars);
+    expect(layOut(700)).toBe(bars);
+  });
+
   it('refuses an edit it cannot make, saying why, and leaves the document as it was', () => {
     const host = new EngineHost();
     const opened = host.open({

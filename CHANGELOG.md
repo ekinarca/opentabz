@@ -355,8 +355,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   tablature (0052), sound-change labels (0053), the tempo changes of Guitar Pro 3–5 and Capella
   files as steps (0054), tempo ramps marked accel. or rit. (0055), detached codas (0056), a
   chord's tablature slurs over its outer notes or each note's (0057), the staff each bar's
-  bounds are drawn on, with its lines (0058), and long bend and whammy curves saved as the nearest
-  Guitar Pro 7 curve (0059). See [docs/upstream/](docs/upstream/).
+  bounds are drawn on, with its lines (0058), long bend and whammy curves saved as the nearest
+  Guitar Pro 7 curve (0059), and a resize after a partial layout that flows each bar once (0060).
+  See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
