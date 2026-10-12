@@ -9,10 +9,12 @@ import { LAYOUT_KINDS, NOTE_NAMES, STAFF_DISPLAYS, SYSTEMS_LAYOUTS } from '@open
 import { ORIENTATIONS, PAGE_ARRANGEMENTS, PAPER_IDS, type PageSetup } from '../score-view/pagination.ts';
 import { occurrenceOfMasterBar } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '../state/documents.ts';
-import { editingOf, transposeNotes } from '../state/editing.ts';
+import { editingOf, goToIncompleteBar, transposeNotes } from '../state/editing.ts';
 import { openBarDialog } from './BarDialog.tsx';
 import { openTransposeDialog } from './TransposeDialog.tsx';
 import { openEffectsDialog } from './EffectsDialog.tsx';
+import { openAssistantDialog } from './AssistantDialog.tsx';
+import { openPasteDialog } from './PasteDialog.tsx';
 import { openScoreInfoDialog } from './ScoreInfoDialog.tsx';
 import { openTrackDialog } from './TrackDialog.tsx';
 import { newScore } from './new-score.ts';
@@ -294,6 +296,39 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       run: () => {
         const doc = activeDocument();
         if (doc !== null) openScoreInfoDialog(doc.key);
+      },
+    },
+    {
+      id: 'paste-special',
+      label: strings.pasteDialog.open,
+      aliases: aliasesOf('paste-special'),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openPasteDialog(doc.key);
+      },
+    },
+    {
+      id: 'next-incomplete-bar',
+      label: strings.editing.goToIncomplete,
+      aliases: aliasesOf('next-incomplete-bar'),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) goToIncompleteBar(doc.key);
+      },
+    },
+    {
+      id: 'palm-mute-let-ring',
+      label: strings.assistantDialog.open,
+      aliases: aliasesOf('palm-mute-let-ring'),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openAssistantDialog(doc.key);
       },
     },
     {

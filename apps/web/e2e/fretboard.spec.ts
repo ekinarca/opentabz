@@ -212,6 +212,8 @@ test.describe('fretboard', () => {
       'false',
     );
     await page.keyboard.press('Escape');
+    // The menu gone, the keys go to the score again.
+    await expect(page.getByRole('menu')).toBeHidden();
 
     if (isMobile) {
       await track.selectOption('2');

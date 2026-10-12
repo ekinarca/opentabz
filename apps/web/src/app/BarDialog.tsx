@@ -6,6 +6,7 @@
  */
 import {
   BAR_LINES,
+  BEAM_UNITS,
   CLEF_OTTAVAS,
   CLEFS,
   MAX_ENDINGS,
@@ -18,6 +19,8 @@ import {
   type BarLine,
   type BarProperties,
   type BarState,
+  type BeamGroups,
+  type BeamUnit,
   type Clef,
   type ClefOttava,
   type Simile,
@@ -96,6 +99,11 @@ function isPlace(direction: BarDirection): direction is Place {
   return (PLACES as readonly string[]).includes(direction);
 }
 
+/** The note value a meter's beats are, as beams count them: its denominator's, at least a quarter. */
+function beamUnitOf(denominator: number): BeamUnit {
+  return BEAM_UNITS.find(unit => unit === denominator) ?? (denominator < 4 ? 4 : 32);
+}
+
 /** Simile marks, offered where they can be (EDIT-108). */
 const SIMILE_CHOICES: readonly Simile[] = ['none', 'one-bar', 'two-bar'];
 
@@ -124,7 +132,22 @@ export function barChanges(was: BarState, now: BarState): BarProperties {
   if (was.systemBreak !== now.systemBreak) changes.systemBreak = now.systemBreak;
   if ([...was.directions].sort().join() !== [...now.directions].sort().join())
     changes.directions = now.directions;
+  if (JSON.stringify(was.beamGroups) !== JSON.stringify(now.beamGroups)) changes.beamGroups = now.beamGroups;
   return changes;
+}
+
+/** Beam groups typed ("2+2+3"), or none when nothing is; undefined when they cannot be read. */
+export function beamGroupsOf(text: string, unit: BeamUnit): BeamGroups | null | undefined {
+  if (text.trim() === '') return null;
+  const groups = text.split('+').map(part => Number(part.trim()));
+  return groups.every(group => Number.isInteger(group) && group > 0) ? { unit, groups } : undefined;
+}
+
+/** Whether beam groups fill a bar of a meter. */
+export function fillsBar(beams: BeamGroups, meter: BarState['meter']): boolean {
+  return (
+    beams.groups.reduce((sum, group) => sum + group, 0) * meter.denominator === meter.numerator * beams.unit
+  );
 }
 
 /** A whole number typed, within limits, or the fallback. */
@@ -150,6 +173,9 @@ export function BarDialog() {
     readonly staffNow: StaffBarState;
     /** With a new clef, the notes keep their places rather than their pitches. */
     readonly keepPlaces: boolean;
+    /** The beam groups as typed, and the note value they count. */
+    readonly beamText: string;
+    readonly beamUnit: BeamUnit;
   } | null>(null);
   const current = read !== null && open !== null && read.open === open ? read : null;
   const was = current?.was ?? null;
@@ -170,13 +196,26 @@ export function BarDialog() {
       readStaffBar(open.key, open.track, open.staff, open.bar),
     ]).then(([state, staff]) => {
       if (wanted && state !== null && staff !== null)
-        setRead({ open, was: state, now: state, staffWas: staff, staffNow: staff, keepPlaces: false });
+        setRead({
+          open,
+          was: state,
+          now: state,
+          staffWas: staff,
+          staffNow: staff,
+          keepPlaces: false,
+          beamText: state.beamGroups?.groups.join('+') ?? '',
+          beamUnit: state.beamGroups?.unit ?? beamUnitOf(state.meter.denominator),
+        });
     });
     return () => {
       wanted = false;
     };
   }, [open]);
 
+  // The beam groups typed: read, and whether they fill the bar.
+  const beams = current === null ? null : beamGroupsOf(current.beamText, current.beamUnit);
+  const beamsWrong =
+    current !== null && (beams === undefined || (beams !== null && !fillsBar(beams, current.now.meter)));
   const update = (patch: Partial<BarState>) => {
     setRead(state => (state === null ? null : { ...state, now: { ...state.now, ...patch } }));
   };
@@ -205,10 +244,10 @@ export function BarDialog() {
           </Button>
           <Button
             variant="primary"
-            disabled={was === null || now === null}
+            disabled={was === null || now === null || beamsWrong}
             onClick={() => {
               if (current !== null && bar !== null) {
-                const changes = barChanges(current.was, current.now);
+                const changes = barChanges(current.was, { ...current.now, beamGroups: beams ?? null });
                 const staff = staffBarChanges(current.staffWas, current.staffNow, current.keepPlaces);
                 if (Object.keys(changes).length > 0 || Object.keys(staff).length > 0)
                   setBar(docKey, bar, changes, {
@@ -261,6 +300,45 @@ export function BarDialog() {
               </select>
             </Field>
           </div>
+          {current !== null && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label={s.beamGroups}
+                hint={beamsWrong ? s.beamGroupsWrong(now.meter, current.beamUnit) : s.beamGroupsHint}
+                htmlFor={`${id}-beams`}
+              >
+                <input
+                  id={`${id}-beams`}
+                  value={current.beamText}
+                  placeholder={s.beamGroupsAuto}
+                  aria-invalid={beamsWrong}
+                  onChange={event => {
+                    const beamText = event.target.value;
+                    setRead(state => (state === null ? null : { ...state, beamText }));
+                  }}
+                  className={INPUT_CLASS}
+                />
+              </Field>
+              <Field label={s.beamUnit} htmlFor={`${id}-beam-unit`}>
+                <select
+                  id={`${id}-beam-unit`}
+                  value={current.beamUnit}
+                  onChange={event => {
+                    const beamUnit = BEAM_UNITS.find(unit => String(unit) === event.target.value);
+                    if (beamUnit !== undefined)
+                      setRead(state => (state === null ? null : { ...state, beamUnit }));
+                  }}
+                  className={INPUT_CLASS}
+                >
+                  {BEAM_UNITS.map(unit => (
+                    <option key={unit} value={unit}>
+                      {s.beamUnits[unit]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Field label={s.key} htmlFor={`${id}-key`}>

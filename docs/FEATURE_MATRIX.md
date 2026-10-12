@@ -576,8 +576,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-034 | Percussion tracks with drum-map editing                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-035 | Track name, short name, colour                                   | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-036 | Transposing-instrument settings                                  | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
-| EDIT-040 | Chord library and custom diagram editor                          | GP  | M5  | —       | —    | planned |
-| EDIT-041 | Chord-name recognition from notes                                | GP  | M5  | —       | —    | planned |
+| EDIT-040 | Chord library and custom diagram editor                          | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-041 | Chord-name recognition from notes                                | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
 | EDIT-042 | Lyrics editor with syllable alignment and counting               | GP+ | M5  | —       | —    | planned |
 | EDIT-043 | Text, fingering and dynamics editing                             | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-050 | Transpose selection                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -631,11 +631,11 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-098 | Slash (rhythm) entry; convert notes to slashes keeping their pitches | GP  | M4  | —       | —    | planned |
 | EDIT-099 | Beat-range copy, cut and paste across bar lines, all voices, between instruments | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-100 | Multitrack copy and cut of whole bars                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
-| EDIT-101 | Special paste: repeat count, include the current bar, choose element types | GP  | M4  | —       | —    | planned |
+| EDIT-101 | Special paste: repeat count, include the current bar, choose element types | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-102 | Move, copy or swap voice contents                                | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
-| EDIT-103 | Live bar-completeness indicator naming the faulty voice          | GP  | M4  | —       | —    | planned |
+| EDIT-103 | Live bar-completeness indicator naming the faulty voice          | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, apps/web/src/state/bar-check.test.ts | done |
 | EDIT-104 | Nested-tuplet entry, inner or outer first                        | GP  | M4  | —       | —    | planned |
-| EDIT-105 | Default beam grouping per time signature                         | GP  | M4  | —       | —    | planned |
+| EDIT-105 | Default beam grouping per time signature                         | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-106 | Flip stem direction                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-107 | Clefs and clef changes, optionally keeping pitches               | GP  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-108 | One- and two-bar simile marks                                    | GP  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -643,7 +643,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-110 | Accidentals: sharp, flat, natural, double, courtesy              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-111 | Bend editor: pitch curve with draggable points and presets       | GP  | M4  | —       | —    | planned |
 | EDIT-112 | Whammy-bar editor: pitch curve with presets in quarter-tone steps | GP  | M4  | —       | —    | planned |
-| EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |
+| EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -655,8 +655,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-122 | Open lock: password-encrypted documents                          | GP+ | M4  | —       | —    | planned |
 | EDIT-123 | Unsaved-changes guard: modified indicator, confirmation on close | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
 | EDIT-124 | Recovery of unsaved documents after a crash, reload or closed tab | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
-| EDIT-125 | Palm-mute assistant: chosen strings across a range               | GP  | M5  | —       | —    | planned |
-| EDIT-126 | Let-ring assistant: chosen strings across a range                | GP  | M5  | —       | —    | planned |
+| EDIT-125 | Palm-mute assistant: chosen strings across a range               | GP  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-126 | Let-ring assistant: chosen strings across a range                | GP  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-127 | Bar arranger: re-bar music to fit time signatures, splitting and tying notes | GP  | M5  | —       | —    | planned |
 | EDIT-128 | Bars per system: default count, redistribution, per-system change | GP  | M5  | —       | —    | planned |
 | EDIT-129 | Design mode for single- and multi-track scores                   | GP  | M5  | —       | —    | planned |
@@ -664,16 +664,16 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-131 | Design mode: drag individual beats                               | GP  | M5  | —       | —    | planned |
 | EDIT-132 | Design mode: alignment guide while dragging                      | GP  | M5  | —       | —    | planned |
 | EDIT-133 | Design mode: reset spacing per system or for the whole score     | GP  | M5  | —       | —    | planned |
-| EDIT-134 | Chord builder: root and quality                                  | GP  | M5  | —       | —    | planned |
-| EDIT-135 | Chord builder: extensions (7, 9, 11, 13)                         | GP  | M5  | —       | —    | planned |
-| EDIT-136 | Chord builder: altered fifths, ninths, elevenths, thirteenths    | GP  | M5  | —       | —    | planned |
-| EDIT-137 | Chord builder: slash-chord bass note                             | GP  | M5  | —       | —    | planned |
-| EDIT-138 | Chord builder: inversions                                        | GP  | M5  | —       | —    | planned |
-| EDIT-139 | Chord builder: omitted tones                                     | GP  | M5  | —       | —    | planned |
-| EDIT-140 | Custom chord names kept exactly as typed                         | GP  | M5  | —       | —    | planned |
-| EDIT-141 | Automatic barre in chord diagrams                                | GP  | M5  | —       | —    | planned |
+| EDIT-134 | Chord builder: root and quality                                  | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-135 | Chord builder: extensions (7, 9, 11, 13)                         | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-136 | Chord builder: altered fifths, ninths, elevenths, thirteenths    | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-137 | Chord builder: slash-chord bass note                             | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-138 | Chord builder: inversions                                        | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-139 | Chord builder: omitted tones                                     | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-140 | Custom chord names kept exactly as typed                         | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
+| EDIT-141 | Automatic barre in chord diagrams                                | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
 | EDIT-142 | Chord preview playback                                           | GP  | M5  | —       | —    | planned |
-| EDIT-143 | Write a diagram's notes into an empty beat                       | GP  | M5  | —       | —    | planned |
+| EDIT-143 | Write a diagram's notes into an empty beat                       | GP  | M5  | —       | packages/core/test/chord-builder.test.ts, packages/core/test/edit.test.ts | in progress |
 | EDIT-144 | Transpose chord diagrams and names with the notes                | GP  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-145 | Scale diagram: insert, resize, reset, delete                     | GP  | M5  | —       | —    | planned |
 | EDIT-146 | Scale-diagram geometry: 3–10 strings, 4–24 frets, start fret, orientation, fret markers | GP  | M5  | —       | —    | planned |

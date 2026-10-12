@@ -44,9 +44,11 @@ import {
   SlidersHorizontal,
   Sparkles,
   Trash2,
+  TriangleAlert,
   Undo2,
 } from 'lucide-react';
-import type { MouseEvent } from 'react';
+import { useMemo, type MouseEvent } from 'react';
+import { faultyVoices, nextFaulty } from '../state/bar-check.ts';
 import type { OpenDocument } from '../state/documents.ts';
 import { fretAtCaret, rowOf } from '../state/edit-caret.ts';
 import {
@@ -74,6 +76,7 @@ import {
   selectAllToEdit,
   selectBarAtCaret,
   selectVoice,
+  goToIncompleteBar,
   setDurationAtCaret,
   toggleDotAtCaret,
   toggleEditing,
@@ -89,6 +92,8 @@ import { openEffectsDialog } from './EffectsDialog.tsx';
 import { openMarksDialog } from './MarksDialog.tsx';
 import { openVoicesDialog } from './VoicesDialog.tsx';
 import { openHarmonizeDialog } from './HarmonizeDialog.tsx';
+import { openAssistantDialog } from './AssistantDialog.tsx';
+import { openPasteDialog } from './PasteDialog.tsx';
 import { openScoreInfoDialog } from './ScoreInfoDialog.tsx';
 import { DurationIcon } from './icons.tsx';
 import { focusScore, shortcutHint } from './keymap.ts';
@@ -161,6 +166,14 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
   const drumName = (sound: string): string => beats?.drumNames.find(([id]) => id === sound)?.[1] ?? sound;
   const voice = caret?.voice ?? 0;
   const copied = useClipboard(state => state.clip !== null);
+  // Bars whose voices do not add up (EDIT-103): the caret's own first, else the next.
+  const faulty = useMemo(() => (beats === null ? [] : faultyVoices(beats)), [beats]);
+  const caretBarIndex = row?.bar ?? -1;
+  const faultHere =
+    faulty.find(each => each.bar === caretBarIndex && each.staff === caret?.staff && each.voice === voice) ??
+    faulty.find(each => each.bar === caretBarIndex);
+  const fault = faultHere ?? nextFaulty(faulty, caretBarIndex);
+  // Its words name the caret's bar when that one does not add up, else the next to go to.
 
   return (
     <div
@@ -528,6 +541,29 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
                 e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret, caret.voice + 1)}
       </p>
       <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2 md:pl-2">
+        {fault !== null && caret !== null && (
+          <Tooltip label={e.goToIncomplete}>
+            <button
+              type="button"
+              onMouseDown={keepFocus}
+              onClick={() => {
+                goToIncompleteBar(key);
+              }}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2 text-[12px] text-ink-muted hover:bg-sunken hover:text-ink"
+            >
+              <TriangleAlert size={16} className="text-warning" aria-hidden />
+              <span className="max-xl:sr-only">
+                {e.incomplete(
+                  fault.bar + 1,
+                  fault.voice + 1,
+                  e.lengthOf(Math.abs(fault.missing)),
+                  fault.missing > 0,
+                  faulty.length,
+                )}
+              </span>
+            </button>
+          </Tooltip>
+        )}
         {dirty && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-muted">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
@@ -602,11 +638,17 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             >
               {e.paste}
             </MenuItem>
+            <MenuItem disabled={!ready || !copied} onSelect={() => openPasteDialog(key)}>
+              {strings.pasteDialog.open}
+            </MenuItem>
             <MenuItem icon={<ArrowUpDown size={16} aria-hidden />} onSelect={() => openTransposeDialog(key)}>
               {strings.transposeDialog.open}
             </MenuItem>
             <MenuItem disabled={!ready} onSelect={() => openHarmonizeDialog(key)}>
               {strings.harmonizeDialog.open}
+            </MenuItem>
+            <MenuItem disabled={!ready} onSelect={() => openAssistantDialog(key)}>
+              {strings.assistantDialog.open}
             </MenuItem>
             <MenuSeparator />
             <MenuItem

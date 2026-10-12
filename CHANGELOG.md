@@ -264,6 +264,15 @@ All notable changes to OpenTabz are recorded here. The format follows
   spells them — C♯ a major third up is E♯ — or by steps of each bar's scale, keeping the
   accidentals written. Whole bars (a track, every track, bars selected) can take their key
   signatures with them: A major a tone down is G major.
+- **Harmonics, assistants, bars that do not add up.** The effects dialog sets a note's harmonic,
+  where it is touched (a natural harmonic's node, or frets above the note held, the fret
+  named) and shows what it sounds; a natural harmonic now sounds at its node rather than as the
+  open string. "Palm mute and let ring…" marks (or unmarks) the notes on chosen strings of the
+  selection or the track. A bar whose voice is short or too long is named in the edit bar —
+  "Bar 3, voice 1: an eighth short" — and one click (or the command palette) goes to it.
+- **Beam groups and paste special.** The bar dialog groups a bar's beams as typed (7/8 as 2+2+3
+  eighths), from that bar on, the groups filling the bar; "Paste special…" pastes what was
+  copied as many times as asked, one after another.
 - **More effects.** "Strums, grace notes, fermatas, trills, ornaments…" sets, on the beats
   selected or the caret's, a strum or an arpeggio up or down and how long it takes, a grace
   note before or on the beat, a fermata (every track's at that moment), a crescendo or

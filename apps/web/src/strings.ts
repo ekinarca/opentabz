@@ -1457,6 +1457,30 @@ export const strings = {
     fretPad: 'Write a fret',
     fret: (fret: number) => `Fret ${String(fret)}`,
     unsaved: 'Changes not saved',
+    incomplete: (bar: number, voice: number, length: string, short: boolean, count: number) =>
+      `Bar ${String(bar)}, voice ${String(voice)}: ${length} ${short ? 'short' : 'too long'}${
+        count > 1 ? ` (${String(count)} bars)` : ''
+      }`,
+    goToIncomplete: 'Go to the next bar that does not add up',
+    lengthOf: (ticks: number) => {
+      const units: readonly (readonly [number, string, string])[] = [
+        [3840, 'whole note', 'whole notes'],
+        [1920, 'half note', 'half notes'],
+        [960, 'quarter', 'quarters'],
+        [480, 'eighth', 'eighths'],
+        [240, 'sixteenth', 'sixteenths'],
+        [120, 'thirty-second', 'thirty-seconds'],
+        [60, 'sixty-fourth', 'sixty-fourths'],
+        [640, 'triplet quarter', 'triplet quarters'],
+        [320, 'triplet eighth', 'triplet eighths'],
+        [160, 'triplet sixteenth', 'triplet sixteenths'],
+      ];
+      const unit = units.find(([size]) => ticks % size === 0);
+      if (unit === undefined) return `${String(ticks)} ticks`;
+      const [size, one, many] = unit;
+      const count = ticks / size;
+      return count === 1 ? `${/^[aeiou]/.test(one) ? 'an' : 'a'} ${one}` : `${String(count)} ${many}`;
+    },
     tabUnsaved: (name: string) => `${name}, changes not saved`,
     save: 'Save as a Guitar Pro file',
     saveShort: 'Save',
@@ -1728,6 +1752,35 @@ export const strings = {
     cancel: 'Cancel',
   },
 
+  pasteDialog: {
+    open: 'Paste special…',
+    title: 'Paste special',
+    description: 'Pastes what was copied at the caret, as many times as asked, one after another.',
+    times: 'Times',
+    timesHint: 'From 1 to 99; the score grows to hold them.',
+    apply: 'Paste',
+    cancel: 'Cancel',
+  },
+
+  assistantDialog: {
+    open: 'Palm mute and let ring…',
+    title: 'Palm mute and let ring',
+    description: 'Marks the notes on the strings chosen palm-muted or let ring, or takes the mark away.',
+    technique: 'Technique',
+    palmMute: 'Palm mute',
+    letRing: 'Let ring',
+    action: 'Do',
+    set: 'Mark',
+    clear: 'Take away',
+    strings: 'Strings',
+    string: (string: number, name: string) => `${String(string)} (${name})`,
+    scope: 'Notes',
+    scopes: { selection: 'Selected', track: 'This track' },
+    selectionHint: 'What is selected, or the caret’s beat when nothing is.',
+    apply: 'Apply',
+    cancel: 'Cancel',
+  },
+
   effectsDialog: {
     open: 'Strums, grace notes, fermatas, trills, ornaments…',
     title: 'Effects',
@@ -1805,6 +1858,21 @@ export const strings = {
     trillWith: (fret: number) => `With fret ${String(fret)}`,
     trillSpeed: 'Trill speed',
     leftTap: 'Tapped with the fretting hand',
+    harmonic: 'Harmonic',
+    harmonics: {
+      none: 'None',
+      natural: 'Natural',
+      artificial: 'Artificial',
+      pinch: 'Pinch',
+      tap: 'Tapped',
+      semi: 'Semi',
+      feedback: 'Feedback',
+    },
+    touchedAt: 'Touched at',
+    nodeAt: (node: number) => `The node at fret ${String(node)}`,
+    fretsAbove: (node: number, fret: number | null) =>
+      fret === null ? `${String(node)} frets above` : `${String(node)} frets above, at fret ${String(fret)}`,
+    sounds: (name: string) => `Sounds as ${name}.`,
     apply: 'Apply',
     cancel: 'Cancel',
   },
@@ -1929,6 +1997,13 @@ export const strings = {
     anacrusisHint: 'As long as its notes; the first bar only.',
     systemBreak: 'A new system starts here',
     systemBreakHint: 'On the page and on screen, in every track.',
+    beamGroups: 'Beam groups',
+    beamGroupsAuto: 'As the meter groups them',
+    beamGroupsHint: 'Notes beamed together, as 2+2+3; from this bar on.',
+    beamGroupsWrong: (meter: { readonly numerator: number; readonly denominator: number }, unit: number) =>
+      `They fill the bar: ${String(meter.numerator)}/${String(meter.denominator)} is ${String((meter.numerator * unit) / meter.denominator)} of them, in all.`,
+    beamUnit: 'Counted in',
+    beamUnits: { 4: 'Quarters', 8: 'Eighths', 16: 'Sixteenths', 32: 'Thirty-seconds' },
     staffSection: (track: string) => (track === '' ? 'This staff' : `This staff: ${track}`),
     clef: 'Clef',
     clefs: {

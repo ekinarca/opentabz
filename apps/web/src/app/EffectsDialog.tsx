@@ -1,15 +1,18 @@
 /**
- * The effects dialog (EDIT-014, EDIT-114): what Guitar Pro's edition palette sets beyond the
- * keys — on the beats acted on (those selected, or the caret's), a strum or an arpeggio and how
- * long it takes, a grace note, a fermata, a hairpin, an ottava, a rasgueado, a golpe, the wah
- * pedal, a barre, a dead slap, legato and a timer; on the caret's note, a slide in, a trill, an
- * ornament and left-hand tapping. Only what is changed is set, as one edit to undo.
+ * The effects dialog (EDIT-014, EDIT-113, EDIT-114): what Guitar Pro's edition palette sets beyond
+ * the keys — on the beats acted on (those selected, or the caret's), a strum or an arpeggio and
+ * how long it takes, a grace note, a fermata, a hairpin, an ottava, a rasgueado, a golpe, the wah
+ * pedal, a barre, a dead slap, legato and a timer; on the caret's note, a harmonic (its kind,
+ * where it is touched and what it sounds), a slide in, a trill, an ornament and left-hand
+ * tapping. Only what is changed is set, as one edit to undo.
  */
 import {
   BRUSH_LENGTHS,
   BRUSHES,
   FERMATAS,
   GOLPES,
+  HARMONIC_NODES,
+  HARMONIC_TYPES,
   GRACES,
   HAIRPINS,
   ORNAMENTS,
@@ -18,6 +21,8 @@ import {
   SLIDE_INS,
   TRILL_SPEEDS,
   WAHS,
+  harmonicPitch,
+  noteName,
   type BeatState,
   type BeatTechniques,
   type NoteState,
@@ -27,6 +32,7 @@ import { Button, Dialog, Switch } from '@opentabz/ui';
 import { useEffect, useId, useState } from 'react';
 import { create } from 'zustand';
 import { useDocuments } from '../state/documents.ts';
+import { rowOf } from '../state/edit-caret.ts';
 import { applyEffects, editingOf, readTechniques, type CaretTechniques } from '../state/editing.ts';
 import { strings } from '../strings.ts';
 import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
@@ -37,18 +43,35 @@ const INPUT_CLASS = `${SELECT_CLASS} w-full`;
 /** The frets a trill or a barre may name. */
 const FRETS = Array.from({ length: 25 }, (_, fret) => fret);
 
-/** The document whose effects dialog is open, and the caret's string then, as tablature numbers it. */
-export const useEffectsDialog = create<{
-  readonly open: { readonly key: string; readonly string: number } | null;
-}>(() => ({ open: null }));
+/** Where the effects dialog was opened: the document, and the caret's note's string. */
+interface Opened {
+  readonly key: string;
+  /** The string, as tablature numbers it (1 the highest). */
+  readonly string: number;
+  /** The note's fret (null without a note), and its string's open pitch with the capo. */
+  readonly fret: number | null;
+  readonly open: number;
+}
+
+export const useEffectsDialog = create<{ readonly open: Opened | null }>(() => ({ open: null }));
 
 /** Opens the dialog for the caret's beat and note; false when nothing is being edited. */
 export function openEffectsDialog(key: string): boolean {
-  const { on, caret } = editingOf(key);
+  const { on, caret, beats } = editingOf(key);
   if (!on || caret === null) return false;
   const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
-  const strings = doc?.summary.tracks[caret.track]?.staves[caret.staff]?.tuning.length ?? caret.string;
-  useEffectsDialog.setState({ open: { key, string: strings - caret.string + 1 } });
+  const staff = doc?.summary.tracks[caret.track]?.staves[caret.staff];
+  const tuning = staff?.tuning ?? [];
+  const row = beats === null ? null : rowOf(beats, caret.beatId);
+  const note = row?.notes.find(candidate => candidate.string === caret.string) ?? null;
+  useEffectsDialog.setState({
+    open: {
+      key,
+      string: tuning.length - caret.string + 1,
+      fret: note?.fret ?? null,
+      open: (tuning[tuning.length - caret.string] ?? 0) + (staff?.capo ?? 0),
+    },
+  });
   return true;
 }
 
@@ -79,7 +102,21 @@ export function noteChanges(was: NoteState, now: NoteState): NoteTechniques {
   if (was.trill?.fret !== now.trill?.fret || was.trill?.speed !== now.trill?.speed) changes.trill = now.trill;
   if (was.ornament !== now.ornament) changes.ornament = now.ornament;
   if (was.leftTap !== now.leftTap) changes.leftTap = now.leftTap;
+  if (was.harmonic !== now.harmonic) changes.harmonic = now.harmonic;
+  if (now.harmonic !== 'none' && (was.harmonicAt !== now.harmonicAt || was.harmonic !== now.harmonic))
+    changes.harmonicAt = now.harmonicAt;
   return changes;
+}
+
+/** Where a harmonic of a kind is touched unless said: a natural one at its fret's node, the others an octave up. */
+function defaultNode(harmonic: NoteState['harmonic'], fret: number | null): number {
+  if (harmonic !== 'natural') return 12;
+  return HARMONIC_NODES.find(node => Math.round(node) === fret) ?? 12;
+}
+
+/** The pitch a harmonic sounds: over the open string for a natural one, else over the note held. */
+function harmonicSound(harmonic: NoteState['harmonic'], node: number, opened: Opened): number {
+  return opened.open + (harmonic === 'natural' ? 0 : (opened.fret ?? 0)) + harmonicPitch(node);
 }
 
 /** A select of named values. */
@@ -123,12 +160,12 @@ function Choice<T extends string | number>({
 
 function EffectsForm({
   read,
-  string,
+  opened,
   onApply,
   onClose,
 }: {
   readonly read: CaretTechniques;
-  readonly string: number;
+  readonly opened: Opened;
   readonly onApply: (beat: BeatTechniques, note: NoteTechniques) => void;
   readonly onClose: () => void;
 }) {
@@ -280,7 +317,40 @@ function EffectsForm({
       </fieldset>
       {note !== null && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 text-[13px] font-semibold text-ink">{s.note(string)}</legend>
+          <legend className="mb-1 text-[13px] font-semibold text-ink">{s.note(opened.string)}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <Choice
+              label={s.harmonic}
+              value={note.harmonic}
+              values={HARMONIC_TYPES}
+              names={value => s.harmonics[value]}
+              onChange={harmonic => {
+                updateNote({ harmonic, harmonicAt: defaultNode(harmonic, opened.fret) });
+              }}
+            />
+            <Choice
+              label={s.touchedAt}
+              value={
+                HARMONIC_NODES.find(node => node === note.harmonicAt) ??
+                defaultNode(note.harmonic, opened.fret)
+              }
+              values={HARMONIC_NODES}
+              names={node =>
+                note.harmonic === 'natural'
+                  ? s.nodeAt(node)
+                  : s.fretsAbove(node, opened.fret === null ? null : opened.fret + node)
+              }
+              disabled={note.harmonic === 'none'}
+              onChange={harmonicAt => {
+                updateNote({ harmonicAt });
+              }}
+            />
+          </div>
+          {note.harmonic !== 'none' && (
+            <p className="text-[13px] text-ink-muted" aria-live="polite">
+              {s.sounds(noteName(harmonicSound(note.harmonic, note.harmonicAt, opened), false, true))}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Choice
               label={s.slideIn}
@@ -374,7 +444,7 @@ export function EffectsDialog() {
       {open !== null && current !== null && (
         <EffectsForm
           read={current}
-          string={open.string}
+          opened={open}
           onApply={(beat, note) => {
             if (Object.keys(beat).length > 0 || Object.keys(note).length > 0)
               applyEffects(open.key, beat, note);

@@ -83,6 +83,7 @@ import {
   type TypedFret,
 } from './edit-caret.ts';
 import { deleteDraft, holdDraft, releaseDraft, writeDraft } from './drafts.ts';
+import { faultyVoices, nextFaulty } from './bar-check.ts';
 import {
   actedRows,
   engineSelection,
@@ -518,13 +519,13 @@ async function cutNow(key: string): Promise<void> {
 }
 
 /** Writes what was copied from the caret's beat on. */
-function pasteNow(key: string): boolean {
+function pasteNow(key: string, times = 1): boolean {
   const found = atCaret(key);
   const { clip } = useClipboard.getState();
   if (found === null) return editingOf(key).on;
   if (clip === null) return true;
   const { caret, at } = found;
-  apply(key, [{ kind: 'paste', at, clip }], { at, string: caret.string });
+  apply(key, [{ kind: 'paste', at, clip, ...(times > 1 ? { times } : {}) }], { at, string: caret.string });
   return true;
 }
 
@@ -1322,6 +1323,38 @@ export function transposeNotes(
 }
 
 /**
+ * Puts the caret on the next bar of its track whose voices do not add up (EDIT-103), after the
+ * caret's, else the first; false when every bar does.
+ */
+export function goToIncompleteBar(key: string): boolean {
+  const { on, caret, beats } = editingOf(key);
+  if (!on || caret === null || beats === null) return false;
+  const bar = rowOf(beats, caret.beatId)?.bar ?? -1;
+  const next = nextFaulty(faultyVoices(beats), bar);
+  if (next === null) return false;
+  setCaretAt(key, { track: caret.track, staff: next.staff, beatId: next.beatId, string: caret.string });
+  return true;
+}
+
+/**
+ * Palm-mutes or lets ring (or no longer) the notes on chosen strings (alphaTab's numbers, 1 the
+ * lowest) of what is selected (else the caret's beat) or the caret's track (EDIT-125, EDIT-126).
+ */
+export function markStrings(
+  key: string,
+  technique: 'palm-mute' | 'let-ring',
+  on: boolean,
+  strings: readonly number[],
+  scope: 'selection' | 'track',
+): boolean {
+  return act(key, () => {
+    const selection = transposed(key, scope);
+    if (selection === null || strings.length === 0) return;
+    apply(key, [{ kind: 'mark-strings', selection, strings, technique, on }], placeOf(editingOf(key)), true);
+  });
+}
+
+/**
  * Gives each note of what is selected (else the caret's beat) a harmony in the key (EDIT-055);
  * what is selected stays so.
  */
@@ -1723,9 +1756,10 @@ export function cutSelection(key: string): boolean {
   return act(key, () => cutNow(key));
 }
 
-export function pasteAtCaret(key: string): boolean {
+/** Pastes at the caret what was copied, as many times as asked one after another (EDIT-101). */
+export function pasteAtCaret(key: string, times = 1): boolean {
   if (useClipboard.getState().clip === null) return false;
-  return act(key, () => pasteNow(key));
+  return act(key, () => pasteNow(key, times));
 }
 
 export function stepDurationAtCaret(key: string, longer: boolean): boolean {

@@ -899,6 +899,123 @@ test('a beat strummed under a fermata, its note trilled with an ornament, from t
   await expect(note.getByLabel('Trill', { exact: true })).toHaveValue('-1');
 });
 
+test('a harmonic touched where asked shows what it sounds; the let-ring assistant marks chosen strings (EDIT-113, EDIT-125, EDIT-126)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 0');
+
+  // The open A string as a natural harmonic: at the twelfth fret an A3, at the seventh an E4.
+  await editBar(page).getByRole('button', { name: 'Techniques' }).click();
+  await page.getByRole('menuitem', { name: 'Strums, grace notes, fermatas, trills, ornaments…' }).click();
+  const effects = page.getByRole('dialog', { name: 'Effects' });
+  const note = effects.getByRole('group', { name: 'The note on string 5' });
+  await expect(note.getByLabel('Touched at')).toBeDisabled();
+  await note.getByLabel('Harmonic').selectOption({ label: 'Natural' });
+  await expect(note.getByText('Sounds as A3.')).toBeVisible();
+  await note.getByLabel('Touched at').selectOption({ label: 'The node at fret 7' });
+  await expect(note.getByText('Sounds as E4.')).toBeVisible();
+  await effects.getByRole('button', { name: 'Apply' }).click();
+  await expect(effects).toBeHidden();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 7');
+  await expect.poll(() => firstSystemWrites(page, '&lt;7&gt;')).toBe(true);
+
+  // Let ring on the A and D strings of the whole track.
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menuitem', { name: 'Palm mute and let ring…' }).click();
+  const assistant = page.getByRole('dialog', { name: 'Palm mute and let ring' });
+  await assistant.getByRole('radio', { name: 'Let ring' }).click();
+  await expect(assistant.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  await assistant.getByRole('checkbox', { name: '5 (A)' }).check();
+  await assistant.getByRole('checkbox', { name: '4 (D)' }).check();
+  await assistant.getByRole('radio', { name: 'This track' }).click();
+  await assistant.getByRole('button', { name: 'Apply' }).click();
+  await expect(assistant).toBeHidden();
+  await editBar(page).getByRole('button', { name: 'Techniques' }).click();
+  await expect(page.getByRole('menuitemcheckbox', { name: /^Let ring/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.keyboard.press('Escape');
+});
+
+test('a bar’s beams grouped as typed, filling the bar (EDIT-105)', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editTool(page, 'Bar properties');
+  const bar = page.getByRole('dialog', { name: 'Bar 1' });
+  const groups = bar.getByLabel('Beam groups');
+  await expect(groups).toHaveValue('');
+  await expect(bar.getByLabel('Counted in')).toHaveValue('4');
+  await bar.getByLabel('Counted in').selectOption({ label: 'Eighths' });
+  // Seven eighths do not fill a bar of 4/4.
+  await groups.fill('2+2+3');
+  await expect(bar.getByText('They fill the bar: 4/4 is 8 of them, in all.')).toBeVisible();
+  await expect(bar.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  await groups.fill('3+3+2');
+  await bar.getByRole('button', { name: 'Apply' }).click();
+  await expect(bar).toBeHidden();
+  await editTool(page, 'Bar properties');
+  await expect(groups).toHaveValue('3+3+2');
+  await expect(bar.getByLabel('Counted in')).toHaveValue('8');
+  await bar.getByRole('button', { name: 'Cancel' }).first().click();
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await editTool(page, 'Bar properties');
+  await expect(groups).toHaveValue('');
+});
+
+test('a bar copied is pasted three times, bar after bar (EDIT-101)', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 3', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 3');
+  await editTool(page, 'Select the bar');
+  await editTool(page, 'Copy');
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  await page.keyboard.press('Escape');
+  for (let step = 0; step < 8; step++) await page.keyboard.press('ArrowRight');
+  await expect(caret(page)).toHaveText('Caret: bar 2, string 1, nothing written');
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menuitem', { name: 'Paste special…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Paste special' });
+  await dialog.getByLabel('Times').fill('3');
+  await dialog.getByRole('button', { name: 'Paste', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(caret(page)).toHaveText('Caret: bar 2, string 1, fret 3');
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 16; step++) await page.keyboard.press('ArrowRight');
+  await expect(caret(page)).toHaveText('Caret: bar 4, string 1, fret 3');
+  for (let step = 0; step < 8; step++) await page.keyboard.press('ArrowRight');
+  await expect(caret(page)).toHaveText('Caret: bar 5, string 1, nothing written');
+});
+
+test('a bar whose voice does not add up is named, and gone to (EDIT-103)', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  const incomplete = editBar(page).getByRole('button', { name: /^Bar \d+, voice \d+: / });
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await expect(incomplete).toHaveCount(0);
+  // Seven eighths left of eight in the third bar.
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 16; step++) await page.keyboard.press('ArrowRight');
+  await expect(caret(page)).toHaveText(/^Caret: bar 3, /);
+  await editTool(page, 'Delete the beat');
+  await expect(incomplete).toHaveAccessibleName('Bar 3, voice 1: an eighth short');
+  // From the first bar, the button goes to it.
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 16; step++) await page.keyboard.press('ArrowLeft');
+  await expect(caret(page)).toHaveText(/^Caret: bar 1, /);
+  await incomplete.click();
+  await expect(caret(page)).toHaveText(/^Caret: bar 3, /);
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(incomplete).toHaveCount(0);
+});
+
 test('dynamics, beams, fingering, spelling and text for a note and its beat, directions from the bar dialog (EDIT-012, EDIT-013, EDIT-025, EDIT-043)', async ({
   page,
 }) => {
