@@ -119,8 +119,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   keyboard scrolls on phones to keep the music in view.
 - **Chords panel.** The chord-diagram button shows the active track's chords under the score:
   the chord sounding, the next one with the beats left until it, and every chord of the track
-  as a diagram (open and unplayed strings, the first fret, barres). Clicking a chord plays
-  from where it comes next.
+  as a diagram (open and unplayed strings, the first fret, barres, and the fingering the file
+  gives). Clicking a chord plays from where it comes next.
+- **Chords as the file shows them.** Each chord shows its name, its diagram and its fingering
+  as the file asks: the fingering of Guitar Pro 4 to 8 files written under the diagram, a finger
+  under each string (T for the thumb), in the score and on paper; a chord whose name is hidden
+  shows only its diagram, one whose diagram is hidden only its name.
 - **Drum view.** The drum button shows the active drum track as pads lit as the music plays: a
   pad for each piece of the kit the track plays, cymbals to kick as on the staff, or a pad for
   each of the kit's 95 sounds with its MIDI number, General MIDI's only on request. Names never,
@@ -256,8 +260,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   system indented (0031), tuplets without brackets or bends without the pitch they reach on
   request (0032), tied frets, dashed rests, arpeggio arrowheads and trill notes on request
   (0033), level beams (0034), clefs and time signatures at the start of systems and sections
-  as asked (0035), technique lines over rests (0036) and chord diagrams mirrored for left-handed
-  players (0037). See [docs/upstream/](docs/upstream/).
+  as asked (0035), technique lines over rests (0036), chord diagrams mirrored for left-handed
+  players (0037) and what each chord shows, with its fingering (0038). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

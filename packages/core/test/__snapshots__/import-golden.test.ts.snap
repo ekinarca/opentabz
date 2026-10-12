@@ -8,7 +8,7 @@ exports[`every fixture imports to the same score > alphatab/audio/grace-beats.gp
 
 exports[`every fixture imports to the same score > alphatab/audio/ornaments.gp 1`] = `"f17f09c5fe773eec"`;
 
-exports[`every fixture imports to the same score > alphatab/audio/rasgueado.gp 1`] = `"ec540bc82a0817ba"`;
+exports[`every fixture imports to the same score > alphatab/audio/rasgueado.gp 1`] = `"a10f0b06c776cf2a"`;
 
 exports[`every fixture imports to the same score > alphatab/audio/repeat-close.gp5 1`] = `"08efaa7e0c099a84"`;
 
@@ -72,7 +72,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro4/colors.gp
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/dead.gp4 1`] = `"3444cf8eaa749d3a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro4/effects.gp4 1`] = `"8309b66e591e3000"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro4/effects.gp4 1`] = `"01af656ce69c9473"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/fingering.gp4 1`] = `"018e0a6e75ddf91d"`;
 
@@ -86,7 +86,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro4/harmonics
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/notes.gp4 1`] = `"5637fcce60db71d6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro4/other-effects.gp4 1`] = `"14d00b9d3eea5ef3"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro4/other-effects.gp4 1`] = `"5538d61798540ae6"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/ranges.gp4 1`] = `"9a17666b85ff9185"`;
 
@@ -120,7 +120,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/beaming-m
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/bends.gp5 1`] = `"9f7ebe129e844622"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/chords.gp5 1`] = `"3fbc0b9afc6674c5"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/chords.gp5 1`] = `"b933734a705bdbcf"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/colors.gp5 1`] = `"6553a99dcdf8a958"`;
 
@@ -128,7 +128,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/dead.gp5 
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/directions.gp5 1`] = `"081702bdda173c68"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/effects.gp5 1`] = `"f2225c26cf783759"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/effects.gp5 1`] = `"72c3e6cedd255372"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/fingering.gp5 1`] = `"5cc69c3403a44c76"`;
 
@@ -142,7 +142,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/harmonics
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/header-footer.gp5 1`] = `"b673b48343aa8703"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/hide-diagrams.gp5 1`] = `"32bb3ae2047a4591"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/hide-diagrams.gp5 1`] = `"ce8c077d99a67349"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/hide-tuning.gp5 1`] = `"d92a29354e0bbd17"`;
 
@@ -158,7 +158,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/layout-co
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/notes.gp5 1`] = `"acc5a5e443fd0d08"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/other-effects.gp5 1`] = `"cfb701981cd5384d"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/other-effects.gp5 1`] = `"385f07d53283f034"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/ottavia.gp5 1`] = `"e94f8662a8f49554"`;
 
@@ -202,7 +202,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro6/beaming-m
 
 exports[`every fixture imports to the same score > alphatab/guitarpro6/bends.gpx 1`] = `"32691eeb4f3afb3e"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro6/chords.gpx 1`] = `"338977d9072fd929"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro6/chords.gpx 1`] = `"08b37d1c082b109e"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro6/colors.gpx 1`] = `"94d51772ad208520"`;
 
@@ -278,7 +278,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro7/bends-adv
 
 exports[`every fixture imports to the same score > alphatab/guitarpro7/chord-no-diagram.gp 1`] = `"b95b69bd6a9a58d7"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro7/chords.gp 1`] = `"c9dfcb33fb61bca2"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro7/chords.gp 1`] = `"8890f7ba8a0387e3"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro7/colors.gp 1`] = `"ccf569905f0aa2a9"`;
 
@@ -404,7 +404,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro8/layout-co
 
 exports[`every fixture imports to the same score > alphatab/guitarpro8/multibar-rest.gp 1`] = `"ddcd9e2b16d95683"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro8/show-diagrams-in-score.gp 1`] = `"a4af6c560ee8136e"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro8/show-diagrams-in-score.gp 1`] = `"d2d6d333dd94a301"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro8/slash.gp 1`] = `"db7e821efe53ad7d"`;
 

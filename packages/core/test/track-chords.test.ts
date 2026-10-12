@@ -11,9 +11,9 @@ describe('track chords for the chords panel (VIEW-007)', () => {
     const chords = collectTrackChords(score, 0);
     expect(chords.chords).toEqual([
       // From the highest string to the lowest: A7 is x02020 read backwards.
-      { name: 'A7', firstFret: 1, strings: [0, 2, 0, 2, 0, -1], barres: [] },
-      { name: 'D7', firstFret: 1, strings: [2, 1, 2, 0, -1, -1], barres: [] },
-      { name: 'E7', firstFret: 1, strings: [0, 0, 1, 0, 2, 0], barres: [] },
+      { name: 'A7', firstFret: 1, strings: [0, 2, 0, 2, 0, -1], barres: [], fingers: [] },
+      { name: 'D7', firstFret: 1, strings: [2, 1, 2, 0, -1, -1], barres: [], fingers: [] },
+      { name: 'E7', firstFret: 1, strings: [0, 0, 1, 0, 2, 0], barres: [], fingers: [] },
     ]);
   });
 

@@ -7,7 +7,8 @@ const MIN_FRETS = 4;
 /**
  * A chord diagram as players read them: the lowest string on the left (the highest, mirrored, for
  * left-handed players), the nut (or the first fret's number) on top, dots on the frets held, open
- * strings as rings and strings not played as crosses, barres as bars.
+ * strings as rings and strings not played as crosses, barres as bars, and the fingering under it
+ * when the chord shows one (T for the thumb).
  */
 export function ChordDiagram({
   chord,
@@ -41,6 +42,9 @@ export function ChordDiagram({
   const lowToHigh = [...chord.strings].reverse();
   // As drawn, left to right.
   const frets = leftHanded ? [...chord.strings] : lowToHigh;
+  const fingersLowToHigh = [...chord.fingers].reverse();
+  const fingers = leftHanded ? [...chord.fingers] : fingersLowToHigh;
+  const fingered = fingers.some(finger => finger >= 0);
   const highest = Math.max(0, ...frets);
   const rows = Math.max(MIN_FRETS, highest - chord.firstFret + 1);
   const gap = 14;
@@ -48,7 +52,8 @@ export function ChordDiagram({
   const left = chord.firstFret > 1 ? 22 : 12;
   const top = 34;
   const width = left + (count - 1) * gap + 12;
-  const height = top + rows * fretGap + 8;
+  const bottom = top + rows * fretGap;
+  const height = bottom + (fingered ? 22 : 8);
   const x = (string: number) => left + string * gap;
   const y = (fret: number) => top + (fret - chord.firstFret + 0.5) * fretGap;
 
@@ -57,10 +62,19 @@ export function ChordDiagram({
       fret < 0 ? strings.chords.mutedString : fret === 0 ? strings.chords.openString : String(fret),
     )
     .join(', ');
+  const spokenFingers = fingered
+    ? strings.chords.fingering(
+        fingersLowToHigh
+          .map(finger =>
+            finger < 0 ? strings.chords.noFinger : finger === 0 ? strings.chords.thumb : String(finger),
+          )
+          .join(', '),
+      )
+    : '';
   return (
     <svg
       role="img"
-      aria-label={label ?? strings.chords.diagram(name, spoken)}
+      aria-label={label ?? strings.chords.diagram(name, spoken) + spokenFingers}
       width={width * size}
       height={height * size}
       viewBox={`0 0 ${width} ${height}`}
@@ -149,6 +163,22 @@ export function ChordDiagram({
           <circle key={`mark-${string}`} cx={x(string)} cy={y(fret)} r={5} fill="var(--ot-text)" />
         ),
       )}
+      {fingered &&
+        fingers.map((finger, string) =>
+          finger < 0 ? null : (
+            <text
+              key={`finger-${string}`}
+              x={x(string)}
+              y={bottom + 15}
+              textAnchor="middle"
+              fontSize={10}
+              fill="var(--ot-text-muted)"
+              data-finger={finger}
+            >
+              {finger === 0 ? 'T' : finger}
+            </text>
+          ),
+        )}
     </svg>
   );
 }

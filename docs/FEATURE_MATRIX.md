@@ -210,7 +210,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-205 | Dead slap                                                                         | GP  | M2  | —                                                           | packages/core/test/render-details.test.ts | done |
 | REND-206 | Sound-change labels where sound automations fire (custom text)                    | GP  | M2  | —                                                           | —    | planned |
 | REND-207 | Bracketed comments in lyrics are hidden in the score                              | GP  | M2  | alphatex/views/lyrics.atex | packages/core/test/notation-toggles.test.ts | done |
-| REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | —                                                           | —    | planned |
+| REND-208 | Per-chord display toggles: name, diagram, fingering                               | GP  | M2  | alphatab/guitarpro7/chords.gp | packages/core/test/chord-display.test.ts, apps/web/e2e/chords.spec.ts | done |
 | REND-209 | Scale diagrams attached to beats (geometry, custom dots, grid spacing)            | GP  | M2  | —                                                           | —    | planned |
 | REND-210 | Show or hide tempo-automation marks                                               | GP  | M2  | —                                                           | packages/core/test/notation-toggles.test.ts, apps/web/e2e/notation-toggles.spec.ts | done |
 | REND-211 | Tempo marks against any beat unit (e.g. dotted quarter)                           | GP  | M2  | —                                                           | packages/core/test/render-notation.test.ts | done |

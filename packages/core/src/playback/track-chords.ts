@@ -24,6 +24,7 @@ export function collectTrackChords(score: alphaTab.model.Score, trackIndex: numb
               firstFret: Math.max(1, chord.firstFret),
               strings: chord.showDiagram ? [...chord.strings] : [],
               barres: [...chord.barreFrets],
+              fingers: chord.showDiagram && chord.showFingering ? [...chord.fingers] : [],
             });
           }
           beats.push(beat.id, index);

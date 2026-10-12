@@ -897,6 +897,10 @@ export const strings = {
     mutedString: 'not played',
     openString: 'open',
     diagram: (name: string, frets: string) => `${name}: ${frets}, from the lowest string`,
+    /** The fingering, from the lowest string (REND-208). */
+    fingering: (fingers: string) => `; fingers ${fingers}`,
+    noFinger: 'none',
+    thumb: 'thumb',
   },
 
   lyrics: {

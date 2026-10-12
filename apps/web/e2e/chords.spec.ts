@@ -1,10 +1,11 @@
 /**
  * The chords panel (VIEW-007, VIEW-027): the chord sounding, the next one with the beats left
  * until it, every chord of the track drawn as a diagram, and playing from a chord clicked; the
- * diagrams, the panel's and the score's, mirrored for left-handed players (REND-314).
+ * diagrams, the panel's and the score's, mirrored for left-handed players (REND-314); the fingering
+ * the file gives, under the panel's diagrams (REND-208).
  */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test, topBarTool } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, topBarTool } from './support.ts';
 
 /** SMuFL's chord diagram marks: a string not played, an open string. */
 const MUTED = '\u{E859}';
@@ -100,4 +101,27 @@ test('mirrors the diagrams for left-handed players, in the panel and in the scor
   await expect.poll(() => mutedFirst(page)).toBe(false);
   // Named as before, from the lowest string.
   await expect(now).toHaveAccessibleName('A7: not played, open, 2, open, 2, open, from the lowest string');
+});
+
+test('writes the fingering the file gives under the panel’s diagrams', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatab/guitarpro7/chords.gp')]);
+  await expectScore(page);
+  await page.getByRole('button', { name: 'Chords', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Chords', exact: true });
+  // C, from the lowest string: the third finger, the second, the first.
+  const now = panel.getByTestId('chord-now').getByRole('img');
+  await expect(now).toHaveAccessibleName(
+    'C: not played, 3, 2, open, 1, open, from the lowest string; fingers none, 3, 2, none, 1, none',
+  );
+  await expect(now.locator('[data-finger]')).toHaveText(['3', '2', '1']);
+  // The barred C: the first finger across, the others above it.
+  const all = panel.getByRole('list', { name: 'Chords of the track' });
+  await expect(all.getByRole('img', { name: 'C', exact: true }).nth(1).locator('[data-finger]')).toHaveText([
+    '1',
+    '2',
+    '3',
+    '4',
+    '1',
+  ]);
 });

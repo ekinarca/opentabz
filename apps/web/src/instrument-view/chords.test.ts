@@ -41,8 +41,8 @@ const TIMELINE: PlaybackTimeline = {
 const CHORDS: TrackChords = {
   trackIndex: 0,
   chords: [
-    { name: 'A7', firstFret: 1, strings: [0, 2, 0, 2, 0, -1], barres: [] },
-    { name: 'D7', firstFret: 1, strings: [2, 1, 2, 0, -1, -1], barres: [] },
+    { name: 'A7', firstFret: 1, strings: [0, 2, 0, 2, 0, -1], barres: [], fingers: [] },
+    { name: 'D7', firstFret: 1, strings: [2, 1, 2, 0, -1, -1], barres: [], fingers: [] },
   ],
   // Beat 1: A7, beat 2: A7 again, beat 3: D7; beat 9 of track 1 is not this track's.
   beats: Int32Array.from([1, 0, 2, 0, 3, 1]),

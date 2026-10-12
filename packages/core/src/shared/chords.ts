@@ -10,6 +10,11 @@ export interface ChordShape {
   readonly strings: readonly number[];
   /** Frets held by a barre. */
   readonly barres: readonly number[];
+  /**
+   * The finger on each string, as `strings` lists them: 0 the thumb, 1 to 4 the index to the
+   * little finger, -1 or -2 none. Empty unless the chord shows its fingering (REND-208).
+   */
+  readonly fingers: readonly number[];
 }
 
 export interface TrackChords {

@@ -46,6 +46,7 @@ available as source: the patch file is that source.
 | [0035](0035-clefs-and-time-signatures-at-systems.md) | Clefs and time signatures at the start of systems and sections, as asked           | Guitar Pro's stylesheet chooses where they are written again               | not yet  |
 | [0036](0036-lines-over-rests.md)                     | Technique lines over rests                                                         | Palm-mute lines broke at every rest                                        | not yet  |
 | [0037](0037-left-handed-chord-diagrams.md)           | Chord diagrams mirrored for left-handed players                                    | Left-handed players read them with the highest string on the left          | not yet  |
+| [0038](0038-chord-display-and-fingering.md)          | What each chord shows, and its fingering                                           | Chords hid their name or diagram in vain; fingering was dropped            | not yet  |
 
 ## Working on a patch
 
