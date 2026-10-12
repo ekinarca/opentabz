@@ -8,6 +8,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger, SegmentedControl, Tooltip } from '@opentabz/ui';
 import { Paintbrush } from 'lucide-react';
 import { usePreferences } from '../state/preferences.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { Field } from './MetronomeSettingsForm.tsx';
 
@@ -33,6 +34,8 @@ function legend(mode: Exclude<NoteColorMode, 'off'>): readonly string[] {
  * ones, or string colours of one's own; with what each colour stands for.
  */
 export function NoteColorsControl() {
+  const open = useUi(state => state.panel === 'noteColors');
+  const setPanelOpen = useUi(state => state.setPanelOpen);
   const mode = usePreferences(state => state.noteColors);
   const palette = usePreferences(state => state.notePalette);
   const stringColors = usePreferences(state => state.stringColors);
@@ -41,7 +44,12 @@ export function NoteColorsControl() {
   const labels = mode === 'off' ? [] : legend(mode);
 
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={next => {
+        setPanelOpen('noteColors', next);
+      }}
+    >
       <Tooltip label={s.open}>
         <PopoverTrigger asChild>
           <button

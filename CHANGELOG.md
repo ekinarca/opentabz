@@ -184,12 +184,18 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Recent scores and the last session.** The home page lists the scores opened lately to open
+  again (one still open comes to the front) and can clear the list; Settings can open the scores
+  open last time again at the start. The scores are kept in this browser only, and forgotten at
+  once when "Remember recent scores" is turned off.
 - **Command palette.** ⌘/Ctrl K (or ⌘/Ctrl E, as in Guitar Pro 8), the ⌘ button or, on a phone,
   Commands in the top bar's menu open a palette that finds a command by its name, a word for it
-  ("pdf" for Export) or its initials ("zi" for Zoom in), shown with its keys, the past ones first.
-  "?" lists every command alphabetically, those that cannot run now with why; "$" goes to a
-  section and ":" to a bar; a value after a name zooms ("zoom 150"), sets the playback speed
-  ("speed 80") or transposes the playback ("transpose -2").
+  ("pdf" for Export) or its initials ("zi" for Zoom in), shown with its keys, the past ones
+  first. "?" lists every command alphabetically, those that cannot run now with why; "$" goes to
+  a section and ":" to a bar; a value after a name zooms ("zoom 150"), sets the playback speed
+  ("speed 80") or transposes the playback ("transpose -2"). Every action of the app is there,
+  also those its toolbar keeps in menus and panels: each track shown or hidden, the paper and
+  the pages, the mixer, song info, page setup, the open scores.
 - **Detached codas.** A coda starts a system of its own, below the music before it, as Guitar
   Pro draws it; the stylesheet sets the space above it (10 mm unless changed) or runs it on, and
   its sign stays within the system.

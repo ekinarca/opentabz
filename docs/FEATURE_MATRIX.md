@@ -832,7 +832,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | LIB-002  | Import files and folders into the library                   | OT  | M3  | —       | —    | planned |
 | LIB-003  | Search and filter by title / artist / tags                  | OT  | M3  | —       | —    | planned |
 | LIB-004  | Favorites                                                   | OT  | M3  | —       | —    | planned |
-| LIB-005  | Recents                                                     | GP  | M3  | —       | —    | planned |
+| LIB-005  | Recents                                                     | GP  | M3  | —       | apps/web/src/state/recent-scores.test.ts, apps/web/e2e/recent-scores.spec.ts | done |
 | LIB-006  | Setlists                                                    | OT  | M3  | —       | —    | planned |
 | LIB-007  | Practice stats per song                                     | OT  | M6  | —       | —    | planned |
 | LIB-008  | Per-song saved settings                                     | OT  | M3  | —       | —    | planned |
@@ -890,7 +890,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-011 | Drag, dock and pop out panels                                                                                               | OT  | M3  | —        | —    | planned |
 | UX-012 | Named workspace layouts                                                                                                     | OT  | M3  | —        | —    | planned |
 | UX-013 | Split view: two documents, or two views of one                                                                              | OT  | M3  | —        | —    | planned |
-| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action, with each action's shortcut | OT  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | in progress |
+| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action, with each action's shortcut | OT  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | done |
 | UX-015 | Every action reachable within one click or one shortcut                                                                     | OT  | M3  | —        | —    | planned |
 | UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | — | apps/web/e2e/app.spec.ts, packages/core/test/score-colors.test.ts | done |
 | UX-021 | Desktop and mobile first-class; no feature removed on mobile                                                                | OT  | M3  | —        | —    | planned |
@@ -900,7 +900,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-025 | Help links: user guide, issue tracker, community                                                                            | GP  | M8  | —        | —    | planned |
 | UX-026 | What's-new area on the home page                                                                                            | GP  | M3  | —        | —    | planned |
 | UX-027 | Choose which home-page sections are shown                                                                                   | GP  | M3  | —        | —    | planned |
-| UX-028 | Optionally reopen the previous session's documents                                                                          | GP  | M3  | —        | —    | planned |
+| UX-028 | Optionally reopen the previous session's documents                                                                          | GP  | M3  | —        | apps/web/src/state/session.test.ts, apps/web/e2e/recent-scores.spec.ts | done |
 | UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | —    | planned |
 | UX-030 | Context menus (right-click or long-press) on tracks, bars, symbols, document tabs and the waveform                          | GP  | M3  | —        | —    | planned |
 | UX-031 | Shortcut hints in tooltips and menus | GP  | M1  | —        | apps/web/e2e/practice.spec.ts, apps/web/e2e/mobile.spec.ts | done |

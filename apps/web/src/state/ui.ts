@@ -13,7 +13,15 @@ export type Panel =
   | 'export'
   | 'tuner'
   | 'stylesheet'
-  | 'palette';
+  | 'palette'
+  | 'about'
+  | 'url'
+  | 'songInfo'
+  | 'pageSetup'
+  | 'trackStaves'
+  | 'mixer'
+  | 'noteColors'
+  | 'following';
 
 interface UiState {
   readonly panel: Panel | null;

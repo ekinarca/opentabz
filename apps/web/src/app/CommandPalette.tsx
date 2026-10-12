@@ -2,6 +2,7 @@ import { CommandDialog, cx, Kbd } from '@opentabz/ui';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useDocuments } from '../state/documents.ts';
 import { recallRecent, rememberRecent } from '../state/palette-memory.ts';
+import { useRecentScores } from '../state/recent-scores.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { goToMasterBar, paletteCommands, valueCommands } from './commands.ts';
@@ -24,6 +25,11 @@ export function CommandPalette() {
   const listId = useId();
   // Read again each time the palette opens.
   const recent = useMemo(() => (open ? recallRecent() : []), [open]);
+  // The scores kept to open again, as they are now.
+  useRecentScores(state => state.list);
+  useEffect(() => {
+    if (open) void useRecentScores.getState().refresh();
+  }, [open]);
 
   const score = useMemo(
     () =>

@@ -33,7 +33,7 @@ import {
   Rows3,
   SwatchBook,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ORIENTATIONS,
   PAGE_ARRANGEMENTS,
@@ -42,14 +42,13 @@ import {
   type PageArrangement,
   type PaperId,
 } from '../score-view/pagination.ts';
-import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
-import { openFiles } from './open-actions.ts';
+import { writeOutRepeats } from './unfold.ts';
 import { enterFullScreen } from './full-screen.ts';
 import { FullScreenBar } from './FullScreenBar.tsx';
 import { FretboardPanel } from './FretboardPanel.tsx';
@@ -437,31 +436,14 @@ function usePlaybackForActiveDocument(active: OpenDocument | null): void {
   }, [key, engineId, load, unload]);
 }
 
-/**
- * Opens the score with its repeats and jumps written out (REND-319), as a document of its own:
- * every bar as often and in the order it is played.
- */
-async function writeOutRepeats(doc: OpenDocument): Promise<void> {
-  try {
-    const { bytes } = await getEngine().call('unfoldDocument', { docId: doc.engineId });
-    const base = doc.source.name.replace(/\.[^.]+$/, '');
-    openFiles([new File([bytes], strings.toolbar.unfoldedName(base))]);
-  } catch (error) {
-    useDocuments.getState().notify({
-      title: strings.toolbar.unfoldFailed,
-      description: error instanceof Error ? error.message : String(error),
-      tone: 'error',
-    });
-  }
-}
-
 export function Workspace() {
   const docs = useDocuments(state => state.docs);
   const activeKey = useDocuments(state => state.activeKey);
   const active = docs.find(doc => doc.key === activeKey) ?? null;
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [pageSetupOpen, setPageSetupOpen] = useState(false);
-  const [stavesOpen, setStavesOpen] = useState(false);
+  const infoOpen = useUi(state => state.panel === 'songInfo');
+  const pageSetupOpen = useUi(state => state.panel === 'pageSetup');
+  const stavesOpen = useUi(state => state.panel === 'trackStaves');
+  const setPanelOpen = useUi(state => state.setPanelOpen);
   const fretboard = usePreferences(state => state.fretboard);
   const keyboard = usePreferences(state => state.keyboard);
   const chords = usePreferences(state => state.chords);
@@ -482,13 +464,13 @@ export function Workspace() {
           <ViewToolbar
             doc={active}
             onInfo={() => {
-              setInfoOpen(true);
+              setPanelOpen('songInfo', true);
             }}
             onPageSetup={() => {
-              setPageSetupOpen(true);
+              setPanelOpen('pageSetup', true);
             }}
             onTrackStaves={() => {
-              setStavesOpen(true);
+              setPanelOpen('trackStaves', true);
             }}
           />
         ))}
@@ -505,12 +487,34 @@ export function Workspace() {
       {active !== null && <Transport />}
       {active !== null && <PracticeDialog />}
       {active !== null && <CountInOverlay />}
-      {active !== null && <SongInfoDialog doc={active} open={infoOpen} onOpenChange={setInfoOpen} />}
       {active !== null && (
-        <PageSetupDialog doc={active} open={pageSetupOpen} onOpenChange={setPageSetupOpen} />
+        <SongInfoDialog
+          doc={active}
+          open={infoOpen}
+          onOpenChange={open => {
+            setPanelOpen('songInfo', open);
+          }}
+        />
+      )}
+      {active !== null && (
+        <PageSetupDialog
+          doc={active}
+          open={pageSetupOpen}
+          onOpenChange={open => {
+            setPanelOpen('pageSetup', open);
+          }}
+        />
       )}
       {active !== null && <StylesheetDialog doc={active} />}
-      {active !== null && <TrackStavesDialog doc={active} open={stavesOpen} onOpenChange={setStavesOpen} />}
+      {active !== null && (
+        <TrackStavesDialog
+          doc={active}
+          open={stavesOpen}
+          onOpenChange={open => {
+            setPanelOpen('trackStaves', open);
+          }}
+        />
+      )}
     </main>
   );
 }

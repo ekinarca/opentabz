@@ -2,8 +2,9 @@
  * The command palette (UX-014, UX-032, UX-033, UX-038, UX-043), as Guitar Pro 8's: ⌘/Ctrl K or E
  * opens it; a command is found by its name, an alias or its initials and runs with Enter; past
  * commands come first; "?" lists every command, those that cannot run now with why; "$" goes to
- * a section and ":" to a bar; a value after a name sets the zoom, the speed or the transposition.
- * On a phone it opens from the top bar's menu.
+ * a section and ":" to a bar; a value after a name sets the zoom, the speed or the transposition;
+ * what the toolbar keeps in panels of its own (the mixer, song info…) opens from it too. On a phone
+ * it opens from the top bar's menu.
  */
 import type { Page } from '@playwright/test';
 import { expect, expectScore, openHome, test } from './support.ts';
@@ -101,7 +102,35 @@ test('finds and runs commands, past ones first, with values and jumps', async ({
   const unfocus = options.filter({ hasText: /^Unfocus/ });
   await expect(unfocus).toHaveAttribute('aria-disabled', 'true');
   await expect(unfocus).toContainText('Not now: no track is focused');
+  await field.press('Escape');
+
+  // What the toolbar keeps in panels and dialogs of their own opens from it too.
+  for (const [typed, name] of [
+    ['mixer', 'Mixer'],
+    ['each track', 'Staves of each track'],
+    ['song info', 'Twelve-Bar Shuffle in A'],
+    ['note col', 'Note colours'],
+    ['following', 'Following the music'],
+    ['about', 'About OpenTabz'],
+  ] as const) {
+    await page.keyboard.press(`${key}+k`);
+    await run(page, typed);
+    const opened = page.getByRole('dialog', { name });
+    await expect(opened).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(opened).toBeHidden();
+  }
+
+  // The score's own tracks and its pages too.
+  await page.keyboard.press(`${key}+k`);
+  await run(page, 'show or hide drums');
+  await expect(page.getByRole('button', { name: /^Tracks: / })).toHaveAccessibleName('Tracks: 2 of 4 tracks');
+  await page.keyboard.press(`${key}+k`);
+  await run(page, 'paper landscape');
+  await expect(page.getByRole('button', { name: /^Paper: / })).toHaveAccessibleName(/landscape/i);
+
   // Arrow keys choose; Escape closes.
+  await page.keyboard.press(`${key}+k`);
   await field.fill('zoom');
   await field.press('ArrowDown');
   await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true');

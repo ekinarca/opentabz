@@ -1,7 +1,8 @@
 import { ToastProvider, TooltipProvider } from '@opentabz/ui';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { onEngineRestart } from '../engine/instance.ts';
 import { useDocuments } from '../state/documents.ts';
+import { reopenLastSession } from '../state/reopen.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
@@ -27,8 +28,9 @@ export function App() {
   useTheme();
   useShortcuts();
   const dragging = useGlobalIntake();
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [urlOpen, setUrlOpen] = useState(false);
+  const aboutOpen = useUi(state => state.panel === 'about');
+  const urlOpen = useUi(state => state.panel === 'url');
+  const setPanelOpen = useUi(state => state.setPanelOpen);
   const docs = useDocuments(state => state.docs);
   const activeKey = useDocuments(state => state.activeKey);
   const active = docs.find(doc => doc.key === activeKey) ?? null;
@@ -42,6 +44,11 @@ export function App() {
 
   useEffect(() => {
     onEngineRestart(() => void useDocuments.getState().reopenAll());
+  }, []);
+
+  // The scores open last time, when the settings ask (UX-028).
+  useEffect(() => {
+    void reopenLastSession();
   }, []);
 
   // The app is on screen and interactive: the "warm start" budget ends here.
@@ -67,7 +74,7 @@ export function App() {
             <TopBar
               home={active === null}
               onAbout={() => {
-                setAboutOpen(true);
+                setPanelOpen('about', true);
               }}
             />
           )}
@@ -75,7 +82,7 @@ export function App() {
             <Home
               dragging={dragging}
               onOpenUrl={() => {
-                setUrlOpen(true);
+                setPanelOpen('url', true);
               }}
             />
           )}
@@ -84,8 +91,18 @@ export function App() {
         {/* The landing page answers a drag itself; the overlay is for open documents. */}
         <DropOverlay visible={dragging && active !== null} />
         <OpenErrorsDialog />
-        <UrlDialog open={urlOpen} onOpenChange={setUrlOpen} />
-        <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+        <UrlDialog
+          open={urlOpen}
+          onOpenChange={open => {
+            setPanelOpen('url', open);
+          }}
+        />
+        <AboutDialog
+          open={aboutOpen}
+          onOpenChange={open => {
+            setPanelOpen('about', open);
+          }}
+        />
         <ShortcutSheet />
         <CommandPalette />
         <SettingsDialog />

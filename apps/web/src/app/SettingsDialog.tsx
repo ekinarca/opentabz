@@ -6,6 +6,8 @@ import { AUDIO_LATENCIES, usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { loadStylesheets, setDefaultStylesheet } from '../state/stylesheets.ts';
+import { useRecentScores } from '../state/recent-scores.ts';
+import { forgetSession } from '../state/session.ts';
 import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 import { choiceOf, StylesheetOptions, valueOf } from './StylesheetChoices.tsx';
 
@@ -89,6 +91,36 @@ export function SettingsDialog() {
             checked={preferences.invertedTab}
             onCheckedChange={invertedTab => {
               preferences.set({ invertedTab });
+            }}
+          />
+        </section>
+        <section className="flex flex-col gap-3" aria-labelledby="settings-scores">
+          <h3
+            id="settings-scores"
+            className="text-[12px] font-semibold tracking-[0.08em] text-ink-faint uppercase"
+          >
+            {s.scores}
+          </h3>
+          <Switch
+            label={strings.recent.remember}
+            hint={strings.recent.rememberHint}
+            checked={preferences.rememberRecent}
+            onCheckedChange={rememberRecent => {
+              preferences.set({ rememberRecent });
+              // Forgotten at once: nothing of them stays on the device.
+              if (!rememberRecent) {
+                void useRecentScores.getState().clear();
+                forgetSession();
+              }
+            }}
+          />
+          <Switch
+            label={strings.recent.reopen}
+            hint={strings.recent.reopenHint}
+            checked={preferences.reopenSession && preferences.rememberRecent}
+            disabled={!preferences.rememberRecent}
+            onCheckedChange={reopenSession => {
+              preferences.set({ reopenSession });
             }}
           />
         </section>

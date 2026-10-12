@@ -5,6 +5,7 @@ import type { TrackSummary } from '@opentabz/core/shared';
 import { MAX_DETUNE, MAX_TRANSPOSE } from '../state/mixer-memory.ts';
 import { useDocuments, type OpenDocument, type TrackMix } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
@@ -200,6 +201,8 @@ function TrackDetails({
  * transposition and fine tuning; the master balance. Changes are remembered for the file.
  */
 export function Mixer({ doc }: { readonly doc: OpenDocument }) {
+  const open = useUi(state => state.panel === 'mixer');
+  const setPanelOpen = useUi(state => state.setPanelOpen);
   const updateMix = useDocuments(state => state.updateMix);
   const setFocus = useDocuments(state => state.setFocus);
   const resetMix = useDocuments(state => state.resetMix);
@@ -213,7 +216,12 @@ export function Mixer({ doc }: { readonly doc: OpenDocument }) {
   );
 
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={next => {
+        setPanelOpen('mixer', next);
+      }}
+    >
       <Tooltip label={s.open}>
         <PopoverTrigger asChild>
           <button

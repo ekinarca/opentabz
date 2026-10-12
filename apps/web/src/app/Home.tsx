@@ -15,6 +15,9 @@ import { LogoMark } from '@opentabz/ui';
 import { Link2 } from 'lucide-react';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useDocuments } from '../state/documents.ts';
+import { usePreferences } from '../state/preferences.ts';
+import { useRecentScores } from '../state/recent-scores.ts';
+import { recentSource } from '../state/session.ts';
 import { strings } from '../strings.ts';
 import { DEMOS, demoSource } from './demos.ts';
 import { pickFiles } from './open-actions.ts';
@@ -729,6 +732,66 @@ function DemoLinks() {
   });
 }
 
+const DATE = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+
+/** The scores opened lately, to open again (LIB-005): kept on this device only. */
+function RecentScores() {
+  const list = useRecentScores(state => state.list);
+  const remember = usePreferences(state => state.rememberRecent);
+  const pending = useDocuments(state => state.pending.length > 0);
+  useEffect(() => {
+    void useRecentScores.getState().refresh();
+  }, []);
+  if (!remember || list.length === 0) return null;
+  return (
+    <section aria-labelledby="recent-title" className="ot-recent">
+      <div className="ot-recent-head">
+        <h2 id="recent-title" className="ot-recent-title">
+          {strings.recent.heading}
+        </h2>
+        <button
+          type="button"
+          className="ot-recent-clear"
+          onClick={() => {
+            void useRecentScores.getState().clear();
+          }}
+        >
+          {strings.recent.clear}
+        </button>
+      </div>
+      <ul className="ot-recent-list">
+        {list.map(score => {
+          const title = score.title.length > 0 ? score.title : score.name;
+          const opened = new Date(score.openedAt);
+          return (
+            <li key={score.fingerprint}>
+              <button
+                type="button"
+                className="ot-recent-item"
+                disabled={pending}
+                aria-label={strings.recent.open(title)}
+                onClick={() => {
+                  // A score still open comes to the front instead of opening twice.
+                  const documents = useDocuments.getState();
+                  const open = documents.docs.find(doc => doc.fingerprint === score.fingerprint);
+                  if (open !== undefined) documents.activate(open.key);
+                  else void documents.open([recentSource(score)]);
+                }}
+              >
+                <span className="ot-recent-name">{title}</span>
+                <span className="ot-recent-meta">{strings.recent.byline(score.artist, score.name)}</span>
+                <time className="ot-recent-date" dateTime={opened.toISOString()}>
+                  {strings.recent.openedOn(DATE.format(opened))}
+                </time>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function Home({
   dragging,
   onOpenUrl,
@@ -787,6 +850,8 @@ export function Home({
             <p className="ot-demos">
               {strings.home.demosHeading} <DemoLinks />
             </p>
+
+            <RecentScores />
           </main>
 
           <footer className="ot-footer">

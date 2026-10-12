@@ -475,6 +475,93 @@
   text-decoration-color: var(--ot-accent);
 }
 
+/* Recent scores (LIB-005) ------------------------------------------------------------------- */
+
+.ot-recent {
+  width: min(100%, 760px);
+  margin: clamp(18px, 3vh, 32px) auto 0;
+  padding-inline: var(--ot-landing-gutter);
+}
+
+.ot-recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.ot-recent-title {
+  color: var(--ot-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ot-recent-clear {
+  border-radius: 4px;
+  color: var(--ot-text-muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--ot-text) 24%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ot-recent-clear:hover {
+  color: var(--ot-text);
+}
+
+.ot-recent-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 8px;
+}
+
+.ot-recent-item {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--ot-text) 12%, transparent);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--ot-surface) 55%, transparent);
+  color: var(--ot-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ot-landing-ease),
+    background-color 160ms var(--ot-landing-ease);
+}
+
+.ot-recent-item:hover {
+  border-color: color-mix(in oklab, var(--ot-accent) 60%, transparent);
+}
+
+.ot-recent-item:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.ot-recent-name {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ot-recent-meta,
+.ot-recent-date {
+  overflow: hidden;
+  color: var(--ot-text-muted);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ot-footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -574,6 +661,7 @@
   stroke: var(--stage-hot);
 }
 
-.ot-landing[data-dragging] :is(.ot-stage-bars, .ot-stage-notes, .ot-stage-rhythm, .ot-demos, .ot-footer) {
+.ot-landing[data-dragging]
+  :is(.ot-stage-bars, .ot-stage-notes, .ot-stage-rhythm, .ot-demos, .ot-recent, .ot-footer) {
   opacity: 0.22;
 }

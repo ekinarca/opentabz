@@ -5,13 +5,16 @@
  * commands that take a value typed after their name (UX-043); the sections and bars to go to
  * (UX-038).
  */
-import { LAYOUT_KINDS, STAFF_DISPLAYS } from '@opentabz/core/shared';
+import { LAYOUT_KINDS, NOTE_NAMES, STAFF_DISPLAYS, SYSTEMS_LAYOUTS } from '@opentabz/core/shared';
+import { ORIENTATIONS, PAGE_ARRANGEMENTS, PAPER_IDS, type PageSetup } from '../score-view/pagination.ts';
 import { occurrenceOfMasterBar } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '../state/documents.ts';
 import { MAX_TRANSPOSE } from '../state/mixer-memory.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { THEME_PREFERENCES, usePreferences, type Preferences } from '../state/preferences.ts';
-import { useUi } from '../state/ui.ts';
+import { useRecentScores } from '../state/recent-scores.ts';
+import { recentSource } from '../state/session.ts';
+import { useUi, type Panel } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import type { CommandValue } from './command-query.ts';
 import type { Searchable } from './command-search.ts';
@@ -19,6 +22,7 @@ import { formatBinding, platformBindings, SHORTCUTS } from './keymap.ts';
 import { openMetronomeTool } from './MetronomeTool.tsx';
 import { modKey } from './platform.ts';
 import { openTuner } from './TunerTool.tsx';
+import { writeOutRepeats } from './unfold.ts';
 
 const p = strings.palette;
 
@@ -67,6 +71,106 @@ function updateView(change: (doc: OpenDocument) => Partial<DocViewState>): void 
 
 function setPreferences(patch: Partial<Preferences>): void {
   usePreferences.getState().set(patch);
+}
+
+/** Changes the open score's paper, and the paper of scores opened from now on, as Page setup does. */
+function setPage(patch: Partial<PageSetup>): void {
+  const doc = activeDocument();
+  if (doc === null) return;
+  const page = { ...doc.view.page, ...patch };
+  useDocuments.getState().updateView(doc.key, { page });
+  setPreferences({ page });
+}
+
+/** Paper and pages belong to the page layout. */
+function needsPages(): string | null {
+  const doc = activeDocument();
+  if (doc === null) return p.reasons.noScore;
+  return doc.view.layout === 'page' ? null : p.reasons.pagesOnly;
+}
+
+/** The commands about the open score's own tracks and the other open scores. */
+function scoreCommands(): Command[] {
+  const { docs, activeKey } = useDocuments.getState();
+  const doc = docs.find(candidate => candidate.key === activeKey) ?? null;
+  const c = p.commands;
+  const tracks =
+    doc === null
+      ? []
+      : doc.summary.tracks.map((track): Command => ({
+          id: `track-${String(track.index)}`,
+          label: c.track(track.name.trim().length > 0 ? track.name : track.shortName),
+          aliases: [],
+          keys: null,
+          unavailable: () => null,
+          run: () => {
+            const view = activeDocument()?.view;
+            if (view === undefined) return;
+            const shown = view.trackIndexes.includes(track.index);
+            const next = shown
+              ? view.trackIndexes.filter(index => index !== track.index)
+              : [...view.trackIndexes, track.index].sort((a, b) => a - b);
+            // A score shows one track at least.
+            if (next.length > 0) updateView(() => ({ trackIndexes: next }));
+          },
+        }));
+  const others = docs
+    .filter(other => other.key !== activeKey)
+    .map((other): Command => ({
+      id: `document-${other.key}`,
+      label: c.switchTo(other.summary.title.trim().length > 0 ? other.summary.title : other.source.name),
+      aliases: [other.source.name],
+      keys: null,
+      unavailable: () => null,
+      run: () => {
+        useDocuments.getState().activate(other.key);
+      },
+    }));
+  // The scores opened lately (LIB-005): open again, or to the front when still open.
+  const recent = useRecentScores.getState().list.map((score): Command => ({
+    id: `recent-${score.fingerprint}`,
+    label: strings.recent.open(score.title.length > 0 ? score.title : score.name),
+    aliases: [score.name, score.artist],
+    keys: null,
+    unavailable: () => null,
+    run: () => {
+      const open = useDocuments
+        .getState()
+        .docs.find(candidate => candidate.fingerprint === score.fingerprint);
+      if (open !== undefined) useDocuments.getState().activate(open.key);
+      else void useDocuments.getState().open([recentSource(score)]);
+    },
+  }));
+  const clearRecent: Command = {
+    id: 'clear-recent',
+    label: strings.recent.clearCommand,
+    aliases: [],
+    keys: null,
+    unavailable: () => (useRecentScores.getState().list.length === 0 ? p.reasons.noRecent : null),
+    run: () => {
+      void useRecentScores.getState().clear();
+    },
+  };
+  return [...tracks, ...others, ...recent, clearRecent];
+}
+
+/** A command that opens one of the app's panels or dialogs. */
+function opens(
+  id: string,
+  label: string,
+  panel: Panel,
+  unavailable: () => string | null = needsScore,
+): Command {
+  return {
+    id,
+    label,
+    aliases: aliasesOf(id),
+    keys: null,
+    unavailable,
+    run: () => {
+      useUi.getState().openPanel(panel);
+    },
+  };
 }
 
 /** A command that switches a preference on or off, while a score is open. */
@@ -125,34 +229,30 @@ export function paletteCommands(mod: string = modKey()): Command[] {
   );
   const c = p.commands;
   const others: Command[] = [
+    opens('export', c.export, 'export'),
+    opens('settings', c.settings, 'settings', () => null),
+    opens('practice', c.practice, 'practice'),
+    opens('about', strings.topBar.about, 'about', () => null),
+    opens('open-url', strings.home.openUrl, 'url', () => null),
+    opens('song-info', strings.toolbar.songInfo, 'songInfo'),
+    opens('page-setup', strings.pageSetup.open, 'pageSetup'),
+    opens('track-staves', strings.trackStaves.title, 'trackStaves'),
+    opens('mixer', strings.mixer.open, 'mixer'),
+    opens('note-colours', strings.noteColors.open, 'noteColors'),
+    opens('following', strings.playbackView.open, 'following'),
     {
-      id: 'export',
-      label: c.export,
-      aliases: aliasesOf('export'),
+      id: 'unfold',
+      label: strings.toolbar.unfold,
+      aliases: aliasesOf('unfold'),
       keys: null,
-      unavailable: needsScore,
-      run: () => {
-        useUi.getState().openPanel('export');
+      unavailable: () => {
+        const doc = activeDocument();
+        if (doc === null) return p.reasons.noScore;
+        return doc.summary.hasRepeats ? null : p.reasons.noRepeats;
       },
-    },
-    {
-      id: 'settings',
-      label: c.settings,
-      aliases: [],
-      keys: null,
-      unavailable: () => null,
       run: () => {
-        useUi.getState().openPanel('settings');
-      },
-    },
-    {
-      id: 'practice',
-      label: c.practice,
-      aliases: [],
-      keys: null,
-      unavailable: needsScore,
-      run: () => {
-        useUi.getState().openPanel('practice');
+        const doc = activeDocument();
+        if (doc !== null) void writeOutRepeats(doc);
       },
     },
     {
@@ -220,6 +320,62 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       },
     },
     toggle('beat-counts', c.beatCounts, 'beatCounts'),
+    ...NOTE_NAMES.map((noteNames): Command => ({
+      id: `note-names-${noteNames}`,
+      label: c.noteNames(strings.readingAids.names[noteNames]),
+      aliases: [],
+      keys: null,
+      unavailable: needsScore,
+      run: () => {
+        setPreferences({ noteNames });
+      },
+    })),
+    ...PAPER_IDS.filter(paper => paper !== 'custom').map((paper): Command => ({
+      id: `paper-${paper}`,
+      label: c.paper(strings.papers[paper]),
+      aliases: [],
+      keys: null,
+      unavailable: needsPages,
+      run: () => {
+        setPage({ paper });
+      },
+    })),
+    ...ORIENTATIONS.map((orientation): Command => ({
+      id: `orientation-${orientation}`,
+      label: c.paper(strings.orientations[orientation]),
+      aliases: [],
+      keys: null,
+      unavailable: needsPages,
+      run: () => {
+        setPage({ orientation });
+      },
+    })),
+    ...PAGE_ARRANGEMENTS.map((arrangement): Command => ({
+      id: `pages-${arrangement}`,
+      label: c.pages(strings.arrangements[arrangement]),
+      aliases: [],
+      keys: null,
+      unavailable: needsPages,
+      run: () => {
+        updateView(() => ({ arrangement }));
+        setPreferences({ pageArrangement: arrangement });
+      },
+    })),
+    ...SYSTEMS_LAYOUTS.map((systemsLayout): Command => ({
+      id: `systems-${systemsLayout}`,
+      label: c.systems(strings.systemsLayouts[systemsLayout]),
+      aliases: [],
+      keys: null,
+      unavailable: () => {
+        const doc = activeDocument();
+        if (doc === null) return p.reasons.noScore;
+        if (!doc.summary.hasModelLayout) return p.reasons.noModelLayout;
+        return doc.view.layout === 'horizontal' ? p.reasons.notHorizontal : null;
+      },
+      run: () => {
+        updateView(() => ({ systemsLayout }));
+      },
+    })),
     toggle('drum-key', c.drumKey, 'drumKey'),
     {
       id: 'concert-pitch',
@@ -289,7 +445,7 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       },
     },
   ];
-  return [...fromShortcuts, ...others];
+  return [...fromShortcuts, ...others, ...scoreCommands()];
 }
 
 /** A whole percentage: absolute, or a change from `current` when signed. */

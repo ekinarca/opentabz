@@ -17,6 +17,7 @@ import {
   usePreferences,
   type CursorColor,
 } from '../state/preferences.ts';
+import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { Field } from './MetronomeSettingsForm.tsx';
 
@@ -36,10 +37,17 @@ const SWATCH: Readonly<Record<CursorColor, string>> = {
  * playing line sits, the cursor's style and colour, and the bar and note highlights.
  */
 export function PlaybackViewControl() {
+  const open = useUi(state => state.panel === 'following');
+  const setPanelOpen = useUi(state => state.setPanelOpen);
   const preferences = usePreferences();
   const set = preferences.set;
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={next => {
+        setPanelOpen('following', next);
+      }}
+    >
       <Tooltip label={s.open}>
         <PopoverTrigger asChild>
           <button

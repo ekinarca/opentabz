@@ -20,6 +20,8 @@ import type { PageArrangement, PageSetup } from '../score-view/pagination.ts';
 import { describeFormat, strings } from '../strings.ts';
 import { fingerprint, recallMix, rememberMix, STYLE_DEFAULTS, type TrackMix } from './mixer-memory.ts';
 import { usePreferences } from './preferences.ts';
+import { useRecentScores } from './recent-scores.ts';
+import { forgetSession, saveSession, sessionOf } from './session.ts';
 import { recallStyle, rememberStyle } from './style-memory.ts';
 import { startingStyle } from './stylesheets.ts';
 
@@ -157,6 +159,21 @@ async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): 
         : doc,
     ),
   }));
+  // Kept to open again from the home page, on this device only (LIB-005).
+  const doc = useDocuments.getState().docs.find(candidate => candidate.key === key);
+  if (doc !== undefined && usePreferences.getState().rememberRecent) {
+    void useRecentScores.getState().remember(
+      {
+        fingerprint: hash,
+        name: doc.source.name,
+        title: doc.summary.title.trim(),
+        artist: doc.summary.artist.trim(),
+        openedAt: Date.now(),
+        size: bytes.byteLength,
+      },
+      bytes,
+    );
+  }
 }
 
 let counter = 0;
@@ -400,3 +417,11 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
     get().notify({ ...strings.notices.engineRestarted, tone: 'warning' });
   },
 }));
+
+// The scores open now, kept to open again at the next start (UX-028), while recent scores are
+// remembered.
+useDocuments.subscribe((state, previous) => {
+  if (state.docs === previous.docs && state.activeKey === previous.activeKey) return;
+  if (usePreferences.getState().rememberRecent) saveSession(sessionOf(state.docs, state.activeKey));
+  else forgetSession();
+});

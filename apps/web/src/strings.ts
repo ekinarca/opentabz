@@ -347,9 +347,10 @@ export const strings = {
 
   settings: {
     title: 'Settings',
-    description: 'Sound, instrument views and the keyboard. Remembered on this device.',
+    description: 'Sound, notation, instrument views, scores and the keyboard. Remembered on this device.',
     close: 'Close',
     sound: 'Sound',
+    scores: 'Scores',
     latency: 'Audio delay',
     latencies: { interactive: 'Shortest', balanced: 'Balanced', playback: 'Steadiest' },
     latencyHints: {
@@ -1263,6 +1264,20 @@ export const strings = {
     close: 'Close',
   },
 
+  recent: {
+    heading: 'Recent scores',
+    open: (title: string) => `Open ${title} again`,
+    clear: 'Clear the list',
+    clearCommand: 'Clear the recent scores',
+    openedOn: (date: string) => `Opened ${date}`,
+    byline: (artist: string, file: string) => (artist.length > 0 ? `${artist} · ${file}` : file),
+    gone: 'This score is no longer kept on this device.',
+    remember: 'Remember recent scores',
+    rememberHint: 'Kept on this device only, to open again from the home page.',
+    reopen: 'Open the scores from last time at the start',
+    reopenHint: 'Needs recent scores to be remembered.',
+  },
+
   palette: {
     open: 'Commands',
     label: 'Command palette',
@@ -1279,6 +1294,11 @@ export const strings = {
       noFocus: 'no track is focused',
       noSections: 'this score has no sections',
       drumsOnly: 'only drums are open',
+      noRepeats: 'this score has no repeats or jumps',
+      pagesOnly: 'only the page layout has paper and pages',
+      noModelLayout: 'this score brings no layout of its own',
+      notHorizontal: 'the horizontal layout has one system',
+      noRecent: 'no scores are kept',
     },
     goToBar: (bar: number) => `Go to bar ${bar}`,
     goToBarField: 'Go to bar…',
@@ -1321,6 +1341,12 @@ export const strings = {
       focus: 'Focus on the active track',
       unfocus: 'Unfocus',
       close: 'Close the score',
+      track: (name: string) => `Show or hide ${name}`,
+      switchTo: (name: string) => `Switch to ${name}`,
+      noteNames: (option: string) => `Note names: ${option}`,
+      paper: (option: string) => `Paper: ${option}`,
+      pages: (option: string) => `Pages: ${option}`,
+      systems: (option: string) => `Systems: ${option}`,
     },
     /** Other words each command is found by. */
     aliases: {
@@ -1349,6 +1375,14 @@ export const strings = {
       focus: ['duck', 'highlight'],
       'concert-pitch': ['transposing instruments', 'sounding pitch'],
       'tempo-marks': ['tempo automation', 'bpm marks'],
+      'open-url': ['link', 'download', 'web'],
+      'song-info': ['title', 'artist', 'information', 'notes'],
+      'page-setup': ['paper', 'margins', 'orientation'],
+      'track-staves': ['tablature', 'standard notation', 'slash', 'numbered'],
+      mixer: ['volume', 'mute', 'solo', 'pan', 'instrument'],
+      'note-colours': ['colors', 'colours', 'intervals', 'degrees'],
+      following: ['cursor', 'scrolling', 'follow'],
+      unfold: ['unroll', 'expand repeats', 'linear'],
     } satisfies Record<string, readonly string[]>,
   },
 
@@ -1609,7 +1643,7 @@ export const strings = {
       'Scores are parsed and engraved by alphaTab (Mozilla Public License 2.0) by Daniel Kuschny and contributors. OpenTabz applies small patches, published with its source code.',
     font: 'Music fonts: Bravura and Petaluma by Steinberg Media Technologies (SIL Open Font License 1.1).',
     privacy:
-      'Privacy: OpenTabz has no server. Your files are opened in this browser tab and never uploaded. There are no cookies, analytics or trackers.',
+      'Privacy: OpenTabz has no server. Your files are opened in this browser tab and never uploaded; the scores you open lately are kept in this browser to open again, unless you turn that off in Settings. There are no cookies, analytics or trackers.',
     trademark:
       'Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with or endorsed by Arobas Music; it opens Guitar Pro files for compatibility.',
     notices: 'Third-party notices',

@@ -112,6 +112,10 @@ export interface Preferences {
   readonly audioLatency: AudioLatency;
   /** How exported files are named, with tokens (see export/file-names.ts). */
   readonly exportFileName: string;
+  /** The scores opened are kept on this device to open again (LIB-005). */
+  readonly rememberRecent: boolean;
+  /** The scores open when the app was last left open again at the start (UX-028). */
+  readonly reopenSession: boolean;
 }
 
 /** The longest file-name template kept. */
@@ -161,6 +165,8 @@ export function defaultPreferences(locale: string): Preferences {
     invertedTab: false,
     audioLatency: 'interactive',
     exportFileName: '%T',
+    rememberRecent: true,
+    reopenSession: false,
   };
 }
 
@@ -270,6 +276,9 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
       invertedTab: typeof value.invertedTab === 'boolean' ? value.invertedTab : fallback.invertedTab,
       audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
+      rememberRecent:
+        typeof value.rememberRecent === 'boolean' ? value.rememberRecent : fallback.rememberRecent,
+      reopenSession: typeof value.reopenSession === 'boolean' ? value.reopenSession : fallback.reopenSession,
       exportFileName:
         typeof value.exportFileName === 'string' && value.exportFileName.length <= MAX_FILE_NAME_TEMPLATE
           ? value.exportFileName
@@ -342,6 +351,8 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       invertedTab: state.invertedTab,
       audioLatency: state.audioLatency,
       exportFileName: state.exportFileName,
+      rememberRecent: state.rememberRecent,
+      reopenSession: state.reopenSession,
     });
   },
 }));
