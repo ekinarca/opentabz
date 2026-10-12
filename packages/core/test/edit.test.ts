@@ -1304,6 +1304,52 @@ describe('more techniques: strums, grace notes, fermatas, trills, ornaments… (
   });
 });
 
+describe('chord diagrams over beats (EDIT-040, EDIT-140, EDIT-143)', () => {
+  const C = { name: 'C', strings: [0, 1, 0, 2, 3, -1], firstFret: 1, barres: [] };
+
+  it('writes a chord over a beat, its notes into an empty one, the staff keeping it once', () => {
+    const score = texScore('\\track "Guitar" r.4 r.4 3.3.2 | r.1');
+    const editor = editorOf(score);
+    const staff = score.tracks[0]?.staves[0];
+    editor.apply([{ kind: 'set-chord', at: AT, chord: C, writeNotes: true }]);
+    expect(written(score, 0)[0]).toBe('0.1 1.2 0.3 2.4 3.5:4');
+    expect(beat(score, 0, 0).chordId).toBe('C');
+    // The same chord again: the staff's own; another shape of the same name: one of its own.
+    editor.apply([{ kind: 'set-chord', at: { ...AT, beat: 1 }, chord: C }]);
+    expect(beat(score, 0, 1).chordId).toBe('C');
+    editor.apply([
+      {
+        kind: 'set-chord',
+        at: { ...AT, bar: 1 },
+        chord: { ...C, strings: [3, 5, 5, 5, 3, -1], barres: [3] },
+      },
+    ]);
+    expect(beat(score, 1, 0).chordId).toBe("C'");
+    expect(staff?.chords?.size).toBe(2);
+    // A name of one's own, kept as typed, without a diagram.
+    editor.apply([
+      {
+        kind: 'set-chord',
+        at: { ...AT, beat: 2 },
+        chord: { name: 'Riff  A ', strings: [], firstFret: 1, barres: [] },
+      },
+    ]);
+    expect(staff?.getChord(beat(score, 0, 2).chordId ?? '')?.name).toBe('Riff  A');
+    expect(() =>
+      editor.apply([{ kind: 'set-chord', at: { ...AT, beat: 2 }, chord: C, writeNotes: true }]),
+    ).toThrow('The diagram’s notes are written into a beat without notes.');
+    expect(() => editor.apply([{ kind: 'set-chord', at: AT, chord: { ...C, strings: [0, 1, 0] } }])).toThrow(
+      'A diagram of 6 strings is wanted.',
+    );
+    editor.apply([{ kind: 'set-chord', at: { ...AT, beat: 1 }, chord: null }]);
+    expect(beat(score, 0, 1).chordId).toBeNull();
+    editor.undo();
+    editor.undo();
+    editor.undo();
+    expect(staff?.chords?.size).toBe(1);
+  });
+});
+
 describe('harmonics touched where asked, and the palm-mute and let-ring assistants (EDIT-113, EDIT-125, EDIT-126)', () => {
   it('reckons a harmonic’s pitch from where it is touched, as Guitar Pro does', () => {
     expect(harmonicPitch(12)).toBe(12);
@@ -1713,7 +1759,30 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(15)) {
+  switch (pick(16)) {
+    case 15:
+      return staff.tuning.length === 0 || staff.isPercussion
+        ? null
+        : {
+            kind: 'set-chord',
+            at: {
+              track: staff.track.index,
+              staff: staff.index,
+              bar: bar.index,
+              voice: voice.index,
+              beat: pick(voice.beats.length),
+            },
+            chord:
+              random() < 0.2
+                ? null
+                : {
+                    name: ['C', 'Am7', 'Intro'][pick(3)] ?? 'C',
+                    strings: staff.tuning.map(() => pick(4) - 1),
+                    firstFret: 1,
+                    barres: [],
+                  },
+            writeNotes: random() < 0.5,
+          };
     case 14:
       return {
         kind: 'mark-strings',
@@ -1923,6 +1992,7 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
             'set-staff-bar',
             'set-beat',
             'set-note',
+            'set-chord',
           ].includes(command.kind)
         )
           throw error;

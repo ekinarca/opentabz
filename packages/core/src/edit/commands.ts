@@ -22,6 +22,7 @@ import { articulationIn, clearSelection, copyBeat, paste, place, removeSelection
 import { moveString, retune, transpose } from './transpose.ts';
 import { harmonize } from './harmonize.ts';
 import { markStrings } from './assistants.ts';
+import { setChord } from './chords.ts';
 import { setStaffBar } from './staff-bars.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
@@ -448,6 +449,9 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       return;
     case 'move-string':
       moveString(transaction, command.at, command.higher);
+      return;
+    case 'set-chord':
+      setChord(transaction, command.at, command.chord, command.writeNotes === true);
       return;
     case 'mark-strings':
       markStrings(transaction, command.selection, command.strings, command.technique, command.on);

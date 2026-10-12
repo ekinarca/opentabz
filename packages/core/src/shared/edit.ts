@@ -526,6 +526,17 @@ export interface Barre {
   readonly half: boolean;
 }
 
+/** A chord over a beat (EDIT-040): its name, as built or typed (EDIT-140), and its diagram. */
+export interface ChordDiagram {
+  readonly name: string;
+  /** Frets from the highest string to the lowest: 0 open, −1 not played. None for a name alone. */
+  readonly strings: readonly number[];
+  /** The fret at the diagram's top (1: the nut). */
+  readonly firstFret: number;
+  /** Frets a barre holds. */
+  readonly barres: readonly number[];
+}
+
 /** A beat's techniques (EDIT-014): each one given is set. */
 export interface BeatTechniques {
   /** Three in the time of two (/), five in four…, or none. */
@@ -713,6 +724,16 @@ export type EditCommand =
       readonly strings: readonly number[];
       readonly technique: 'palm-mute' | 'let-ring';
       readonly on: boolean;
+    }
+  /**
+   * A chord diagram written over a beat, or taken away (EDIT-040): the staff keeps it; with
+   * `writeNotes`, its notes are written into the beat, which has none (EDIT-143).
+   */
+  | {
+      readonly kind: 'set-chord';
+      readonly at: BeatAddress;
+      readonly chord: ChordDiagram | null;
+      readonly writeNotes?: boolean;
     }
   /** A note moved to the next string higher or lower in pitch it can be played on, at its pitch (EDIT-052). */
   | { readonly kind: 'move-string'; readonly at: NoteAddress; readonly higher: boolean };

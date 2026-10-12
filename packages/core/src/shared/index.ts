@@ -17,6 +17,7 @@ export * from './overview.ts';
 export * from './style.ts';
 export * from './page-text.ts';
 export * from './chord-spelling.ts';
+export * from './chord-builder.ts';
 export * from './text-fonts.ts';
 export * from './technique-labels.ts';
 export * from './note-colors.ts';
