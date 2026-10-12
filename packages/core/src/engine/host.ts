@@ -7,6 +7,7 @@ import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
 import { readBarProperties } from '../edit/bar-properties.ts';
 import { readStaffBar } from '../edit/staff-bars.ts';
+import { readBeatTechniques, readNoteTechniques } from '../edit/techniques.ts';
 import { copySelection } from '../edit/clip.ts';
 import { readTrackProperties } from '../edit/tracks.ts';
 import { EditError } from '../edit/commands.ts';
@@ -247,6 +248,19 @@ export class EngineHost implements EngineMethods {
       if (error instanceof EditError) throw new EngineHostError(error.message);
       throw error;
     }
+  }
+
+  public techniques(args: EngineArgs<'techniques'>): EngineResult<'techniques'> {
+    const { at } = args;
+    const beat = this.document(args.docId).score.tracks[at.track]?.staves[at.staff]?.bars[at.bar]?.voices[
+      at.voice
+    ]?.beats[at.beat];
+    if (beat === undefined) throw new EngineHostError(`No beat at ${JSON.stringify(at)}.`);
+    const note =
+      args.string === null
+        ? null
+        : (beat.notes.find(candidate => candidate.isStringed && candidate.string === args.string) ?? null);
+    return { beat: readBeatTechniques(beat), note: note === null ? null : readNoteTechniques(note) };
   }
 
   public staffBarProperties(args: EngineArgs<'staffBarProperties'>): StaffBarState {

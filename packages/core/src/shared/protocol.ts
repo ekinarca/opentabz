@@ -6,9 +6,12 @@
 import type { TrackBeats } from './beats.ts';
 import type {
   BarState,
+  BeatAddress,
+  BeatState,
   Clip,
   EditCommand,
   EditOutcome,
+  NoteState,
   Selection,
   StaffBarState,
   TrackState,
@@ -83,6 +86,11 @@ export interface EngineMethods {
   trackProperties(args: { readonly docId: string; readonly track: number }): TrackState;
   /** A bar's properties as they are (EDIT-021 … EDIT-027), for the editor's bar dialog. */
   barProperties(args: { readonly docId: string; readonly bar: number }): BarState;
+  /** A beat's techniques, and its note's on a string (none without one), as they are (EDIT-014). */
+  techniques(args: { readonly docId: string; readonly at: BeatAddress; readonly string: number | null }): {
+    readonly beat: BeatState;
+    readonly note: NoteState | null;
+  };
   /** A staff's own properties at a bar: its clef, a simile mark (EDIT-107, EDIT-108). */
   staffBarProperties(args: {
     readonly docId: string;

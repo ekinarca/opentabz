@@ -12,6 +12,7 @@ import { moveChordName } from '../src/edit/transpose.ts';
 import { harmonyOf } from '../src/edit/harmonize.ts';
 import { byDegrees, byInterval, fifthsOf, movedKey, spell } from '../src/edit/spelling.ts';
 import { readStaffBar } from '../src/edit/staff-bars.ts';
+import { readBeatTechniques, readNoteTechniques } from '../src/edit/techniques.ts';
 import { readBarProperties } from '../src/edit/bar-properties.ts';
 import { collectTrackBeats } from '../src/edit/track-beats.ts';
 import { SPELLING_ORDER } from '../src/shared/beats.ts';
@@ -20,12 +21,17 @@ import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
 import {
   BAR_DIRECTIONS,
+  BRUSHES,
   CLEF_OTTAVAS,
   CLEFS,
   DURATION_VALUES,
   DYNAMICS,
   FINGERS,
+  GRACES,
   HARMONIES,
+  ORNAMENTS,
+  OTTAVAS,
+  RASGUEADOS,
   SIMILES,
   STEMS,
   TUPLETS,
@@ -1124,6 +1130,135 @@ describe('notes spelled and moved by letters (EDIT-107, EDIT-116, EDIT-117)', ()
   });
 });
 
+describe('more techniques: strums, grace notes, fermatas, trills, ornaments… (EDIT-014, EDIT-114)', () => {
+  it('sets and reads a note’s slide in, trill, ornament and tapping', () => {
+    const score = texScore('\\track "Guitar" 5.3.4 r.4 r.2');
+    const editor = editorOf(score);
+    const at = { ...AT, string: tex(3) };
+    editor.apply([
+      {
+        kind: 'set-note',
+        at,
+        techniques: {
+          slideIn: 'from-below',
+          trill: { fret: 7, speed: 16 },
+          ornament: 'upper-mordent',
+          leftTap: true,
+        },
+      },
+    ]);
+    const note = beat(score, 0, 0).notes[0];
+    if (note === undefined) throw new Error('no note');
+    // The trill's fret on the G string: the D above.
+    expect(note.trillValue).toBe(62);
+    expect(readNoteTechniques(note)).toMatchObject({
+      slideIn: 'from-below',
+      trill: { fret: 7, speed: 16 },
+      ornament: 'upper-mordent',
+      leftTap: true,
+      spelling: 'auto',
+    });
+    editor.apply([{ kind: 'set-note', at, techniques: { trill: null, ornament: 'none' } }]);
+    expect(readNoteTechniques(note)).toMatchObject({ trill: null, ornament: 'none' });
+    expect(() =>
+      editor.apply([{ kind: 'set-note', at, techniques: { trill: { fret: 7, speed: 8 as 16 } } }]),
+    ).toThrow('No trill in 8ths.');
+  });
+
+  it('strums and arpeggiates a beat, as long as asked', () => {
+    const score = texScore('\\track "Guitar" (0.1 0.2 0.3).4 r.4 r.2');
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { brush: 'down' } }]);
+    // A sixty-fourth from string to string unless said.
+    expect(beat(score, 0, 0).brushDuration).toBe(60);
+    expect(readBeatTechniques(beat(score, 0, 0))).toMatchObject({ brush: 'down', brushLength: 64 });
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { brush: 'arpeggio-up', brushLength: 8 } }]);
+    expect(beat(score, 0, 0).brushDuration).toBe(480);
+    expect(readBeatTechniques(beat(score, 0, 0))).toMatchObject({ brush: 'arpeggio-up', brushLength: 8 });
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { brush: 'none' } }]);
+    expect(beat(score, 0, 0).brushDuration).toBe(0);
+    expect(() => editor.apply([{ kind: 'set-beat', at: AT, techniques: { brushLength: 16 } }])).toThrow(
+      'A strum’s length is a strum’s.',
+    );
+  });
+
+  it('makes a beat a grace note, taking no time of the bar’s; a rest cannot be one', () => {
+    const score = texScore('\\track "Guitar" 3.3.32 5.3.4 r.4 r.2');
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { grace: 'before' } }]);
+    expect(beat(score, 0, 0).graceType).toBe(alphaTab.model.GraceType.BeforeBeat);
+    // The beat after it starts the bar.
+    expect(beat(score, 0, 1).playbackStart).toBe(0);
+    expect(readBeatTechniques(beat(score, 0, 0)).grace).toBe('before');
+    expect(() =>
+      editor.apply([{ kind: 'set-beat', at: { ...AT, beat: 2 }, techniques: { grace: 'on-beat' } }]),
+    ).toThrow('A grace note is a note.');
+    editor.undo();
+    expect(beat(score, 0, 1).playbackStart).toBe(120);
+  });
+
+  it('puts a fermata over every track’s beats at its moment, and takes it away from all', () => {
+    const score = texScore('\\track "Guitar" 3.3.2 5.3.2 \\track "Bass" 3.4.2 5.4.2');
+    const editor = editorOf(score);
+    const second = (track: number) => score.tracks[track]?.staves[0]?.bars[0]?.voices[0]?.beats[1];
+    editor.apply([{ kind: 'set-beat', at: { ...AT, beat: 1 }, techniques: { fermata: 'long' } }]);
+    expect(second(0)?.fermata?.type).toBe(alphaTab.model.FermataType.Long);
+    expect(second(1)?.fermata?.type).toBe(alphaTab.model.FermataType.Long);
+    expect(score.masterBars[0]?.fermata?.size).toBe(1);
+    // Taken away from the bass's beat: from the guitar's too.
+    editor.apply([{ kind: 'set-beat', at: { ...AT, track: 1, beat: 1 }, techniques: { fermata: 'none' } }]);
+    expect(second(0)?.fermata).toBeNull();
+    expect(score.masterBars[0]?.fermata).toBeNull();
+    editor.undo();
+    expect(readBeatTechniques(second(0) ?? beat(score, 0, 0)).fermata).toBe('long');
+    // The fermata is the moment's: a beat put in before moves the notes, not the fermata.
+    editor.apply([{ kind: 'insert-beat', at: AT }]);
+    expect([0, 1, 2].map(index => readBeatTechniques(beat(score, 0, index)).fermata)).toEqual([
+      'none',
+      'long',
+      'none',
+    ]);
+  });
+
+  it('sets and reads hairpins, ottavas, golpes, wah, rasgueado, dead slaps, legato, timers and barres', () => {
+    const score = texScore('\\track "Guitar" (5.1 5.2 5.3).4 r.4 r.2');
+    const editor = editorOf(score);
+    editor.apply([
+      {
+        kind: 'set-beat',
+        at: AT,
+        techniques: {
+          hairpin: 'decrescendo',
+          ottava: '8va',
+          golpe: 'thumb',
+          wah: 'closed',
+          rasgueado: 'ami-triplet',
+          deadSlap: true,
+          legato: true,
+          timer: true,
+          barre: { fret: 5, half: true },
+        },
+      },
+    ]);
+    expect(readBeatTechniques(beat(score, 0, 0))).toMatchObject({
+      hairpin: 'decrescendo',
+      ottava: '8va',
+      golpe: 'thumb',
+      wah: 'closed',
+      rasgueado: 'ami-triplet',
+      deadSlap: true,
+      legato: true,
+      timer: true,
+      barre: { fret: 5, half: true },
+    });
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { barre: null, ottava: 'none' } }]);
+    expect(readBeatTechniques(beat(score, 0, 0))).toMatchObject({ barre: null, ottava: 'none' });
+    expect(() =>
+      editor.apply([{ kind: 'set-beat', at: AT, techniques: { barre: { fret: 0, half: false } } }]),
+    ).toThrow('No barre at fret 0.');
+  });
+});
+
 describe('clefs and simile marks (EDIT-107, EDIT-108)', () => {
   const at = { track: 0, staff: 0 };
 
@@ -1308,6 +1443,10 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
           rightFinger: FINGERS[pick(FINGERS.length)] ?? 'none',
         },
         { spelling: SPELLING_ORDER[pick(SPELLING_ORDER.length)] ?? 'auto' },
+        { slideIn: random() < 0.5 ? 'from-above' : 'none' },
+        { trill: random() < 0.5 ? { fret: pick(20), speed: 32 } : null },
+        { ornament: ORNAMENTS[pick(ORNAMENTS.length)] ?? 'none' },
+        { leftTap: random() < 0.5 },
       ];
       const chosen = techniques[pick(techniques.length)] ?? {};
       return note === undefined
@@ -1366,6 +1505,15 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
         { text: random() < 0.3 ? null : 'a tempo' },
         { dynamics: DYNAMICS[pick(DYNAMICS.length)] ?? 'mf' },
         { beaming: (['auto', 'split', 'join'] as const)[pick(3)] ?? 'auto' },
+        { brush: BRUSHES[pick(BRUSHES.length)] ?? 'none' },
+        { grace: GRACES[pick(GRACES.length)] ?? 'none' },
+        { fermata: (['none', 'short', 'long'] as const)[pick(3)] ?? 'none' },
+        { hairpin: random() < 0.5 ? 'crescendo' : 'none' },
+        { ottava: OTTAVAS[pick(OTTAVAS.length)] ?? 'none' },
+        { rasgueado: RASGUEADOS[pick(RASGUEADOS.length)] ?? 'none' },
+        { golpe: random() < 0.5 ? 'finger' : 'none', wah: random() < 0.5 ? 'open' : 'none' },
+        { deadSlap: random() < 0.5, legato: random() < 0.5, timer: random() < 0.5 },
+        { barre: random() < 0.5 ? { fret: 1 + pick(12), half: random() < 0.5 } : null },
       ];
       return { kind: 'set-beat', at, techniques: techniques[pick(techniques.length)] ?? {} };
     }
@@ -1602,6 +1750,8 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
             'harmonize',
             'set-drum',
             'set-staff-bar',
+            'set-beat',
+            'set-note',
           ].includes(command.kind)
         )
           throw error;

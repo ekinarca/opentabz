@@ -86,6 +86,30 @@ export type Accent = 'none' | 'normal' | 'heavy' | 'tenuto';
 /** A bend: none, or a whole tone up (Guitar Pro's default bend). */
 export type Bend = 'none' | 'full';
 
+/** A slide into a note: from below or from above (EDIT-014). */
+export type SlideIn = 'none' | 'from-below' | 'from-above';
+export const SLIDE_INS: readonly SlideIn[] = ['none', 'from-below', 'from-above'];
+
+/** An ornament on a note (EDIT-014): a turn, an inverted turn, an upper or a lower mordent. */
+export type Ornament = 'none' | 'turn' | 'inverted-turn' | 'upper-mordent' | 'lower-mordent';
+export const ORNAMENTS: readonly Ornament[] = [
+  'none',
+  'turn',
+  'inverted-turn',
+  'upper-mordent',
+  'lower-mordent',
+];
+
+/** How fast a trill goes, as the note value of each of its notes. */
+export type TrillSpeed = 16 | 32 | 64;
+export const TRILL_SPEEDS: readonly TrillSpeed[] = [16, 32, 64];
+
+/** A trill (EDIT-014): the fret it trills with on the note's string (without strings, the pitch), how fast. */
+export interface Trill {
+  readonly fret: number;
+  readonly speed: TrillSpeed;
+}
+
 /** A note's techniques (EDIT-014), as Guitar Pro's keys set them: each one given is set. */
 export interface NoteTechniques {
   /** Held on from the note before it on the string (L); written on a string without a note, it adds one. */
@@ -110,7 +134,16 @@ export interface NoteTechniques {
   readonly rightFinger?: Finger;
   /** Its spelling in standard notation (EDIT-013). */
   readonly spelling?: Spelling;
+  readonly slideIn?: SlideIn;
+  /** A trill with another fret, or none. */
+  readonly trill?: Trill | null;
+  readonly ornament?: Ornament;
+  /** Tapped with the fretting hand. */
+  readonly leftTap?: boolean;
 }
+
+/** A note's techniques as they are. */
+export type NoteState = Required<NoteTechniques>;
 
 /** A dynamic, from ppp to fff (EDIT-043). */
 export type Dynamic = 'ppp' | 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'fff';
@@ -383,6 +416,87 @@ export interface NewTrack {
 /** A track's properties as they are. */
 export type TrackState = Required<Omit<TrackProperties, 'keepPitches'>> & { readonly percussion: boolean };
 
+/** A strum across the strings, or an arpeggio, down (from the lowest string) or up (EDIT-114). */
+export type Brush = 'none' | 'down' | 'up' | 'arpeggio-down' | 'arpeggio-up';
+export const BRUSHES: readonly Brush[] = ['none', 'down', 'up', 'arpeggio-down', 'arpeggio-up'];
+
+/** How long a strum or an arpeggio takes from its first string to its last, as a note value. */
+export type BrushLength = 4 | 8 | 16 | 32 | 64 | 128;
+export const BRUSH_LENGTHS: readonly BrushLength[] = [4, 8, 16, 32, 64, 128];
+
+/** A grace note's beat: played before the beat, on it, or as a bend's grace; none, a beat of its own. */
+export type Grace = 'none' | 'before' | 'on-beat' | 'bend';
+export const GRACES: readonly Grace[] = ['none', 'before', 'on-beat', 'bend'];
+
+/** A fermata over a beat, every track's at that moment: short, as usual, or long. */
+export type Fermata = 'none' | 'short' | 'medium' | 'long';
+export const FERMATAS: readonly Fermata[] = ['none', 'short', 'medium', 'long'];
+
+/** A hairpin from a beat: getting louder or softer. */
+export type Hairpin = 'none' | 'crescendo' | 'decrescendo';
+export const HAIRPINS: readonly Hairpin[] = ['none', 'crescendo', 'decrescendo'];
+
+/** Octaves a beat is played above (8va, 15ma) or below (8vb, 15mb) where it is written. */
+export type Ottava = '15ma' | '8va' | 'none' | '8vb' | '15mb';
+export const OTTAVAS: readonly Ottava[] = ['15ma', '8va', 'none', '8vb', '15mb'];
+
+/** A golpe: the guitar's top tapped with the thumb or a finger. */
+export type Golpe = 'none' | 'thumb' | 'finger';
+export const GOLPES: readonly Golpe[] = ['none', 'thumb', 'finger'];
+
+/** A wah pedal open or closed at a beat. */
+export type Wah = 'none' | 'open' | 'closed';
+export const WAHS: readonly Wah[] = ['none', 'open', 'closed'];
+
+/** A rasgueado: the fingers that strum (i, m, a, e, p), in triplets or anapaests. */
+export type Rasgueado =
+  | 'none'
+  | 'ii'
+  | 'mi'
+  | 'mii-triplet'
+  | 'mii-anapaest'
+  | 'pmp-triplet'
+  | 'pmp-anapaest'
+  | 'pei-triplet'
+  | 'pei-anapaest'
+  | 'pai-triplet'
+  | 'pai-anapaest'
+  | 'ami-triplet'
+  | 'ami-anapaest'
+  | 'ppp'
+  | 'amii'
+  | 'amip'
+  | 'eami'
+  | 'eamii'
+  | 'peami';
+export const RASGUEADOS: readonly Rasgueado[] = [
+  'none',
+  'ii',
+  'mi',
+  'mii-triplet',
+  'mii-anapaest',
+  'pmp-triplet',
+  'pmp-anapaest',
+  'pei-triplet',
+  'pei-anapaest',
+  'pai-triplet',
+  'pai-anapaest',
+  'ami-triplet',
+  'ami-anapaest',
+  'ppp',
+  'amii',
+  'amip',
+  'eami',
+  'eamii',
+  'peami',
+];
+
+/** A barre over a beat: the fret, across all the strings or half of them. */
+export interface Barre {
+  readonly fret: number;
+  readonly half: boolean;
+}
+
 /** A beat's techniques (EDIT-014): each one given is set. */
 export interface BeatTechniques {
   /** Three in the time of two (/), five in four…, or none. */
@@ -404,7 +518,28 @@ export interface BeatTechniques {
   readonly dynamics?: Dynamic;
   /** How its beam goes on to the next beat (EDIT-012). */
   readonly beaming?: Beaming;
+  /** A strum or an arpeggio (EDIT-114), and how long it takes. */
+  readonly brush?: Brush;
+  readonly brushLength?: BrushLength;
+  /** A grace note's beat, taking no time of the bar's: its notes played before or on the next beat. */
+  readonly grace?: Grace;
+  readonly fermata?: Fermata;
+  readonly hairpin?: Hairpin;
+  readonly ottava?: Ottava;
+  readonly golpe?: Golpe;
+  readonly wah?: Wah;
+  readonly rasgueado?: Rasgueado;
+  /** Slapped with its strings muted. */
+  readonly deadSlap?: boolean;
+  /** Slurred to the next beat. */
+  readonly legato?: boolean;
+  /** The time it is played at shown over it. */
+  readonly timer?: boolean;
+  readonly barre?: Barre | null;
 }
+
+/** A beat's techniques as they are. */
+export type BeatState = Required<BeatTechniques>;
 
 export type EditCommand =
   /** The note on a string of a beat, written on a fret (added, or moved there and no longer tied). */

@@ -76,6 +76,17 @@ function clearNeighbours({ staff, from, to }: Region): void {
 }
 
 /**
+ * A staff's beats let go of their fermatas: a fermata is its bar's, at a moment of it, and each
+ * beat at that moment takes it again as the staff is worked out — a beat put in before it does not
+ * carry it along.
+ */
+function clearFermatas(staff: alphaTab.model.Staff): void {
+  for (const bar of staff.bars)
+    if (bar.masterBar.fermata !== null)
+      for (const voice of bar.voices) for (const beat of voice.beats) beat.fermata = null;
+}
+
+/**
  * Works out again what follows from the written notes of staves, then where each bar starts (a
  * pickup bar is as long as its notes).
  */
@@ -86,6 +97,7 @@ export function refinishStaves(
 ): void {
   const all = [...staves];
   for (const staff of all) clearChains(staff);
+  for (const staff of all) clearFermatas(staff);
   for (const staff of all) staff.finish(settings, new Map());
   const shared = new Map<string, unknown>();
   for (const masterBar of score.masterBars) masterBar.finish(shared);

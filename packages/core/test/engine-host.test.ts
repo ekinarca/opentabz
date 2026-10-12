@@ -304,6 +304,31 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(() => host.staffBarProperties({ ...at, bar: 99 })).toThrow('No bar 99 in staff 0 of track 0.');
   });
 
+  it('reads a beat’s techniques and its note’s, as they are and once set (EDIT-014)', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const at = { track: 0, staff: 0, bar: 0, voice: 0, beat: 0 };
+    // The A string's palm-muted open note (alphaTab's string 2).
+    const first = host.techniques({ docId, at, string: 2 });
+    expect(first.note).toMatchObject({ palmMute: true, trill: null, slideIn: 'none' });
+    expect(first.beat).toMatchObject({ brush: 'none', grace: 'none', fermata: 'none', barre: null });
+    expect(host.techniques({ docId, at, string: 6 }).note).toBeNull();
+    host.edit({
+      docId,
+      commands: [{ kind: 'set-beat', at, techniques: { brush: 'up', brushLength: 32, fermata: 'short' } }],
+    });
+    expect(host.techniques({ docId, at, string: null })).toMatchObject({
+      beat: { brush: 'up', brushLength: 32, fermata: 'short' },
+      note: null,
+    });
+    expect(() => host.techniques({ docId, at: { ...at, beat: 99 }, string: null })).toThrow('No beat at');
+  });
+
   it('copies bars from one document and pastes them in another (EDIT-020)', () => {
     const host = new EngineHost();
     const shuffle = host.open({

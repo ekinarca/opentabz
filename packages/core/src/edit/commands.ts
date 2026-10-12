@@ -332,6 +332,12 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
     case 'set-beat': {
       const beat = beatAt(score, command.at);
       transaction.touch(beat.voice.bar.staff, command.at.bar);
+      // A fermata is the bar's, over every track's beats at its moment.
+      if (command.techniques.fermata !== undefined) {
+        transaction.journal.keepFields(beat.voice.bar.masterBar, ['fermata']);
+        for (const track of score.tracks)
+          for (const staff of track.staves) transaction.touch(staff, command.at.bar);
+      }
       setBeatTechniques(beat, command.techniques);
       return;
     }
