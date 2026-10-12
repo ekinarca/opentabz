@@ -26,10 +26,13 @@ import {
   TITLE_ELEMENTS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  TAB_RHYTHM_PLACES,
+  TAB_RHYTHMS,
   TUNING_DETAILS,
   TUNING_LAYOUTS,
   TUNING_PLACES,
   type PageFurniture,
+  type TabRhythmPlace,
   type ScoreStyle,
   type TechniqueLabels,
   type TextBlocks,
@@ -119,6 +122,13 @@ function parseTechniqueLabels(value: unknown, fallback: TechniqueLabels): Techni
   return Object.fromEntries(labels.filter(label => label !== null)) as unknown as TechniqueLabels;
 }
 
+/** Where voices 1 to 4 put their rhythm in the tablature (REND-244). */
+function parseRhythmVoices(value: unknown): readonly TabRhythmPlace[] | null {
+  if (!Array.isArray(value) || value.length !== 4) return null;
+  const places = value.map((place: unknown) => oneOf(place, TAB_RHYTHM_PLACES));
+  return places.every(place => place !== null) ? places : null;
+}
+
 function parsePages(value: unknown): PageFurniture | null {
   if (!isRecord(value)) return null;
   const lines = PAGE_LINES.map(id => {
@@ -168,6 +178,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'tiedTabNotes',
     'harmonicTouch',
     'octaveHarmonicDot',
+    'tabStemsInside',
     'dashQuarterRests',
     'voiceColors',
     'flatBeams',
@@ -226,6 +237,10 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
       raw.tuningLayout === undefined ? fallback.tuningLayout : oneOf(raw.tuningLayout, TUNING_LAYOUTS),
   };
   if (Object.values(tuning).some(entry => entry === null)) return null;
+  const tabRhythm = raw.tabRhythm === undefined ? fallback.tabRhythm : oneOf(raw.tabRhythm, TAB_RHYTHMS);
+  const tabRhythmVoices =
+    raw.tabRhythmVoices === undefined ? fallback.tabRhythmVoices : parseRhythmVoices(raw.tabRhythmVoices);
+  if (tabRhythm === null || tabRhythmVoices === null) return null;
   const techniqueLabels =
     raw.techniqueLabels === undefined
       ? fallback.techniqueLabels
@@ -249,6 +264,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
     ...(measures as Record<keyof typeof laterMeasures, number>),
     ...(tuning as { [K in keyof typeof tuning]: NonNullable<(typeof tuning)[K]> }),
+    tabRhythm,
+    tabRhythmVoices,
     titleBlock,
     textBlocks,
     pages,

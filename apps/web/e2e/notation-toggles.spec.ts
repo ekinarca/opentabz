@@ -5,7 +5,8 @@
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
  * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
  * systems (REND-231); technique lines over rests (REND-243); where artificial harmonics are
- * touched, and octave harmonics as a dot (REND-247); in the score on screen.
+ * touched, and octave harmonics as a dot (REND-247); the rhythm in the tablature (REND-244); in
+ * the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -245,4 +246,38 @@ test('artificial harmonics with where they are touched, without, or octaves as a
   await expect
     .poll(async () => (await texts()).filter(text => text.startsWith('<')))
     .toEqual(['<12>', '<12>', '<12>']);
+});
+
+test('the rhythm in the tablature under a staff when asked, and each voice’s where asked', async ({
+  page,
+}) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/techniques.atex')]);
+  await expectScore(page);
+  /** Thin rules of the first system: stems, barlines. */
+  const rules = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+      .first()
+      .evaluate(
+        element =>
+          [...element.querySelectorAll('rect')].filter(
+            rect => Number(rect.getAttribute('width')) < 2 && Number(rect.getAttribute('height')) > 2,
+          ).length,
+      );
+  await expect.poll(rules).toBeGreaterThan(0);
+  const staffOnly = await rules();
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog
+    .getByRole('radiogroup', { name: 'Rhythm in the tablature' })
+    .getByRole('radio', { name: 'Always' })
+    .click();
+  // The tablature's stems too.
+  await expect.poll(rules).toBeGreaterThan(staffOnly);
+  const always = await rules();
+  // Voice 2's rhythm left out of the tablature: fewer stems.
+  await dialog.getByLabel('Voice 2').selectOption('none');
+  await expect.poll(rules).toBeLessThan(always);
 });

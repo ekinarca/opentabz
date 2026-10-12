@@ -32,6 +32,17 @@ export type TrackNameText = (typeof TRACK_NAME_TEXTS)[number];
 export const TEXT_ORIENTATIONS = ['horizontal', 'vertical'] as const;
 export type TextOrientation = (typeof TEXT_ORIENTATIONS)[number];
 
+/**
+ * When the tablature shows the rhythm (REND-244): only without a staff above it (`auto`), always,
+ * or never.
+ */
+export const TAB_RHYTHMS = ['auto', 'always', 'never'] as const;
+export type TabRhythm = (typeof TAB_RHYTHMS)[number];
+
+/** Where a voice's rhythm goes in the tablature (REND-244). */
+export const TAB_RHYTHM_PLACES = ['below', 'above', 'none'] as const;
+export type TabRhythmPlace = (typeof TAB_RHYTHM_PLACES)[number];
+
 /** Where the tuning is written: in a legend above the music, or before each track's tablature. */
 export const TUNING_PLACES = ['top', 'tab'] as const;
 export type TuningPlace = (typeof TUNING_PLACES)[number];
@@ -82,6 +93,12 @@ export interface ScoreStyle {
   readonly harmonicTouch: boolean;
   /** An artificial harmonic touched an octave up written as its fret and a dot (REND-247). */
   readonly octaveHarmonicDot: boolean;
+  /** When the tablature shows the rhythm (REND-244). */
+  readonly tabRhythm: TabRhythm;
+  /** The rhythm's stems start at the fret numbers, through the staff; else outside it (REND-244). */
+  readonly tabStemsInside: boolean;
+  /** Where the rhythm of voices 1 to 4 goes in the tablature (REND-244). */
+  readonly tabRhythmVoices: readonly TabRhythmPlace[];
   /** Quarter rests in the tablature written as a dash (REND-250). */
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
@@ -190,6 +207,9 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tiedTabNotes: false,
   harmonicTouch: true,
   octaveHarmonicDot: false,
+  tabRhythm: 'auto',
+  tabStemsInside: true,
+  tabRhythmVoices: ['below', 'below', 'below', 'below'],
   dashQuarterRests: false,
   voiceColors: false,
   flatBeams: false,
@@ -248,6 +268,11 @@ function sameSetting(a: ScoreStyle, b: ScoreStyle, key: keyof ScoreStyle): boole
       return sameTextFonts(a.fonts, b.fonts);
     case 'techniqueLabels':
       return sameTechniqueLabels(a.techniqueLabels, b.techniqueLabels);
+    case 'tabRhythmVoices':
+      return (
+        a.tabRhythmVoices.length === b.tabRhythmVoices.length &&
+        a.tabRhythmVoices.every((place, index) => place === b.tabRhythmVoices[index])
+      );
     default:
       return a[key] === b[key];
   }

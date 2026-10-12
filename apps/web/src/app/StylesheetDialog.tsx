@@ -12,6 +12,8 @@ import {
   TEXT_ORIENTATIONS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  TAB_RHYTHM_PLACES,
+  TAB_RHYTHMS,
   TUNING_DETAILS,
   TUNING_LAYOUTS,
   TUNING_PLACES,
@@ -505,6 +507,7 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ tiedTabNotes });
             }}
           />
+          <TabRhythmFields style={style} set={set} />
           <Switch
             label={s.harmonicTouch}
             hint={s.harmonicTouchHint}
@@ -645,6 +648,79 @@ function TuningFields({
               set({ tuningFrame });
             }}
           />
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * The rhythm in the tablature (REND-244): without a staff above it, always or never; its stems
+ * from the frets or outside; each voice's rhythm below, above or nowhere.
+ */
+function TabRhythmFields({
+  style,
+  set,
+}: {
+  readonly style: ScoreStyle;
+  readonly set: (patch: Partial<ScoreStyle>) => void;
+}) {
+  const id = useId();
+  return (
+    <>
+      <Field label={s.tabRhythm}>
+        <SegmentedControl
+          label={s.tabRhythm}
+          value={style.tabRhythm}
+          segments={TAB_RHYTHMS.map(value => ({ value, label: s.tabRhythms[value] }))}
+          onValueChange={tabRhythm => {
+            set({ tabRhythm });
+          }}
+        />
+      </Field>
+      {style.tabRhythm !== 'never' && (
+        <>
+          <Switch
+            label={s.tabStemsInside}
+            hint={s.tabStemsInsideHint}
+            checked={style.tabStemsInside}
+            onCheckedChange={tabStemsInside => {
+              set({ tabStemsInside });
+            }}
+          />
+          <Field label={s.tabRhythmVoices}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {style.tabRhythmVoices.map((place, voice) => (
+                <label
+                  key={voice}
+                  className="flex flex-col gap-1 text-[12px] text-ink-muted"
+                  htmlFor={`${id}-${voice}`}
+                >
+                  {s.tabRhythmVoice(voice + 1)}
+                  <select
+                    id={`${id}-${voice}`}
+                    value={place}
+                    onChange={event => {
+                      const chosen = TAB_RHYTHM_PLACES.find(value => value === event.target.value);
+                      if (chosen === undefined) return;
+                      set({
+                        tabRhythmVoices: style.tabRhythmVoices.map((other, index) =>
+                          index === voice ? chosen : other,
+                        ),
+                      });
+                    }}
+                    className={SELECT_CLASS}
+                  >
+                    {TAB_RHYTHM_PLACES.map(value => (
+                      <option key={value} value={value}>
+                        {s.tabRhythmPlaces[value]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </Field>
         </>
       )}
     </>

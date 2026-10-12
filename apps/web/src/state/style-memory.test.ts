@@ -163,6 +163,31 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads the rhythm in the tablature (REND-244), as usual for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        tabRhythm: 'always',
+        tabStemsInside: false,
+        tabRhythmVoices: ['below', 'above', 'none', 'below'],
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({
+      tabRhythm: 'always',
+      tabStemsInside: false,
+      tabRhythmVoices: ['below', 'above', 'none', 'below'],
+    });
+    expect(parseStyle({ ...stored, tabRhythm: 'sometimes' })).toBeNull();
+    expect(parseStyle({ ...stored, tabRhythmVoices: ['below', 'above'] })).toBeNull();
+    expect(parseStyle({ ...stored, tabRhythmVoices: ['below', 'sideways', 'none', 'below'] })).toBeNull();
+    const { tabRhythm: _rhythm, tabStemsInside: _inside, tabRhythmVoices: _voices, ...older } = stored;
+    expect(parseStyle(older)).toMatchObject({
+      tabRhythm: 'auto',
+      tabStemsInside: true,
+      tabRhythmVoices: ['below', 'below', 'below', 'below'],
+    });
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

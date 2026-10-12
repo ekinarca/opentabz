@@ -16,6 +16,7 @@ import {
   styleChanges,
   type BracketMode,
   type ScoreStyle,
+  type TabRhythm,
   type TextOrientation,
   type TrackNamePlace,
   type TrackNameText,
@@ -81,6 +82,10 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     tiedTabNotes: false,
     harmonicTouch: true,
     octaveHarmonicDot: false,
+    // alphaTab reads none of Guitar Pro's rhythm-in-tablature choices: as alphaTab draws it.
+    tabRhythm: 'auto',
+    tabStemsInside: true,
+    tabRhythmVoices: ['below', 'below', 'below', 'below'],
     dashQuarterRests: false,
     voiceColors: false,
     flatBeams: false,
@@ -255,6 +260,9 @@ export function applyScoreStyle(
       case 'tiedTabNotes':
       case 'harmonicTouch':
       case 'octaveHarmonicDot':
+      case 'tabRhythm':
+      case 'tabStemsInside':
+      case 'tabRhythmVoices':
       case 'dashQuarterRests':
       case 'voiceColors':
       case 'flatBeams':
@@ -309,6 +317,13 @@ function respellChords(score: alphaTab.model.Score, spelling: ChordSpelling): ()
 const SYSTEM_PADDING = 10;
 const PX_PER_MM = 96 / 25.4;
 
+/** alphaTab's rhythm modes for the tablature: the rhythm without a staff above, always, never. */
+const TAB_RHYTHM_MODES: Readonly<Record<TabRhythm, alphaTab.TabRhythmMode>> = {
+  auto: alphaTab.TabRhythmMode.Automatic,
+  always: alphaTab.TabRhythmMode.ShowWithBars,
+  never: alphaTab.TabRhythmMode.Hidden,
+};
+
 export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyle): void {
   const display = settings.display;
   display.scale *= style.scale;
@@ -336,6 +351,10 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.showTiedTabNotes = style.tiedTabNotes;
   settings.notation.showHarmonicTouch = style.harmonicTouch;
   settings.notation.octaveHarmonicDot = style.octaveHarmonicDot;
+  // The rhythm in the tablature: when, its stems, and each voice's place (REND-244).
+  settings.notation.rhythmMode = TAB_RHYTHM_MODES[style.tabRhythm];
+  settings.notation.tabStemsInside = style.tabStemsInside;
+  settings.notation.tabRhythmVoices = [...style.tabRhythmVoices];
   settings.notation.dashQuarterRests = style.dashQuarterRests;
   settings.notation.flatBeams = style.flatBeams;
   settings.notation.flatDrumBeams = style.flatDrumBeams;
