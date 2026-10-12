@@ -3,7 +3,10 @@ import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { strings } from '../strings.ts';
 import { SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
-/** The active track, chosen from the instrument views (the fretboard, the keyboard, the chords). */
+/**
+ * The active track, chosen from the instrument views (the fretboard, the keyboard, the chords),
+ * marked with its colour (REND-036).
+ */
 export function TrackSelect({ doc }: { readonly doc: OpenDocument }) {
   const setActiveTrack = useDocuments(state => state.setActiveTrack);
   const id = useId();
@@ -13,6 +16,12 @@ export function TrackSelect({ doc }: { readonly doc: OpenDocument }) {
       <label htmlFor={id} className="sr-only">
         {strings.fretboard.track}
       </label>
+      <span
+        className="inline-block size-2.5 shrink-0 rounded-full"
+        style={{ background: track?.color }}
+        data-track-color={track?.color}
+        aria-hidden
+      />
       <select
         id={id}
         value={track?.index ?? 0}

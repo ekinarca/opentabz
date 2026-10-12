@@ -204,6 +204,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   of squares, a square per bar filled in the track's colour where it plays, under the sections
   and bar numbers, with each track's mute and solo. A click goes to the bar and makes the track
   the active one, a drag selects bars, and the bar being played stays in view.
+- **Track colours.** Each track's colour from the file marks it in the song overview, the
+  tracks menu, the mixer and the instrument views' choice of track. Tracks of files that give
+  none (MusicXML, capella, alphaTex without colours) get one each, told apart with any colour
+  vision, and keep it in exports.
 - **Full screen.** The full-screen button, F11 or ⌃⌘F puts the app's bars away, and the browser
   goes full screen too where a page may ask it to (on iPhone the bars still go). A slim strip
   keeps the song's name, the zoom and the way out; Esc leaves.

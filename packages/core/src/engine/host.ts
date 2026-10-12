@@ -3,6 +3,7 @@
  * forwards protocol messages here; tests call it directly in Node.
  */
 import { summarizeScore } from '../document/summary.ts';
+import { colorTracks } from '../document/track-colors.ts';
 import { exportMidi } from '../export/midi.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
@@ -97,6 +98,7 @@ export class EngineHost implements EngineMethods {
     const started = performance.now();
     try {
       const opened = openScore(new Uint8Array(args.bytes), args.name);
+      colorTracks(opened.score, opened.format);
       this.documentCounter += 1;
       const id = `doc-${this.documentCounter}`;
       const summary = summarizeScore(opened.score, {
