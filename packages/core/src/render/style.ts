@@ -64,6 +64,10 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     staffLineThickness: 1,
     systemSpacing: 1,
     firstSystemIndent: 0,
+    chordDiagramsOnTopSize: 1,
+    chordDiagramsOnTopSpacing: 1,
+    chordDiagramsInScoreSize: 1,
+    chordDiagramsInScoreSpacing: 1,
     hideDynamics: sheet.hideDynamics,
     // C and cut C as the file writes any; the others as alphaTab draws.
     commonTime: score.masterBars.some(bar => bar.timeSignatureCommon),
@@ -217,6 +221,10 @@ export function applyScoreStyle(
       case 'staffLineThickness':
       case 'systemSpacing':
       case 'firstSystemIndent':
+      case 'chordDiagramsOnTopSize':
+      case 'chordDiagramsOnTopSpacing':
+      case 'chordDiagramsInScoreSize':
+      case 'chordDiagramsInScoreSpacing':
       case 'titleBlock':
       case 'textBlocks':
       case 'pages':
@@ -311,12 +319,23 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.timeSignatureOnEverySystem = style.timeSignatureOnEverySystem;
   settings.notation.timeSignatureAtSections = style.timeSignatureAtSections;
   settings.notation.linesOverRests = style.linesOverRests;
+  // Chord diagrams at the size and spacing asked (REND-227), keeping their size when the score is
+  // scaled and text keeps its own (REND-223).
+  const kept = style.keepTextSize ? 1 / style.scale : 1;
+  settings.notation.chordDiagramScale = style.chordDiagramsOnTopSize * kept;
+  settings.notation.chordDiagramSpacing = style.chordDiagramsOnTopSpacing * kept;
+  settings.notation.inScoreChordDiagramScale = style.chordDiagramsInScoreSize * kept;
+  settings.notation.inScoreChordDiagramSpacing = style.chordDiagramsInScoreSpacing;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);
   if (style.keepTextSize && style.scale !== 1) {
     // The renderer scales text with the score: text drawn at its size divided by the scale stays put.
+    // The chord diagrams' numbers go with the diagrams, kept above.
     const fonts = display.resources.elementFonts;
-    for (const [element, font] of fonts) fonts.set(element, font.withSize(font.size / style.scale));
+    for (const [element, font] of fonts) {
+      if (element !== alphaTab.NotationElement.ChordDiagramFretboardNumbers)
+        fonts.set(element, font.withSize(font.size / style.scale));
+    }
   }
 }

@@ -10,6 +10,8 @@ import {
   FONT_SIZE,
   isMusicFontId,
   PAGE_LINES,
+  STYLE_DIAGRAM_SIZE,
+  STYLE_DIAGRAM_SPACING,
   STYLE_INDENT_MM,
   STYLE_LINE_THICKNESS,
   STYLE_SCALE,
@@ -162,6 +164,10 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     staffLineThickness: STYLE_LINE_THICKNESS,
     systemSpacing: STYLE_SYSTEM_SPACING,
     firstSystemIndent: STYLE_INDENT_MM,
+    chordDiagramsOnTopSize: STYLE_DIAGRAM_SIZE,
+    chordDiagramsOnTopSpacing: STYLE_DIAGRAM_SPACING,
+    chordDiagramsInScoreSize: STYLE_DIAGRAM_SIZE,
+    chordDiagramsInScoreSpacing: STYLE_DIAGRAM_SPACING,
   } as const;
   const measures = Object.fromEntries(
     (Object.keys(laterMeasures) as (keyof typeof laterMeasures)[]).map(key => [

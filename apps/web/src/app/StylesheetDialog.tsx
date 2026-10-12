@@ -2,6 +2,8 @@ import {
   BRACKET_MODES,
   CHORD_SPELLINGS,
   sameScoreStyle,
+  STYLE_DIAGRAM_SIZE,
+  STYLE_DIAGRAM_SPACING,
   STYLE_SCALE,
   STYLE_INDENT_MM,
   STYLE_LINE_THICKNESS,
@@ -429,6 +431,26 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ chordDiagramsOnTop });
             }}
           />
+          {style.chordDiagramsOnTop && (
+            <>
+              <FactorField
+                label={s.diagramsOnTopSize}
+                value={style.chordDiagramsOnTopSize}
+                range={STYLE_DIAGRAM_SIZE}
+                onChange={chordDiagramsOnTopSize => {
+                  set({ chordDiagramsOnTopSize });
+                }}
+              />
+              <FactorField
+                label={s.diagramsOnTopSpacing}
+                value={style.chordDiagramsOnTopSpacing}
+                range={STYLE_DIAGRAM_SPACING}
+                onChange={chordDiagramsOnTopSpacing => {
+                  set({ chordDiagramsOnTopSpacing });
+                }}
+              />
+            </>
+          )}
           <Switch
             label={s.chordDiagramsInScore}
             checked={style.chordDiagramsInScore}
@@ -436,6 +458,27 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ chordDiagramsInScore });
             }}
           />
+          {style.chordDiagramsInScore && (
+            <>
+              <FactorField
+                label={s.diagramsInScoreSize}
+                value={style.chordDiagramsInScoreSize}
+                range={STYLE_DIAGRAM_SIZE}
+                onChange={chordDiagramsInScoreSize => {
+                  set({ chordDiagramsInScoreSize });
+                }}
+              />
+              <FactorField
+                label={s.diagramsInScoreSpacing}
+                hint={s.diagramsInScoreSpacingHint}
+                value={style.chordDiagramsInScoreSpacing}
+                range={STYLE_DIAGRAM_SPACING}
+                onChange={chordDiagramsInScoreSpacing => {
+                  set({ chordDiagramsInScoreSpacing });
+                }}
+              />
+            </>
+          )}
           <Field label={s.chordSpelling} hint={s.chordSpellingHints[style.chordSpelling]}>
             <SegmentedControl
               label={s.chordSpelling}
@@ -483,5 +526,36 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
         </Section>
       </div>
     </Dialog>
+  );
+}
+
+/** A factor set in tenths with a slider, such as the size of the chord diagrams (REND-227). */
+function FactorField({
+  label,
+  hint,
+  value,
+  range,
+  onChange,
+}: {
+  readonly label: string;
+  readonly hint?: string;
+  readonly value: number;
+  readonly range: { readonly min: number; readonly max: number };
+  readonly onChange: (value: number) => void;
+}) {
+  return (
+    <Field label={label} value={s.diagramFactorValue(value)} {...(hint === undefined ? {} : { hint })}>
+      <Slider
+        label={label}
+        valueText={s.diagramFactorValue(value)}
+        value={value}
+        min={range.min}
+        max={range.max}
+        step={0.1}
+        onValueChange={next => {
+          onChange(Math.round(next * 10) / 10);
+        }}
+      />
+    </Field>
   );
 }

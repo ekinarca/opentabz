@@ -184,7 +184,7 @@ All notable changes to OpenTabz are recorded here. The format follows
   notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
   one another; one choice in the menu applies to every track again. Exports print the same.
 - **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
-  (keeping the text's size if asked), the rhythmic spacing, the staff lines' thickness, the space
+  (keeping the size of text and chord diagrams if asked), the rhythmic spacing, the staff lines' thickness, the space
   between systems, the first system's indent, brackets (none, a track's staves, similar instruments,
   around single staves too), the clef on every system or the first only, the time signature again on
   every system or at every section, barlines through all staves, the // separator between systems,
@@ -193,7 +193,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   tuplet brackets, arrowheads on arpeggios, a trill's second note, "sl." over slides, technique
   lines (P.M., let ring, harmonics) over rests, level beams on the staff and on drums, the
   tablature's tied frets, dashes for its quarter rests and voices 2 to 4 in colour, the tuning
-  legend and where chord diagrams go. It starts as the file asks (Guitar Pro stylesheets are
+  legend, and where chord diagrams go, at what size and how far apart (those above their beats
+  keep apart). It starts as the file asks (Guitar Pro stylesheets are
   honoured, the tuning legend included), applies as it is changed, prints and exports the same, and
   is remembered for the file.
 - **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
@@ -261,8 +262,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   request (0032), tied frets, dashed rests, arpeggio arrowheads and trill notes on request
   (0033), level beams (0034), clefs and time signatures at the start of systems and sections
   as asked (0035), technique lines over rests (0036), chord diagrams mirrored for left-handed
-  players (0037) and what each chord shows, with its fingering (0038). See
-  [docs/upstream/](docs/upstream/).
+  players (0037), what each chord shows, with its fingering (0038), and chord diagrams' size and
+  spacing (0039). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

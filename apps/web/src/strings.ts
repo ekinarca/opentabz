@@ -592,8 +592,8 @@ export const strings = {
     },
     scale: 'Scale',
     scaleValue: (scale: number) => `${Math.round(scale * 100)} %`,
-    keepTextSize: 'Keep the text’s size',
-    keepTextSizeHint: 'Only the music grows or shrinks; titles and labels stay as they are.',
+    keepTextSize: 'Keep the size of text and chord diagrams',
+    keepTextSizeHint: 'Only the music grows or shrinks; titles, labels and chord diagrams stay as they are.',
     spacing: 'Rhythmic spacing',
     spacingValue: (spacing: number) => `× ${spacing.toFixed(1)}`,
     spacingHint: 'How much room the durations take across the page.',
@@ -673,6 +673,13 @@ export const strings = {
     tuning: 'Tuning legend',
     chordDiagramsOnTop: 'Chord diagrams above the music',
     chordDiagramsInScore: 'Chord diagrams above their beats',
+    diagramsOnTopSize: 'Size of the diagrams above the music',
+    diagramsOnTopSpacing: 'Space between them',
+    diagramsInScoreSize: 'Size of the diagrams above their beats',
+    diagramsInScoreSpacing: 'Room each takes along the staff',
+    diagramsInScoreSpacingHint:
+      'At × 1.0 the diagrams of beats close together just keep apart; at × 0.0 they may overlap.',
+    diagramFactorValue: (factor: number) => `× ${factor.toFixed(1)}`,
   },
 
   zoom: {

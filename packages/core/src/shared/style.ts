@@ -34,7 +34,7 @@ export type TextOrientation = (typeof TEXT_ORIENTATIONS)[number];
 export interface ScoreStyle {
   /** The size of the whole score (Guitar Pro's overall scale), 1 = 100 %. */
   readonly scale: number;
-  /** Text keeps its size when the score is scaled. */
+  /** Text and chord diagrams keep their size when the score is scaled (REND-223). */
   readonly keepTextSize: boolean;
   /** How much room the durations take across the page (rhythmic spacing), 1 = as usual. */
   readonly spacing: number;
@@ -94,6 +94,17 @@ export interface ScoreStyle {
   readonly chordDiagramsOnTop: boolean;
   /** Chord diagrams above the beats that carry them. */
   readonly chordDiagramsInScore: boolean;
+  /** The size of the chord diagrams above the music, 1 = as usual (REND-227). */
+  readonly chordDiagramsOnTopSize: number;
+  /** The space between the chord diagrams above the music, 1 = as usual (REND-227). */
+  readonly chordDiagramsOnTopSpacing: number;
+  /** The size of the chord diagrams above their beats, 1 = as usual (REND-227). */
+  readonly chordDiagramsInScoreSize: number;
+  /**
+   * The room each chord diagram above its beat takes along the staff, as a share of its width
+   * (REND-227): at 1 the diagrams of beats close together just keep apart, at 0 they may overlap.
+   */
+  readonly chordDiagramsInScoreSpacing: number;
   /** How chord names are spelled: as written, or in a classic, jazz or rock style (REND-226). */
   readonly chordSpelling: ChordSpelling;
   /** Track names when one track is shown, and when several are. */
@@ -126,6 +137,8 @@ export const STYLE_SPACING = { min: 0.5, max: 2 } as const;
 export const STYLE_LINE_THICKNESS = { min: 0.5, max: 3 } as const;
 export const STYLE_SYSTEM_SPACING = { min: 0, max: 4 } as const;
 export const STYLE_INDENT_MM = { min: 0, max: 50 } as const;
+export const STYLE_DIAGRAM_SIZE = { min: 0.5, max: 2 } as const;
+export const STYLE_DIAGRAM_SPACING = { min: 0, max: 3 } as const;
 
 /** alphaTab's own defaults, for scores that bring no stylesheet. */
 export const DEFAULT_SCORE_STYLE: ScoreStyle = {
@@ -162,6 +175,10 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tuning: true,
   chordDiagramsOnTop: true,
   chordDiagramsInScore: false,
+  chordDiagramsOnTopSize: 1,
+  chordDiagramsOnTopSpacing: 1,
+  chordDiagramsInScoreSize: 1,
+  chordDiagramsInScoreSpacing: 1,
   chordSpelling: 'written',
   singleTrackNames: 'first',
   multiTrackNames: 'first',

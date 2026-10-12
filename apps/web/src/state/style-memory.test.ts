@@ -74,6 +74,39 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads the chord diagrams’ sizes and spacing (REND-227), in range, as usual for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        chordDiagramsOnTopSize: 1.5,
+        chordDiagramsOnTopSpacing: 0,
+        chordDiagramsInScoreSize: 0.8,
+        chordDiagramsInScoreSpacing: 2,
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({
+      chordDiagramsOnTopSize: 1.5,
+      chordDiagramsOnTopSpacing: 0,
+      chordDiagramsInScoreSize: 0.8,
+      chordDiagramsInScoreSpacing: 2,
+    });
+    expect(parseStyle({ ...stored, chordDiagramsOnTopSize: 0.1 })).toBeNull();
+    expect(parseStyle({ ...stored, chordDiagramsInScoreSpacing: 9 })).toBeNull();
+    const {
+      chordDiagramsOnTopSize: _topSize,
+      chordDiagramsOnTopSpacing: _topSpacing,
+      chordDiagramsInScoreSize: _size,
+      chordDiagramsInScoreSpacing: _spacing,
+      ...older
+    } = stored;
+    expect(parseStyle(older)).toMatchObject({
+      chordDiagramsOnTopSize: 1,
+      chordDiagramsOnTopSpacing: 1,
+      chordDiagramsInScoreSize: 1,
+      chordDiagramsInScoreSpacing: 1,
+    });
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

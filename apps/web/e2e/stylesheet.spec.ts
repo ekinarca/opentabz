@@ -2,7 +2,8 @@
  * The stylesheet (REND-218): F7 or the toolbar opens it; a change shows in the score at once, is
  * remembered for the file, and "As in the file" brings the file's own style back. The staff
  * lines' thickness, the space between systems and the first system's indent (REND-228). The
- * music engraved or handwritten, on screen and in exported pages (REND-241).
+ * music engraved or handwritten, on screen and in exported pages (REND-241). The chord diagrams'
+ * size and spacing (REND-227), kept with the text as the score is scaled (REND-223).
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -179,6 +180,68 @@ test('staff lines thicker, systems further apart, the first system indented', as
   await expect.poll(async () => (await lines()).thickness).toBeCloseTo(before.thickness * 3, 1);
   await expect.poll(async () => (await lines()).left - before.left).toBeCloseTo((50 * 96) / 25.4, 0);
   await expect.poll(gap).toBeCloseTo(gapBefore + 60, 0);
+});
+
+test('chord diagrams at the size and spacing asked, kept as the score is scaled (REND-227, REND-223)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  /**
+   * The diagrams above the music, row by row: the space between two strings, and how far the
+   * second diagram is from the first (across, or down to the next row on a narrow screen).
+   */
+  const diagrams = () =>
+    page.locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="header"]').evaluateAll(elements => {
+      const lines = elements
+        .flatMap(element => {
+          const top = Number.parseFloat((element as HTMLElement).style.top) || 0;
+          return [...element.querySelectorAll('rect')]
+            .filter(
+              rect => Number(rect.getAttribute('width')) <= 3 && Number(rect.getAttribute('height')) > 25,
+            )
+            .map(rect => ({ x: Number(rect.getAttribute('x')), y: top + Number(rect.getAttribute('y')) }));
+        })
+        .sort((a, b) => a.y - b.y || a.x - b.x);
+      const sameRow = (a: { y: number }, b: { y: number }) => Math.abs(a.y - b.y) < 1;
+      const gaps = lines.slice(1).flatMap((line, index) => {
+        const before = lines[index];
+        return before !== undefined && sameRow(before, line) ? [line.x - before.x] : [];
+      });
+      const spacing = Math.min(...gaps);
+      // Six strings a diagram: the second starts at the seventh.
+      const [first, second] = [lines[0], lines[6]];
+      const step =
+        first === undefined || second === undefined ? 0 : Math.hypot(second.x - first.x, second.y - first.y);
+      return { strings: lines.length, spacing, step };
+    });
+  // A7, D7 and E7, six strings each.
+  await expect.poll(async () => (await diagrams()).strings).toBe(18);
+  const usual = await diagrams();
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  const slider = (name: string) => dialog.getByRole('slider', { name, exact: true });
+  await slider('Size of the diagrams above the music').focus();
+  await page.keyboard.press('End');
+  await expect(slider('Size of the diagrams above the music')).toHaveAttribute('aria-valuetext', '× 2.0');
+  await expect.poll(async () => (await diagrams()).spacing).toBeCloseTo(usual.spacing * 2, 1);
+  const large = await diagrams();
+  await slider('Space between them').focus();
+  await page.keyboard.press('Home');
+  await expect.poll(async () => (await diagrams()).step).toBeLessThan(large.step);
+
+  // Half the size: the diagrams too, unless they keep their size with the text.
+  await slider('Scale').focus();
+  await page.keyboard.press('Home');
+  await expect.poll(async () => (await diagrams()).spacing).toBeCloseTo(usual.spacing, 1);
+  await dialog.getByRole('switch', { name: 'Keep the size of text and chord diagrams' }).click();
+  await expect.poll(async () => (await diagrams()).spacing).toBeCloseTo(usual.spacing * 2, 1);
+
+  // Above their beats: a size and a room of their own.
+  await expect(slider('Size of the diagrams above their beats')).toHaveCount(0);
+  await dialog.getByRole('switch', { name: 'Chord diagrams above their beats' }).click();
+  await expect(slider('Size of the diagrams above their beats')).toHaveAttribute('aria-valuetext', '× 1.0');
+  await expect(slider('Room each takes along the staff')).toHaveAttribute('aria-valuetext', '× 1.0');
 });
 
 const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));
