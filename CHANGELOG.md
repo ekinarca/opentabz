@@ -220,6 +220,18 @@ All notable changes to OpenTabz are recorded here. The format follows
   string), capo and how far above its sound it is written; it moves a track up or down and
   deletes it. The mixer, the tracks shown and the instrument views follow, and each is an edit
   to undo.
+- **Copy, cut and paste.** While the score is edited, the caret's keys with Shift select beats
+  (`Shift ←` `→`, by the bar with `Ctrl`/`⌘`, to the bar's start or end with `Home` and `End`),
+  `Shift ↑` `↓` reach the tracks above and below as whole bars, `Ctrl A`/`⌘ A` selects
+  everything, `Esc` lets go; a drag with the mouse or Shift and a click select as well, a long
+  press the bar on a phone. `Ctrl C`, `Ctrl X` and `Ctrl V` (`⌘` on a Mac), or the edit bar,
+  copy, cut and paste at the caret: beats over as many beats as they last, across bar lines and
+  with rests where they end early; bars over the bars from the caret's, in its track and the next;
+  bars are added at the end when needed. Delete clears the notes selected, `Shift Delete` takes
+  the beats away, `Ctrl Delete` the bars. What is copied can be pasted in another score open.
+  Drums paste on drum tracks only, and notes only on a track with strings enough.
+- **Duplicate a track.** The track dialog's Duplicate puts a copy of the track in after it, its
+  notes, chord diagrams and lyrics and all, on MIDI channels of its own.
 - **Nothing lost.** Changes not saved are kept on the device as they are made, the file and its
   edits; after a crash, a reload or a closed tab OpenTabz offers them back, to open with their
   edits (undo going on as before) or to discard. A score saved, undone back to as it was, or

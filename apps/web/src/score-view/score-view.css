@@ -170,6 +170,18 @@
   background: color-mix(in oklab, var(--ot-accent) 9%, transparent);
 }
 
+/* What the editor has selected (EDIT-020), under the caret. */
+.ot-edit-selection {
+  --ot-px: calc(1px / var(--ot-zoom, 1));
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: calc(3 * var(--ot-px));
+  background: color-mix(in oklab, var(--ot-accent) 18%, transparent);
+  box-shadow: inset 0 0 0 var(--ot-px) color-mix(in oklab, var(--ot-accent) 55%, transparent);
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ot-edit-caret {
     transition:

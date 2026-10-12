@@ -1,7 +1,7 @@
 /** Where the editor's caret is drawn, and what a click on the music means (EDIT-002, EDIT-004). */
 import { STAFF_KIND, type ScoreBounds } from '@opentabz/core/shared';
 import { describe, expect, it } from 'vitest';
-import { caretBox, lineOfString, spotAtPoint } from './caret-geometry.ts';
+import { caretBox, lineOfString, selectionBoxes, spotAtPoint } from './caret-geometry.ts';
 
 /**
  * One system (y 100–300) of track 0, staff 0: standard notation (lines at 120…160) above six-line
@@ -87,5 +87,33 @@ describe('caret', () => {
     });
     expect(spotAtPoint(bounds(), TRACKS, 50, 20, false)).toBeNull();
     expect(spotAtPoint(bounds(), new Set([1]), 50, 210, false)).toBeNull();
+  });
+});
+
+describe('the selection drawn (EDIT-020)', () => {
+  it('covers the beats selected, over their staff’s notation and tablature', () => {
+    const [box, ...others] = selectionBoxes(bounds(), {
+      kind: 'beats',
+      track: 0,
+      staff: 0,
+      beatIds: new Set([11, 12]),
+    });
+    expect(others).toEqual([]);
+    // From the first beat's left to the second's right; the top line to the bottom one, and half a
+    // space around.
+    expect(box).toEqual({ x: 40, y: 115, w: 200, h: 140 });
+  });
+
+  it('covers the bars selected, of the tracks selected', () => {
+    expect(
+      selectionBoxes(bounds(), { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 1, toBar: 1 }),
+    ).toEqual([{ x: 300, y: 115, w: 300, h: 140 }]);
+    // A track not shown has nothing drawn; bars not shown neither.
+    expect(
+      selectionBoxes(bounds(), { kind: 'bars', fromTrack: 2, toTrack: 3, fromBar: 0, toBar: 1 }),
+    ).toEqual([]);
+    expect(
+      selectionBoxes(bounds(), { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 5, toBar: 9 }),
+    ).toEqual([]);
   });
 });

@@ -1,8 +1,16 @@
 /**
  * The editor's caret drawn over the music (EDIT-004): a box on the string of the beat the next fret
- * is written on. It follows each layout, and the view scrolls to keep it in sight as it moves.
+ * is written on. It follows each layout, and the view scrolls to keep it in sight as it moves. What
+ * is selected (EDIT-020) is shaded under it.
  */
-import { caretBox, spotAtPoint, type CaretBox, type CaretSpot } from './caret-geometry.ts';
+import {
+  caretBox,
+  selectionBoxes,
+  spotAtPoint,
+  type CaretBox,
+  type CaretSpot,
+  type SelectionSpan,
+} from './caret-geometry.ts';
 import { engineToSheet } from './pagination.ts';
 import type { ScoreView } from './score-view.ts';
 
@@ -21,6 +29,8 @@ export class CaretOverlay {
   private readonly element: HTMLDivElement;
   private caret: CaretMark | null = null;
   private inverted = false;
+  private selection: SelectionSpan | null = null;
+  private readonly shades: HTMLDivElement[] = [];
 
   public constructor(view: ScoreView) {
     this.view = view;
@@ -29,6 +39,12 @@ export class CaretOverlay {
     this.element.hidden = true;
     this.element.setAttribute('aria-hidden', 'true');
     view.overlay.append(this.element);
+  }
+
+  /** Shades what is selected (null: nothing). */
+  public setSelection(selection: SelectionSpan | null): void {
+    this.selection = selection;
+    this.renderSelection();
   }
 
   /** Shows the caret (null hides it); `reveal` scrolls the view to it. */
@@ -42,6 +58,7 @@ export class CaretOverlay {
   /** Call after every layout: the beats moved. */
   public onLayout(): void {
     this.render();
+    this.renderSelection();
   }
 
   /** The beat and string a click on the music at engine point (x, y) means, or null. */
@@ -52,6 +69,33 @@ export class CaretOverlay {
 
   public dispose(): void {
     this.element.remove();
+    for (const shade of this.shades) shade.remove();
+  }
+
+  /** The selection's boxes, one a system, drawn under the caret. */
+  private renderSelection(): void {
+    const bounds = this.view.bounds;
+    const layout = this.view.layout;
+    const boxes =
+      this.selection === null || bounds === null || layout === null
+        ? []
+        : selectionBoxes(bounds, this.selection);
+    while (this.shades.length < boxes.length) {
+      const shade = document.createElement('div');
+      shade.className = 'ot-edit-selection';
+      shade.setAttribute('aria-hidden', 'true');
+      this.element.before(shade);
+      this.shades.push(shade);
+    }
+    this.shades.forEach((shade, index) => {
+      const box = boxes[index];
+      const topLeft = box === undefined || layout === null ? null : engineToSheet(layout, box.x, box.y);
+      shade.hidden = box === undefined || topLeft === null;
+      if (box === undefined || topLeft === null) return;
+      shade.style.transform = `translate(${String(topLeft.x)}px, ${String(topLeft.y)}px)`;
+      shade.style.width = `${String(box.w)}px`;
+      shade.style.height = `${String(box.h)}px`;
+    });
   }
 
   /** The caret's box on the sheet, drawn; null when it is not shown. */

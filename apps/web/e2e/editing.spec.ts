@@ -140,6 +140,43 @@ test.describe('on a computer', () => {
     await expect(page.locator('.ot-edit-caret')).toBeHidden();
   });
 
+  test('Shift and the arrows select; Delete clears, ⌘/Ctrl C and V copy and paste, Esc lets go', async ({
+    page,
+  }) => {
+    await openShuffle(page);
+    const mod = await primary(page);
+    const score = page.getByRole('region', { name: /^Score: / });
+    await score.focus();
+    await page.keyboard.press('F2');
+    for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 0');
+    const shades = page.locator('.ot-edit-selection:not([hidden])');
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect(shades).toHaveCount(1);
+    await page.keyboard.press(`${mod}+c`);
+    // Delete takes the selection's notes away, leaving rests.
+    await page.keyboard.press('Delete');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 5, nothing written');
+    await expect(shades).toHaveCount(0);
+    await page.keyboard.press('ArrowLeft');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 5, nothing written');
+    // Pasted where the D7 bar has nothing on the A string.
+    for (let step = 0; step < 4; step++) await page.keyboard.press(`${mod}+ArrowRight`);
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, nothing written');
+    await page.keyboard.press(`${mod}+v`);
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, fret 0');
+    await page.keyboard.press('ArrowRight');
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, fret 0');
+    await page.keyboard.press('ArrowRight');
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, nothing written');
+    // Shift ↓ reaches the next track, whole bars; Esc lets go and leaves editing on.
+    await page.keyboard.press('Shift+ArrowDown');
+    await expect(shades).not.toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(shades).toHaveCount(0);
+    await expect(editBar(page)).toBeVisible();
+  });
+
   test('→ makes room for the next note, a bar at the end; bars are put in and taken away', async ({
     page,
   }) => {
@@ -537,4 +574,47 @@ test('tracks are added from an instrument, set, moved and deleted, each an edit 
   await expect(track.locator('option').nth(4)).toHaveText('5. 5-string Bass');
   await undo.click();
   await expect(track.locator('option')).toHaveCount(4);
+});
+
+test('what is selected is copied and pasted at the caret, and a track duplicated (EDIT-020, EDIT-030)', async ({
+  page,
+  isMobile,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  // A fret of its own on the first beat, to know the bar by.
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 12', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 12');
+
+  // The bar selected: with Shift and the keys, or on a phone from the menu.
+  if (isMobile) await editTool(page, 'Select the bar');
+  else {
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('Shift+End');
+  }
+  await expect(page.locator('.ot-edit-selection:not([hidden])')).toHaveCount(1);
+  await editTool(page, 'Copy');
+
+  // Pasted in a bar put in before it: the copy's first beat has the fret.
+  await editTool(page, 'Insert a bar');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await expect(page.locator('.ot-edit-selection:not([hidden])')).toHaveCount(0);
+  await editTool(page, 'Paste');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 12');
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+
+  // A track duplicated is put in after it, as it is.
+  const track = editBar(page).getByRole('combobox', { name: 'Track' });
+  await expect(track.locator('option')).toHaveCount(4);
+  await editTool(page, 'Track properties');
+  await page
+    .getByRole('dialog', { name: 'Track: Rhythm Guitar' })
+    .getByRole('button', { name: 'Duplicate' })
+    .click();
+  await expect(track.locator('option')).toHaveCount(5);
+  await expect(track.locator('option').nth(1)).toHaveText('2. Rhythm Guitar');
 });

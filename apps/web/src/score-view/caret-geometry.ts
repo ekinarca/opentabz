@@ -5,6 +5,7 @@
  */
 import {
   BOUNDS_BAR_INDEX_STRIDE,
+  BOUNDS_BAR_RECT_STRIDE,
   BOUNDS_BEAT_INDEX_STRIDE,
   BOUNDS_BEAT_RECT_STRIDE,
   BOUNDS_STAFF_LINES_STRIDE,
@@ -123,6 +124,105 @@ export function caretBox(
     }
   }
   return fallback;
+}
+
+/** A box over the music, in engine coordinates. */
+export interface Box {
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
+
+/** What the editor's selection covers (EDIT-020): beats of a track's staff, or bars of tracks. */
+export type SelectionSpan =
+  | {
+      readonly kind: 'beats';
+      readonly track: number;
+      readonly staff: number;
+      readonly beatIds: ReadonlySet<number>;
+    }
+  | {
+      readonly kind: 'bars';
+      readonly fromTrack: number;
+      readonly toTrack: number;
+      readonly fromBar: number;
+      readonly toBar: number;
+    };
+
+/** From the top line of the staves drawn in a system to the bottom one, with half a space around. */
+function stavesHeight(rows: readonly StaffRow[]): { top: number; bottom: number } | null {
+  let top = Number.POSITIVE_INFINITY;
+  let bottom = Number.NEGATIVE_INFINITY;
+  for (const row of rows) {
+    if (row.lines.length === 0) continue;
+    const gap = spacing(row.lines);
+    top = Math.min(top, (row.lines[0] ?? 0) - gap / 2);
+    bottom = Math.max(bottom, (row.lines.at(-1) ?? 0) + gap / 2);
+  }
+  return Number.isFinite(top) && Number.isFinite(bottom) ? { top, bottom } : null;
+}
+
+/**
+ * The boxes the editor's selection is drawn as, one a system: over the beats selected, on the
+ * staves of their track's staff; or over the bars selected, on the staves of the tracks selected.
+ */
+export function selectionBoxes(bounds: ScoreBounds, span: SelectionSpan): Box[] {
+  const rows = staffRows(bounds);
+  const spans = new Map<number, { left: number; right: number }>();
+  const widen = (system: number, left: number, right: number) => {
+    const known = spans.get(system);
+    spans.set(
+      system,
+      known === undefined
+        ? { left, right }
+        : { left: Math.min(known.left, left), right: Math.max(known.right, right) },
+    );
+  };
+  if (span.kind === 'beats') {
+    const beatCount = bounds.beatIndex.length / BOUNDS_BEAT_INDEX_STRIDE;
+    for (let index = 0; index < beatCount; index++) {
+      const at = index * BOUNDS_BEAT_INDEX_STRIDE;
+      if (
+        !span.beatIds.has(bounds.beatIndex[at] ?? -1) ||
+        bounds.beatIndex[at + 1] !== span.track ||
+        bounds.beatIndex[at + 2] !== span.staff
+      )
+        continue;
+      const x = bounds.beatRect[index * BOUNDS_BEAT_RECT_STRIDE + 1] ?? 0;
+      const w = bounds.beatRect[index * BOUNDS_BEAT_RECT_STRIDE + 2] ?? 0;
+      widen(systemOfBeat(bounds, index), x, x + w);
+    }
+  } else {
+    const [fromBar, toBar] = [Math.min(span.fromBar, span.toBar), Math.max(span.fromBar, span.toBar)];
+    const barCount = bounds.barIndex.length / BOUNDS_BAR_INDEX_STRIDE;
+    for (let index = 0; index < barCount; index++) {
+      const bar = bounds.barIndex[index * BOUNDS_BAR_INDEX_STRIDE] ?? -1;
+      if (bar < fromBar || bar > toBar) continue;
+      const x = bounds.barRect[index * BOUNDS_BAR_RECT_STRIDE] ?? 0;
+      const w = bounds.barRect[index * BOUNDS_BAR_RECT_STRIDE + 2] ?? 0;
+      widen(bounds.barIndex[index * BOUNDS_BAR_INDEX_STRIDE + 1] ?? -1, x, x + w);
+    }
+  }
+  const [fromTrack, toTrack] =
+    span.kind === 'beats'
+      ? [span.track, span.track]
+      : [Math.min(span.fromTrack, span.toTrack), Math.max(span.fromTrack, span.toTrack)];
+  const boxes: Box[] = [];
+  for (const [system, { left, right }] of [...spans].sort(([a], [b]) => a - b)) {
+    const height = stavesHeight(
+      rows.filter(
+        row =>
+          row.system === system &&
+          row.track >= fromTrack &&
+          row.track <= toTrack &&
+          (span.kind === 'bars' || row.staff === span.staff),
+      ),
+    );
+    if (height !== null)
+      boxes.push({ x: left, y: height.top, w: right - left, h: height.bottom - height.top });
+  }
+  return boxes;
 }
 
 /**

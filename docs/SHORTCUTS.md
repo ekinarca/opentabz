@@ -55,6 +55,10 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Selecting
 
+While the score is edited, the caret moved with Shift selects beats of its voice, from where it
+was to where it goes; `Shift ↑` and `Shift ↓` reach the tracks above and below, whole bars of each.
+Otherwise these keys select the part of the song played.
+
 | Action                                       | Windows and Linux | macOS      |
 | -------------------------------------------- | ----------------- | ---------- |
 | Extend the selection one beat left           | `Shift ←`         | `⇧ ←`      |
@@ -65,6 +69,8 @@ appears below with the same keys. Press `?` in the app to see the same list.
 | Extend the selection to the end of the bar   | `Shift End`       | `⇧ End`    |
 | Extend the selection to the start            | `Ctrl Shift Home` | `⌘ ⇧ Home` |
 | Extend the selection to the end              | `Ctrl Shift End`  | `⌘ ⇧ End`  |
+| Extend the selection to the track above      | `Shift ↑`         | `⇧ ↑`      |
+| Extend the selection to the track below      | `Shift ↓`         | `⇧ ↓`      |
 | Select everything                            | `Ctrl A`          | `⌘ A`      |
 | Clear the selection, or leave full screen    | `Esc`             | `Esc`      |
 
@@ -90,10 +96,13 @@ its beat.
 | Caret to the line below                        | `↓`                                     | `↓`                                     |
 | Caret to the previous bar                      | `Ctrl ←`                                | `⌘ ←`                                   |
 | Caret to the next bar                          | `Ctrl →`                                | `⌘ →`                                   |
-| Delete the note                                | `Backspace` or `Delete`                 | `Backspace` or `Delete`                 |
-| Delete the beat                                | `Shift Delete`                          | `⌘ -`                                   |
+| Delete the note, or the notes selected         | `Backspace` or `Delete`                 | `Backspace` or `Delete`                 |
+| Delete the beat, or the beats selected         | `Shift Delete`                          | `⌘ -`                                   |
 | Insert a bar                                   | `Insert`                                | `⌘ +`                                   |
-| Delete the bar                                 | `Ctrl Delete`                           | `⌃ -`                                   |
+| Delete the bar, or the bars selected           | `Ctrl Delete`                           | `⌃ -`                                   |
+| Copy the selection                             | `Ctrl C`                                | `⌘ C`                                   |
+| Cut the selection                              | `Ctrl X`                                | `⌘ X`                                   |
+| Paste at the caret                             | `Ctrl V`                                | `⌘ V`                                   |
 | Insert a beat                                  | `Ctrl Insert`                           | `⌃ +`                                   |
 | Longer note                                    | `-` or `_`                              | `-` or `_`                              |
 | Shorter note                                   | `+` or `=`                              | `+` or `=`                              |

@@ -7,7 +7,8 @@ import { pageGeometry } from '../score-view/pagination.ts';
 import { PlaybackCursor, type CursorOptions } from '../score-view/playback-cursor.ts';
 import { ScoreView, type ScoreGesture } from '../score-view/score-view.ts';
 import { SelectionOverlay } from '../score-view/selection-overlay.ts';
-import { editingOf, setCaretAt, useEditing, type DocEditing } from '../state/editing.ts';
+import { selectionMark } from '../state/edit-selection.ts';
+import { editingOf, selectBarAtCaret, setCaretAt, useEditing, type DocEditing } from '../state/editing.ts';
 import { usePlayer } from '../state/player.ts';
 import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { scoreFields } from '../state/score-fields.ts';
@@ -83,11 +84,31 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     let cursor: PlaybackCursor | null = null;
     let selection: SelectionOverlay | null = null;
     let caretOverlay: CaretOverlay | null = null;
+    // The beat a drag selecting while editing last reached.
+    let dragged: number | null = null;
     const onGesture = (gesture: ScoreGesture) => {
-      // While editing, a click puts the caret on the beat and the string clicked (EDIT-002).
-      if (gesture.type === 'tap' && !gesture.extend && gesture.count === 1 && editingOf(key).on) {
+      // While editing, a click puts the caret on the beat and the string clicked (EDIT-002); with
+      // Shift, what is selected reaches it, as a drag selects from where it starts and a long
+      // press the bar (EDIT-020).
+      if (editingOf(key).on) {
         const spot = caretOverlay?.spotAt(gesture.x, gesture.y) ?? null;
-        if (spot !== null) setCaretAt(key, spot);
+        if (gesture.type === 'tap' && gesture.count === 1) {
+          if (spot !== null) setCaretAt(key, spot, gesture.extend);
+          if (gesture.extend) return;
+        } else if (gesture.type === 'press') {
+          if (spot !== null) {
+            setCaretAt(key, spot);
+            selectBarAtCaret(key);
+            if ('vibrate' in navigator) navigator.vibrate(10);
+          }
+          return;
+        } else if (gesture.type === 'drag') {
+          if (spot !== null && (gesture.phase === 'start' || spot.beatId !== dragged)) {
+            dragged = spot.beatId;
+            setCaretAt(key, spot, gesture.phase !== 'start');
+          }
+          return;
+        }
       }
       const player = usePlayer.getState();
       if (player.docKey !== key || cursor === null || selection === null) return;
@@ -165,8 +186,24 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     caretOverlay = caretLayer;
     let mark = caretMark(editingOf(key));
     caretLayer.set(mark, usePreferences.getState().invertedTab, false);
+    let selected: Pick<DocEditing, 'on' | 'selection' | 'caret' | 'beats'> = editingOf(key);
+    caretLayer.setSelection(
+      selected.on ? selectionMark(selected.selection, selected.caret, selected.beats) : null,
+    );
     const unsubscribeEditing = useEditing.subscribe(state => {
-      const next = caretMark(state.docs[key] ?? editingOf(null));
+      const editing = state.docs[key] ?? editingOf(null);
+      if (
+        editing.on !== selected.on ||
+        editing.selection !== selected.selection ||
+        editing.caret !== selected.caret ||
+        editing.beats !== selected.beats
+      ) {
+        selected = editing;
+        caretLayer.setSelection(
+          editing.on ? selectionMark(editing.selection, editing.caret, editing.beats) : null,
+        );
+      }
+      const next = caretMark(editing);
       if (sameMark(next, mark)) return;
       mark = next;
       caretLayer.set(next, usePreferences.getState().invertedTab, true);

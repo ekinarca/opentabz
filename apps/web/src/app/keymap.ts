@@ -15,8 +15,14 @@ import {
 } from '../score-view/timeline-lookup.ts';
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import {
+  clearEditSelection,
+  copySelection,
+  cutSelection,
   deleteBarAtCaret,
   deleteBeatAtCaret,
+  extendSelection,
+  pasteAtCaret,
+  selectAllToEdit,
   deleteNoteAtCaret,
   insertBarAtCaret,
   insertBeatAtCaret,
@@ -34,6 +40,7 @@ import {
   typeFret,
   undoEdit,
   type CaretMove,
+  type SelectionMove,
 } from '../state/editing.ts';
 import { clampSpeed, usePlayer } from '../state/player.ts';
 import { usePractice } from '../state/practice.ts';
@@ -328,6 +335,14 @@ function caret(move: CaretMove): () => boolean {
   return () => onActive(key => moveCaret(key, move, usePreferences.getState().invertedTab));
 }
 
+/**
+ * While the score is edited, the caret moved with Shift selects (EDIT-020); else the playback
+ * selection follows `focus`.
+ */
+function select(move: SelectionMove, focus: FocusMove): () => boolean {
+  return () => onActive(key => extendSelection(key, move)) || moveFocus(focus);
+}
+
 /** The score shown, focused, for the keys that follow to edit it. */
 export function focusScore(): void {
   const doc = activeDocument();
@@ -484,6 +499,33 @@ const EDITING: readonly Shortcut[] = [
     needsScore: true,
     editing: true,
     run: () => onActive(deleteBarAtCaret),
+  },
+  {
+    id: 'copy',
+    group: 'editing',
+    label: s.copy,
+    bindings: [{ key: 'c', mod: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(copySelection),
+  },
+  {
+    id: 'cut',
+    group: 'editing',
+    label: s.cut,
+    bindings: [{ key: 'x', mod: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(cutSelection),
+  },
+  {
+    id: 'paste',
+    group: 'editing',
+    label: s.paste,
+    bindings: [{ key: 'v', mod: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(pasteAtCaret),
   },
   {
     id: 'insert-beat',
@@ -796,7 +838,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBeatLeft,
     bindings: [{ key: 'ArrowLeft', shift: true }],
     needsScore: true,
-    run: () => moveFocus('beat-left'),
+    run: select('left', 'beat-left'),
   },
   {
     id: 'select-beat-right',
@@ -804,7 +846,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBeatRight,
     bindings: [{ key: 'ArrowRight', shift: true }],
     needsScore: true,
-    run: () => moveFocus('beat-right'),
+    run: select('right', 'beat-right'),
   },
   {
     id: 'select-bar-left',
@@ -812,7 +854,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBarLeft,
     bindings: [{ key: 'ArrowLeft', mod: true, shift: true }],
     needsScore: true,
-    run: () => moveFocus('bar-left'),
+    run: select('bar-left', 'bar-left'),
   },
   {
     id: 'select-bar-right',
@@ -820,7 +862,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBarRight,
     bindings: [{ key: 'ArrowRight', mod: true, shift: true }],
     needsScore: true,
-    run: () => moveFocus('bar-right'),
+    run: select('bar-right', 'bar-right'),
   },
   {
     id: 'select-bar-start',
@@ -828,7 +870,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBarStart,
     bindings: [{ key: 'Home', shift: true }],
     needsScore: true,
-    run: () => moveFocus('bar-start'),
+    run: select('bar-start', 'bar-start'),
   },
   {
     id: 'select-bar-end',
@@ -836,7 +878,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.selectBarEnd,
     bindings: [{ key: 'End', shift: true }],
     needsScore: true,
-    run: () => moveFocus('bar-end'),
+    run: select('bar-end', 'bar-end'),
   },
   {
     id: 'select-song-start',
@@ -855,12 +897,30 @@ export const SHORTCUTS: readonly Shortcut[] = [
     run: () => moveFocus('song-end'),
   },
   {
+    id: 'select-track-up',
+    group: 'selection',
+    label: s.selectTrackUp,
+    bindings: [{ key: 'ArrowUp', shift: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => extendSelection(key, 'up')),
+  },
+  {
+    id: 'select-track-down',
+    group: 'selection',
+    label: s.selectTrackDown,
+    bindings: [{ key: 'ArrowDown', shift: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => extendSelection(key, 'down')),
+  },
+  {
     id: 'select-all',
     group: 'selection',
     label: s.selectAll,
     bindings: [{ key: 'a', mod: true }],
     needsScore: true,
-    run: selectAll,
+    run: () => onActive(selectAllToEdit) || selectAll(),
   },
   {
     id: 'clear-selection',
@@ -868,7 +928,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
     label: s.clearSelection,
     bindings: [{ key: 'Escape' }],
     needsScore: true,
-    run: clearSelection,
+    run: () => onActive(clearEditSelection) || clearSelection(),
   },
   {
     id: 'zoom-in',

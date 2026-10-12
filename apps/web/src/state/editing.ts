@@ -36,6 +36,7 @@ import {
   type TrackState,
   type BeatAddress,
   type BeatTechniques,
+  type Clip,
   type DurationValue,
   type EditCommand,
   type EditOutcome,
@@ -63,6 +64,14 @@ import {
   type TypedFret,
 } from './edit-caret.ts';
 import { deleteDraft, holdDraft, releaseDraft, writeDraft } from './drafts.ts';
+import {
+  engineSelection,
+  everything,
+  extendToTrack,
+  followCaret,
+  selectedBars,
+  type EditSelection,
+} from './edit-selection.ts';
 import { regenerateSong, usePlayer } from './player.ts';
 
 export interface DocEditing {
@@ -84,6 +93,8 @@ export interface DocEditing {
   readonly changes: number;
   /** The active track has no strings to write frets on (drums, a piano). */
   readonly noStrings: boolean;
+  /** What is selected (EDIT-020), from the caret; null when nothing is. */
+  readonly selection: EditSelection | null;
 }
 
 export const NOT_EDITING: DocEditing = {
@@ -97,6 +108,7 @@ export const NOT_EDITING: DocEditing = {
   typed: null,
   changes: 0,
   noStrings: false,
+  selection: null,
 };
 
 interface EditingState {
@@ -104,6 +116,9 @@ interface EditingState {
 }
 
 export const useEditing = create<EditingState>(() => ({ docs: {} }));
+
+/** What was copied last (EDIT-020), from any score: pasted in it or another. */
+export const useClipboard = create<{ readonly clip: Clip | null }>(() => ({ clip: null }));
 
 /** A document's editing, or none. */
 export function editingOf(key: string | null): DocEditing {
@@ -272,7 +287,7 @@ async function placeCaret(key: string, track: number): Promise<void> {
 /** Starts or stops editing a document. */
 export function toggleEditing(key: string): Promise<void> {
   if (editingOf(key).on) {
-    patch(key, { on: false, typed: null });
+    patch(key, { on: false, typed: null, selection: null });
     return Promise.resolve();
   }
   patch(key, { on: true });
@@ -291,6 +306,7 @@ export function setCaretAt(
     readonly beatId: number;
     readonly string: number | null;
   },
+  extend = false,
 ): void {
   if (!editingOf(key).on) return;
   void enqueue(key, async () => {
@@ -309,11 +325,14 @@ export function setCaretAt(
       strings.stringCount,
       Math.max(1, spot.string ?? editing.caret?.string ?? strings.stringCount),
     );
+    const caret = { track: spot.track, staff: row.staff, voice: row.voice, beatId: row.beatId, string };
     patch(key, {
       beats,
       typed: null,
       noStrings: false,
-      caret: { track: spot.track, staff: row.staff, voice: row.voice, beatId: row.beatId, string },
+      caret,
+      // Shift and a click: the selection reaches the beat clicked (bars, in another track or voice).
+      selection: extend ? extendedTo(editing, caret, row.bar) : null,
     });
     if (doc.activeTrack !== spot.track) useDocuments.getState().setActiveTrack(key, spot.track);
   }).catch(fail);
@@ -361,8 +380,165 @@ function moveCaretNow(key: string, move: CaretMove, invertedTab: boolean): boole
       : move === 'bar-left' || move === 'bar-right'
         ? stepCaretBar(beats, caret, move === 'bar-left' ? -1 : 1)
         : stepCaretString(caret, strings, move === 'up', invertedTab);
-  patch(key, { caret: next, typed: null });
+  patch(key, { caret: next, typed: null, selection: null });
   if (next.beatId !== caret.beatId) seekToCaret(key, next);
+  return true;
+}
+
+/** The selection reaching a caret put elsewhere: across tracks or voices, whole bars. */
+function extendedTo(editing: DocEditing, caret: Caret, bar: number): EditSelection | null {
+  const { caret: from, beats } = editing;
+  if (from === null || beats === null) return null;
+  const selection = editing.selection ?? { kind: 'beats', anchor: from.beatId };
+  if (
+    selection.kind === 'beats' &&
+    from.track === caret.track &&
+    from.staff === caret.staff &&
+    from.voice === caret.voice
+  )
+    return selection;
+  const bars = selectedBars(selection, from, beats);
+  return {
+    kind: 'bars',
+    fromTrack: selection.kind === 'bars' ? selection.fromTrack : from.track,
+    toTrack: caret.track,
+    fromBar: bars?.from ?? bar,
+    toBar: bar,
+  };
+}
+
+export type SelectionMove = CaretMove | 'bar-start' | 'bar-end';
+
+/** Moves the caret with Shift (EDIT-020): the selection goes from where it started to the caret. */
+function extendSelectionNow(key: string, move: SelectionMove): boolean {
+  const editing = editingOf(key);
+  const { caret, beats } = editing;
+  if (!editing.on) return false;
+  if (caret === null || beats === null) return true;
+  const selection: EditSelection = editing.selection ?? { kind: 'beats', anchor: caret.beatId };
+  if (move === 'up' || move === 'down') {
+    const tracks = docOf(key)?.summary.tracks.length ?? 1;
+    patch(key, {
+      selection: extendToTrack(selection, caret, beats, move === 'down' ? 1 : -1, tracks),
+      typed: null,
+    });
+    return true;
+  }
+  const rows = voiceRows(beats, caret.staff, caret.voice);
+  const bar = rowOf(beats, caret.beatId)?.bar;
+  const inBar = rows.filter(row => row.bar === bar);
+  const next =
+    move === 'left' || move === 'right'
+      ? stepCaret(beats, caret, move === 'left' ? -1 : 1)
+      : move === 'bar-left' || move === 'bar-right'
+        ? stepCaretBar(beats, caret, move === 'bar-left' ? -1 : 1)
+        : { ...caret, beatId: (move === 'bar-start' ? inBar[0] : inBar.at(-1))?.beatId ?? caret.beatId };
+  patch(key, { caret: next, typed: null, selection: followCaret(selection, next, beats) });
+  if (next.beatId !== caret.beatId) seekToCaret(key, next);
+  return true;
+}
+
+/** Selects every bar of every track; false when nothing is being edited (the key keeps its meaning). */
+function selectAllNow(key: string): boolean {
+  const editing = editingOf(key);
+  const doc = docOf(key);
+  if (!editing.on || doc === null) return false;
+  patch(key, { selection: everything(doc.summary.tracks.length, doc.summary.masterBars.length) });
+  return true;
+}
+
+/** Copies what is selected (EDIT-020); false when nothing is. */
+function copyNow(key: string): Promise<boolean> | boolean {
+  const editing = editingOf(key);
+  const selection = engineSelection(editing.selection, editing.caret, editing.beats);
+  const doc = docOf(key);
+  if (!editing.on || selection === null || doc === null) return false;
+  return getEngine()
+    .call('copy', { docId: doc.engineId, selection })
+    .then(clip => {
+      useClipboard.setState({ clip });
+      return true;
+    });
+}
+
+/** The caret's place at the start of what is selected. */
+function selectionStart(editing: DocEditing): CaretPlace | null {
+  const { caret } = editing;
+  const selection = engineSelection(editing.selection, caret, editing.beats);
+  if (caret === null || selection === null) return null;
+  const at =
+    selection.kind === 'beats'
+      ? { track: caret.track, staff: caret.staff, voice: caret.voice, ...selection.from }
+      : {
+          track: caret.track,
+          staff: caret.staff,
+          voice: caret.voice,
+          bar: Math.min(selection.fromBar, selection.toBar),
+          beat: 0,
+        };
+  return { at, string: caret.string };
+}
+
+/** Cuts what is selected: copied, then taken away. */
+async function cutNow(key: string): Promise<void> {
+  const editing = editingOf(key);
+  const selection = engineSelection(editing.selection, editing.caret, editing.beats);
+  if (selection === null || !(await copyNow(key))) return;
+  apply(key, [{ kind: 'remove', selection }], selectionStart(editing));
+}
+
+/** Writes what was copied from the caret's beat on. */
+function pasteNow(key: string): boolean {
+  const found = atCaret(key);
+  const { clip } = useClipboard.getState();
+  if (found === null) return editingOf(key).on;
+  if (clip === null) return true;
+  const { caret, at } = found;
+  apply(key, [{ kind: 'paste', at, clip }], { at, string: caret.string });
+  return true;
+}
+
+/** Takes away what is selected: its notes (Delete), its beats, or its bars from every track. */
+function deleteSelectionNow(key: string, what: 'notes' | 'beats' | 'bars'): boolean {
+  const editing = editingOf(key);
+  const { caret, beats } = editing;
+  const selection = engineSelection(editing.selection, caret, beats);
+  const doc = docOf(key);
+  if (selection === null || editing.selection === null || caret === null || beats === null || doc === null)
+    return false;
+  if (what === 'notes') {
+    apply(key, [{ kind: 'clear', selection }]);
+    return true;
+  }
+  if (what === 'beats') {
+    apply(key, [{ kind: 'remove', selection }], selectionStart(editing));
+    return true;
+  }
+  const bars = selectedBars(editing.selection, caret, beats);
+  if (bars === null) return true;
+  const { tracks, masterBars } = doc.summary;
+  const removed = bars.to - bars.from + 1;
+  // The caret goes to the bar that takes their place; every bar selected, they are emptied.
+  const bar = removed >= masterBars.length ? bars.from : Math.min(bars.from, masterBars.length - removed - 1);
+  apply(
+    key,
+    [
+      {
+        kind: 'remove',
+        selection: {
+          kind: 'bars',
+          fromTrack: 0,
+          toTrack: tracks.length - 1,
+          fromBar: bars.from,
+          toBar: bars.to,
+        },
+      },
+    ],
+    {
+      at: { track: caret.track, staff: caret.staff, voice: caret.voice, bar, beat: 0 },
+      string: caret.string,
+    },
+  );
   return true;
 }
 
@@ -409,6 +585,8 @@ async function changed(
     caret,
     beats,
     changes: editingOf(key).changes + 1,
+    // What was selected was edited, or moved: it is selected no more.
+    selection: null,
   });
   void regenerateSong(key).catch(fail);
   keepDraft(key);
@@ -660,6 +838,13 @@ export function addTrack(key: string, track: NewTrack): boolean {
 export function removeTrack(key: string, track: number): boolean {
   return act(key, () => {
     apply(key, [{ kind: 'remove-track', track }]);
+  });
+}
+
+/** Puts a copy of a track in after it, its notes and all (EDIT-030). */
+export function duplicateTrack(key: string, track: number): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'duplicate-track', track }]);
   });
 }
 
@@ -953,7 +1138,7 @@ export function writeFretAtCaret(key: string, fret: number): boolean {
 }
 
 export function deleteNoteAtCaret(key: string): boolean {
-  return act(key, () => deleteNoteAtCaretNow(key));
+  return act(key, () => deleteSelectionNow(key, 'notes') || deleteNoteAtCaretNow(key));
 }
 
 export function insertBeatAtCaret(key: string): boolean {
@@ -965,11 +1150,62 @@ export function insertBarAtCaret(key: string): boolean {
 }
 
 export function deleteBarAtCaret(key: string): boolean {
-  return act(key, () => deleteBarAtCaretNow(key));
+  return act(key, () => deleteSelectionNow(key, 'bars') || deleteBarAtCaretNow(key));
 }
 
 export function deleteBeatAtCaret(key: string): boolean {
-  return act(key, () => deleteBeatAtCaretNow(key));
+  return act(key, () => deleteSelectionNow(key, 'beats') || deleteBeatAtCaretNow(key));
+}
+
+/** Moves the caret with Shift, selecting (EDIT-020). */
+export function extendSelection(key: string, move: SelectionMove): boolean {
+  return act(key, () => extendSelectionNow(key, move));
+}
+
+export function selectAllToEdit(key: string): boolean {
+  return act(key, () => selectAllNow(key));
+}
+
+/** Selects the beats of the caret's bar; the caret goes to its last (a long press on a phone). */
+export function selectBarAtCaret(key: string): boolean {
+  return act(key, () => {
+    const editing = editingOf(key);
+    const { caret, beats } = editing;
+    if (caret === null || beats === null) return;
+    const bar = rowOf(beats, caret.beatId)?.bar;
+    const rows = voiceRows(beats, caret.staff, caret.voice).filter(row => row.bar === bar);
+    const first = rows[0];
+    const last = rows.at(-1);
+    if (first === undefined || last === undefined) return;
+    patch(key, {
+      caret: { ...caret, beatId: last.beatId },
+      selection: { kind: 'beats', anchor: first.beatId },
+    });
+  });
+}
+
+/** Nothing selected any more; false when nothing was (the key keeps its meaning). */
+export function clearEditSelection(key: string): boolean {
+  if (!editingOf(key).on || editingOf(key).selection === null) return false;
+  patch(key, { selection: null });
+  return true;
+}
+
+export function copySelection(key: string): boolean {
+  if (engineSelection(editingOf(key).selection, editingOf(key).caret, editingOf(key).beats) === null)
+    return false;
+  return act(key, () => copyNow(key));
+}
+
+export function cutSelection(key: string): boolean {
+  if (engineSelection(editingOf(key).selection, editingOf(key).caret, editingOf(key).beats) === null)
+    return false;
+  return act(key, () => cutNow(key));
+}
+
+export function pasteAtCaret(key: string): boolean {
+  if (useClipboard.getState().clip === null) return false;
+  return act(key, () => pasteNow(key));
 }
 
 export function stepDurationAtCaret(key: string, longer: boolean): boolean {

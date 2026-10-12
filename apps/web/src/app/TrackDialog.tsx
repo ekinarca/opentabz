@@ -14,7 +14,15 @@ import { Button, Dialog } from '@opentabz/ui';
 import { useEffect, useId, useState } from 'react';
 import { create } from 'zustand';
 import { useDocuments } from '../state/documents.ts';
-import { addTrack, editingOf, moveTrack, readTrack, removeTrack, setTrack } from '../state/editing.ts';
+import {
+  addTrack,
+  duplicateTrack,
+  editingOf,
+  moveTrack,
+  readTrack,
+  removeTrack,
+  setTrack,
+} from '../state/editing.ts';
 import {
   INSTRUMENT_IDS,
   INSTRUMENTS,
@@ -378,6 +386,17 @@ export function TrackDialog() {
                 }}
               >
                 {s.moveDown}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                title={s.duplicateLabel}
+                onClick={() => {
+                  duplicateTrack(editing.key, editing.track);
+                  close();
+                }}
+              >
+                {s.duplicate}
               </Button>
               <Button
                 size="sm"

@@ -561,7 +561,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-012 | Beam control                                                     | GP  | M4  | —       | —    | planned |
 | EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | —    | planned |
 | EDIT-014 | Every effect and articulation editable with a shortcut           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
-| EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-021 | Time and key signatures                                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-022 | Tempo and tempo ramps                                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-023 | Repeats and alternate endings                                    | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -569,7 +569,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-025 | Directions                                                       | GP  | M5  | —       | —    | planned |
 | EDIT-026 | Barline types                                                    | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-027 | Free time, swing feel, anacrusis                                 | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
-| EDIT-030 | Tracks: add / remove / reorder / duplicate                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-030 | Tracks: add / remove / reorder / duplicate                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-031 | Instrument and program                                           | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-032 | Tuning editor (any string count, capo, presets, custom)          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-033 | Microtonal tuning offsets                                        | OT  | M4  | —       | —    | planned |

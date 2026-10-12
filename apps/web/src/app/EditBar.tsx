@@ -25,6 +25,9 @@ import {
 import {
   BetweenVerticalStart,
   Check,
+  ClipboardPaste,
+  Copy,
+  CopyPlus,
   Download,
   Ellipsis,
   Eraser,
@@ -33,6 +36,8 @@ import {
   ListPlus,
   Plus,
   Redo2,
+  Scissors,
+  SquareDashedMousePointer,
   Settings2,
   SlidersHorizontal,
   Sparkles,
@@ -51,18 +56,25 @@ import {
   toggleBeatTechnique,
   toggleNoteTechnique,
   togglePalmMuteBeat,
+  copySelection,
+  cutSelection,
   deleteBarAtCaret,
   deleteBeatAtCaret,
   deleteNoteAtCaret,
+  duplicateTrack,
   insertBarAtCaret,
   insertBeatAtCaret,
   isDirty,
   NOT_EDITING,
+  pasteAtCaret,
   redoEdit,
+  selectAllToEdit,
+  selectBarAtCaret,
   setDurationAtCaret,
   toggleDotAtCaret,
   toggleEditing,
   undoEdit,
+  useClipboard,
   useEditing,
   writeFretAtCaret,
 } from '../state/editing.ts';
@@ -115,6 +127,8 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
   const dirty = isDirty(editing);
   const ready = row !== null;
   const key = doc.key;
+  const selected = editing.selection !== null;
+  const copied = useClipboard(state => state.clip !== null);
 
   return (
     <div
@@ -128,7 +142,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         <IconButton
           onMouseDown={keepFocus}
           size="sm"
-          className="max-md:hidden"
+          className="max-xl:hidden"
           label={strings.trackDialog.open}
           icon={<Settings2 size={16} aria-hidden />}
           onClick={() => {
@@ -138,7 +152,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         <IconButton
           onMouseDown={keepFocus}
           size="sm"
-          className="max-md:hidden"
+          className="max-xl:hidden"
           label={strings.trackDialog.add}
           shortcut={shortcutHint('add-track')}
           icon={<ListPlus size={16} aria-hidden />}
@@ -171,7 +185,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         }}
       />
       <Divider />
-      <div role="group" aria-label={e.duration} className="flex shrink-0 items-center max-md:hidden">
+      <div role="group" aria-label={e.duration} className="flex shrink-0 items-center max-xl:hidden">
         {DURATION_VALUES.map((value: DurationValue) => (
           <IconButton
             onMouseDown={keepFocus}
@@ -207,7 +221,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               type="button"
               aria-label={e.duration}
               disabled={!ready}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink disabled:pointer-events-none disabled:opacity-40 md:hidden"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink disabled:pointer-events-none disabled:opacity-40 xl:hidden"
             >
               <DurationIcon
                 value={DURATION_VALUES.find(value => value === row?.duration) ?? 4}
@@ -279,7 +293,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       </Popover>
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={e.insertBeat}
         shortcut={shortcutHint('insert-beat')}
         icon={<Plus size={18} aria-hidden />}
@@ -290,7 +304,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={e.deleteNote}
         shortcut={shortcutHint('delete-note')}
         icon={<Eraser size={18} aria-hidden />}
@@ -301,7 +315,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={e.deleteBeat}
         shortcut={shortcutHint('delete-beat')}
         icon={<Trash2 size={18} aria-hidden />}
@@ -312,7 +326,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={e.insertBar}
         shortcut={shortcutHint('insert-bar')}
         icon={<BetweenVerticalStart size={18} aria-hidden />}
@@ -323,7 +337,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={e.deleteBar}
         shortcut={shortcutHint('delete-bar')}
         icon={<FoldHorizontal size={18} aria-hidden />}
@@ -334,12 +348,46 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
-        className="max-md:hidden"
+        className="max-xl:hidden"
         label={strings.barDialog.open}
         icon={<SlidersHorizontal size={18} aria-hidden />}
         disabled={!ready}
         onClick={() => {
           openBarDialog(key);
+        }}
+      />
+      {/* What is selected copied, cut, and pasted at the caret (EDIT-020). */}
+      <IconButton
+        onMouseDown={keepFocus}
+        className="max-xl:hidden"
+        label={e.copy}
+        shortcut={shortcutHint('copy')}
+        icon={<Copy size={18} aria-hidden />}
+        disabled={!selected}
+        onClick={() => {
+          copySelection(key);
+        }}
+      />
+      <IconButton
+        onMouseDown={keepFocus}
+        className="max-xl:hidden"
+        label={e.cut}
+        shortcut={shortcutHint('cut')}
+        icon={<Scissors size={18} aria-hidden />}
+        disabled={!selected}
+        onClick={() => {
+          cutSelection(key);
+        }}
+      />
+      <IconButton
+        onMouseDown={keepFocus}
+        className="max-xl:hidden"
+        label={e.paste}
+        shortcut={shortcutHint('paste')}
+        icon={<ClipboardPaste size={18} aria-hidden />}
+        disabled={!ready || !copied}
+        onClick={() => {
+          pasteAtCaret(key);
         }}
       />
       <Menu>
@@ -417,7 +465,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         {dirty && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-muted">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
-            <span className="max-md:sr-only">{e.unsaved}</span>
+            <span className="max-xl:sr-only">{e.unsaved}</span>
           </span>
         )}
         <Button
@@ -438,7 +486,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               <button
                 type="button"
                 aria-label={e.more}
-                className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink md:hidden"
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink xl:hidden"
               >
                 <Ellipsis size={18} aria-hidden />
               </button>
@@ -451,6 +499,36 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
               onSelect={() => redoEdit(key)}
             >
               {e.redo}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              icon={<SquareDashedMousePointer size={16} aria-hidden />}
+              disabled={!ready}
+              onSelect={() => selectBarAtCaret(key)}
+            >
+              {e.selectBar}
+            </MenuItem>
+            <MenuItem onSelect={() => selectAllToEdit(key)}>{e.selectAll}</MenuItem>
+            <MenuItem
+              icon={<Copy size={16} aria-hidden />}
+              disabled={!selected}
+              onSelect={() => copySelection(key)}
+            >
+              {e.copy}
+            </MenuItem>
+            <MenuItem
+              icon={<Scissors size={16} aria-hidden />}
+              disabled={!selected}
+              onSelect={() => cutSelection(key)}
+            >
+              {e.cut}
+            </MenuItem>
+            <MenuItem
+              icon={<ClipboardPaste size={16} aria-hidden />}
+              disabled={!ready || !copied}
+              onSelect={() => pasteAtCaret(key)}
+            >
+              {e.paste}
             </MenuItem>
             <MenuSeparator />
             <MenuItem
@@ -501,6 +579,12 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             </MenuItem>
             <MenuItem icon={<ListPlus size={16} aria-hidden />} onSelect={() => openAddTrack(key)}>
               {strings.trackDialog.add}
+            </MenuItem>
+            <MenuItem
+              icon={<CopyPlus size={16} aria-hidden />}
+              onSelect={() => duplicateTrack(key, doc.activeTrack)}
+            >
+              {e.duplicateTrack}
             </MenuItem>
             <MenuSeparator />
             <MenuItem icon={<Download size={16} aria-hidden />} onSelect={() => void saveDocument(key)}>
