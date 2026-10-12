@@ -78,6 +78,10 @@ export interface ScoreStyle {
   readonly slideLabel: boolean;
   /** Every tied note's fret written in the tablature, not only at the start of a bar (REND-250). */
   readonly tiedTabNotes: boolean;
+  /** Where an artificial harmonic is touched, after its fret in the tablature (REND-247). */
+  readonly harmonicTouch: boolean;
+  /** An artificial harmonic touched an octave up written as its fret and a dot (REND-247). */
+  readonly octaveHarmonicDot: boolean;
   /** Quarter rests in the tablature written as a dash (REND-250). */
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
@@ -184,6 +188,8 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   trillNote: true,
   slideLabel: true,
   tiedTabNotes: false,
+  harmonicTouch: true,
+  octaveHarmonicDot: false,
   dashQuarterRests: false,
   voiceColors: false,
   flatBeams: false,

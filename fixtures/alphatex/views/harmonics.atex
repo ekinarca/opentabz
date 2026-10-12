@@ -1,0 +1,10 @@
+// Harmonics — original music written for OpenTabz (AGPL-3.0-or-later).
+// Artificial harmonics an octave and a twelfth up, and natural harmonics at the twelfth fret.
+\title "Harmonics"
+\subtitle "OpenTabz test score"
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+:4 5.3{ah 12} 7.3{ah 12} 5.2{ah 7} r | :4 12.1{nh} 12.2{nh} 12.3{nh} r |

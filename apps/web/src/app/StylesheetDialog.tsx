@@ -506,6 +506,22 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.harmonicTouch}
+            hint={s.harmonicTouchHint}
+            checked={style.harmonicTouch}
+            onCheckedChange={harmonicTouch => {
+              set({ harmonicTouch });
+            }}
+          />
+          <Switch
+            label={s.octaveHarmonicDot}
+            hint={s.octaveHarmonicDotHint}
+            checked={style.octaveHarmonicDot}
+            onCheckedChange={octaveHarmonicDot => {
+              set({ octaveHarmonicDot });
+            }}
+          />
+          <Switch
             label={s.dashQuarterRests}
             checked={style.dashQuarterRests}
             onCheckedChange={dashQuarterRests => {

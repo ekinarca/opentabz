@@ -166,6 +166,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'trillNote',
     'slideLabel',
     'tiedTabNotes',
+    'harmonicTouch',
+    'octaveHarmonicDot',
     'dashQuarterRests',
     'voiceColors',
     'flatBeams',

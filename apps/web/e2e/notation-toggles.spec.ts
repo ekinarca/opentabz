@@ -4,7 +4,8 @@
  * the rests of the lower voices and tuplet brackets (REND-248); arpeggio arrowheads, a trill's
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
  * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
- * systems (REND-231); technique lines over rests (REND-243); in the score on screen.
+ * systems (REND-231); technique lines over rests (REND-243); where artificial harmonics are
+ * touched, and octave harmonics as a dot (REND-247); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -224,4 +225,24 @@ test('palm mutes either side of a rest drawn as one line on request', async ({ p
     .getByRole('switch', { name: 'Technique lines over rests' })
     .click();
   await expect.poll(mutes).toBe(1);
+});
+
+test('artificial harmonics with where they are touched, without, or octaves as a dot', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/harmonics.atex')]);
+  await expectScore(page);
+  const texts = async () => (await scoreTexts(page)).map(text => text.trim());
+  // 5 <17>, 7 <19>, 5 <12>; and the natural harmonics at the twelfth fret.
+  await expect
+    .poll(async () => (await texts()).filter(text => text.startsWith('<')))
+    .toEqual(['<17>', '<19>', '<12>', '<12>', '<12>', '<12>']);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'A dot for octave harmonics' }).click();
+  await expect.poll(async () => (await texts()).filter(text => /^\d+\.$/.test(text))).toEqual(['5.', '7.']);
+  await dialog.getByRole('switch', { name: 'Where artificial harmonics are touched' }).click();
+  // Only the natural harmonics keep their brackets.
+  await expect
+    .poll(async () => (await texts()).filter(text => text.startsWith('<')))
+    .toEqual(['<12>', '<12>', '<12>']);
 });

@@ -79,6 +79,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     trillNote: true,
     slideLabel: true,
     tiedTabNotes: false,
+    harmonicTouch: true,
+    octaveHarmonicDot: false,
     dashQuarterRests: false,
     voiceColors: false,
     flatBeams: false,
@@ -251,6 +253,8 @@ export function applyScoreStyle(
       case 'trillNote':
       case 'slideLabel':
       case 'tiedTabNotes':
+      case 'harmonicTouch':
+      case 'octaveHarmonicDot':
       case 'dashQuarterRests':
       case 'voiceColors':
       case 'flatBeams':
@@ -330,6 +334,8 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.showTrillNote = style.trillNote;
   elements.set(alphaTab.NotationElement.EffectSlideText, style.slideLabel);
   settings.notation.showTiedTabNotes = style.tiedTabNotes;
+  settings.notation.showHarmonicTouch = style.harmonicTouch;
+  settings.notation.octaveHarmonicDot = style.octaveHarmonicDot;
   settings.notation.dashQuarterRests = style.dashQuarterRests;
   settings.notation.flatBeams = style.flatBeams;
   settings.notation.flatDrumBeams = style.flatDrumBeams;
