@@ -59,6 +59,7 @@ available as source: the patch file is that source.
 | [0048](0048-lyrics-place.md)                         | Where the lyrics go                                                                | Guitar Pro puts them above or below the staves                             | not yet  |
 | [0049](0049-inverted-tab.md)                         | The tablature the other way up                                                     | Some players read the lowest string on top                                 | not yet  |
 | [0050](0050-fingering-display.md)                    | Fingering as asked                                                                 | Guitar Pro labels, places and sizes fingering                              | not yet  |
+| [0051](0051-tab-notes-without-strings.md)            | Tablature skips notes without a string                                             | A pitched part shown as tab may have notes no string reaches               | not yet  |
 
 ## Working on a patch
 

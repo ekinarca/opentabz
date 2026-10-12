@@ -37,8 +37,8 @@ export function shownStaves(
 }
 
 /**
- * The kinds of staff each track shows (REND-031): standard notation, tablature, rhythm slashes
- * and numbered notation, chosen track by track.
+ * The kinds of staff each track shows (REND-031): standard notation, tablature (for any pitched
+ * part, REND-190), rhythm slashes and numbered notation, chosen track by track.
  */
 export function TrackStavesDialog({
   doc,
@@ -98,9 +98,10 @@ export function TrackStavesDialog({
               const name = track.name.trim().length > 0 ? track.name : track.shortName;
               const shown = shownStaves(track, staffDisplay, staves);
               const drums = track.staves.every(staff => staff.isPercussion);
+              // Any pitched part can be shown as tablature (REND-190): on a guitar's strings.
               const unavailable: Readonly<Record<Kind, boolean>> = {
                 standard: false,
-                tablature: !stringed(track),
+                tablature: drums,
                 slash: false,
                 numbered: drums,
               };

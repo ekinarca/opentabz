@@ -27,6 +27,7 @@ import { applyVoiceColors } from './voice-colors.ts';
 import { layoutDrumKey } from './drum-key.ts';
 import { layoutTextBlocks, type TextBlocksLayout } from './text-blocks.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
+import { applyVirtualTablature } from './virtual-tab.ts';
 import { applyWrittenAsStandard } from './written-pitch.ts';
 
 export interface LayoutResult {
@@ -229,6 +230,8 @@ export class RenderSession {
 
   private withStaffDisplay(action: () => void): void {
     const tracks = tracksFor(this.score, this.options.trackIndexes);
+    // A pitched part's tablature, when asked (REND-190), before the staves are chosen.
+    const restoreVirtual = applyVirtualTablature(tracks, this.options.staves);
     const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
     // Guitars as if in standard tuning without a capo, when the style asks (REND-232).
@@ -249,6 +252,7 @@ export class RenderSession {
       restoreWritten();
       restorePitch();
       restoreStaves();
+      restoreVirtual();
     };
     const { style } = this.options;
     const restoreStyle = style === undefined ? null : applyScoreStyle(this.score, style, this.fileStyle);

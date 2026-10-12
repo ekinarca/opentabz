@@ -83,10 +83,10 @@ All notable changes to OpenTabz are recorded here. The format follows
 - **Standalone metronome.** Tempo from 10 to 400 BPM by typing, buttons, slider or tap tempo
   (button or T), any meter up to 16 beats, with the beat display and the same sounds and
   patterns; the open song waits and comes back when it closes.
-- **Practice.** A mixer with mute, solo and level per track and a practice mode; selecting a
-  range by dragging across the music, Shift+click or a long press on phones, with handles to
-  adjust it, or a whole section from the Go to list; looping the selection; Shift+arrow keys and Esc for selections
-  ([docs/SHORTCUTS.md](docs/SHORTCUTS.md)).
+- **Practice.** A mixer with mute, solo and level per track and a practice mode; selecting a range
+  by dragging across the music, Shift+click or a long press on phones, with handles to adjust it,
+  or a whole section from the Go to list; looping the selection; Shift+arrow keys and Esc for
+  selections ([docs/SHORTCUTS.md](docs/SHORTCUTS.md)).
 - **Phones.** Phone-first layouts: scroll layout by default, a compact playback bar with a menu
   for less frequent controls, touch-sized selection handles.
 - **Landing page and identity.** A new logo (the open string), a landing page with a live
@@ -147,9 +147,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   it. In the score, exports and print; remembered.
 - **Note colours.** The brush button colours notes, in the notation and the tablature, by the
   string they are played on, their interval above the key's tonic, their degree in the key, or
-  their part in the chord over them (root, third, fifth, seventh); in standard colours, colour-blind
-  safe ones (Okabe and Ito's, Paul Tol's) or string colours of one's own, with what each colour
-  stands for. Exports print the same; the choice is remembered.
+  their part in the chord over them (root, third, fifth, seventh); in standard colours,
+  colour-blind safe ones (Okabe and Ito's, Paul Tol's) or string colours of one's own, with what
+  each colour stands for. Exports print the same; the choice is remembered.
 - **Repeats written out.** For a score with repeats, endings or jumps (D.C., D.S., codas), the
   toolbar's Write out repeats opens it again in a tab of its own with every bar as often and in
   the order it is played, with no repeat signs or jumps left to follow; it plays, prints and
@@ -184,30 +184,32 @@ All notable changes to OpenTabz are recorded here. The format follows
   spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
 - **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard
   notation, tablature, rhythm slashes and numbered notation (jianpu), alongside or instead of
-  one another; one choice in the menu applies to every track again. Exports print the same.
+  one another; one choice in the menu applies to every track again. Exports print the same. A
+  keyboard, voice or orchestral part can be shown as tablature too, its notes placed on a
+  guitar's strings (or a bass's), each chord's on strings of their own near the hand.
 - **Stylesheet.** The stylesheet button or F7 sets how a score is engraved: its overall scale
-  (keeping the size of text and chord diagrams if asked), the rhythmic spacing, the staff lines' thickness, the space
-  between systems, the first system's indent, brackets (none, a track's staves, similar instruments,
-  around single staves too), the clef on every system or the first only, the time signature again on
-  every system or at every section, barlines through all staves, the // separator between systems,
-  multi-bar rests, staves left out while they rest, track names (where, full or short, which way
-  up), the lyrics (under the staff, above or below the staves), fingering (the thumbs' and little
-  fingers' letters, before the notes or above or below the staff and the tablature, its size),
-  dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches, the rests of voices 2 to 4,
-  tuplet brackets, arrowheads on arpeggios, a trill's second note, "sl." over slides, technique
-  lines (P.M., let ring, harmonics) over rests, level beams on the staff and on drums, the
-  tablature's tied frets, dashes for its quarter rests, voices 2 to 4 in colour, its rhythm (with
-  or without a staff above, never; stems from the frets or outside; each voice's below, above or
-  nowhere; beams over rests or not; half and whole notes circled), slash notation's line and
-  barlines and its single notes' frets and strings, where artificial
-  harmonics are touched (or not, or a dot for an octave), the tuning
-  legend (what it says, its strings in columns or on a line, framed) or the strings' names before
-  the tablature instead, capos and tunings in the written notes or guitars written as fingered in
-  their own key, and where chord diagrams go, at what size and how far apart (those above their beats
-  keep apart), and the words printed for let ring, palm mute, slide, hammer-on, pull-off, slap,
-  pop, pick scrape, rasgueado and the whammy bar. It starts as the file asks (Guitar Pro stylesheets are
-  honoured, the tuning legend included), applies as it is changed, prints and exports the same, and
-  is remembered for the file.
+  (keeping the size of text and chord diagrams if asked), the rhythmic spacing, the staff lines'
+  thickness, the space between systems, the first system's indent, brackets (none, a track's
+  staves, similar instruments, around single staves too), the clef on every system or the first
+  only, the time signature again on every system or at every section, barlines through all staves,
+  the // separator between systems, multi-bar rests, staves left out while they rest, track names
+  (where, full or short, which way up), the lyrics (under the staff, above or below the staves),
+  fingering (the thumbs' and little fingers' letters, before the notes or above or below the staff
+  and the tablature, its size), dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches,
+  the rests of voices 2 to 4, tuplet brackets, arrowheads on arpeggios, a trill's second note,
+  "sl." over slides, technique lines (P.M., let ring, harmonics) over rests, level beams on the
+  staff and on drums, the tablature's tied frets, dashes for its quarter rests, voices 2 to 4 in
+  colour, its rhythm (with or without a staff above, never; stems from the frets or outside; each
+  voice's below, above or nowhere; beams over rests or not; half and whole notes circled), slash
+  notation's line and barlines and its single notes' frets and strings, where artificial harmonics
+  are touched (or not, or a dot for an octave), the tuning legend (what it says, its strings in
+  columns or on a line, framed) or the strings' names before the tablature instead, capos and
+  tunings in the written notes or guitars written as fingered in their own key, and where chord
+  diagrams go, at what size and how far apart (those above their beats keep apart), and the words
+  printed for let ring, palm mute, slide, hammer-on, pull-off, slap, pop, pick scrape, rasgueado
+  and the whammy bar. It starts as the file asks (Guitar Pro stylesheets are honoured, the tuning
+  legend included), applies as it is changed, prints and exports the same, and is remembered for
+  the file.
 - **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
   Executive, Statement, Folio, Quarto) or a size of one's own, portrait or landscape, and the
   four margins, from the Paper menu and its Page setup dialog. The page on screen, the PDF and
@@ -279,7 +281,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
-  (0049), and fingering as asked (0050). See [docs/upstream/](docs/upstream/).
+  (0049), fingering as asked (0050), and tablature that skips notes without a string (0051).
+  See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
