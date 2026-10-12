@@ -548,7 +548,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 
 | ID       | Feature                                                          | Src | M   | Fixture | Test | Status  |
 | -------- | ---------------------------------------------------------------- | --- | --- | ------- | ---- | ------- |
-| EDIT-001 | UI-agnostic command layer (commands, inverses, serialization)    | OT  | M4  | —       | —    | planned |
+| EDIT-001 | UI-agnostic command layer (commands, inverses, serialization)    | OT  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts | done |
 | EDIT-002 | Note entry with the mouse on tablature                           | GP  | M4  | —       | —    | planned |
 | EDIT-003 | Note entry with the mouse on standard notation                   | GP  | M4  | —       | —    | planned |
 | EDIT-004 | Keyboard entry: fret numbers, duration keys, arrow navigation    | GP  | M4  | —       | —    | planned |

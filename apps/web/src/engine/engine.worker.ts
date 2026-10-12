@@ -37,6 +37,16 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.paint(message.args as EngineRequestMessage<'paint'>['args']);
     case 'closeView':
       return host.closeView(message.args as EngineRequestMessage<'closeView'>['args']);
+    case 'edit':
+      return host.edit(message.args as EngineRequestMessage<'edit'>['args']);
+    case 'undo':
+      return host.undo(message.args as EngineRequestMessage<'undo'>['args']);
+    case 'redo':
+      return host.redo(message.args as EngineRequestMessage<'redo'>['args']);
+    case 'trackBeats':
+      return host.trackBeats(message.args as EngineRequestMessage<'trackBeats'>['args']);
+    case 'saveDocument':
+      return host.saveDocument(message.args as EngineRequestMessage<'saveDocument'>['args']);
     case 'connectSynth':
       return host.connectSynth(message.args as EngineRequestMessage<'connectSynth'>['args']);
     case 'preparePlayback':

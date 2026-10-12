@@ -141,8 +141,20 @@ The session adds partials of its own for the score's instructions and notice (RE
 drum key (REND-318): painted with alphaTab's SVG canvas, placed after the title block, with every
 later partial and the bounds of the systems and bars below them moved down by their height, so
 the paged view, the cursor and the exports need no special case.
-From M4, edits mutate the worker's `Score` and re-render with
-`renderHints.firstChangedMasterBar`, so only systems from the edit onward are laid out again.
+Edits (EDIT-001) are plain-data commands (`shared/edit.ts`: set a fret, take a note away, set a
+duration, insert or remove a beat) sent to the worker in groups; `edit/editor.ts` makes each group
+whole or not at all. Before a command changes the score, a journal keeps the objects it may change
+(the bars around it, their voices, beats, notes and the notes joined to them); once it is made,
+only the fields that changed are kept, as they were and as they are, so that undo and redo put
+exactly those back (an edit undone leaves the score's fingerprint as it was, in every fixture).
+What alphaTab works out from the written notes (the chain of beats, ties, hammer-ons, slides,
+legato slurs, let-ring spans, tuplet groups) is cleared and worked out again in the staves edited
+(`edit/refinish.ts`). The render session then lays the score out again with
+`renderHints.firstChangedMasterBar` (three bars before the edit, or where a legato run through it
+begins), so the systems before it keep their ids and their painted SVG, and the page shows them
+unchanged while the rest is painted again. The page keeps the history of commands, to make them
+again should the engine restart, and saves a document with alphaTab's GPIF writer
+(`export/guitar-pro.ts`).
 
 ### 4.4 Music fonts
 

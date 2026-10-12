@@ -66,6 +66,8 @@ available as source: the patch file is that source.
 | [0055](0055-tempo-ramp-marks.md)                     | Tempo ramps marked accel. or rit.                                                  | Guitar Pro 8 marks a gradual tempo change                                  | not yet  |
 | [0056](0056-detached-coda.md)                        | Detached coda                                                                      | Guitar Pro draws a coda apart, below a gap                                 | not yet  |
 | [0057](0057-tab-slurs-outer-notes.md)                | A chord's tablature slurs over its outer notes, or each note's                     | Guitar Pro's stylesheet chooses                                            | not yet  |
+| [0058](0058-bar-bounds-staff-lines.md)               | A bar's bounds name their staff and where its lines are                            | The editor's caret sits on a string of the tablature                       | not yet  |
+| [0059](0059-long-bends-saved.md)                     | Long bend and whammy curves are saved, as the nearest Guitar Pro 7 curve           | Saving a Guitar Pro 5 score as .gp left its longer bends out               | not yet  |
 
 ## Working on a patch
 

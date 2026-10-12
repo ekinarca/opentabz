@@ -1,5 +1,5 @@
 diff --git a/dist/alphaTab.core.mjs b/dist/alphaTab.core.mjs
-index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be6c11372f 100644
+index b6203da6066c95efcf66298fe48a690f144597a5..e06561d64fc8287e50f6a2acd9ddc575f72ac4f4 100644
 --- a/dist/alphaTab.core.mjs
 +++ b/dist/alphaTab.core.mjs
 @@ -503,21 +503,54 @@ class Automation {
@@ -1122,7 +1122,32 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			case "showname":
  				obj.showName = v;
  				return true;
-@@ -34864,6 +35422,8 @@ class SynthEvent {
+@@ -33847,6 +34405,16 @@ class BarBounds {
+ 	*/
+ 	bar;
+ 	/**
++	* OpenTabz patch 0058: the staff the bar is drawn on ("score", "tab", "slash", "numbered"…), as
++	* a bar is drawn once on each of its track's staves.
++	*/
++	staffId = "";
++	/**
++	* OpenTabz patch 0058: where the staff's lines are, from the top one down, or null for a staff
++	* without lines.
++	*/
++	lineYs = null;
++	/**
+ 	* Gets or sets a list of the beats contained in this lookup.
+ 	*/
+ 	beats = [];
+@@ -33876,6 +34444,7 @@ class BarBounds {
+ 	finish(scale = 1) {
+ 		this.realBounds.scaleWith(scale);
+ 		this.visualBounds.scaleWith(scale);
++		if (this.lineYs) this.lineYs = this.lineYs.map((y) => y * scale);
+ 		this.beats.sort((a, b) => a.realBounds.x - b.realBounds.x);
+ 		for (const b of this.beats) b.finish(scale);
+ 	}
+@@ -34864,6 +35433,8 @@ class SynthEvent {
  	event;
  	isMetronome;
  	time = 0;
@@ -1131,7 +1156,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	constructor(eventIndex, e) {
  		this.eventIndex = eventIndex;
  		this.event = e;
-@@ -34988,6 +35548,42 @@ class MidiFileSequencer {
+@@ -34988,6 +35559,42 @@ class MidiFileSequencer {
  	get isPlayingCountIn() {
  		return this._currentState === this._countInState;
  	}
@@ -1174,7 +1199,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	constructor(synthesizer) {
  		this._synthesizer = synthesizer;
  		this._mainState = new MidiSequencerState();
-@@ -35078,6 +35674,46 @@ class MidiFileSequencer {
+@@ -35078,6 +35685,46 @@ class MidiFileSequencer {
  		this._mainState = this.createStateFromFile(midiFile);
  		this._currentState = this._mainState;
  	}
@@ -1221,7 +1246,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	createStateFromFile(midiFile) {
  		const state = new MidiSequencerState();
  		this.percussionKeys.add(SynthConstants.MetronomeKey);
-@@ -35096,6 +35732,8 @@ class MidiFileSequencer {
+@@ -35096,6 +35743,8 @@ class MidiFileSequencer {
  		let metronomeTime = 0;
  		let maxChannel = 0;
  		let previousTick = 0;
@@ -1230,7 +1255,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		for (const mEvent of midiFile.events) {
  			const synthData = new SynthEvent(state.synthData.length, mEvent);
  			state.synthData.push(synthData);
-@@ -35126,15 +35764,21 @@ class MidiFileSequencer {
+@@ -35126,15 +35775,21 @@ class MidiFileSequencer {
  					state.firstTimeSignatureNumerator = meta.numerator;
  					state.firstTimeSignatureDenominator = timeSignatureDenominator;
  				}
@@ -1254,7 +1279,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				if (noteOn.channel > maxChannel) maxChannel = noteOn.channel;
  			}
  		}
-@@ -35159,6 +35803,7 @@ class MidiFileSequencer {
+@@ -35159,6 +35814,7 @@ class MidiFileSequencer {
  		this._currentState.currentTime = endTime;
  		while (this._currentState.eventIndex < this._currentState.synthData.length && this._currentState.synthData[this._currentState.eventIndex].time < this._currentState.currentTime) {
  			const synthEvent = this._currentState.synthData[this._currentState.eventIndex];
@@ -1262,7 +1287,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this._synthesizer.dispatchEvent(synthEvent);
  			this._currentState.eventIndex++;
  			anyEventsDispatched = true;
-@@ -35167,6 +35812,9 @@ class MidiFileSequencer {
+@@ -35167,6 +35823,9 @@ class MidiFileSequencer {
  	}
  	_fillMidiEventQueueLimited(maxMilliseconds) {
  		let millisecondsPerBuffer = SynthConstants.MicroBufferSize / this._synthesizer.outSampleRate * 1e3 * this.playbackSpeed;
@@ -1272,7 +1297,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		let endTime = this._internalEndTime;
  		if (maxMilliseconds > 0) {
  			if (maxMilliseconds < millisecondsPerBuffer) millisecondsPerBuffer = maxMilliseconds;
-@@ -35175,7 +35823,9 @@ class MidiFileSequencer {
+@@ -35175,7 +35834,9 @@ class MidiFileSequencer {
  		let anyEventsDispatched = false;
  		this._currentState.currentTime += millisecondsPerBuffer;
  		while (this._currentState.eventIndex < this._currentState.synthData.length && this._currentState.synthData[this._currentState.eventIndex].time < this._currentState.currentTime && this._currentState.currentTime < endTime) {
@@ -1283,7 +1308,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this._currentState.eventIndex++;
  			anyEventsDispatched = true;
  		}
-@@ -35351,6 +36001,52 @@ class MidiFileSequencer {
+@@ -35351,6 +36012,52 @@ class MidiFileSequencer {
  		this._countInState = null;
  		this._currentState = this._mainState;
  	}
@@ -1336,7 +1361,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	startCountIn() {
  		this.generateCountInMidi();
  		this._currentState = this._countInState;
-@@ -35377,8 +36073,9 @@ class MidiFileSequencer {
+@@ -35377,8 +36084,9 @@ class MidiFileSequencer {
  		const metronomeLengthInMillis = metronomeLengthInTicks * (6e4 / (bpm * this._mainState.division));
  		let metronomeTick = 0;
  		let metronomeTime = 0;
@@ -1348,7 +1373,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			state.synthData.push(metronome);
  			metronome.time = metronomeTime;
  			metronomeTick += metronomeLengthInTicks;
-@@ -37963,6 +38660,12 @@ class Channel {
+@@ -37963,6 +38671,12 @@ class Channel {
  	mixVolume = 0;
  	mute = false;
  	solo = false;
@@ -1361,7 +1386,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  }
  //#endregion
  //#region src/synth/synthesis/Channels.ts
-@@ -37974,7 +38677,8 @@ class Channels {
+@@ -37974,7 +38688,8 @@ class Channels {
  	channelList = [];
  	setupVoice(tinySoundFont, voice) {
  		const c = this.channelList[this.activeChannel];
@@ -1371,7 +1396,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		voice.playingChannel = this.activeChannel;
  		voice.mixVolume = c.mixVolume;
  		voice.noteGainDb += c.gainDb;
-@@ -38610,10 +39314,12 @@ class Voice {
+@@ -38610,10 +39325,12 @@ class Voice {
  	vibLfo = new VoiceLfo();
  	mixVolume = 0;
  	mute = false;
@@ -1385,7 +1410,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		this.calcPitchRatio(pitchShift, outSampleRate);
  	}
  	calcPitchRatio(pitchShift, outSampleRate) {
-@@ -38875,6 +39581,10 @@ class TinySoundFont {
+@@ -38875,6 +39592,10 @@ class TinySoundFont {
  	_midiEventQueue = new Queue();
  	_mutedChannels = /* @__PURE__ */ new Map();
  	_soloChannels = /* @__PURE__ */ new Map();
@@ -1396,7 +1421,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	_isAnySolo = false;
  	_transpositionPitches = /* @__PURE__ */ new Map();
  	_liveTranspositionPitches = /* @__PURE__ */ new Map();
-@@ -38903,6 +39613,45 @@ class TinySoundFont {
+@@ -38903,6 +39624,45 @@ class TinySoundFont {
  		if (mute) this._mutedChannels.set(channel, true);
  		else this._mutedChannels.delete(channel);
  	}
@@ -1442,7 +1467,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	channelSetSolo(channel, solo) {
  		if (solo) this._soloChannels.set(channel, true);
  		else this._soloChannels.delete(channel);
-@@ -38911,6 +39660,10 @@ class TinySoundFont {
+@@ -38911,6 +39671,10 @@ class TinySoundFont {
  	resetChannelStates() {
  		this._mutedChannels = /* @__PURE__ */ new Map();
  		this._soloChannels = /* @__PURE__ */ new Map();
@@ -1453,7 +1478,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		this._liveTranspositionPitches = /* @__PURE__ */ new Map();
  		this.applyTranspositionPitches(/* @__PURE__ */ new Map());
  		this._isAnySolo = false;
-@@ -38943,23 +39696,37 @@ class TinySoundFont {
+@@ -38943,23 +39707,37 @@ class TinySoundFont {
  		this._midiEventQueue.enqueue(synthEvent);
  	}
  	_fillWorkingBuffer(buffer, bufferPos, sampleCount) {
@@ -1495,7 +1520,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	processMidiMessage(e) {
  		switch (e.type) {
-@@ -38982,7 +39749,14 @@ class TinySoundFont {
+@@ -38982,7 +39760,14 @@ class TinySoundFont {
  				break;
  			case MidiEventType.ProgramChange:
  				const programChange = e;
@@ -1511,7 +1536,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				break;
  			case MidiEventType.TempoChange:
  				const tempoChange = e;
-@@ -39044,7 +39818,10 @@ class TinySoundFont {
+@@ -39044,7 +39829,10 @@ class TinySoundFont {
  			c.gainDb = 0;
  			c.pitchRange = 2;
  			c.tuning = 0;
@@ -1522,7 +1547,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	presets = null;
  	_voices = [];
-@@ -39100,6 +39877,8 @@ class TinySoundFont {
+@@ -39100,6 +39888,8 @@ class TinySoundFont {
  		const voicePlayIndex = this._voicePlayIndex++;
  		for (const region of this.presets[presetIndex].regions) {
  			if (key < region.loKey || key > region.hiKey || midiVelocity < region.loVel || midiVelocity > region.hiVel) continue;
@@ -1531,7 +1556,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			let voice = null;
  			if (region.group !== 0) {
  				for (const v of this._voices) if (v.playingPreset === presetIndex && v.region.group === region.group) v.endQuick(this.outSampleRate);
-@@ -39117,6 +39896,7 @@ class TinySoundFont {
+@@ -39117,6 +39907,7 @@ class TinySoundFont {
  			voice.playingPreset = presetIndex;
  			voice.playingKey = key;
  			voice.playIndex = voicePlayIndex;
@@ -1539,7 +1564,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			voice.noteGainDb = this.globalGainDb - region.attenuation - SynthHelper.gainToDecibels(1 / vel);
  			if (this._channels) this._channels.setupVoice(this, voice);
  			else {
-@@ -39286,9 +40066,19 @@ class TinySoundFont {
+@@ -39286,9 +40077,19 @@ class TinySoundFont {
  		}
  		this._channelInit(channel).perNotePitchWheel.delete(key);
  		if (!matchFirst) return;
@@ -1560,7 +1585,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		}
  	}
  	/**
-@@ -39359,8 +40149,10 @@ class TinySoundFont {
+@@ -39359,8 +40160,10 @@ class TinySoundFont {
  	* @param pan stereo panning value from 0.0 (left) to 1.0 (right) (default 0.5 center)
  	*/
  	channelSetPan(channel, pan) {
@@ -1572,7 +1597,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			if (newPan <= -.5) {
  				v.panFactorLeft = 1;
  				v.panFactorRight = 0;
-@@ -39492,6 +40284,11 @@ class TinySoundFont {
+@@ -39492,6 +40295,11 @@ class TinySoundFont {
  			case ControllerType.NonRegisteredParameterCourse:
  				c.midiRpn = 65535;
  				return;
@@ -1584,7 +1609,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			case ControllerType.AllSoundOff:
  				this.channelSoundsOffAll(channel);
  				return;
-@@ -39503,6 +40300,8 @@ class TinySoundFont {
+@@ -39503,6 +40311,8 @@ class TinySoundFont {
  				c.midiExpression = 16383;
  				c.midiPan = 8192;
  				c.bank = 0;
@@ -1593,7 +1618,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				this.channelSetVolume(channel, 1);
  				this.channelSetPan(channel, .5);
  				this.channelSetPitchRange(channel, 2);
-@@ -39787,6 +40586,64 @@ class AlphaSynthBase {
+@@ -39787,6 +40597,64 @@ class AlphaSynthBase {
  	_output;
  	_loadedMidiInfo;
  	_currentPosition = new PositionChangedEventArgs(0, 0, 0, 0, false, 120, 120);
@@ -1658,7 +1683,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	get output() {
  		return this._output;
  	}
-@@ -39841,8 +40698,24 @@ class AlphaSynthBase {
+@@ -39841,8 +40709,24 @@ class AlphaSynthBase {
  	}
  	updatePlaybackSpeed(value) {
  		const oldSpeed = this.sequencer.playbackSpeed;
@@ -1683,7 +1708,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	get loadedMidiInfo() {
  		return this._loadedMidiInfo;
-@@ -39861,11 +40734,14 @@ class AlphaSynthBase {
+@@ -39861,11 +40745,14 @@ class AlphaSynthBase {
  	}
  	set timePosition(value) {
  		Logger.debug("AlphaSynth", `Seeking to position ${value}ms (main)`);
@@ -1698,7 +1723,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		}
  	}
  	get playbackRange() {
-@@ -39937,10 +40813,20 @@ class AlphaSynthBase {
+@@ -39937,10 +40824,20 @@ class AlphaSynthBase {
  				const synthesizedEvents = this.synthesizer.synthesize(samples, bufferPos, SynthConstants.MicroBufferSize);
  				bufferPos += SynthConstants.MicroBufferSize * SynthConstants.AudioChannels;
  				for (const e of synthesizedEvents) if (this.midiEventsPlayedFilterSet.has(e.event.type)) this.playedEventsQueue.enqueue(e);
@@ -1720,7 +1745,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.output.addSamples(samples);
  			if (this.sequencer.isFinished) this.synthesizer.noteOffAll(true);
  		} else {
-@@ -39948,15 +40834,112 @@ class AlphaSynthBase {
+@@ -39948,15 +40845,112 @@ class AlphaSynthBase {
  			this.output.addSamples(samples);
  		}
  	}
@@ -1833,7 +1858,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		}
  		this.output.play();
  		return true;
-@@ -39990,8 +40973,14 @@ class AlphaSynthBase {
+@@ -39990,8 +40984,14 @@ class AlphaSynthBase {
  		this.state = PlayerState.Paused;
  		this.output.pause();
  		this._notPlayedSamples = 0;
@@ -1848,7 +1873,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		this.tickPosition = this.sequencer.mainPlaybackRange ? this.sequencer.mainPlaybackRange.startTick : 0;
  		this.stateChanged.trigger(new PlayerStateChangedEventArgs(this.state, true));
  	}
-@@ -40003,6 +40992,7 @@ class AlphaSynthBase {
+@@ -40003,6 +41003,7 @@ class AlphaSynthBase {
  		this.updateTimePosition(0, true);
  		this._notPlayedSamples = 0;
  		this.output.resetSamples();
@@ -1856,7 +1881,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		this.output.activate();
  		this._synthStopping = false;
  		this.state = PlayerState.Playing;
-@@ -40082,16 +41072,95 @@ class AlphaSynthBase {
+@@ -40082,16 +41083,95 @@ class AlphaSynthBase {
  	setChannelSolo(channel, solo) {
  		this.synthesizer.channelSetSolo(channel, solo);
  	}
@@ -1956,7 +1981,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	checkForFinish() {
  		let startTick = 0;
-@@ -40428,6 +41497,10 @@ class BackingTrackAudioSynthesizer {
+@@ -40428,6 +41508,10 @@ class BackingTrackAudioSynthesizer {
  	setChannelTranspositionPitch(_channel, _semitones) {}
  	channelSetMute(_channel, _mute) {}
  	channelSetSolo(_channel, _solo) {}
@@ -1967,7 +1992,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	resetChannelStates() {}
  	channelSetMixVolume(_channel, _volume) {}
  	hasSamplesForProgram(_program) {
-@@ -41966,11 +43039,58 @@ class MidiPlaybackController {
+@@ -41966,11 +43050,58 @@ class MidiPlaybackController {
  	shouldPlay = true;
  	index = 0;
  	currentTick = 0;
@@ -2026,7 +2051,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	processCurrent() {
  		const masterBar = this._score.masterBars[this.index];
-@@ -41994,7 +43114,12 @@ class MidiPlaybackController {
+@@ -41994,7 +43125,12 @@ class MidiPlaybackController {
  				if ((masterBarAlternateEndings & 1 << iteration) === 0) this.shouldPlay = false;
  				else this.shouldPlay = true;
  			}
@@ -2040,7 +2065,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (this.shouldPlay) this.currentTick += masterBar.calculateDuration();
  	}
  	moveNext() {
-@@ -42008,7 +43133,8 @@ class MidiPlaybackController {
+@@ -42008,7 +43144,8 @@ class MidiPlaybackController {
  	}
  	_handleDaCapo(directions, daCapo, newState) {
  		if (directions.has(daCapo)) {
@@ -2050,7 +2075,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this._state = newState;
  			this._resetRepeats();
  			return true;
-@@ -42017,8 +43143,11 @@ class MidiPlaybackController {
+@@ -42017,8 +43154,11 @@ class MidiPlaybackController {
  	}
  	_handleDalSegno(directions, dalSegno, newState, jumpTarget) {
  		if (directions.has(dalSegno)) {
@@ -2062,7 +2087,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.index = segno;
  			this._state = newState;
  			this._resetRepeats();
-@@ -42026,6 +43155,21 @@ class MidiPlaybackController {
+@@ -42026,6 +43166,21 @@ class MidiPlaybackController {
  		}
  		return false;
  	}
@@ -2084,7 +2109,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	_handleDaCoda(directions, daCoda, jumpTarget) {
  		if (directions.has(daCoda)) {
  			const coda = this._findJumpTarget(jumpTarget, this.index, false);
-@@ -42049,11 +43193,12 @@ class MidiPlaybackController {
+@@ -42049,11 +43204,12 @@ class MidiPlaybackController {
  		}
  		switch (this._state) {
  			case 0:
@@ -2101,7 +2126,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				this.index++;
  				return true;
  			case 2:
-@@ -42970,6 +44115,13 @@ class MidiFileGenerator {
+@@ -42970,6 +44126,13 @@ class MidiFileGenerator {
  		this.transpositionPitches.clear();
  		this._calculatedBeatTimers.clear();
  		this._currentTime = 0;
@@ -2115,7 +2140,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		for (const track of this._score.tracks) this._generateTrack(track);
  		Logger.debug("Midi", "Begin midi generation");
  		this.syncPoints = [];
-@@ -42992,6 +44144,83 @@ class MidiFileGenerator {
+@@ -42992,6 +44155,83 @@ class MidiFileGenerator {
  		tickShift = Math.abs(tickShift);
  		this._handler.addTickShift(tickShift);
  	}
@@ -2199,7 +2224,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	_generateTrack(track) {
  		this._generateChannel(track, track.playbackInfo.primaryChannel, track.playbackInfo);
  		if (track.playbackInfo.primaryChannel !== track.playbackInfo.secondaryChannel) this._generateChannel(track, track.playbackInfo.secondaryChannel, track.playbackInfo);
-@@ -43230,12 +44459,80 @@ class MidiFileGenerator {
+@@ -43230,12 +44470,80 @@ class MidiFileGenerator {
  			this._handler.addTempo(currentTick, masterBar.score.tempo);
  			masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, masterBar.score.tempo));
  		} else masterBarLookup.tempoChanges.push(new MasterBarTickLookupTempoChange(currentTick, currentTempo));
@@ -2280,7 +2305,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const playbackBar = this._getPlaybackBar(bar);
  		const barStartTime = this._currentTime;
  		for (const v of playbackBar.voices) {
-@@ -43307,6 +44604,7 @@ class MidiFileGenerator {
+@@ -43307,6 +44615,7 @@ class MidiFileGenerator {
  		}
  		this._currentTime += MidiUtils.ticksToMillis(audioDuration, tempoOnBeatStart);
  		if (realBar === beat.voice.bar) this.tickLookup.addBeat(beat, beatStart, audioDuration);
@@ -2288,7 +2313,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const track = beat.voice.bar.staff.track;
  		for (const automation of beat.automations) this._generateNonTempoAutomation(beat, automation, barStartTick);
  		if (beat.isRest) this._handler.addRest(track.index, barStartTick + beatStart, track.playbackInfo.primaryChannel);
-@@ -43316,6 +44614,7 @@ class MidiFileGenerator {
+@@ -43316,6 +44625,7 @@ class MidiFileGenerator {
  			const rasgueadoInfo = this._getRasgueadoInfo(beat, audioDuration);
  			for (const n of beat.notes) this._generateNote(n, barStartTick + beatStart, audioDuration, tempoOnBeatStart, brushInfo, rasgueadoInfo);
  		}
@@ -2296,7 +2321,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (beat.fade !== FadeType.None) this._generateFade(beat, barStartTick + beatStart, audioDuration);
  		if (beat.vibrato !== VibratoType.None) {
  			let phaseLength = 240;
-@@ -43393,6 +44692,20 @@ class MidiFileGenerator {
+@@ -43393,6 +44703,20 @@ class MidiFileGenerator {
  		return note.hasBend || note.beat.hasWhammyBar || note.beat.vibrato !== VibratoType.None;
  	}
  	_determineChannel(track, note) {
@@ -2317,7 +2342,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (this._needsSecondaryChannel(note)) return track.playbackInfo.secondaryChannel;
  		let currentNote = note;
  		while (currentNote.isTieDestination) {
-@@ -43420,8 +44733,10 @@ class MidiFileGenerator {
+@@ -43420,8 +44744,10 @@ class MidiFileGenerator {
  		noteDuration.untilTieOrSlideEnd -= brushOffset;
  		noteDuration.noteOnly -= brushOffset;
  		noteDuration.letRingEnd -= brushOffset;
@@ -2330,7 +2355,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		let initialBend = 0;
  		const noteSoundDuration = Math.max(noteDuration.untilTieOrSlideEnd, noteDuration.letRingEnd);
  		if (note.hasBend) initialBend = MidiFileGenerator.getPitchWheel(note.bendPoints[0].value);
-@@ -43492,17 +44807,31 @@ class MidiFileGenerator {
+@@ -43492,17 +44818,31 @@ class MidiFileGenerator {
  		-1,
  		-1
  	];
@@ -2365,7 +2390,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				];
  				ornamentNoteDurations = [
  					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
-@@ -43512,9 +44841,9 @@ class MidiFileGenerator {
+@@ -43512,9 +44852,9 @@ class MidiFileGenerator {
  				break;
  			case NoteOrnament.InvertedTurn:
  				ornamentNoteKeys = [
@@ -2377,7 +2402,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				];
  				ornamentNoteDurations = [
  					MidiUtils.toTicks(Duration.Sixteenth) * triplet,
-@@ -43523,11 +44852,11 @@ class MidiFileGenerator {
+@@ -43523,11 +44863,11 @@ class MidiFileGenerator {
  				];
  				break;
  			case NoteOrnament.UpperMordent:
@@ -2391,7 +2416,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				ornamentNoteDurations = [MidiUtils.toTicks(Duration.ThirtySecond), MidiUtils.toTicks(Duration.ThirtySecond)];
  				break;
  			default: return;
-@@ -43558,7 +44887,16 @@ class MidiFileGenerator {
+@@ -43558,7 +44898,16 @@ class MidiFileGenerator {
  			return durationWithEffects;
  		}
  		if (note.isPalmMute) {
@@ -2409,7 +2434,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			durationWithEffects.untilTieOrSlideEnd = durationWithEffects.noteOnly;
  			durationWithEffects.letRingEnd = durationWithEffects.noteOnly;
  			return durationWithEffects;
-@@ -43584,7 +44922,8 @@ class MidiFileGenerator {
+@@ -43584,7 +44933,8 @@ class MidiFileGenerator {
  				durationWithEffects.untilTieOrSlideEnd = endNote.beat.absolutePlaybackStart + slideTargetDuration.untilTieOrSlideEnd - startTick;
  			}
  		}
@@ -2419,7 +2444,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			let lastLetRingBeat = note.beat;
  			let letRingEnd = 0;
  			const maxDuration = note.beat.voice.bar.masterBar.calculateDuration();
-@@ -43608,9 +44947,56 @@ class MidiFileGenerator {
+@@ -43608,9 +44958,56 @@ class MidiFileGenerator {
  		const value = tempo * duration / BendPoint.MaxPosition | 0;
  		return Math.min(value, maximum);
  	}
@@ -2477,7 +2502,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (note.isGhost) adjustment--;
  		switch (note.accentuated) {
  			case AccentuationType.Normal:
-@@ -43637,6 +45023,13 @@ class MidiFileGenerator {
+@@ -43637,6 +45034,13 @@ class MidiFileGenerator {
  				this._generateFadeSteps(track, beatStart + half, half, MidiFileGenerator._toChannelShort(track.playbackInfo.volume), 0);
  				break;
  		}
@@ -2491,7 +2516,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	_generateFadeSteps(track, start, duration, startVolume, endVolume) {
  		const tickStep = 120;
-@@ -44003,7 +45396,8 @@ class MidiFileGenerator {
+@@ -44003,7 +45407,8 @@ class MidiFileGenerator {
  	_generateTremoloPicking(note, noteStart, noteDuration, noteKey, dynamicValue, channel) {
  		const track = note.beat.voice.bar.staff.track;
  		if (note.beat.tremoloPicking.marks === 0) return;
@@ -2501,7 +2526,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		let tick = noteStart;
  		const end = noteStart + noteDuration.untilTieOrSlideEnd;
  		while (tick + 10 < end) {
-@@ -44220,6 +45614,18 @@ class MidiFileGenerator {
+@@ -44220,6 +45625,18 @@ class MidiFileGenerator {
  	}
  	_getBrushInfo(beat) {
  		const brushInfo = new Int32Array(beat.voice.bar.staff.tuning.length);
@@ -2520,7 +2545,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (beat.brushType) {
  			let stringUsed = 0;
  			let stringCount = 0;
-@@ -44508,10 +45914,32 @@ class BeatContainerGlyph extends BeatContainerGlyphBase {
+@@ -44508,10 +45925,32 @@ class BeatContainerGlyph extends BeatContainerGlyphBase {
  	get postBeatStretch() {
  		return this.onNotes.computedWidth + this._tieWidth - this.onNotes.onTimeX;
  	}
@@ -2554,7 +2579,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		layoutings.addBeatSpring(this, preBeatStretch, postBeatStretch);
  		layoutings.setBeatSizes(this, {
  			preBeatSize: this.preNotes.width,
-@@ -49793,7 +51221,8 @@ class SvgCanvas {
+@@ -49793,7 +51232,8 @@ class SvgCanvas {
  	}
  	measureText(text) {
  		if (!text) return new MeasuredText(0, 0);
@@ -2564,7 +2589,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	onRenderFinished() {
  		return null;
-@@ -50746,6 +52175,36 @@ class CapoEffectInfo extends EffectInfo {
+@@ -50746,6 +52186,36 @@ class CapoEffectInfo extends EffectInfo {
  	}
  }
  //#endregion
@@ -2601,7 +2626,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  //#region src/rendering/glyphs/ChordDiagramGlyph.ts
  /**
  * @internal
-@@ -50756,6 +52215,7 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50756,6 +52226,7 @@ class ChordDiagramGlyph extends EffectGlyph {
  	_textRow = 0;
  	_fretRow = 0;
  	_firstFretSpacing = 0;
@@ -2609,7 +2634,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	_center;
  	_fontElement;
  	constructor(x, y, chord, fontElement, center = false) {
-@@ -50764,18 +52224,35 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50764,18 +52235,35 @@ class ChordDiagramGlyph extends EffectGlyph {
  		this._center = center;
  		this._fontElement = fontElement;
  	}
@@ -2650,7 +2675,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		} else if (this._chord.showName) {
  			const canvas = this.renderer.scoreRenderer.canvas;
  			canvas.font = font;
-@@ -50783,12 +52260,13 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50783,12 +52271,13 @@ class ChordDiagramGlyph extends EffectGlyph {
  		}
  	}
  	paint(cx, cy, canvas) {
@@ -2667,7 +2692,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const align = canvas.textAlign;
  		const baseline = canvas.textBaseline;
  		const font = res.elementFonts.get(this._fontElement);
-@@ -50803,21 +52281,24 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50803,21 +52292,24 @@ class ChordDiagramGlyph extends EffectGlyph {
  	_paintFretboard(cx, cy, canvas, w) {
  		cy += this._textRow;
  		const res = this.renderer.resources;
@@ -2703,7 +2728,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			else {
  				fret -= this._chord.firstFret - 1;
  				canvas.fillText(fret.toString(), x, y);
-@@ -50832,10 +52313,10 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50832,10 +52324,10 @@ class ChordDiagramGlyph extends EffectGlyph {
  			canvas.textAlign = TextAlign.Left;
  			canvas.fillText(this._chord.firstFret.toString(), cx - this._firstFretSpacing, cy + fretSpacing / 2);
  			canvas.fillRect(cx, cy, w, lineWidth);
@@ -2716,7 +2741,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		}
  		const barreLookup = /* @__PURE__ */ new Map();
  		for (const barreFret of this._chord.barreFrets) barreLookup.set(barreFret - this._chord.firstFret, [-1, -1]);
-@@ -50849,16 +52330,28 @@ class ChordDiagramGlyph extends EffectGlyph {
+@@ -50849,16 +52341,28 @@ class ChordDiagramGlyph extends EffectGlyph {
  					if (info[1] === -1 || guitarString > info[1]) info[1] = guitarString;
  				}
  				const y = cy + fret * fretSpacing + fretSpacing / 2 + .5;
@@ -2749,7 +2774,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -50880,10 +52373,13 @@ class ChordsEffectInfo extends EffectInfo {
+@@ -50880,10 +52384,13 @@ class ChordsEffectInfo extends EffectInfo {
  		return EffectBarGlyphSizing.SingleOnBeat;
  	}
  	shouldCreateGlyph(_settings, beat) {
@@ -2765,7 +2790,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	canExpand(_from, _to) {
  		return false;
-@@ -50977,9 +52473,13 @@ class TargetDirectionGlyph extends Glyph {
+@@ -50977,9 +52484,13 @@ class TargetDirectionGlyph extends Glyph {
  			const h = this.renderer.smuflMetrics.glyphHeights.get(s) * scale;
  			if (h > this.height) this.height = h;
  		}
@@ -2780,7 +2805,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  /**
-@@ -51566,6 +53066,8 @@ class FingeringGroupGlyph extends GlyphGroup {
+@@ -51566,6 +53077,8 @@ class FingeringGroupGlyph extends GlyphGroup {
  	addFingers(note) {
  		const settings = this.renderer.settings;
  		if (settings.notation.fingeringMode !== FingeringMode.ScoreDefault && settings.notation.fingeringMode !== FingeringMode.ScoreForcePiano) return;
@@ -2789,7 +2814,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const symbolLeft = FingeringGroupGlyph.fingerToMusicFontSymbol(this.renderer.settings, note.beat, note.leftHandFinger, true);
  		if (symbolLeft !== MusicFontSymbol.None) this._addFinger(note, symbolLeft);
  		const symbolRight = FingeringGroupGlyph.fingerToMusicFontSymbol(this.renderer.settings, note.beat, note.rightHandFinger, false);
-@@ -51582,24 +53084,36 @@ class FingeringGroupGlyph extends GlyphGroup {
+@@ -51582,24 +53095,36 @@ class FingeringGroupGlyph extends GlyphGroup {
  			case Fingers.LittleFinger: return MusicFontSymbol.Fingering5;
  			default: return MusicFontSymbol.None;
  		}
@@ -2829,7 +2854,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			default: return MusicFontSymbol.None;
  		}
  	}
-@@ -51615,7 +53129,8 @@ class FingeringGroupGlyph extends GlyphGroup {
+@@ -51615,7 +53140,8 @@ class FingeringGroupGlyph extends GlyphGroup {
  	doLayout() {
  		const sr = this.renderer;
  		for (const [_, info] of this._infos) {
@@ -2839,7 +2864,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			g.colorOverride = info.color;
  			g.renderer = sr;
  			g.y = sr.getScoreY(info.line);
-@@ -51673,6 +53188,80 @@ class FingeringEffectInfo extends EffectInfo {
+@@ -51673,6 +53199,80 @@ class FingeringEffectInfo extends EffectInfo {
  		return true;
  	}
  }
@@ -2920,7 +2945,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  //#endregion
  //#region src/rendering/effects/FreeTimeEffectInfo.ts
  /**
-@@ -51901,8 +53490,9 @@ class LetRingEffectInfo extends EffectInfo {
+@@ -51901,8 +53501,9 @@ class LetRingEffectInfo extends EffectInfo {
  	get sizingMode() {
  		return EffectBarGlyphSizing.GroupedOnBeat;
  	}
@@ -2932,7 +2957,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	canExpand(_from, _to) {
  		return true;
-@@ -51918,6 +53508,8 @@ class LyricsGlyph extends EffectGlyph {
+@@ -51918,6 +53519,8 @@ class LyricsGlyph extends EffectGlyph {
  	_linePositions = [];
  	font;
  	textAlign;
@@ -2941,7 +2966,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	constructor(x, y, lines, font, textAlign = TextAlign.Center) {
  		super(x, y);
  		this._lines = lines;
-@@ -51929,7 +53521,7 @@ class LyricsGlyph extends EffectGlyph {
+@@ -51929,7 +53532,7 @@ class LyricsGlyph extends EffectGlyph {
  		const lineSpacing = this.renderer.settings.display.lyricLinesPaddingBetween;
  		const canvas = this.renderer.scoreRenderer.canvas;
  		canvas.font = this.font;
@@ -2950,7 +2975,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		for (const line of this._lines) {
  			this._linePositions.push(y);
  			const size = canvas.measureText(line.length > 0 ? line : " ");
-@@ -51952,6 +53544,12 @@ class LyricsGlyph extends EffectGlyph {
+@@ -51952,6 +53555,12 @@ class LyricsGlyph extends EffectGlyph {
  * @internal
  */
  class LyricsEffectInfo extends EffectInfo {
@@ -2963,7 +2988,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	get notationElement() {
  		return NotationElement.EffectLyrics;
  	}
-@@ -51964,11 +53562,15 @@ class LyricsEffectInfo extends EffectInfo {
+@@ -51964,11 +53573,15 @@ class LyricsEffectInfo extends EffectInfo {
  	get sizingMode() {
  		return EffectBarGlyphSizing.SingleOnBeat;
  	}
@@ -2982,7 +3007,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	canExpand(_from, _to) {
  		return true;
-@@ -51986,8 +53588,10 @@ class MarkerEffectInfo extends EffectInfo {
+@@ -51986,8 +53599,10 @@ class MarkerEffectInfo extends EffectInfo {
  	get hideOnMultiTrack() {
  		return true;
  	}
@@ -2994,7 +3019,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	get sizingMode() {
  		return EffectBarGlyphSizing.SinglePreBeat;
-@@ -52417,8 +54021,9 @@ class PalmMuteEffectInfo extends NoteEffectInfoBase {
+@@ -52417,8 +54032,9 @@ class PalmMuteEffectInfo extends NoteEffectInfoBase {
  	get sizingMode() {
  		return EffectBarGlyphSizing.GroupedOnBeat;
  	}
@@ -3006,7 +3031,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -52436,8 +54041,9 @@ class PickSlideEffectInfo extends NoteEffectInfoBase {
+@@ -52436,8 +54052,9 @@ class PickSlideEffectInfo extends NoteEffectInfoBase {
  	get sizingMode() {
  		return EffectBarGlyphSizing.GroupedOnBeat;
  	}
@@ -3018,7 +3043,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -52511,8 +54117,9 @@ class RasgueadoEffectInfo extends EffectInfo {
+@@ -52511,8 +54128,9 @@ class RasgueadoEffectInfo extends EffectInfo {
  	get sizingMode() {
  		return EffectBarGlyphSizing.GroupedOnBeat;
  	}
@@ -3030,7 +3055,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	canExpand(_from, _to) {
  		return true;
-@@ -52557,7 +54164,20 @@ class EffectBand extends Glyph {
+@@ -52557,7 +54175,20 @@ class EffectBand extends Glyph {
  		}
  	}
  	static shouldCreateGlyph(beat, info, renderer) {
@@ -3052,7 +3077,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	createGlyph(beat) {
  		if (beat.voice !== this.voice) return;
-@@ -52609,7 +54229,8 @@ class EffectBand extends Glyph {
+@@ -52609,7 +54240,8 @@ class EffectBand extends Glyph {
  				const singleSizing = sizing === EffectBarGlyphSizing.GroupedOnBeat ? EffectBarGlyphSizing.SingleOnBeat : EffectBarGlyphSizing.SingleOnBeatToEnd;
  				if (b.index > 0 || this.renderer.index > 0) {
  					const prevBeat = b.previousBeat;
@@ -3062,7 +3087,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  						let prevEffect = null;
  						if (b.index > 0 && this._effectGlyphs[b.voice.index].has(prevBeat.index)) prevEffect = this._effectGlyphs[b.voice.index].get(prevBeat.index);
  						else if (this.renderer.index > 0) {
-@@ -53858,6 +55479,8 @@ class BeamingHelper {
+@@ -53858,6 +55490,8 @@ class BeamingHelper {
  		return [0, 0];
  	}
  	checkBeat(beat) {
@@ -3071,7 +3096,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (beat.invertBeamDirection) this.invertBeamDirection = true;
  		if (!this.voice) this.voice = beat.voice;
  		let add = false;
-@@ -54018,13 +55641,16 @@ class BarCollisionHelper {
+@@ -54018,13 +55652,16 @@ class BarCollisionHelper {
  				let newRestTopY = oldRestTopY;
  				const reservedSlots = this.reservedLayoutAreasByDisplayTime.get(beat.playbackStart);
  				let hasCollision = false;
@@ -3091,7 +3116,30 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					const newRestBottomY = newRestTopY + restSizes[0] + restSizes[1];
  					const staveSpace = linesToPixel * 2;
  					const distanceInLines = Math.ceil(Math.abs(newRestTopY - oldRestTopY) / staveSpace);
-@@ -55064,12 +56690,13 @@ class TabBendGlyph extends Glyph {
+@@ -54332,6 +55969,12 @@ var NoteXPosition = /* @__PURE__ */ function(NoteXPosition) {
+ * @internal
+ */
+ class BarRendererBase {
++	/**
++	* OpenTabz patch 0058: where the staff's lines are drawn, for the bounds lookup; none here.
++	*/
++	boundsLineYs(_cy) {
++		return null;
++	}
+ 	_preBeatGlyphs = new LeftToRightLayoutingGlyphGroup();
+ 	voiceContainer = new MultiVoiceContainerGlyph();
+ 	_postBeatGlyphs = new LeftToRightLayoutingGlyphGroup();
+@@ -54651,6 +56294,9 @@ class BarRendererBase {
+ 	buildBoundingsLookup(masterBarBounds, cx, cy) {
+ 		const barBounds = new BarBounds();
+ 		barBounds.bar = this.bar;
++		// OpenTabz patch 0058: the staff, and its lines.
++		barBounds.staffId = this.staff ? this.staff.staffId : "";
++		barBounds.lineYs = this.boundsLineYs(cy);
+ 		barBounds.visualBounds = new Bounds();
+ 		barBounds.visualBounds.x = cx + this.x;
+ 		barBounds.visualBounds.y = cy + this.y;
+@@ -55064,12 +56710,13 @@ class TabBendGlyph extends Glyph {
  		let y1;
  		if (firstPt.value === 0) {
  			y1 = cy + smufl.tabBendStaffPadding;
@@ -3107,7 +3155,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		else y2 = cy - smufl.tabBendPerValueHeight * secondPt.lineValue;
  		this._paintBendLine(canvas, x1, y1, x2, y2, firstPt, secondPt);
  		const arrowSize = smufl.glyphWidths.get(MusicFontSymbol.ArrowheadBlackDown);
-@@ -55600,8 +57227,10 @@ class TapEffectInfo extends EffectInfo {
+@@ -55600,8 +57247,10 @@ class TapEffectInfo extends EffectInfo {
  	}
  	createNewGlyph(renderer, beat) {
  		const res = renderer.resources;
@@ -3120,7 +3168,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		return new TextGlyph(0, 0, "T", res.elementFonts.get(NotationElement.EffectTap), TextAlign.Center);
  	}
  	canExpand(_from, _to) {
-@@ -55626,6 +57255,38 @@ class BarTempoGlyph extends EffectGlyph {
+@@ -55626,6 +57275,38 @@ class BarTempoGlyph extends EffectGlyph {
  		const res = this.renderer.resources;
  		this.height = this.renderer.smuflMetrics.glyphHeights.get(MusicFontSymbol.MetNoteQuarterUp) * res.engravingSettings.tempoNoteScale;
  	}
@@ -3159,7 +3207,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	paint(cx, cy, canvas) {
  		for (const automation of this._tempoAutomations) {
  			let x = cx + this.renderer.getRatioPositionX(automation.ratioPosition);
-@@ -55634,17 +57295,27 @@ class BarTempoGlyph extends EffectGlyph {
+@@ -55634,17 +57315,27 @@ class BarTempoGlyph extends EffectGlyph {
  			const notePosY = cy + this.y + this.height + this.renderer.smuflMetrics.glyphBottom.get(MusicFontSymbol.MetNoteQuarterUp) * res.engravingSettings.tempoNoteScale;
  			const b = canvas.textBaseline;
  			canvas.textBaseline = TextBaseline.Alphabetic;
@@ -3192,7 +3240,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		}
  	}
  }
-@@ -55705,6 +57376,50 @@ class TextEffectInfo extends EffectInfo {
+@@ -55705,6 +57396,50 @@ class TextEffectInfo extends EffectInfo {
  	}
  }
  //#endregion
@@ -3243,7 +3291,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  //#region src/rendering/glyphs/TrillGlyph.ts
  /**
  * @internal
-@@ -56041,8 +57756,9 @@ class WhammyBarEffectInfo extends EffectInfo {
+@@ -56041,8 +57776,9 @@ class WhammyBarEffectInfo extends EffectInfo {
  	shouldCreateGlyph(_settings, beat) {
  		return beat.hasWhammyBar;
  	}
@@ -3255,7 +3303,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	canExpand(_from, _to) {
  		return true;
-@@ -56103,13 +57819,18 @@ class WideNoteVibratoEffectInfo extends NoteEffectInfoBase {
+@@ -56103,13 +57839,18 @@ class WideNoteVibratoEffectInfo extends NoteEffectInfoBase {
  class RowGlyphContainer extends GlyphGroup {
  	_glyphWidth = 0;
  	_align;
@@ -3275,7 +3323,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const glyphWidth = this._glyphWidth - padding;
  		let x = 0;
  		switch (this._align) {
-@@ -56130,7 +57851,7 @@ class RowGlyphContainer extends GlyphGroup {
+@@ -56130,7 +57871,7 @@ class RowGlyphContainer extends GlyphGroup {
  	}
  	addGlyphToRow(glyph) {
  		this.glyphs.push(glyph);
@@ -3284,7 +3332,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (glyph.height > this.height) this.height = glyph.height;
  	}
  }
-@@ -56151,11 +57872,13 @@ class RowContainerGlyph extends GlyphGroup {
+@@ -56151,11 +57892,13 @@ class RowContainerGlyph extends GlyphGroup {
  	doLayout() {
  		let x = 0;
  		let y = 0;
@@ -3299,7 +3347,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		for (const g of this.glyphs) {
  			const endX = x + g.width + gap;
  			if (endX < this.width) {
-@@ -56171,6 +57894,7 @@ class RowContainerGlyph extends GlyphGroup {
+@@ -56171,6 +57914,7 @@ class RowContainerGlyph extends GlyphGroup {
  				row = new RowGlyphContainer(x, y, this._align);
  				row.renderer = this.renderer;
  				row.width = this.width;
@@ -3307,7 +3355,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				row.addGlyphToRow(g);
  				x += Math.ceil(g.width + gap);
  			}
-@@ -56185,6 +57909,10 @@ class RowContainerGlyph extends GlyphGroup {
+@@ -56185,6 +57929,10 @@ class RowContainerGlyph extends GlyphGroup {
  	paint(cx, cy, canvas) {
  		for (const row of this._rows) row.paint(cx + this.x, cy + this.y, canvas);
  	}
@@ -3318,7 +3366,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  }
  //#endregion
  //#region src/rendering/glyphs/ChordDiagramContainerGlyph.ts
-@@ -56192,6 +57920,10 @@ class RowContainerGlyph extends GlyphGroup {
+@@ -56192,6 +57940,10 @@ class RowContainerGlyph extends GlyphGroup {
  * @internal
  */
  class ChordDiagramContainerGlyph extends RowContainerGlyph {
@@ -3329,7 +3377,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	addChord(chord) {
  		if (chord.strings.length > 0) {
  			const chordDiagram = new ChordDiagramGlyph(0, 0, chord, NotationElement.ChordDiagrams);
-@@ -56236,6 +57968,26 @@ class TuningGlyph extends GlyphGroup {
+@@ -56236,6 +57988,26 @@ class TuningGlyph extends GlyphGroup {
  		this._trackLabel = trackLabel;
  		this.glyphs = [];
  	}
@@ -3356,7 +3404,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	doLayout() {
  		if (this.glyphs.length > 0) return;
  		this._createGlyphs(this._tuning);
-@@ -56248,20 +58000,27 @@ class TuningGlyph extends GlyphGroup {
+@@ -56248,20 +58020,27 @@ class TuningGlyph extends GlyphGroup {
  		const c = canvas.color;
  		if (this.colorOverride) canvas.color = this.colorOverride;
  		super.paint(cx, cy, canvas);
@@ -3388,7 +3436,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			tuningName.renderer = this.renderer;
  			tuningName.doLayout();
  			this.height += tuningName.height;
-@@ -56269,28 +58028,66 @@ class TuningGlyph extends GlyphGroup {
+@@ -56269,28 +58048,66 @@ class TuningGlyph extends GlyphGroup {
  		}
  		const circleScale = this.renderer.smuflMetrics.tuningGlyphCircleNumberScale;
  		const circleHeight = this.renderer.smuflMetrics.glyphHeights.get(MusicFontSymbol.GuitarString0) * circleScale;
@@ -3465,7 +3513,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -57762,10 +59559,11 @@ class ScoreLayout {
+@@ -57762,10 +59579,11 @@ class ScoreLayout {
  					break;
  				}
  			}
@@ -3479,7 +3527,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					const trackLabel = stavesWithTuning.length > 1 ? staff.track.name : "";
  					const item = new TuningGlyph(0, 0, staff.stringTuning, trackLabel);
  					item.colorOverride = ElementStyleHelper.trackColor(res, TrackSubElement.StringTuning, staff.track);
-@@ -58233,6 +60031,7 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58233,6 +60051,7 @@ class VerticalLayoutBase extends ScoreLayout {
  		if (barsPerRowActive) for (let i = 0; i < this._systems.length; i++) {
  			const system = this._systems[i];
  			system.width = system.computedWidth;
@@ -3487,7 +3535,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this._fitSystem(system);
  			y += this._paintSystem(system, oldHeight);
  		}
-@@ -58242,14 +60041,16 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58242,14 +60061,16 @@ class VerticalLayoutBase extends ScoreLayout {
  			let currentIndex = 0;
  			const maxWidth = this._maxWidth;
  			let system = this.createEmptyStaffSystem(this._systems.length);
@@ -3506,7 +3554,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				} else {
  					while (renderers && !renderers.canWrap && system.masterBarsRenderers.length > 1) {
  						renderers = system.revertLastBar();
-@@ -58260,14 +60061,20 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58260,14 +60081,20 @@ class VerticalLayoutBase extends ScoreLayout {
  				if (system.isFull) {
  					system.isLast = this.lastBarIndex === system.lastBarIndex;
  					this._systems.push(system);
@@ -3528,7 +3576,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this._fitSystem(system);
  			y += this._paintSystem(system, oldHeight);
  		}
-@@ -58279,8 +60086,12 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58279,8 +60106,12 @@ class VerticalLayoutBase extends ScoreLayout {
  		while (currentBarIndex <= endBarIndex) {
  			const system = this._createStaffSystem(currentBarIndex, endBarIndex);
  			this._systems.push(system);
@@ -3542,7 +3590,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			currentBarIndex = system.lastBarIndex + 1;
  			this._fitSystem(system);
  			Logger.debug(this.name, `Rendering partial from bar ${system.firstBarIndex} to ${system.lastBarIndex}`, null);
-@@ -58313,7 +60124,8 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58313,7 +60144,8 @@ class VerticalLayoutBase extends ScoreLayout {
  	*/
  	_fitSystem(system) {
  		system.reconcileMinDurationIfDirty();
@@ -3552,7 +3600,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		else this._scaleToWidth(system, system.width);
  		system.finalizeSystem();
  	}
-@@ -58342,7 +60154,7 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58342,7 +60174,7 @@ class VerticalLayoutBase extends ScoreLayout {
  	_createStaffSystem(currentBarIndex, endIndex) {
  		const system = this.createEmptyStaffSystem(this._systems.length);
  		const barsPerRow = this.getBarsPerSystem(system.index);
@@ -3561,7 +3609,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const end = endIndex + 1;
  		let barIndex = currentBarIndex;
  		while (barIndex < end) {
-@@ -58380,12 +60192,36 @@ class VerticalLayoutBase extends ScoreLayout {
+@@ -58380,12 +60212,36 @@ class VerticalLayoutBase extends ScoreLayout {
  				system.isLast = false;
  				return system;
  			}
@@ -3598,7 +3646,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	_needsLineBreak(barIndex) {
  		let anyTrackNeedsLineBreak = false;
  		let allTracksNeedLineBreak = true;
-@@ -58573,8 +60409,10 @@ class BarLineGlyph extends LeftToRightLayoutingGlyphGroup {
+@@ -58573,8 +60429,10 @@ class BarLineGlyph extends LeftToRightLayoutingGlyphGroup {
  	doLayout() {
  		const bar = this.renderer.bar;
  		const masterBar = bar.masterBar;
@@ -3610,7 +3658,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		let previousLineType = BarLineStyle.Automatic;
  		if (!this._isRight) {
  			const previousRenderer = this.renderer.previousRenderer;
-@@ -59199,10 +61037,11 @@ class NumberedBeatGlyph extends BeatOnNoteGlyphBase {
+@@ -59199,10 +61057,11 @@ class NumberedBeatGlyph extends BeatOnNoteGlyphBase {
  class TabTieGlyph extends NoteTieGlyph {
  	calculateTieDirection() {
  		if (this.isLeftHandTap) return BeamDirection.Up;
@@ -3625,7 +3673,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -59219,17 +61058,18 @@ class TieGlyphLabels {
+@@ -59219,17 +61078,18 @@ class TieGlyphLabels {
  	* vs. pull-off — score side passes a comparison on `realValue`,
  	* tab side passes a comparison on `fret`.
  	*/
@@ -3647,7 +3695,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			element: NotationElement.EffectHammerOnPullOffText
  		};
  	}
-@@ -59256,7 +61096,7 @@ class TabSlurGlyph extends TabTieGlyph {
+@@ -59256,7 +61116,7 @@ class TabSlurGlyph extends TabTieGlyph {
  			if (slur !== null) {
  				const notationSettings = this.renderer.settings.notation;
  				for (const s of slur.segments) {
@@ -3656,7 +3704,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					if (notationSettings.isNotationElementVisible(label.element)) this._labels.push(label);
  				}
  			}
-@@ -59268,23 +61108,15 @@ class TabSlurGlyph extends TabTieGlyph {
+@@ -59268,23 +61128,15 @@ class TabSlurGlyph extends TabTieGlyph {
  		if (this.startNote.beat.id !== startNote.beat.id) return false;
  		if (this.endNote.beat.id !== endNote.beat.id) return false;
  		if (this.renderer === this.lookupEndBeatRenderer() !== forEnd) return false;
@@ -3689,7 +3737,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		return true;
  	}
  }
-@@ -59670,7 +61502,8 @@ class FlagGlyph extends MusicFontGlyph {
+@@ -59670,7 +61522,8 @@ class FlagGlyph extends MusicFontGlyph {
  			case Duration.ThirtySecond: return MusicFontSymbol.Flag32ndDown;
  			case Duration.SixtyFourth: return MusicFontSymbol.Flag64thDown;
  			case Duration.OneHundredTwentyEighth: return MusicFontSymbol.Flag128thDown;
@@ -3699,7 +3747,22 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			default: return MusicFontSymbol.Flag8thDown;
  		}
  	}
-@@ -59932,7 +61765,8 @@ class LineBarRenderer extends BarRendererBase {
+@@ -59764,6 +61617,14 @@ class LineBarRenderer extends BarRendererBase {
+ 	getLineHeight(line) {
+ 		return this.lineOffset * line;
+ 	}
++	/**
++	* OpenTabz patch 0058: the middle of each line drawn (see paintStaffLines), from the top one.
++	*/
++	boundsLineYs(cy) {
++		const lines = [];
++		for (let i = 0; i < this.drawnLineCount; i++) lines.push(cy + this.y + this.getLineY(i));
++		return lines;
++	}
+ 	paintContent(cx, cy, canvas) {
+ 		super.paintContent(cx, cy, canvas);
+ 		this.paintBeams(cx, cy, canvas, this.flagsSubElement, this.beamsSubElement);
+@@ -59932,7 +61793,8 @@ class LineBarRenderer extends BarRendererBase {
  				const pixelAlignment = canvas.lineWidth % 2 === 0 ? 0 : .5;
  				cx += pixelAlignment;
  				cy += pixelAlignment;
@@ -3709,7 +3772,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					canvas.beginPath();
  					canvas.moveTo(cx + this.x + startX, cy + this.y + angleStartY);
  					if (bracketsAsArcs) canvas.quadraticCurveTo(cx + this.x + (offset1X + startX) / 2, cy + this.y + offset1Y, cx + this.x + offset1X, cy + this.y + offset1Y);
-@@ -60221,8 +62055,28 @@ class LineBarRenderer extends BarRendererBase {
+@@ -60221,8 +62083,28 @@ class LineBarRenderer extends BarRendererBase {
  		if (direction === BeamDirection.Down && drawingInfo.endY > drawingInfo.startY && drawingInfo.endY - drawingInfo.startY > maxSlope) drawingInfo.startY = drawingInfo.endY - maxSlope;
  		if (direction === BeamDirection.Up && drawingInfo.startY < drawingInfo.endY && drawingInfo.endY - drawingInfo.startY > maxSlope) drawingInfo.endY = drawingInfo.startY + maxSlope;
  		if (direction === BeamDirection.Up && drawingInfo.endY < drawingInfo.startY && drawingInfo.startY - drawingInfo.endY > maxSlope) drawingInfo.startY = drawingInfo.endY + maxSlope;
@@ -3738,7 +3801,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	get beamSpacing() {
  		return this.smuflMetrics.beamSpacing;
  	}
-@@ -60476,7 +62330,7 @@ class NumberedBarRenderer extends LineBarRenderer {
+@@ -60476,7 +62358,7 @@ class NumberedBarRenderer extends LineBarRenderer {
  		else if (!hasSpaceAfterStartGlyphs) this.addPreBeatGlyph(new SpacingGlyph(0, 0, this.smuflMetrics.oneStaffSpace));
  	}
  	createLinePreBeatGlyphs() {
@@ -3747,7 +3810,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.createStartSpacing();
  			this._createTimeSignatureGlyphs();
  		}
-@@ -60712,6 +62566,29 @@ class AccentuationGlyph extends EffectGlyph {
+@@ -60712,6 +62594,29 @@ class AccentuationGlyph extends EffectGlyph {
  	}
  }
  //#endregion
@@ -3777,7 +3840,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  //#region src/rendering/glyphs/ArticStaccatoAboveGlyph.ts
  /**
  * @internal
-@@ -62151,6 +64028,7 @@ class ScoreBeatGlyph extends BeatOnNoteGlyphBase {
+@@ -62151,6 +64056,7 @@ class ScoreBeatGlyph extends BeatOnNoteGlyphBase {
  		const aboveBeatEffects = this.noteHeads.aboveBeatEffects;
  		const outsideBeatEffects = sr.getBeatDirection(this.container.beat) === BeamDirection.Up ? this.noteHeads.belowBeatEffects : this.noteHeads.aboveBeatEffects;
  		if (n.isStaccato && !belowBeatEffects.has("Staccato")) outsideBeatEffects.set("Staccato", new ArticStaccatoAboveGlyph(0, 0));
@@ -3785,7 +3848,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (n.accentuated === AccentuationType.Normal && !belowBeatEffects.has("Accent")) outsideBeatEffects.set("Accent", new AccentuationGlyph(0, 0, n));
  		if (n.accentuated === AccentuationType.Heavy && !belowBeatEffects.has("HAccent")) outsideBeatEffects.set("HAccent", new AccentuationGlyph(0, 0, n));
  		if (n.accentuated === AccentuationType.Tenuto && !belowBeatEffects.has("Tenuto")) outsideBeatEffects.set("Tenuto", new AccentuationGlyph(0, 0, n));
-@@ -62236,24 +64114,29 @@ class ScoreBrushGlyph extends Glyph {
+@@ -62236,24 +64142,29 @@ class ScoreBrushGlyph extends Glyph {
  				canvas.beginRotate(cx + this.x, lineEndY, -90);
  				glyph.paint(0, 0, canvas);
  				canvas.endRotate();
@@ -3827,7 +3890,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			}
  		}
  	}
-@@ -62869,7 +64752,7 @@ class ScoreSlurGlyph extends ScoreTieGlyph {
+@@ -62869,7 +64780,7 @@ class ScoreSlurGlyph extends ScoreTieGlyph {
  			if (slur !== null) {
  				const notationSettings = this.renderer.settings.notation;
  				for (const s of slur.segments) {
@@ -3836,7 +3899,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					if (notationSettings.isNotationElementVisible(label.element)) this._labels.push(label);
  				}
  			}
-@@ -63017,7 +64900,8 @@ class ScoreBeatContainerGlyph extends BeatContainerGlyph {
+@@ -63017,7 +64928,8 @@ class ScoreBeatContainerGlyph extends BeatContainerGlyph {
  			this._effectEndSlur = effectEndSlur;
  			this.addTie(effectEndSlur);
  		}
@@ -3846,7 +3909,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			if (!this._bend) {
  				const bend = new ScoreBendGlyph(this);
  				this._bend = bend;
-@@ -63056,6 +64940,10 @@ class ScoreBeatContainerGlyph extends BeatContainerGlyph {
+@@ -63056,6 +64968,10 @@ class ScoreBeatContainerGlyph extends BeatContainerGlyph {
  * @internal
  */
  class ScoreBarRenderer extends LineBarRenderer {
@@ -3857,7 +3920,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	static StaffId = "score";
  	static _sharpKsSteps = [
  		-1,
-@@ -63172,7 +65060,8 @@ class ScoreBarRenderer extends LineBarRenderer {
+@@ -63172,7 +65088,8 @@ class ScoreBarRenderer extends LineBarRenderer {
  	}
  	createLinePreBeatGlyphs() {
  		let hasClef = false;
@@ -3867,7 +3930,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			let offset = 0;
  			switch (this.bar.clef) {
  				case Clef.Neutral:
-@@ -63200,7 +65089,7 @@ class ScoreBarRenderer extends LineBarRenderer {
+@@ -63200,7 +65117,7 @@ class ScoreBarRenderer extends LineBarRenderer {
  			this.createStartSpacing();
  			this._createKeySignatureGlyphs();
  		}
@@ -3876,7 +3939,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.createStartSpacing();
  			this._createTimeSignatureGlyphs();
  		}
-@@ -63276,7 +65165,8 @@ class ScoreBarRenderer extends LineBarRenderer {
+@@ -63276,7 +65193,8 @@ class ScoreBarRenderer extends LineBarRenderer {
  	_calculateBeamDirection(helper) {
  		if (!helper.voice) return BeamDirection.Up;
  		if (helper.preferredBeamDirection !== null) return helper.preferredBeamDirection;
@@ -3886,7 +3949,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		if (helper.voice.bar.isMultiVoice) return this._invertBeamDirection(helper, BeamDirection.Up);
  		if (helper.beats[0].graceType !== GraceType.None) return this._invertBeamDirection(helper, BeamDirection.Up);
  		if (helper.beats.length === 1 && helper.beats[0].slashed) return this._invertBeamDirection(helper, BeamDirection.Down);
-@@ -63504,6 +65394,39 @@ class SlashBeatGlyph extends BeatOnNoteGlyphBase {
+@@ -63504,6 +65422,39 @@ class SlashBeatGlyph extends BeatOnNoteGlyphBase {
  		super.paint(cx, cy, canvas);
  		const tremolo = this._tremoloPicking;
  		if (tremolo) tremolo.paint(cx + this.x, cy + this.y, canvas);
@@ -3926,7 +3989,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  }
  //#endregion
-@@ -63606,7 +65529,8 @@ class SlashBarRenderer extends LineBarRenderer {
+@@ -63606,7 +65557,8 @@ class SlashBarRenderer extends LineBarRenderer {
  		return 5;
  	}
  	get drawnLineCount() {
@@ -3936,7 +3999,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	get bottomGlyphOverflow() {
  		return 0;
-@@ -63623,6 +65547,9 @@ class SlashBarRenderer extends LineBarRenderer {
+@@ -63623,6 +65575,9 @@ class SlashBarRenderer extends LineBarRenderer {
  	doLayout() {
  		super.doLayout();
  		if (this.voiceContainer.tupletGroups.size > 0) this.registerOverflowTop(this.tupletSize);
@@ -3946,7 +4009,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	getNoteLine(_note) {
  		return 0;
-@@ -63641,7 +65568,7 @@ class SlashBarRenderer extends LineBarRenderer {
+@@ -63641,7 +65596,7 @@ class SlashBarRenderer extends LineBarRenderer {
  		return BeamDirection.Up;
  	}
  	createLinePreBeatGlyphs() {
@@ -3955,7 +4018,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.createStartSpacing();
  			this._createTimeSignatureGlyphs();
  		}
-@@ -63732,10 +65659,16 @@ class NoteNumberGlyph extends Glyph {
+@@ -63732,10 +65687,16 @@ class NoteNumberGlyph extends Glyph {
  				if (i >= 0) this._noteString = this._noteString.substr(0, i + 2);
  				this._noteString = `<${this._noteString}>`;
  			}
@@ -3975,7 +4038,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			case HarmonicType.Artificial:
  			case HarmonicType.Pinch:
  			case HarmonicType.Tap:
-@@ -63774,6 +65707,12 @@ class NoteNumberGlyph extends Glyph {
+@@ -63774,6 +65735,12 @@ class NoteNumberGlyph extends Glyph {
  		const _ = ElementStyleHelper.note(canvas, NoteSubElement.GuitarTabFretNumber, this._note);
  		try {
  			canvas.fillText(this._noteString, x, y);
@@ -3988,7 +4051,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		} finally {
  			_?.[Symbol.dispose]?.();
  		}
-@@ -63840,13 +65779,17 @@ class TabNoteChordGlyph extends Glyph {
+@@ -63840,13 +65807,17 @@ class TabNoteChordGlyph extends Glyph {
  		return 0;
  	}
  	getLowestNoteY(requestedPosition) {
@@ -4009,7 +4072,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			const n = this.notesPerString.get(note.string);
  			let pos = this.y + n.y;
  			switch (requestedPosition) {
-@@ -63905,7 +65848,8 @@ class TabNoteChordGlyph extends Glyph {
+@@ -63905,7 +65876,8 @@ class TabNoteChordGlyph extends Glyph {
  			const tabHeight = this.renderer.resources.tablatureFont.size;
  			let minEffectY = NaN;
  			let maxEffectY = NaN;
@@ -4019,7 +4082,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			const effectSpacing = this.renderer.smuflMetrics.onNoteEffectPadding;
  			for (const g of this.beatEffects.values()) {
  				g.y += effectY;
-@@ -63970,7 +65914,11 @@ class TabRestGlyph extends MusicFontGlyph {
+@@ -63970,7 +65942,11 @@ class TabRestGlyph extends MusicFontGlyph {
  		if (this._isVisibleRest) {
  			const _ = ElementStyleHelper.beat(canvas, BeatSubElement.GuitarTabRests, this.beat);
  			try {
@@ -4032,7 +4095,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			} finally {
  				_?.[Symbol.dispose]?.();
  			}
-@@ -64049,7 +65997,8 @@ class TabBeatGlyph extends BeatOnNoteGlyphBase {
+@@ -64049,7 +66025,8 @@ class TabBeatGlyph extends BeatOnNoteGlyphBase {
  				const tabNoteNumbers = new TabNoteChordGlyph(0, 0, isGrace);
  				this.noteNumbers = tabNoteNumbers;
  				tabNoteNumbers.beat = this.container.beat;
@@ -4042,7 +4105,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				this.addNormal(tabNoteNumbers);
  				beatEffects = tabNoteNumbers.beatEffects;
  			}
-@@ -64059,8 +66008,10 @@ class TabBeatGlyph extends BeatOnNoteGlyphBase {
+@@ -64059,8 +66036,10 @@ class TabBeatGlyph extends BeatOnNoteGlyphBase {
  				beatEffects.set("tremolo", glyph);
  				centeredEffectGlyphs.push(glyph);
  			}
@@ -4055,7 +4118,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				for (let i = 0; i < this.container.beat.dots; i++) this.addEffect(new AugmentationDotGlyph(0, y));
  			}
  		} else {
-@@ -64136,8 +66087,10 @@ class TabBrushGlyph extends Glyph {
+@@ -64136,8 +66115,10 @@ class TabBrushGlyph extends Glyph {
  	}
  	paint(cx, cy, canvas) {
  		const tabBarRenderer = this.renderer;
@@ -4068,7 +4131,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		const arrowX = cx + this.x + this.width / 2;
  		const arrowSize = this.renderer.smuflMetrics.glyphWidths.get(MusicFontSymbol.ArrowheadBlackDown);
  		if (this._beat.brushType !== BrushType.None) {
-@@ -64146,7 +66099,7 @@ class TabBrushGlyph extends Glyph {
+@@ -64146,7 +66127,7 @@ class TabBrushGlyph extends Glyph {
  				canvas.moveTo(arrowX, startY);
  				canvas.lineTo(arrowX, endY);
  				canvas.stroke();
@@ -4077,7 +4140,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				const glyph = this._noteVibratoGlyph;
  				const lineStartY = startY;
  				const lineEndY = endY - arrowSize;
-@@ -64154,7 +66107,7 @@ class TabBrushGlyph extends Glyph {
+@@ -64154,7 +66135,7 @@ class TabBrushGlyph extends Glyph {
  				canvas.beginRotate(cx + this.x, lineEndY, -90);
  				glyph.paint(0, (this.width - glyph.height) / 2, canvas);
  				canvas.endRotate();
@@ -4086,7 +4149,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				const glyph = this._noteVibratoGlyph;
  				const lineStartY = startY + arrowSize;
  				glyph.width = Math.abs(endY - lineStartY);
-@@ -64162,7 +66115,9 @@ class TabBrushGlyph extends Glyph {
+@@ -64162,7 +66143,9 @@ class TabBrushGlyph extends Glyph {
  				glyph.paint(0, -(this.width - glyph.height / 2), canvas);
  				canvas.endRotate();
  			}
@@ -4097,7 +4160,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				canvas.beginPath();
  				canvas.moveTo(arrowX, endY);
  				canvas.lineTo(arrowX + arrowSize / 2, endY - arrowSize);
-@@ -64365,9 +66320,10 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
+@@ -64365,9 +66348,10 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
  		}
  	}
  	createTies(n) {
@@ -4110,7 +4173,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			const tie = new TabTieGlyph(`tab.tie.${n.id}`, n, n.tieDestination, false);
  			this.addTie(tie);
  		}
-@@ -64379,9 +66335,11 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
+@@ -64379,9 +66363,11 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
  			const tapSlur = new TabTieGlyph(`tab.tie.leftHandTap.${n.id}`, n, n, false);
  			this.addTie(tapSlur);
  		}
@@ -4123,7 +4186,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				expanded = true;
  				break;
  			}
-@@ -64393,7 +66351,7 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
+@@ -64393,7 +66379,7 @@ class TabBeatContainerGlyph extends BeatContainerGlyph {
  		}
  		if (n.isEffectSlurDestination && n.effectSlurOrigin) {
  			let expanded = false;
@@ -4132,7 +4195,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				expanded = true;
  				break;
  			}
-@@ -64496,7 +66454,8 @@ class TabBarRenderer extends LineBarRenderer {
+@@ -64496,7 +66482,8 @@ class TabBarRenderer extends LineBarRenderer {
  		return mode;
  	}
  	getNoteLine(note) {
@@ -4142,7 +4205,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	minString = NaN;
  	maxString = NaN;
-@@ -64508,7 +66467,7 @@ class TabBarRenderer extends LineBarRenderer {
+@@ -64508,7 +66495,7 @@ class TabBarRenderer extends LineBarRenderer {
  			const notes = bg.onNotes;
  			const noteNumbers = notes.noteNumbers;
  			if (noteNumbers) {
@@ -4151,7 +4214,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			}
  		}
  	}
-@@ -64524,16 +66483,27 @@ class TabBarRenderer extends LineBarRenderer {
+@@ -64524,16 +66511,27 @@ class TabBarRenderer extends LineBarRenderer {
  		if (this.maxString === this.bar.staff.tuning.length - 1) this.registerOverflowBottom(this.lineSpacing / 2);
  		if (this.rhythmMode !== TabRhythmMode.Hidden) {
  			this._hasTuplets = this.voiceContainer.tupletGroups.size > 0;
@@ -4181,7 +4244,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			this.createStartSpacing();
  			this._createTimeSignatureGlyphs();
  		}
-@@ -64560,25 +66530,38 @@ class TabBarRenderer extends LineBarRenderer {
+@@ -64560,25 +66558,38 @@ class TabBarRenderer extends LineBarRenderer {
  		if (this.rhythmMode !== TabRhythmMode.Hidden) super.paintBeams(cx, cy, canvas, flagsElement, beamsElement);
  	}
  	paintTuplets(cx, cy, canvas, beatElement, bracketsAsArcs = false) {
@@ -4225,7 +4288,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	shouldPaintFlag(beat) {
  		if (!super.shouldPaintFlag(beat)) return false;
-@@ -64593,23 +66576,22 @@ class TabBarRenderer extends LineBarRenderer {
+@@ -64593,23 +66604,22 @@ class TabBarRenderer extends LineBarRenderer {
  		}
  		const _ = ElementStyleHelper.beat(canvas, BeatSubElement.GuitarTabStem, beat);
  		try {
@@ -4260,7 +4323,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		} finally {
  			_?.[Symbol.dispose]?.();
  		}
-@@ -64635,7 +66617,8 @@ class TabBarRendererFactory extends BarRendererFactory {
+@@ -64635,7 +66645,8 @@ class TabBarRendererFactory extends BarRendererFactory {
  		this.hideOnPercussionTrack = true;
  	}
  	canCreate(track, staff) {
@@ -4270,7 +4333,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	}
  	create(renderer, bar) {
  		return new TabBarRenderer(renderer, bar);
-@@ -64937,6 +66920,10 @@ class Environment {
+@@ -64937,6 +66948,10 @@ class Environment {
  				effect: new TextEffectInfo(),
  				mode: EffectBandMode.SharedTop
  			},
@@ -4281,7 +4344,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			{
  				effect: new BeatTimerEffectInfo(),
  				mode: EffectBandMode.SharedTop
-@@ -64949,6 +66936,11 @@ class Environment {
+@@ -64949,6 +66964,11 @@ class Environment {
  				effect: new AlternateEndingsEffectInfo(),
  				mode: EffectBandMode.SharedTop,
  				order: 1e3
@@ -4293,7 +4356,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			}
  		]),
  		new ScoreBarRendererFactory([
-@@ -64956,6 +66948,10 @@ class Environment {
+@@ -64956,6 +66976,10 @@ class Environment {
  				effect: new CapoEffectInfo(),
  				mode: EffectBandMode.SharedTop
  			},
@@ -4304,7 +4367,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			{
  				effect: new FermataEffectInfo(),
  				mode: EffectBandMode.SharedTop
-@@ -65040,6 +67036,11 @@ class Environment {
+@@ -65040,6 +67064,11 @@ class Environment {
  				effect: new GolpeEffectInfo(GolpeType.Finger),
  				mode: EffectBandMode.OwnedTop
  			},
@@ -4316,7 +4379,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			{
  				effect: new GolpeEffectInfo(GolpeType.Thumb),
  				mode: EffectBandMode.OwnedBottom
-@@ -65055,6 +67056,14 @@ class Environment {
+@@ -65055,6 +67084,14 @@ class Environment {
  			{
  				effect: new SustainPedalEffectInfo(),
  				mode: EffectBandMode.SharedBottom
@@ -4331,7 +4394,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			}
  		]),
  		new NumberedBarRendererFactory([{
-@@ -65131,6 +67140,14 @@ class Environment {
+@@ -65131,6 +67168,14 @@ class Environment {
  				effect: new FingeringEffectInfo(),
  				mode: EffectBandMode.OwnedTop
  			},
@@ -4346,7 +4409,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			{
  				effect: new PalmMuteEffectInfo(),
  				mode: EffectBandMode.OwnedTop
-@@ -65156,6 +67173,10 @@ class Environment {
+@@ -65156,6 +67201,10 @@ class Environment {
  				effect: new GolpeEffectInfo(GolpeType.Thumb),
  				mode: EffectBandMode.OwnedBottom,
  				shouldCreate: (staff) => !staff.showStandardNotation
@@ -4357,7 +4420,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  			}
  		])
  	];
-@@ -65583,7 +67604,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
+@@ -65583,7 +67632,9 @@ var _barrel_exports$1 = /* @__PURE__ */ __exportAll({
  //#region src/io/_barrel.ts
  var _barrel_exports$2 = /* @__PURE__ */ __exportAll({
  	ByteBuffer: () => ByteBuffer,
@@ -4368,7 +4431,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  });
  //#endregion
  //#region src/exporter/ScoreExporter.ts
-@@ -66549,6 +68572,7 @@ class GpifWriter {
+@@ -66549,6 +68600,7 @@ class GpifWriter {
  		if (note.isTrill) noteNode.addElement("Trill").innerText = note.trillValue.toString();
  		let accentFlags = 0;
  		if (note.isStaccato) accentFlags |= 1;
@@ -4376,7 +4439,43 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		switch (note.accentuated) {
  			case AccentuationType.Normal:
  				accentFlags |= 8;
-@@ -67137,7 +69161,7 @@ class GpifWriter {
+@@ -66785,7 +68837,24 @@ class GpifWriter {
+ 		pitch.addElement("Octave").innerText = octave;
+ 	}
+ 	_writeBend(properties, note) {
+-		if (note.hasBend && note.bendPoints.length <= 4) this._writeStandardBend(properties, note.bendPoints);
++		// OpenTabz patch 0059: a longer curve (Guitar Pro 3–5's) is written as the nearest of Guitar
++		// Pro 7's, instead of being left out.
++		if (note.hasBend) this._writeStandardBend(properties, GpifWriter.fourBendPoints(note.bendPoints));
++	}
++	/**
++	* OpenTabz patch 0059: Guitar Pro 7's bends and whammy bars have an origin, a middle held from
++	* one offset to another, and a destination. A longer curve keeps its first and last points and
++	* goes through its point farthest from the origin, held from where the curve first reaches that
++	* value to where it last has it.
++	*/
++	static fourBendPoints(points) {
++		if (points.length <= 4) return points;
++		const origin = points[0];
++		const inner = points.slice(1, points.length - 1);
++		let farthest = inner[0];
++		for (const point of inner) if (Math.abs(point.value - origin.value) > Math.abs(farthest.value - origin.value)) farthest = point;
++		const held = inner.filter((point) => point.value === farthest.value);
++		return [origin, held[0], held[held.length - 1], points[points.length - 1]];
+ 	}
+ 	_writeStandardBend(properties, bendPoints) {
+ 		this._writeSimplePropertyNode(properties, "Bended", "Enable", null);
+@@ -67057,7 +69126,8 @@ class GpifWriter {
+ 		parent.addElement("Rhythm").attributes.set("ref", rhythm);
+ 	}
+ 	_writeWhammyNode(parent, beat) {
+-		if (beat.hasWhammyBar && beat.whammyBarPoints.length <= 4) this._writeStandardWhammy(parent, beat.whammyBarPoints);
++		// OpenTabz patch 0059: as bends.
++		if (beat.hasWhammyBar) this._writeStandardWhammy(parent, GpifWriter.fourBendPoints(beat.whammyBarPoints));
+ 	}
+ 	_writeStandardWhammy(parent, whammyBarPoints) {
+ 		const whammyNode = parent.addElement("Whammy");
+@@ -67137,7 +69207,7 @@ class GpifWriter {
  				tempoAutomation.addElement("Bar").innerText = mb.index.toString();
  				tempoAutomation.addElement("Position").innerText = automation.ratioPosition.toString();
  				tempoAutomation.addElement("Visible").innerText = automation.isVisible ? "true" : "false";
@@ -4385,7 +4484,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  				if (automation.text) tempoAutomation.addElement("Text").innerText = automation.text;
  			}
  			if (mb.syncPoints) for (const syncPoint of mb.syncPoints) {
-@@ -67191,10 +69215,11 @@ class GpifWriter {
+@@ -67191,10 +69261,11 @@ class GpifWriter {
  		this._writeStavesNode(trackNode, track);
  		this._writeSoundsAndAutomations(trackNode, track);
  	}
@@ -4399,7 +4498,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		soundNode.addElement("Path").setCData(path);
  		soundNode.addElement("Role").setCData(role);
  		const midi = soundNode.addElement("MIDI");
-@@ -67207,7 +69232,7 @@ class GpifWriter {
+@@ -67207,7 +69278,7 @@ class GpifWriter {
  		automationNode.addElement("Linear").innerText = "false";
  		automationNode.addElement("Bar").innerText = barIndex.toString();
  		automationNode.addElement("Position").innerText = ratioPosition.toString();
@@ -4408,7 +4507,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  		automationNode.addElement("Value").setCData(`${path};${name};${role}`);
  	}
  	_writeSoundsAndAutomations(trackNode, track) {
-@@ -67232,7 +69257,7 @@ class GpifWriter {
+@@ -67232,7 +69303,7 @@ class GpifWriter {
  						this._writeSoundAndAutomation(soundsNode, automationsNode, trackSoundName, trackSoundPath, trackSoundRole, track.staves[0].bars[0].index, track.playbackInfo.program, track.playbackInfo.bank);
  						trackSoundWritten = true;
  					}
@@ -4417,7 +4516,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  					if (isTrackSound) trackSoundWritten = true;
  				}
  			}
-@@ -69160,6 +71185,8 @@ var _barrel_exports$4 = /* @__PURE__ */ __exportAll({
+@@ -69160,6 +71231,8 @@ var _barrel_exports$4 = /* @__PURE__ */ __exportAll({
  	HarmonicType: () => HarmonicType,
  	HeaderFooterStyle: () => HeaderFooterStyle,
  	InstrumentArticulation: () => InstrumentArticulation,
@@ -4427,7 +4526,7 @@ index b6203da6066c95efcf66298fe48a690f144597a5..a2ba240da75436d82ede1fc90285e3be
  	KeySignature: () => KeySignature,
  	KeySignatureType: () => KeySignatureType,
 diff --git a/dist/alphaTab.d.ts b/dist/alphaTab.d.ts
-index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b13662002 100644
+index 6491fc0cc72695a73993ffb31193da7865ecd9a6..3120f02245624e100778b5d011f6db82fe430c82 100644
 --- a/dist/alphaTab.d.ts
 +++ b/dist/alphaTab.d.ts
 @@ -128,6 +128,34 @@ declare class AlphaSynthBase implements IAlphaSynth {
@@ -4525,7 +4624,24 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      static buildTempoAutomation(isLinear: boolean, ratioPosition: number, value: number, reference: number, isVisible?: boolean): Automation;
      static buildInstrumentAutomation(isLinear: boolean, ratioPosition: number, value: number): Automation;
  }
-@@ -5735,6 +5802,11 @@ declare class Chord {
+@@ -4548,6 +4615,16 @@ declare class BarBounds {
+      * Gets or sets the bar related to this boundaries.
+      */
+     bar: Bar;
++    /**
++     * OpenTabz patch 0058: the staff the bar is drawn on ("score", "tab", "slash", "numbered"…), as
++     * a bar is drawn once on each of its track's staves.
++     */
++    staffId: string;
++    /**
++     * OpenTabz patch 0058: where the staff's lines are, from the top one down, or null for a staff
++     * without lines.
++     */
++    lineYs: number[] | null;
+     /**
+      * Gets or sets a list of the beats contained in this lookup.
+      */
+@@ -5735,6 +5812,11 @@ declare class Chord {
       * Gets or sets a list of frets where the finger should hold a barre
       */
      barreFrets: number[];
@@ -4537,7 +4653,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * Gets or sets the staff the chord belongs to.
       * @json_ignore
-@@ -6559,6 +6631,12 @@ export declare class DisplaySettings {
+@@ -6559,6 +6641,12 @@ export declare class DisplaySettings {
       * @defaultValue `10`
       */
      systemPaddingTop: number;
@@ -4550,7 +4666,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * The bottom padding applied to systems beside the last one.
       * @since 1.4.0
-@@ -9743,6 +9821,34 @@ declare interface ImporterSettingsJson {
+@@ -9743,6 +9831,34 @@ declare interface ImporterSettingsJson {
      maxDecodingBufferSize?: number;
  }
  
@@ -4585,7 +4701,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
  /**
   * Describes an instrument articulation which is used for percussions.
   * @json
-@@ -11332,6 +11438,21 @@ declare class MidiFileGenerator {
+@@ -11332,6 +11448,21 @@ declare class MidiFileGenerator {
       * Gets the transposition pitches for the individual midi channels.
       */
      readonly transpositionPitches: Map<number, number>;
@@ -4607,7 +4723,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * Initializes a new instance of the {@link MidiFileGenerator} class.
       * @param score The score for which the midi file should be generated.
-@@ -11689,6 +11810,7 @@ export declare namespace model {
+@@ -11689,6 +11820,7 @@ export declare namespace model {
          GolpeType,
          HarmonicType,
          InstrumentArticulation,
@@ -4615,7 +4731,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
          TechniqueSymbolPlacement,
          JsonConverter,
          KeySignature,
-@@ -11865,6 +11987,12 @@ declare enum MusicFontSymbol {
+@@ -11865,6 +11997,12 @@ declare enum MusicFontSymbol {
      MetNoteQuarterUp = 60581,
      MetNote8thUp = 60583,
      MetAugmentationDot = 60599,
@@ -4628,7 +4744,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      ArrowheadBlackUp = 60280,
      ArrowheadBlackDown = 60284,
      AugmentationDot = 57831,
-@@ -11912,6 +12040,10 @@ declare enum MusicFontSymbol {
+@@ -11912,6 +12050,10 @@ declare enum MusicFontSymbol {
      ArticAccentBelow = 58529,
      ArticStaccatoAbove = 58530,
      ArticStaccatoBelow = 58531,
@@ -4639,7 +4755,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      ArticTenutoAbove = 58532,
      ArticTenutoBelow = 58533,
      ArticMarcatoAbove = 58540,
-@@ -12029,7 +12161,15 @@ declare enum MusicFontSymbol {
+@@ -12029,7 +12171,15 @@ declare enum MusicFontSymbol {
      FingeringILower = 60697,
      FingeringMLower = 60698,
      FingeringALower = 60699,
@@ -4656,7 +4772,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
  }
  
  /**
-@@ -12278,7 +12418,12 @@ export declare enum NotationElement {
+@@ -12278,7 +12428,12 @@ export declare enum NotationElement {
      /**
       * The slide text shown on slurs.
       */
@@ -4670,7 +4786,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
  }
  
  /**
-@@ -12520,6 +12665,241 @@ export declare class NotationSettings {
+@@ -12520,6 +12675,241 @@ export declare class NotationSettings {
       * | ![Slur Height Default](https://alphatab.net/img/reference/property/slurheight-default.png) | ![Slur Height 14](https://alphatab.net/img/reference/property/slurheight-14.png)  |
       */
      slurHeight: number;
@@ -4912,7 +5028,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * Gets whether the given music notation element should be shown
       * @param element the element to check
-@@ -13009,6 +13389,11 @@ declare class Note {
+@@ -13009,6 +13399,11 @@ declare class Note {
       * Gets or sets whether the note is played as staccato.
       */
      isStaccato: boolean;
@@ -4924,7 +5040,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * Gets or sets the slide-in type this note is played with.
       */
-@@ -15578,6 +15963,17 @@ declare class Staff {
+@@ -15578,6 +15973,17 @@ declare class Staff {
       * transposed. This applies only to rendering.
       */
      displayTranspositionPitch: number;
@@ -4942,7 +5058,7 @@ index 6491fc0cc72695a73993ffb31193da7865ecd9a6..eeb91438c84a8d3ccda5c971b157000b
      /**
       * Get or set the guitar tuning of the guitar. This tuning also indicates the number of strings shown in the
       * guitar tablature. Unlike the {@link Note.string} property this array directly represents
-@@ -16057,6 +16453,16 @@ declare class Track {
+@@ -16057,6 +16463,16 @@ declare class Track {
       * @json_add addLineBreaks
       */
      lineBreaks?: Set<number>;

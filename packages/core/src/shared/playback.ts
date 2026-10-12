@@ -65,6 +65,13 @@ export interface ScoreBounds {
   readonly beatIndex: Int32Array;
   /** Per beat shown: [onNotesX, realX, realWidth]. */
   readonly beatRect: Float32Array;
+  /**
+   * Per staff drawn in a system (alphaTab patch 0058): [systemIndex, trackIndex, staffIndex,
+   * kind (a STAFF_KIND), firstLine, lineCount]; its lines are `lines[firstLine…]`, from the top.
+   */
+  readonly staffLines: Int32Array;
+  /** The y of every staff's lines, staff after staff. */
+  readonly lines: Float32Array;
 }
 
 export const BOUNDS_SYSTEM_STRIDE = 4;
@@ -72,6 +79,10 @@ export const BOUNDS_BAR_INDEX_STRIDE = 2;
 export const BOUNDS_BAR_RECT_STRIDE = 4;
 export const BOUNDS_BEAT_INDEX_STRIDE = 4;
 export const BOUNDS_BEAT_RECT_STRIDE = 3;
+export const BOUNDS_STAFF_LINES_STRIDE = 6;
+
+/** The kinds of staff a track is drawn on, as `ScoreBounds.staffLines` numbers them. */
+export const STAFF_KIND = { notation: 0, tablature: 1, slash: 2, numbered: 3 } as const;
 
 /** A span of score ticks, end exclusive (a selection, a loop). */
 export interface TickRange {

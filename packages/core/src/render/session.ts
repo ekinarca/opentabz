@@ -3,7 +3,8 @@
  * lazy partials) plus the bookkeeping to stream layout and SVG to the UI.
  *
  * Layout is synchronous: `layout()` returns every partial's geometry at once. Painting is lazy:
- * the UI asks for the partials that approach the viewport via `paint()`.
+ * the UI asks for the partials that approach the viewport via `paint()`. After an edit, the next
+ * layout keeps the systems before the first bar changed (their ids too) and lays out the rest.
  */
 import * as alphaTab from '@coderline/alphatab';
 import { sameColoring } from '../shared/note-colors.ts';
@@ -70,6 +71,8 @@ export class RenderSession {
   private finished: alphaTab.rendering.RenderFinishedEventArgs | null = null;
   private failure: Error | null = null;
   private disposed = false;
+  /** The first master bar edited since the last layout, or null. */
+  private edited: number | null = null;
   /** The style the file brought: a view's style changes the stylesheet only where it differs. */
   private readonly fileStyle: ScoreStyle;
 
@@ -99,21 +102,40 @@ export class RenderSession {
     return this.generation;
   }
 
-  /** Lays out the score with new options. Uses alphaTab's fast resize path when only the width changed. */
+  /** Marks the score edited from a master bar on: the next layout lays it out again from there. */
+  public invalidateFrom(masterBar: number): void {
+    this.edited = Math.min(this.edited ?? masterBar, masterBar);
+  }
+
+  /**
+   * Lays out the score with new options. Uses alphaTab's fast resize path when only the width
+   * changed, and after an edit with the same options lays out only from the system edited on.
+   */
   public layout(options: ViewOptions = this.options): LayoutResult {
     this.assertAlive();
-    const onlyWidthChanged = this.generation > 0 && sameExceptWidth(this.options, options);
+    const laidOut = this.generation > 0;
+    const edited = this.edited;
+    const onlyWidthChanged = laidOut && edited === null && sameExceptWidth(this.options, options);
+    const onlyEdited =
+      laidOut &&
+      edited !== null &&
+      sameExceptWidth(this.options, options) &&
+      this.options.width === options.width;
     this.options = options;
+    this.edited = null;
     const started = performance.now();
     this.begin();
     this.withStaffDisplay(() => {
+      const tracks = validTrackIndexes(this.score, options.trackIndexes);
       if (onlyWidthChanged) {
         this.renderer.width = options.width;
         this.renderer.resizeRender();
+      } else if (onlyEdited) {
+        this.renderer.renderScore(this.score, tracks, { firstChangedMasterBar: edited, reuseViewport: true });
       } else {
         this.renderer.updateSettings(createRenderSettings(options));
         this.renderer.width = options.width;
-        this.renderer.renderScore(this.score, validTrackIndexes(this.score, options.trackIndexes));
+        this.renderer.renderScore(this.score, tracks);
       }
     });
     return this.end(performance.now() - started);
@@ -331,10 +353,12 @@ function moveDown(bounds: ScoreBounds, top: number, by: number): ScoreBounds {
     }
     return moved;
   };
+  const lines = bounds.lines.map(y => (y >= top ? y + by : y));
   return {
     ...bounds,
     systems: move(bounds.systems, BOUNDS_SYSTEM_STRIDE),
     barRect: move(bounds.barRect, BOUNDS_BAR_RECT_STRIDE),
+    lines,
   };
 }
 

@@ -2,8 +2,12 @@
  * The engine's request handlers, independent of any messaging mechanism. The worker entry
  * forwards protocol messages here; tests call it directly in Node.
  */
-import { summarizeScore } from '../document/summary.ts';
+import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
+import { EditError } from '../edit/commands.ts';
+import { collectTrackBeats } from '../edit/track-beats.ts';
+import { ScoreEditor, type EditResult } from '../edit/editor.ts';
+import { saveGuitarPro } from '../export/guitar-pro.ts';
 import { exportMidi } from '../export/midi.ts';
 import { OpenFailure, openScore } from '../open/open.ts';
 import { generatePlayback } from '../playback/generate.ts';
@@ -16,7 +20,9 @@ import { unfoldScore } from '../document/unfold.ts';
 import { registerMusicFont } from '../render/music-fonts.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
+import type { TrackBeats } from '../shared/beats.ts';
 import type { TrackChords } from '../shared/chords.ts';
+import type { EditOutcome } from '../shared/edit.ts';
 import type { TrackDrums } from '../shared/drums.ts';
 import type { ScoreOverview } from '../shared/overview.ts';
 import type { TrackLyrics } from '../shared/lyrics.ts';
@@ -45,9 +51,13 @@ import * as alphaTab from '@coderline/alphatab';
 
 interface OpenDocument {
   readonly score: alphaTab.model.Score;
-  readonly summary: DocSummary;
+  /** What the file was, to summarize the document again as it is edited. */
+  readonly meta: SummaryMeta;
+  summary: DocSummary;
   /** Beats by id, built on first use (audible stepping). */
   beats: Map<number, alphaTab.model.Beat> | null;
+  /** Made on the first edit. */
+  editor: ScoreEditor | null;
 }
 
 interface View {
@@ -101,7 +111,7 @@ export class EngineHost implements EngineMethods {
       colorTracks(opened.score, opened.format);
       this.documentCounter += 1;
       const id = `doc-${this.documentCounter}`;
-      const summary = summarizeScore(opened.score, {
+      const meta: SummaryMeta = {
         id,
         fileName: args.name,
         byteLength: args.bytes.byteLength,
@@ -109,8 +119,9 @@ export class EngineHost implements EngineMethods {
         formatVersion: opened.formatVersion,
         extensionMismatch: opened.extensionMismatch,
         truncated: opened.truncated,
-      });
-      this.documents.set(id, { score: opened.score, summary, beats: null });
+      };
+      const summary = summarizeScore(opened.score, meta);
+      this.documents.set(id, { score: opened.score, meta, summary, beats: null, editor: null });
       return { ok: true, summary, parseMs: performance.now() - started };
     } catch (error) {
       if (error instanceof OpenFailure) return { ok: false, error: error.error };
@@ -158,6 +169,59 @@ export class EngineHost implements EngineMethods {
     this.views.get(args.viewId)?.session.dispose();
     this.views.delete(args.viewId);
     return null;
+  }
+
+  public edit(args: EngineArgs<'edit'>): EditOutcome {
+    const document = this.document(args.docId);
+    document.editor ??= new ScoreEditor(document.score, new alphaTab.Settings());
+    try {
+      return this.edited(args.docId, document, document.editor.apply(args.commands));
+    } catch (error) {
+      if (error instanceof EditError) throw new EngineHostError(error.message);
+      throw error;
+    }
+  }
+
+  public undo(args: EngineArgs<'undo'>): EditOutcome {
+    const document = this.document(args.docId);
+    return this.edited(args.docId, document, document.editor?.undo() ?? null);
+  }
+
+  public redo(args: EngineArgs<'redo'>): EditOutcome {
+    const document = this.document(args.docId);
+    return this.edited(args.docId, document, document.editor?.redo() ?? null);
+  }
+
+  /** A document edited: summarized again, its views to be laid out again from the bar changed. */
+  private edited(docId: string, document: OpenDocument, result: EditResult | null): EditOutcome {
+    if (result !== null) {
+      document.beats = null;
+      document.summary = summarizeScore(document.score, document.meta);
+      for (const view of this.views.values())
+        if (view.docId === docId) view.session.invalidateFrom(result.firstChangedMasterBar);
+    }
+    return {
+      changed: result !== null,
+      firstChangedMasterBar: result?.firstChangedMasterBar ?? 0,
+      canUndo: document.editor?.canUndo ?? false,
+      canRedo: document.editor?.canRedo ?? false,
+      revision: document.editor?.revision ?? 0,
+      summary: document.summary,
+    };
+  }
+
+  public trackBeats(args: EngineArgs<'trackBeats'>): TrackBeats {
+    return collectTrackBeats(this.document(args.docId).score, args.trackIndex);
+  }
+
+  public saveDocument(args: EngineArgs<'saveDocument'>): EngineResult<'saveDocument'> {
+    return { bytes: saveGuitarPro(this.document(args.docId).score).slice().buffer };
+  }
+
+  private document(docId: string): OpenDocument {
+    const document = this.documents.get(docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${docId}.`);
+    return document;
   }
 
   public connectSynth(args: { readonly port: MidiSink }): null {
@@ -244,8 +308,7 @@ export class EngineHost implements EngineMethods {
     const order: number[] = [];
     for (let at = 2; at < bars.length; at += TIMELINE_BAR_STRIDE) order.push(bars[at] ?? 0);
     const unfolded = unfoldScore(document.score, order);
-    const bytes = new alphaTab.exporter.Gp7Exporter().export(unfolded, new alphaTab.Settings());
-    return { bytes: bytes.slice().buffer };
+    return { bytes: saveGuitarPro(unfolded).slice().buffer };
   }
 
   public registerMusicFont(args: EngineArgs<'registerMusicFont'>): null {

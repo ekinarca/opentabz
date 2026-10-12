@@ -22,3 +22,5 @@ export * from './technique-labels.ts';
 export * from './note-colors.ts';
 export * from './reading-aids.ts';
 export * from './music-font.ts';
+export * from './edit.ts';
+export * from './beats.ts';

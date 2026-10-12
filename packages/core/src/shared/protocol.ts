@@ -3,6 +3,8 @@
  * synchronous operation inside the worker; the client wraps each call in a promise with a
  * watchdog deadline. alphaTab-free; safe on the main thread.
  */
+import type { TrackBeats } from './beats.ts';
+import type { EditCommand, EditOutcome } from './edit.ts';
 import type { OpenError } from './open-error.ts';
 import type { TrackChords } from './chords.ts';
 import type { TrackDrums } from './drums.ts';
@@ -58,6 +60,19 @@ export interface EngineMethods {
     readonly ids: readonly string[];
   }): PaintResult;
   closeView(args: { readonly viewId: string }): null;
+  /**
+   * Edits a document (EDIT-001): the commands are made together, as one edit to undo, or none is
+   * made. Its views are laid out again, on their next layout, from the first bar changed.
+   */
+  edit(args: { readonly docId: string; readonly commands: readonly EditCommand[] }): EditOutcome;
+  /** Undoes a document's last edit (EDIT-060). */
+  undo(args: { readonly docId: string }): EditOutcome;
+  /** Makes a document's last edit undone again. */
+  redo(args: { readonly docId: string }): EditOutcome;
+  /** Every beat of one track, where it is and what it holds, for the editor's caret. */
+  trackBeats(args: { readonly docId: string; readonly trackIndex: number }): TrackBeats;
+  /** A document as it is now, edited or not, as a Guitar Pro 7/8 file (EDIT-064). */
+  saveDocument(args: { readonly docId: string }): { readonly bytes: ArrayBuffer };
   /** Hands the engine a port to the synth worker; MIDI goes there directly. */
   connectSynth(args: { readonly port: MessagePort }): null;
   /** Generates MIDI for a document, sends it to the synth and returns the playback timeline. */
