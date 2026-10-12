@@ -4,6 +4,22 @@ import { defaultPaper, defaultPreferences, parsePreferences, resolveTheme } from
 const FALLBACK = defaultPreferences('en-GB');
 
 describe('preferences', () => {
+  it('read back tunings of one’s own, leaving out what is not one (EDIT-072)', () => {
+    const stored = JSON.stringify({
+      myTunings: [
+        { name: 'Open C', tuning: [64, 60, 55, 48, 43, 36] },
+        { name: 'Broken', tuning: [64, 'x'] },
+        { name: 42, tuning: [64] },
+        { name: 'Empty', tuning: [] },
+        { name: 'Too high', tuning: [128] },
+      ],
+    });
+    expect(parsePreferences(stored, FALLBACK).myTunings).toEqual([
+      { name: 'Open C', tuning: [64, 60, 55, 48, 43, 36] },
+    ]);
+    expect(parsePreferences(JSON.stringify({ myTunings: 'none' }), FALLBACK).myTunings).toEqual([]);
+  });
+
   it('print on Letter in the Americas that use it, A4 elsewhere', () => {
     expect(defaultPaper('en-US')).toBe('letter');
     expect(defaultPaper('es-MX')).toBe('letter');

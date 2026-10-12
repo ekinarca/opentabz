@@ -596,20 +596,20 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-063 | Native save as .otz                                              | OT  | M4  | —       | —    | planned |
 | EDIT-064 | Save as .gp (Guitar Pro 7/8) with round-trip tests               | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, packages/core/test/save-gp.test.ts | done |
 | EDIT-065 | Save as alphaTex                                                 | OT  | M4  | —       | —    | planned |
-| EDIT-066 | Track-creation wizard: family and instrument, name, colour, icon, notations, tuning and sound, each with a preview | GP  | M4  | —       | —    | planned |
-| EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-066 | Track-creation wizard: family and instrument, name, colour, icon, notations, tuning and sound, each with a preview | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-068 | Track icon                                                       | GP  | M4  | —       | —    | planned |
 | EDIT-069 | Split one staff into two (at a pitch, or everything to the upper or lower staff) | GP  | M4  | —       | —    | planned |
 | EDIT-070 | Merge two staves into one (both, upper only, lower only)         | GP  | M4  | —       | —    | planned |
-| EDIT-071 | Tuning preview: play the whole tuning or one string              | GP  | M4  | —       | —    | planned |
-| EDIT-072 | User tuning library: save, rename, delete                        | GP  | M4  | —       | —    | planned |
-| EDIT-073 | Custom tuning label shown in the score                           | GP  | M4  | —       | —    | planned |
+| EDIT-071 | Tuning preview: play the whole tuning or one string              | GP  | M4  | —       | packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-072 | User tuning library: save, rename, delete                        | GP  | M4  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-073 | Custom tuning label shown in the score                           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-074 | Banjo drone (short fifth) string: fret numbering, fingering, string moves | GP  | M4  | —       | —    | planned |
 | EDIT-075 | Partial capo on chosen strings, combinable with a full capo      | GP  | M4  | —       | —    | planned |
-| EDIT-076 | Stringed or non-stringed track mode                              | GP  | M4  | —       | —    | planned |
+| EDIT-076 | Stringed or non-stringed track mode                              | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-077 | Editing palette: grouped symbol buttons, parameter pop-ups, long-press variants | GP  | M4  | —       | —    | planned |
 | EDIT-078 | Score inspector: information, notation settings, mastering       | GP  | M4  | —       | —    | planned |
-| EDIT-079 | Track inspector: information, notation, tuning, transposition, sound, interpretation | GP  | M4  | —       | —    | planned |
+| EDIT-079 | Track inspector: information, notation, tuning, transposition, sound, interpretation | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-080 | Click-to-edit: editable elements highlight on hover and open their editor on click | GP  | M4  | —       | —    | planned |
 | EDIT-081 | Selection: drag across beats and bars                            | GP  | M1  | — | apps/web/e2e/playback.spec.ts | done |
 | EDIT-082 | Selection handles to grow or shrink a selection                  | GP  | M1  | — | apps/web/e2e/playback.spec.ts, apps/web/e2e/mobile.spec.ts | done |
@@ -619,7 +619,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-086 | Select a whole section                                           | GP  | M1  | —       | apps/web/e2e/practice.spec.ts | done |
 | EDIT-087 | Edit cursor coloured by voice; inactive voices dimmed and locked | GP  | M4  | —       | —    | planned |
 | EDIT-088 | Multivoice mode: edit all four voices at once                    | GP  | M4  | —       | —    | planned |
-| EDIT-089 | Score-information editor: every header field, notice and instructions, multi-line values | GP  | M4  | —       | —    | planned |
+| EDIT-089 | Score-information editor: every header field, notice and instructions, multi-line values | GP  | M4  | —       | packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-090 | Master track: song-wide tempo, sections, repeats, directions, key and master automations | GP  | M4  | —       | —    | planned |
 | EDIT-091 | Keyboard entry on standard notation with a chosen string (1–9) or automatic string (0) | GP  | M4  | —       | —    | planned |
 | EDIT-092 | Entry in any shown notation (tab, staff, slash, numbered) updates all of them | GP  | M4  | —       | —    | planned |

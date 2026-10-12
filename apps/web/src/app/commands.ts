@@ -12,6 +12,7 @@ import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '.
 import { editingOf, transposeNotes } from '../state/editing.ts';
 import { openBarDialog } from './BarDialog.tsx';
 import { openTransposeDialog } from './TransposeDialog.tsx';
+import { openScoreInfoDialog } from './ScoreInfoDialog.tsx';
 import { openTrackDialog } from './TrackDialog.tsx';
 import { newScore } from './new-score.ts';
 import { requestClose } from './save.ts';
@@ -281,6 +282,17 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       run: () => {
         const doc = activeDocument();
         if (doc !== null) openBarDialog(doc.key);
+      },
+    },
+    {
+      id: 'score-information',
+      label: strings.scoreInfoDialog.open,
+      aliases: aliasesOf('score-information'),
+      keys: null,
+      unavailable: whileEditing,
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openScoreInfoDialog(doc.key);
       },
     },
     {

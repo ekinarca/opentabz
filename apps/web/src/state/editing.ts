@@ -47,6 +47,7 @@ import {
   type Finger,
   type Harmony,
   type NoteTechniques,
+  type ScoreInfo,
   type Selection,
   type Spelling,
   type Stem,
@@ -1227,6 +1228,13 @@ export function moveNoteString(key: string, up: boolean, invertedTab: boolean): 
     const tuning = doc.summary.tracks[caret.track]?.staves[caret.staff]?.tuning ?? [];
     const string = stringFor(row, tuning, caret.string, higher) ?? caret.string;
     apply(key, [{ kind: 'move-string', at: { ...at, string: caret.string }, higher }], { at, string });
+  });
+}
+
+/** Sets the score's information: title, artist, credits, instructions, notices (EDIT-089). */
+export function setScoreInfo(key: string, info: ScoreInfo): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'set-score', info }]);
   });
 }
 

@@ -941,3 +941,88 @@ test('drums are written beat by beat: pads of the drum view, or General MIDI key
     await expect(caret(page)).toHaveText(/nothing written$/);
   }
 });
+
+test('the score’s title and credits are edited, and its title block follows (EDIT-089)', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menuitem', { name: 'Score information…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Score information' });
+  await expect(dialog.getByLabel('Title', { exact: true })).toHaveValue('Twelve-Bar Shuffle in A');
+  await dialog.getByLabel('Title', { exact: true }).fill('Blues for Ada');
+  await dialog.getByLabel('Artist').fill('The House Band');
+  await dialog.getByRole('button', { name: 'Apply' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Blues for Ada, changes not saved' })).toBeVisible();
+  const titleBlock = page.locator('.ot-scroll:not([hidden]) .ot-partial').first();
+  await expect
+    .poll(() => titleBlock.evaluate(element => element.innerHTML.includes('>Blues for Ada<')))
+    .toBe(true);
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Twelve-Bar Shuffle in A', exact: true })).toBeVisible();
+});
+
+test('a track is added from a library of instruments by family, with its range (EDIT-067)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editTool(page, 'Add a track');
+  const add = page.getByRole('dialog', { name: 'Add a track' });
+  const instrument = add.getByLabel('Instrument');
+  // Families of instruments, a hundred and more.
+  expect(await instrument.locator('optgroup').count()).toBeGreaterThanOrEqual(10);
+  expect(await instrument.locator('option').count()).toBeGreaterThanOrEqual(100);
+  await instrument.selectOption({ label: 'Cello' });
+  await expect(add.getByText('Plays from C2 to A5.')).toBeVisible();
+  await expect(add.getByLabel('Name', { exact: true })).toHaveValue('Cello');
+  await add.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(add).toBeHidden();
+  await expect(editBar(page).getByRole('combobox', { name: 'Track' }).locator('option').nth(4)).toHaveText(
+    '5. Cello',
+  );
+});
+
+test('a track’s tuning is heard string by string, and named (EDIT-071, EDIT-073)', async ({ page }) => {
+  // The engine's requests to sound pitches, kept.
+  await page.addInitScript(() => {
+    const heard: unknown[] = [];
+    Object.assign(window, { heard });
+    const Original = window.Worker;
+    window.Worker = class extends Original {
+      public override postMessage(message: unknown, transfer?: unknown): void {
+        const request = message as { method?: string; args?: { pitches?: unknown } };
+        if (request.method === 'previewPitches') heard.push(request.args?.pitches);
+        super.postMessage(message, transfer as Transferable[]);
+      }
+    };
+  });
+  const heard = () => page.evaluate(() => (window as unknown as { heard: unknown[] }).heard);
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editTool(page, 'Track properties');
+  const track = page.getByRole('dialog', { name: 'Track: Rhythm Guitar' });
+  await track.getByRole('button', { name: 'Hear the tuning' }).click();
+  // From the low E up.
+  await expect.poll(heard).toEqual([[40, 45, 50, 55, 59, 64]]);
+  await track.getByRole('button', { name: 'Hear string 1' }).click();
+  await expect.poll(heard).toEqual([[40, 45, 50, 55, 59, 64], [64]]);
+  // A preset names the tuning; the name is the track's.
+  await track.getByLabel('Tuning', { exact: true }).selectOption({ label: 'Open G (D G D G B D)' });
+  await expect(track.getByLabel('Tuning name')).toHaveValue('Open G');
+  await track.getByRole('button', { name: 'Apply' }).click();
+  await editTool(page, 'Track properties');
+  await expect(track.getByLabel('Tuning', { exact: true })).toHaveValue('open-g');
+  await expect(track.getByLabel('Tuning name')).toHaveValue('Open G');
+
+  // A tuning of one's own, saved, offered again, renamed and forgotten (EDIT-072).
+  await track.getByLabel('String 6', { exact: true }).selectOption({ label: 'C2' });
+  await track.getByLabel('Tuning name').fill('Open G low C');
+  await track.getByRole('button', { name: 'Save to my tunings' }).click();
+  await expect(track.getByLabel('Tuning', { exact: true })).toHaveValue('mine-0');
+  await track.getByLabel('Tuning name').fill('Low C');
+  await track.getByRole('button', { name: 'Save the name' }).click();
+  await expect(track.getByLabel('Tuning', { exact: true }).locator('optgroup option')).toHaveText(['Low C']);
+  await track.getByRole('button', { name: 'Forget this tuning' }).click();
+  await expect(track.getByLabel('Tuning', { exact: true }).locator('optgroup')).toHaveCount(0);
+});

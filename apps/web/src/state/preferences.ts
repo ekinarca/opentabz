@@ -56,6 +56,33 @@ export type AudioLatency = (typeof AUDIO_LATENCIES)[number];
 export const MIN_SCROLL_OFFSET = 0.05;
 export const MAX_SCROLL_OFFSET = 0.6;
 
+/** A tuning of one's own: its name, its strings as MIDI notes from the highest. */
+export interface MyTuning {
+  readonly name: string;
+  readonly tuning: readonly number[];
+}
+
+/** The most tunings of one's own kept. */
+export const MAX_MY_TUNINGS = 50;
+
+/** Tunings of one's own as stored, or null when they are not. */
+function parseTunings(value: unknown): readonly MyTuning[] | null {
+  if (!Array.isArray(value)) return null;
+  const tunings: MyTuning[] = [];
+  for (const entry of value.slice(0, MAX_MY_TUNINGS) as unknown[]) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { name, tuning } = entry as { name?: unknown; tuning?: unknown };
+    if (typeof name !== 'string' || name.length > 100 || !Array.isArray(tuning)) continue;
+    const strings = (tuning as unknown[]).filter(
+      (pitch): pitch is number =>
+        typeof pitch === 'number' && Number.isInteger(pitch) && pitch >= 0 && pitch <= 127,
+    );
+    if (strings.length === 0 || strings.length !== tuning.length || strings.length > 10) continue;
+    tunings.push({ name, tuning: strings });
+  }
+  return tunings;
+}
+
 export interface Preferences {
   readonly theme: ThemePreference;
   readonly layout: LayoutKind;
@@ -112,6 +139,8 @@ export interface Preferences {
   readonly invertedTab: boolean;
   /** Each fret written while editing is heard (EDIT-096). */
   readonly hearNotes: boolean;
+  /** Tunings of one's own, saved to choose again (EDIT-072). */
+  readonly myTunings: readonly MyTuning[];
   readonly audioLatency: AudioLatency;
   /** How exported files are named, with tokens (see export/file-names.ts). */
   readonly exportFileName: string;
@@ -169,6 +198,7 @@ export function defaultPreferences(locale: string): Preferences {
     leftHanded: false,
     invertedTab: false,
     hearNotes: false,
+    myTunings: [],
     audioLatency: 'interactive',
     exportFileName: '%T',
     rememberRecent: true,
@@ -315,6 +345,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
       invertedTab: typeof value.invertedTab === 'boolean' ? value.invertedTab : fallback.invertedTab,
       hearNotes: typeof value.hearNotes === 'boolean' ? value.hearNotes : fallback.hearNotes,
+      myTunings: parseTunings(value.myTunings) ?? fallback.myTunings,
       audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
       rememberRecent:
         typeof value.rememberRecent === 'boolean' ? value.rememberRecent : fallback.rememberRecent,
@@ -392,6 +423,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       leftHanded: state.leftHanded,
       invertedTab: state.invertedTab,
       hearNotes: state.hearNotes,
+      myTunings: state.myTunings,
       audioLatency: state.audioLatency,
       exportFileName: state.exportFileName,
       rememberRecent: state.rememberRecent,

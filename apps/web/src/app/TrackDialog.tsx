@@ -4,13 +4,19 @@
  * down, deleting it. Adding a track starts from an instrument. What is changed is one edit to undo.
  */
 import {
+  TRACK_NOTATIONS,
+  type TrackNotation,
   MAX_CAPO,
   MAX_STRINGS,
   trackColor,
   type TrackProperties,
   type TrackState,
 } from '@opentabz/core/shared';
-import { Button, Dialog, Switch } from '@opentabz/ui';
+import { Button, Dialog, IconButton, SegmentedControl, Switch } from '@opentabz/ui';
+import { Volume2 } from 'lucide-react';
+import { getAudioEngine } from '../audio/audio-engine.ts';
+import { getEngine } from '../engine/instance.ts';
+import { MAX_MY_TUNINGS, usePreferences } from '../state/preferences.ts';
 import { useEffect, useId, useState } from 'react';
 import { create } from 'zustand';
 import { useDocuments } from '../state/documents.ts';
@@ -24,6 +30,7 @@ import {
   setTrack,
 } from '../state/editing.ts';
 import {
+  INSTRUMENT_FAMILIES,
   INSTRUMENT_IDS,
   INSTRUMENTS,
   noteName,
@@ -74,6 +81,8 @@ export function trackChanges(was: TrackState, now: TrackState): TrackProperties 
   )
     changes.tuning = now.tuning;
   if (was.capo !== now.capo) changes.capo = now.capo;
+  if (was.tuningName !== now.tuningName) changes.tuningName = now.tuningName;
+  if (was.notation !== now.notation) changes.notation = now.notation;
   if (was.transposition !== now.transposition) changes.transposition = now.transposition;
   return changes;
 }
@@ -83,16 +92,39 @@ function close(): void {
 }
 
 /** A track's strings: how many, a preset, and each string's note. */
+/** Sounds pitches on a track's sound, one string after another (EDIT-071). */
+function hear(program: number, pitches: readonly number[]): void {
+  void getAudioEngine()
+    .ensureOutput()
+    .then(() => getEngine().call('previewPitches', { program, pitches, together: false }))
+    .catch(() => undefined);
+}
+
 function TuningFields({
   tuning,
+  name,
+  program,
   onChange,
+  onName,
 }: {
   readonly tuning: readonly number[];
-  readonly onChange: (tuning: number[]) => void;
+  /** The track's sound, the strings heard on it. */
+  readonly program: number;
+  /** The tuning's name, shown with it in the score (EDIT-073). */
+  readonly name: string;
+  /** A new tuning, and with a preset or one's own its name, as one change. */
+  readonly onChange: (tuning: number[], name?: string) => void;
+  readonly onName: (name: string) => void;
 }) {
   const id = useId();
   const preset = presetOf(tuning);
   const presets = TUNING_PRESETS[tuning.length] ?? [];
+  // Tunings of one's own (EDIT-072): offered with the presets of as many strings, saved and forgotten.
+  const myTunings = usePreferences(state => state.myTunings);
+  const setPreferences = usePreferences(state => state.set);
+  const same = (other: readonly number[]) =>
+    other.length === tuning.length && other.every((pitch, index) => pitch === tuning[index]);
+  const mine = myTunings.findIndex(candidate => same(candidate.tuning));
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
@@ -126,41 +158,129 @@ function TuningFields({
           <Field label={s.tuning} htmlFor={`${id}-preset`}>
             <select
               id={`${id}-preset`}
-              value={preset?.id ?? 'custom'}
+              value={preset?.id ?? (mine >= 0 ? `mine-${String(mine)}` : 'custom')}
               onChange={event => {
+                const own = /^mine-(\d+)$/.exec(event.target.value);
+                const saved = own === null ? undefined : myTunings[Number(own[1])];
+                if (saved !== undefined) {
+                  onChange([...saved.tuning], saved.name);
+                  return;
+                }
                 const chosen = presets.find(candidate => candidate.id === event.target.value);
-                if (chosen !== undefined) onChange([...chosen.tuning]);
+                if (chosen === undefined) return;
+                // Named as the preset is, its notes left out: "Drop D".
+                onChange([...chosen.tuning], (s.tunings[chosen.id] ?? chosen.id).replace(/\s*\(.*\)$/, ''));
               }}
               className={INPUT_CLASS}
             >
-              {preset === null && <option value="custom">{s.tunings['custom']}</option>}
+              {preset === null && mine < 0 && <option value="custom">{s.tunings['custom']}</option>}
               {presets.map(candidate => (
                 <option key={candidate.id} value={candidate.id}>
                   {s.tunings[candidate.id] ?? candidate.id}
                 </option>
               ))}
+              {myTunings.some(candidate => candidate.tuning.length === tuning.length) && (
+                <optgroup label={s.myTunings}>
+                  {myTunings.map((candidate, index) =>
+                    candidate.tuning.length === tuning.length ? (
+                      <option key={`mine-${String(index)}`} value={`mine-${String(index)}`}>
+                        {candidate.name}
+                      </option>
+                    ) : null,
+                  )}
+                </optgroup>
+              )}
             </select>
           </Field>
         )}
       </div>
       {tuning.length > 0 && (
+        <Field label={s.tuningName} hint={s.tuningNameHint} htmlFor={`${id}-name`}>
+          <input
+            id={`${id}-name`}
+            value={name}
+            maxLength={100}
+            onChange={event => {
+              onName(event.target.value);
+            }}
+            className={INPUT_CLASS}
+          />
+        </Field>
+      )}
+      {tuning.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Volume2 size={14} aria-hidden />}
+            onClick={() => {
+              // From the lowest string up, as a guitarist checks a tuning.
+              hear(program, [...tuning].reverse());
+            }}
+          >
+            {s.hearTuning}
+          </Button>
+          {preset === null && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const named = name.trim().length > 0 ? name.trim() : s.myTuningName(myTunings.length + 1);
+                // Saved again under another name, it is renamed.
+                const next =
+                  mine >= 0
+                    ? myTunings.map((candidate, index) =>
+                        index === mine ? { ...candidate, name: named } : candidate,
+                      )
+                    : [...myTunings, { name: named, tuning: [...tuning] }].slice(-MAX_MY_TUNINGS);
+                setPreferences({ myTunings: next });
+                onName(named);
+              }}
+            >
+              {mine >= 0 ? s.renameTuning : s.saveTuning}
+            </Button>
+          )}
+          {mine >= 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setPreferences({ myTunings: myTunings.filter((_, index) => index !== mine) });
+              }}
+            >
+              {s.forgetTuning}
+            </Button>
+          )}
+        </div>
+      )}
+      {tuning.length > 0 && (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {tuning.map((pitch, index) => (
             <Field key={index} label={s.string(index + 1)} htmlFor={`${id}-string-${String(index)}`}>
-              <select
-                id={`${id}-string-${String(index)}`}
-                value={pitch}
-                onChange={event => {
-                  onChange(tuning.map((other, at) => (at === index ? Number(event.target.value) : other)));
-                }}
-                className={INPUT_CLASS}
-              >
-                {PITCHES.map(midi => (
-                  <option key={midi} value={midi}>
-                    {noteName(midi)}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1">
+                <select
+                  id={`${id}-string-${String(index)}`}
+                  value={pitch}
+                  onChange={event => {
+                    onChange(tuning.map((other, at) => (at === index ? Number(event.target.value) : other)));
+                  }}
+                  className={`${INPUT_CLASS} min-w-0`}
+                >
+                  {PITCHES.map(midi => (
+                    <option key={midi} value={midi}>
+                      {noteName(midi)}
+                    </option>
+                  ))}
+                </select>
+                <IconButton
+                  size="sm"
+                  label={s.hearString(index + 1)}
+                  icon={<Volume2 size={14} aria-hidden />}
+                  onClick={() => {
+                    hear(program, [pitch]);
+                  }}
+                />
+              </div>
             </Field>
           ))}
         </div>
@@ -241,10 +361,31 @@ function TrackFields({
         <>
           <TuningFields
             tuning={state.tuning}
-            onChange={tuning => {
-              onChange({ tuning, ...(tuning.length === 0 ? { capo: 0 } : {}) });
+            name={state.tuningName}
+            program={state.program}
+            onChange={(tuning, tuningName) => {
+              onChange({
+                tuning,
+                ...(tuningName === undefined ? {} : { tuningName }),
+                ...(tuning.length === 0 ? { capo: 0, tuningName: '' } : {}),
+              });
+            }}
+            onName={tuningName => {
+              onChange({ tuningName });
             }}
           />
+          {state.tuning.length > 0 && (
+            <Field label={s.notation}>
+              <SegmentedControl<TrackNotation>
+                label={s.notation}
+                value={state.notation}
+                onValueChange={notation => {
+                  onChange({ notation });
+                }}
+                segments={TRACK_NOTATIONS.map(value => ({ value, label: s.notations[value] }))}
+              />
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-3">
             {state.tuning.length > 0 && (
               <Field label={s.capo} htmlFor={`${id}-capo`}>
@@ -293,7 +434,7 @@ function TrackFields({
 /** A new track's starting point: an instrument's sound and strings, its name, the next colour. */
 function fromInstrument(instrument: InstrumentId, tracks: number): TrackState {
   const [name, shortName] = s.instruments[instrument];
-  const { program, tuning, percussion } = INSTRUMENTS[instrument];
+  const { program, tuning, percussion, transposition } = INSTRUMENTS[instrument];
   return {
     name,
     shortName,
@@ -301,7 +442,10 @@ function fromInstrument(instrument: InstrumentId, tracks: number): TrackState {
     program,
     tuning: [...tuning],
     capo: 0,
-    transposition: percussion || tuning.length === 0 ? 0 : 12,
+    // Guitars and basses are written an octave up by their clef; transposing instruments as they are.
+    transposition: transposition ?? 0,
+    tuningName: '',
+    notation: 'both',
     percussion,
   };
 }
@@ -423,6 +567,7 @@ export function TrackDialog() {
               if (current !== null && open !== null) {
                 if (open.mode === 'add') {
                   const { now } = current;
+                  const { clef } = INSTRUMENTS[current.instrument];
                   addTrack(open.key, {
                     name: now.name,
                     shortName: now.shortName,
@@ -430,6 +575,9 @@ export function TrackDialog() {
                     tuning: now.tuning,
                     percussion: now.percussion,
                     color: now.color,
+                    ...(clef === undefined ? {} : { clef }),
+                    ...(now.transposition === 0 ? {} : { transposition: now.transposition }),
+                    ...(now.notation === 'both' ? {} : { notation: now.notation }),
                   });
                 } else {
                   const changes = trackChanges(current.was, current.now);
@@ -451,7 +599,14 @@ export function TrackDialog() {
       {current !== null && (
         <div className="flex flex-col gap-4">
           {open?.mode === 'add' && (
-            <Field label={s.instrument} htmlFor={`${id}-instrument`}>
+            <Field
+              label={s.instrument}
+              hint={s.range(
+                noteName(INSTRUMENTS[instrument].range[0]),
+                noteName(INSTRUMENTS[instrument].range[1]),
+              )}
+              htmlFor={`${id}-instrument`}
+            >
               <select
                 id={`${id}-instrument`}
                 value={instrument}
@@ -463,17 +618,23 @@ export function TrackDialog() {
                 }}
                 className={INPUT_CLASS}
               >
-                {INSTRUMENT_IDS.map(candidate => (
-                  <option key={candidate} value={candidate}>
-                    {s.instruments[candidate][0]}
-                  </option>
+                {INSTRUMENT_FAMILIES.map(family => (
+                  <optgroup key={family} label={s.families[family]}>
+                    {INSTRUMENT_IDS.filter(candidate => INSTRUMENTS[candidate].family === family).map(
+                      candidate => (
+                        <option key={candidate} value={candidate}>
+                          {s.instruments[candidate][0]}
+                        </option>
+                      ),
+                    )}
+                  </optgroup>
                 ))}
               </select>
             </Field>
           )}
           <TrackFields state={current.now} onChange={update} />
           {open?.mode === 'edit' &&
-            current.now.tuning.length > 0 &&
+            !current.now.percussion &&
             'tuning' in trackChanges(current.was, current.now) && (
               <Switch
                 label={s.keepPitches}

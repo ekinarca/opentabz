@@ -251,6 +251,18 @@ All notable changes to OpenTabz are recorded here. The format follows
 - **Harmonize.** "Harmonize…" gives each note selected, or of the caret's beat, another a third,
   a sixth or an octave above or below it, in the bar's key, on the nearest string with room; tied
   notes keep their harmony tied.
+- **Score information.** "Score information…" edits the title, subtitle, artist, album, words,
+  music, copyright, the tablature's author, the instructions and the notices; the title block
+  and the tab's name follow.
+- **A library of instruments.** A track is added from more than a hundred instruments in eleven
+  families (guitars, basses, other plucked and bowed strings, keyboards, voices, woodwinds, brass,
+  pitched percussion, synths, drums), each with its sound, strings and tuning, clef,
+  transposition (a B♭ clarinet, a horn, a piccolo) and range; a track with strings is written as
+  notation and tablature, notation or tablature alone.
+- **Tunings heard, named and kept.** The track dialog plays the tuning from the lowest string up,
+  or one string; names the tuning, as the score shows it (a preset names it); and keeps tunings of
+  one's own to choose again, rename or forget. A track can be set to no strings (written by
+  pitch, as a piano) and back, its notes keeping their pitches.
 - **Retuning keeps the music.** A new tuning in the track dialog keeps the notes' pitches unless
   asked to keep their frets: drop D, DADGAD or a bass's four strings, the notes find the frets
   (and, where their string has none, the nearest string) that play them.

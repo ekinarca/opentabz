@@ -88,6 +88,7 @@ import { openTransposeDialog } from './TransposeDialog.tsx';
 import { openMarksDialog } from './MarksDialog.tsx';
 import { openVoicesDialog } from './VoicesDialog.tsx';
 import { openHarmonizeDialog } from './HarmonizeDialog.tsx';
+import { openScoreInfoDialog } from './ScoreInfoDialog.tsx';
 import { DurationIcon } from './icons.tsx';
 import { focusScore, shortcutHint } from './keymap.ts';
 import { saveDocument } from './save.ts';
@@ -647,6 +648,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             >
               {strings.barDialog.open}
             </MenuItem>
+            <MenuItem onSelect={() => openScoreInfoDialog(key)}>{strings.scoreInfoDialog.open}</MenuItem>
             <MenuItem icon={<Settings2 size={16} aria-hidden />} onSelect={() => openTrackDialog(key)}>
               {strings.trackDialog.open}
             </MenuItem>
