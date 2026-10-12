@@ -149,6 +149,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'tiedTabNotes',
     'dashQuarterRests',
     'voiceColors',
+    'flatBeams',
+    'flatDrumBeams',
   ] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   // Measures added later, likewise.

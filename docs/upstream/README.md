@@ -42,6 +42,7 @@ available as source: the patch file is that source.
 | [0031](0031-first-system-indent.md)              | The first system indented                                                          | Every system started at the left padding                                   | not yet  |
 | [0032](0032-tuplet-brackets-and-bent-pitch.md)   | Tuplets without brackets, bends without the pitch they reach                       | Guitar Pro's stylesheet can leave both out                                 | not yet  |
 | [0033](0033-tablature-and-technique-switches.md) | Tied frets, dashed rests, arpeggio arrowheads and trill notes on request           | Guitar Pro's stylesheet chooses each of them                               | not yet  |
+| [0034](0034-flat-beams.md)                       | Level beams on standard and drum staves                                            | Guitar Pro's stylesheet can level them                                     | not yet  |
 
 ## Working on a patch
 

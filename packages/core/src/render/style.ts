@@ -76,6 +76,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     tiedTabNotes: false,
     dashQuarterRests: false,
     voiceColors: false,
+    flatBeams: false,
+    flatDrumBeams: false,
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
@@ -227,6 +229,8 @@ export function applyScoreStyle(
       case 'tiedTabNotes':
       case 'dashQuarterRests':
       case 'voiceColors':
+      case 'flatBeams':
+      case 'flatDrumBeams':
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
@@ -293,6 +297,8 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   elements.set(alphaTab.NotationElement.EffectSlideText, style.slideLabel);
   settings.notation.showTiedTabNotes = style.tiedTabNotes;
   settings.notation.dashQuarterRests = style.dashQuarterRests;
+  settings.notation.flatBeams = style.flatBeams;
+  settings.notation.flatDrumBeams = style.flatDrumBeams;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

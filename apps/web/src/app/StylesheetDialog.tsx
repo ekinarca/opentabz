@@ -351,6 +351,20 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.flatBeams}
+            checked={style.flatBeams}
+            onCheckedChange={flatBeams => {
+              set({ flatBeams });
+            }}
+          />
+          <Switch
+            label={s.flatDrumBeams}
+            checked={style.flatDrumBeams}
+            onCheckedChange={flatDrumBeams => {
+              set({ flatDrumBeams });
+            }}
+          />
+          <Switch
             label={s.tempoMarks}
             checked={style.tempoMarks}
             onCheckedChange={tempoMarks => {

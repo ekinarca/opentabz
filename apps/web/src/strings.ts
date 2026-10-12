@@ -630,6 +630,8 @@ export const strings = {
     arpeggioArrows: 'Arrowheads on arpeggios',
     trillNote: 'A trill’s second note in the tablature',
     slideLabel: '"sl." over slides',
+    flatBeams: 'Level beams on the staff',
+    flatDrumBeams: 'Level beams on drum staves',
     tiedTabNotes: 'Every tied note’s fret',
     tiedTabNotesHint: 'Otherwise only where a bar begins.',
     dashQuarterRests: 'Quarter rests as a dash',

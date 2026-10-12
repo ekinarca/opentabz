@@ -180,6 +180,32 @@ describe('the stylesheet’s technique and tablature switches (REND-249, REND-25
   });
 });
 
+describe('level beams (REND-246)', () => {
+  /** The rise of each beam from its left end to its right, in pixels. */
+  function slopes(view: Engraving): number[] {
+    return view.marks
+      .filter(mark => mark.kind === 'path' && mark.name === 'fill' && mark.commands === 'MLLLz')
+      .map(mark => {
+        const [first, second] = mark.points ?? [];
+        return Math.round(((second?.y ?? 0) - (first?.y ?? 0)) * 100) / 100;
+      });
+  }
+  const style = (changes: Partial<ScoreStyle>) => ({ style: { ...DEFAULT_SCORE_STYLE, ...changes } });
+
+  it('draws the staff’s beams level on request, the drums’ apart', () => {
+    const staff = '\\track "Flute"\n\\staff {score}\n:8 C4 E4 G4 C5 C5 G4 E4 C4 |';
+    expect(slopes(engraveTex(staff)).some(rise => rise !== 0)).toBe(true);
+    const level = slopes(engraveTex(staff, style({ flatBeams: true })));
+    expect(level.length).toBeGreaterThan(1);
+    expect(level.every(rise => rise === 0)).toBe(true);
+    // Drum beams follow their own switch.
+    const drums =
+      '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:8 KickHit SnareHit CrashHighHit KickHit SnareHit KickHit CrashHighHit SnareHit |';
+    expect(slopes(engraveTex(drums, style({ flatBeams: true }))).some(rise => rise !== 0)).toBe(true);
+    expect(slopes(engraveTex(drums, style({ flatDrumBeams: true }))).every(rise => rise === 0)).toBe(true);
+  });
+});
+
 describe('transposing instruments (REND-032)', () => {
   // A B♭ clarinet's part is written a whole tone above what sounds: C major sounds, D major reads.
   const clarinet = [

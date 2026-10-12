@@ -65,6 +65,9 @@ export interface ScoreStyle {
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
   readonly voiceColors: boolean;
+  /** Beams drawn level in standard notation, and in drum notation (REND-246). */
+  readonly flatBeams: boolean;
+  readonly flatDrumBeams: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
   /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
@@ -136,6 +139,8 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tiedTabNotes: false,
   dashQuarterRests: false,
   voiceColors: false,
+  flatBeams: false,
+  flatDrumBeams: false,
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,

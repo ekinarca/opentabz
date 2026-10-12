@@ -3,7 +3,7 @@
  * (REND-210), with their decimals or rounded (REND-240); C and cut C, the pitch a bend reaches,
  * the rests of the lower voices and tuplet brackets (REND-248); arpeggio arrowheads, a trill's
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
- * the tablature (REND-250); in the score on screen.
+ * the tablature (REND-250); level beams (REND-246); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -164,4 +164,28 @@ test('arpeggio arrowheads, a trill’s second note, "sl.", tied frets, dashes an
     .getByRole('switch', { name: 'Quarter rests as a dash' })
     .click();
   await expect.poll(async () => (await texts()).join('').split(QUARTER_REST).length - 1).toBe(2);
+});
+
+test('beams drawn level on request', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/techniques.atex')]);
+  await expectScore(page);
+  /** Beams (filled four-sided paths) whose two ends are not level. */
+  const sloped = () =>
+    page.locator('.ot-scroll:not([hidden]) .ot-partial path').evaluateAll(
+      paths =>
+        paths.filter(path => {
+          const d = (path.getAttribute('d') ?? '').trim();
+          if (!/^M[^ML]*L[^ML]*L[^ML]*L[^MLz]*z$/.test(d)) return false;
+          const numbers = d.match(/-?[\d.]+/g)?.map(Number) ?? [];
+          return Math.abs((numbers[1] ?? 0) - (numbers[3] ?? 0)) > 0.01;
+        }).length,
+    );
+  await expect.poll(sloped).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Stylesheet' })
+    .getByRole('switch', { name: 'Level beams on the staff' })
+    .click();
+  await expect.poll(sloped).toBe(0);
 });
