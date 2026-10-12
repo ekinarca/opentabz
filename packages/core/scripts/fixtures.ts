@@ -6,6 +6,7 @@
  *   drums, piano voicings, ties, dynamics, sections, tempo changes and repeats.
  * - `demos/*.gp`: the alphaTex demos exported to Guitar Pro 7+ files, so the binary import path
  *   is exercised with known content.
+ * - `views/tempo-ramps.gp`: tempo ramps (linear tempo automations), which alphaTex cannot write.
  * - `corrupt/*`: broken files for error handling.
  *
  * Everything is deterministic: the same seed always produces the same notes.
@@ -188,6 +189,34 @@ export function exportGp(score: alphaTab.model.Score): Uint8Array {
   return new alphaTab.exporter.Gp7Exporter().export(score, new alphaTab.Settings());
 }
 
+/**
+ * Tempo ramps (REND-156): bar 2 speeds up from 90 to 150 by bar 4, bar 5 slows down from 150 to
+ * 60 by bar 7. alphaTex writes the tempos; the ramps are set on the score.
+ */
+export function rampScore(): alphaTab.model.Score {
+  const tex = [
+    '\\title "Tempo Ramps"',
+    '\\subtitle "OpenTabz generated fixture"',
+    '\\tempo 90',
+    '\\track "Piano" {instrument acousticGrandPiano}',
+    '\\staff {score}',
+    ':4 C4 E4 G4 C5 |',
+    '\\tempo 90 :4 C4 E4 G4 C5 |',
+    ':4 D4 F4 A4 D5 |',
+    '\\tempo 150 :4 E4 G4 B4 E5 |',
+    '\\tempo 150 :4 C4 E4 G4 C5 |',
+    ':4 G3 B3 D4 G4 |',
+    '\\tempo 60 :1 C4 |',
+  ].join('\n');
+  const { score } = openScore(new TextEncoder().encode(tex), 'tempo-ramps.atex');
+  for (const index of [1, 4]) {
+    const automation = score.masterBars[index]?.tempoAutomations[0];
+    if (automation === undefined) throw new Error(`tempo-ramps: no tempo in bar ${index + 1}.`);
+    automation.isLinear = true;
+  }
+  return score;
+}
+
 export interface GeneratedFile {
   /** Path relative to fixtures/generated/. */
   readonly path: string;
@@ -212,6 +241,7 @@ export function generateFixtures(demos: ReadonlyMap<string, string>): GeneratedF
     const opened = openScore(new TextEncoder().encode(tex), name);
     files.push({ path: `demos/${name.replace(/\.atex$/, '.gp')}`, bytes: exportGp(opened.score) });
   }
+  files.push({ path: 'views/tempo-ramps.gp', bytes: exportGp(rampScore()) });
 
   const sample = files.find(file => file.path === 'perf-5x150.gp')?.bytes ?? new Uint8Array();
   const noise = random(0xbad);

@@ -63,6 +63,7 @@ available as source: the patch file is that source.
 | [0052](0052-drum-tablature.md)                       | Drum tablature                                                                     | Guitar Pro shows a drum kit as tablature with MIDI numbers                 | not yet  |
 | [0053](0053-sound-change-labels.md)                  | Sound-change labels                                                                | Guitar Pro writes a sound's label where the sound changes                  | not yet  |
 | [0054](0054-tempo-steps.md)                          | Tempo changes of Guitar Pro 3–5 and Capella files                                  | Their tempo changes are steps, read as ramps                               | not yet  |
+| [0055](0055-tempo-ramp-marks.md)                     | Tempo ramps marked accel. or rit.                                                  | Guitar Pro 8 marks a gradual tempo change                                  | not yet  |
 
 ## Working on a patch
 

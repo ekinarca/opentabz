@@ -184,6 +184,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Tempo ramps.** A tempo that changes gradually up to the next one (a Guitar Pro 7 or 8 ramp,
+  played that way) is marked accel. when it speeds up and rit. when it slows down, after its
+  tempo mark.
 - **Chord names in a style.** Chord names in the score and the chords panel as written, or
   spelled in a classic, jazz or rock style (Cmaj7, CΔ7, CM7).
 - **Staves of each track.** The Staves menu's "Each track…" chooses, track by track, standard
@@ -288,8 +291,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
   (0049), fingering as asked (0050), tablature that skips notes without a string (0051), drum
-  tablature (0052), sound-change labels (0053), and the tempo changes of Guitar Pro 3–5 and
-  Capella files as steps (0054). See [docs/upstream/](docs/upstream/).
+  tablature (0052), sound-change labels (0053), the tempo changes of Guitar Pro 3–5 and Capella
+  files as steps (0054), and tempo ramps marked accel. or rit. (0055). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
