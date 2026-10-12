@@ -6,7 +6,8 @@
  * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
  * systems (REND-231); technique lines over rests (REND-243); where artificial harmonics are
  * touched, and octave harmonics as a dot (REND-247); the rhythm in the tablature (REND-244) and
- * its circled long notes (REND-245); in the score on screen.
+ * its circled long notes (REND-245); slash notation's line, barlines and single notes' frets
+ * (REND-229); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -288,4 +289,38 @@ test('the rhythm in the tablature under a staff when asked, and each voice’s w
   const before = await circles();
   await dialog.getByRole('switch', { name: 'Half and whole notes circled' }).click();
   await expect.poll(circles).toBeGreaterThan(before);
+});
+
+test('slash notation with or without its line and barlines, and single notes’ frets', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/slash.atex')]);
+  await expectScore(page);
+  /** The first system's long thin rules (the line) and its staff-tall ones (the barlines). */
+  const rules = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+      .first()
+      .evaluate(element => {
+        const rects = [...element.querySelectorAll('rect')].map(rect => ({
+          width: Number(rect.getAttribute('width')),
+          height: Number(rect.getAttribute('height')),
+        }));
+        return {
+          lines: rects.filter(rect => rect.width > 100 && rect.height < 3).length,
+          barlines: rects.filter(rect => rect.height > 30 && rect.height < 45).length,
+        };
+      });
+  await expect.poll(async () => (await rules()).lines).toBeGreaterThan(0);
+  const usual = await rules();
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'A line behind slash notation' }).click();
+  await expect.poll(async () => (await rules()).lines).toBe(0);
+  await dialog.getByRole('switch', { name: 'Barlines in slash notation' }).click();
+  await expect.poll(async () => (await rules()).barlines).toBeLessThan(usual.barlines);
+  // The G string's 5 and the B string's 7, their strings circled.
+  await dialog.getByRole('switch', { name: 'Frets and strings of single notes in slash notation' }).click();
+  await expect
+    .poll(async () => (await scoreTexts(page)).filter(text => text === '5' || text === '7'))
+    .toEqual(['5', '7']);
 });

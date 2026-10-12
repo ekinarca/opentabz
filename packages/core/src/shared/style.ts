@@ -103,6 +103,12 @@ export interface ScoreStyle {
   readonly tabBeamsOverRests: boolean;
   /** Half and whole notes circled in the tablature when it shows the rhythm (REND-245). */
   readonly tabCircleLongNotes: boolean;
+  /** The line behind the slashes of slash notation (REND-229). */
+  readonly slashStaffLines: boolean;
+  /** The plain barlines of slash notation (REND-229). */
+  readonly slashBarLines: boolean;
+  /** A single note's fret and string under its slash (REND-229). */
+  readonly slashSingleNoteFrets: boolean;
   /** Quarter rests in the tablature written as a dash (REND-250). */
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
@@ -216,6 +222,9 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tabRhythmVoices: ['below', 'below', 'below', 'below'],
   tabBeamsOverRests: true,
   tabCircleLongNotes: false,
+  slashStaffLines: true,
+  slashBarLines: true,
+  slashSingleNoteFrets: false,
   dashQuarterRests: false,
   voiceColors: false,
   flatBeams: false,

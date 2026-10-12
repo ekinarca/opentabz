@@ -509,6 +509,27 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
           />
           <TabRhythmFields style={style} set={set} />
           <Switch
+            label={s.slashStaffLines}
+            checked={style.slashStaffLines}
+            onCheckedChange={slashStaffLines => {
+              set({ slashStaffLines });
+            }}
+          />
+          <Switch
+            label={s.slashBarLines}
+            checked={style.slashBarLines}
+            onCheckedChange={slashBarLines => {
+              set({ slashBarLines });
+            }}
+          />
+          <Switch
+            label={s.slashSingleNoteFrets}
+            checked={style.slashSingleNoteFrets}
+            onCheckedChange={slashSingleNoteFrets => {
+              set({ slashSingleNoteFrets });
+            }}
+          />
+          <Switch
             label={s.harmonicTouch}
             hint={s.harmonicTouchHint}
             checked={style.harmonicTouch}

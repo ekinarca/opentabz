@@ -1,0 +1,10 @@
+// Slash notation — original music written for OpenTabz (AGPL-3.0-or-later).
+// Strummed chords as slashes, with two single notes between them.
+\title "Slash Notation"
+\subtitle "OpenTabz test score"
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {slash}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+:4 (0.6 2.5 2.4) (0.6 2.5 2.4) 5.3 7.2 | (0.6 2.5 2.4).2 (0.6 2.5 2.4).2 | (3.6 2.5 0.4).1 |

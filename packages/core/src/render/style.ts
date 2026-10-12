@@ -88,6 +88,9 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     tabRhythmVoices: ['below', 'below', 'below', 'below'],
     tabBeamsOverRests: true,
     tabCircleLongNotes: false,
+    slashStaffLines: true,
+    slashBarLines: true,
+    slashSingleNoteFrets: false,
     dashQuarterRests: false,
     voiceColors: false,
     flatBeams: false,
@@ -267,6 +270,9 @@ export function applyScoreStyle(
       case 'tabRhythmVoices':
       case 'tabBeamsOverRests':
       case 'tabCircleLongNotes':
+      case 'slashStaffLines':
+      case 'slashBarLines':
+      case 'slashSingleNoteFrets':
       case 'dashQuarterRests':
       case 'voiceColors':
       case 'flatBeams':
@@ -362,6 +368,10 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   // Beams over rests and circled long notes in the tablature (REND-245).
   settings.notation.tabBeamsOverRests = style.tabBeamsOverRests;
   settings.notation.tabCircleLongNotes = style.tabCircleLongNotes;
+  // Slash notation's line, barlines and single notes' frets (REND-229).
+  settings.notation.slashStaffLines = style.slashStaffLines;
+  settings.notation.slashBarLines = style.slashBarLines;
+  settings.notation.slashSingleNoteFrets = style.slashSingleNoteFrets;
   settings.notation.dashQuarterRests = style.dashQuarterRests;
   settings.notation.flatBeams = style.flatBeams;
   settings.notation.flatDrumBeams = style.flatDrumBeams;
