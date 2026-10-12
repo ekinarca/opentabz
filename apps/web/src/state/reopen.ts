@@ -7,9 +7,10 @@ import { usePreferences } from './preferences.ts';
 import { listRecent } from './recent-scores.ts';
 import { recallSession, recentSource } from './session.ts';
 
-export async function reopenLastSession(): Promise<void> {
+/** `always`: also when the settings do not ask (the reload that brings a new version). */
+export async function reopenLastSession(always = false): Promise<void> {
   const { rememberRecent, reopenSession } = usePreferences.getState();
-  if (!rememberRecent || !reopenSession) return;
+  if (!rememberRecent || (!reopenSession && !always)) return;
   const session = recallSession();
   if (session === null || session.fingerprints.length === 0) return;
   const kept = await listRecent();

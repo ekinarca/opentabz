@@ -6,6 +6,7 @@ import { parseHttpUrl } from '../features/open/intake.ts';
 import { useDocuments } from '../state/documents.ts';
 import { strings } from '../strings.ts';
 import { openFiles, openPastedText, openUrl } from './open-actions.ts';
+import { consumeLaunchedFiles, takeSharedFiles, type LaunchQueue } from './pwa.ts';
 
 function hasFiles(event: DragEvent): boolean {
   return event.dataTransfer?.types.includes('Files') ?? false;
@@ -99,6 +100,20 @@ export function useGlobalIntake(): boolean {
       window.removeEventListener('drop', onDrop);
       document.removeEventListener('paste', onPaste);
     };
+  }, []);
+
+  // Files shared to the installed app (OPEN-007), and those the system opens it with (OPEN-006).
+  useEffect(() => {
+    const shared = Number.parseInt(new URLSearchParams(window.location.search).get('shared') ?? '', 10);
+    if (shared > 0) {
+      void takeSharedFiles(shared).then(files => {
+        if (files.length > 0) openFiles(files);
+      });
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    const queue =
+      'launchQueue' in window ? (window as unknown as { launchQueue: LaunchQueue }).launchQueue : undefined;
+    consumeLaunchedFiles(queue, openFiles);
   }, []);
 
   useEffect(() => {

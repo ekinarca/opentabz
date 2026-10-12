@@ -1,0 +1,67 @@
+{
+  "id": "/",
+  "name": "OpenTabz",
+  "short_name": "OpenTabz",
+  "description": "Free, open-source guitar tab and notation workstation. Opens Guitar Pro 3–8, MusicXML, Capella and alphaTex files on this device; nothing is uploaded.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fbfaf7",
+  "theme_color": "#fbfaf7",
+  "categories": ["music", "education", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "application/x-guitar-pro": [".gp", ".gp3", ".gp4", ".gp5", ".gpx", ".gpif"],
+        "application/vnd.recordare.musicxml+xml": [".musicxml", ".xml"],
+        "application/vnd.recordare.musicxml": [".mxl"],
+        "application/x-capella": [".capx"],
+        "text/x-alphatex": [".atex", ".alphatex", ".tex"]
+      }
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" },
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            ".gp",
+            ".gp3",
+            ".gp4",
+            ".gp5",
+            ".gpx",
+            ".gpif",
+            ".musicxml",
+            ".xml",
+            ".mxl",
+            ".capx",
+            ".atex",
+            ".alphatex",
+            ".tex",
+            "application/octet-stream",
+            "application/xml",
+            "text/xml",
+            "text/plain"
+          ]
+        }
+      ]
+    }
+  }
+}

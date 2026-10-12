@@ -1264,6 +1264,14 @@ export const strings = {
     close: 'Close',
   },
 
+  update: {
+    title: 'A new version of OpenTabz is ready',
+    reopens: 'Reload to use it; the scores open now open again.',
+    plain: 'Reload to use it.',
+    reload: 'Reload',
+    later: 'Later',
+  },
+
   recent: {
     heading: 'Recent scores',
     open: (title: string) => `Open ${title} again`,

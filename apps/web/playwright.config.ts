@@ -21,6 +21,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',
+    // The service worker would keep the app between pages of a test; pwa.spec.ts allows it.
+    serviceWorkers: 'block',
   },
   webServer: {
     command: 'pnpm preview',

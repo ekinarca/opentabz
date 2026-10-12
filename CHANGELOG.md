@@ -184,6 +184,13 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Install it, use it offline.** OpenTabz installs as an app (Chrome, Edge and Android offer to
+  install it; Safari adds it to the Home Screen) and, after its first visit, opens and plays
+  scores with no network: a service worker keeps every file of the app on the device, and talks
+  to no server but the app's own. A new version installs beside the running one and waits until
+  "Reload" in its notice, after which the scores open then open again. Installed in Chrome or
+  Edge, it opens Guitar Pro, MusicXML, Capella and alphaTex files from the system; on phones it
+  takes scores, or links to them, shared to it.
 - **Recent scores and the last session.** The home page lists the scores opened lately to open
   again (one still open comes to the front) and can clear the list; Settings can open the scores
   open last time again at the start. The scores are kept in this browser only, and forgotten at

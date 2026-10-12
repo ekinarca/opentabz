@@ -13,6 +13,9 @@ interface ConsoleProblem {
   readonly text: string;
 }
 
+/** What Playwright logs when it holds back the app's service worker: the harness's, not the app's. */
+const HARNESS_SERVICE_WORKER_NOTE = 'Service Worker registration blocked by Playwright';
+
 /**
  * Every test fails on a console error or warning, or an uncaught exception, in the page or its
  * workers (budget: zero console messages of either kind in production).
@@ -47,6 +50,8 @@ export const test = base.extend<{ consoleProblems: ConsoleProblem[]; silence: un
     async ({ page }, use) => {
       const problems: ConsoleProblem[] = [];
       page.on('console', message => {
+        // Playwright's own word on the service worker it holds back (playwright.config.ts).
+        if (message.text() === HARNESS_SERVICE_WORKER_NOTE) return;
         if (message.type() === 'error' || message.type() === 'warning') {
           problems.push({ type: message.type(), text: message.text() });
         }

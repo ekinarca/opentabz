@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, transformWithOxc, type Plugin } from 'vite';
 import { headersFor, parseHeadersFile } from './build/netlify-headers.ts';
 
 /**
@@ -25,6 +26,43 @@ function productionHeaders(): Plugin {
         for (const [name, value] of headersFor(rules, path)) response.setHeader(name, value);
         next();
       });
+    },
+  };
+}
+
+/** Built files the service worker does not keep: source maps, and the host's and crawlers' own. */
+const NOT_KEPT = /\.map$|^_headers$|^_redirects$|^robots\.txt$|^og\.png$|^sw\.js$|^\.vite\//;
+
+function builtFiles(directory: string): string[] {
+  return readdirSync(directory, { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile())
+    .map(entry => relative(directory, join(entry.parentPath, entry.name)).split(sep).join('/'))
+    .filter(path => !NOT_KEPT.test(path))
+    .sort();
+}
+
+/**
+ * dist/sw.js (PLAT-001, PLAT-002): src/sw/service-worker.ts as a classic script, given every
+ * built file to keep and a version made of their contents, so that any change installs anew.
+ */
+function serviceWorker(): Plugin {
+  let outDir = '';
+  return {
+    name: 'opentabz:service-worker',
+    apply: 'build',
+    configResolved(config) {
+      outDir = join(config.root, config.build.outDir);
+    },
+    async closeBundle() {
+      const files = builtFiles(outDir);
+      const version = createHash('sha256');
+      for (const path of files) version.update(path).update(readFileSync(join(outDir, path)));
+      const source = readFileSync(join(import.meta.dirname, 'src', 'sw', 'service-worker.ts'), 'utf8');
+      const { code } = await transformWithOxc(source, 'service-worker.ts', { lang: 'ts' });
+      const script = code
+        .replaceAll('__PRECACHE__', JSON.stringify(files.map(path => `/${path}`)))
+        .replaceAll('__VERSION__', JSON.stringify(version.digest('hex').slice(0, 16)));
+      writeFileSync(join(outDir, 'sw.js'), script);
     },
   };
 }
@@ -66,7 +104,7 @@ const alphaTabCore = join(
 );
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), productionHeaders(), restartOnPatchChange()],
+  plugins: [react(), tailwindcss(), productionHeaders(), restartOnPatchChange(), serviceWorker()],
   resolve: {
     alias: [{ find: /^@coderline\/alphatab$/, replacement: alphaTabCore }],
   },

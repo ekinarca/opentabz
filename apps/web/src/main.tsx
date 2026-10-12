@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App.tsx';
+import { registerServiceWorker } from './app/pwa.ts';
 import { getEngine } from './engine/instance.ts';
 import { printRoot } from './export/print.ts';
 import { installScoreTheme, loadMusicFont } from './score-view/score-theme.ts';
@@ -26,6 +27,8 @@ function warmUp(): void {
   setTimeout(() => {
     void getEngine().ready.catch(() => undefined);
     void loadMusicFont();
+    // The app kept for use without a network, once the page is up (PLAT-002).
+    registerServiceWorker();
   }, 0);
 }
 

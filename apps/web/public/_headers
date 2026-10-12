@@ -11,3 +11,7 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The service worker is looked for anew at every visit, so a new version is found at once.
+/sw.js
+  Cache-Control: no-cache

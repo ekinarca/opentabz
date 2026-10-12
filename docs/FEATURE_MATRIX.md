@@ -20,8 +20,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | OPEN-003 | Paste files from the clipboard                                                                  | OT  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | OPEN-004 | Paste plain-text tabs from the clipboard                                                        | OT  | M5  | —                   | —    | planned |
 | OPEN-005 | Open from URL (CORS permitting), including `?url=` deep links                                   | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/features/open/intake.test.ts | done |
-| OPEN-006 | OS file-handler registration via the PWA manifest                                               | OT  | M3  | —                   | —    | planned |
-| OPEN-007 | Web Share Target on mobile                                                                      | OT  | M3  | —                   | —    | planned |
+| OPEN-006 | OS file-handler registration via the PWA manifest                                               | OT  | M3  | —                   | apps/web/src/app/manifest.test.ts, apps/web/src/app/pwa.test.ts | done |
+| OPEN-007 | Web Share Target on mobile                                                                      | OT  | M3  | —                   | apps/web/src/app/manifest.test.ts, apps/web/e2e/pwa.spec.ts | done |
 | OPEN-008 | Open a whole folder                                                                             | OT  | M3  | —                   | —    | planned |
 | OPEN-009 | Multiple documents in tabs                                                                      | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | OPEN-010 | Guitar Pro 3 (.gp3)                                                                             | GP  | M0  | alphatab/guitarpro3 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
@@ -837,10 +837,10 @@ The single source of truth for what OpenTabz does. One row per feature.
 | LIB-007  | Practice stats per song                                     | OT  | M6  | —       | —    | planned |
 | LIB-008  | Per-song saved settings                                     | OT  | M3  | —       | —    | planned |
 | LIB-009  | Save in place with the File System Access API               | GP  | M4  | —       | —    | planned |
-| PLAT-001 | Installable PWA                                             | OT  | M3  | —       | —    | planned |
-| PLAT-002 | Fully offline after first load                              | OT  | M3  | —       | —    | planned |
-| PLAT-003 | File-handler registration for every supported extension     | OT  | M3  | —       | —    | planned |
-| PLAT-004 | Share target                                                | OT  | M3  | —       | —    | planned |
+| PLAT-001 | Installable PWA                                             | OT  | M3  | —       | apps/web/src/app/manifest.test.ts, apps/web/e2e/pwa.spec.ts | done |
+| PLAT-002 | Fully offline after first load                              | OT  | M3  | —       | apps/web/e2e/pwa.spec.ts | done |
+| PLAT-003 | File-handler registration for every supported extension     | OT  | M3  | —       | apps/web/src/app/manifest.test.ts, apps/web/src/app/pwa.test.ts | done |
+| PLAT-004 | Share target                                                | OT  | M3  | —       | apps/web/src/app/manifest.test.ts, apps/web/e2e/pwa.spec.ts | done |
 | PLAT-010 | Responsive down to 360 px                                   | OT  | M3  | —       | —    | planned |
 | PLAT-011 | Touch gestures: pinch zoom, tap-to-seek, swipe              | OT  | M3  | —       | —    | planned |
 | PLAT-012 | Bottom transport bar on mobile                              | OT  | M3  | —       | —    | planned |
@@ -867,7 +867,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | LIB-013  | Reveal the open document in the library or its linked folder | GP  | M3  | —       | —    | planned |
 | LIB-014  | Library filters by tuning, instruments, key, tempo, difficulty and tags | OT  | M3  | —       | —    | planned |
 | LIB-015  | Library backup and restore as one file                      | OT  | M3  | —       | —    | planned |
-| PLAT-045 | New-version notice with one-click reload                    | GP  | M3  | —       | —    | planned |
+| PLAT-045 | New-version notice with one-click reload                    | GP  | M3  | —       | apps/web/src/app/pwa.test.ts, apps/web/e2e/pwa.spec.ts | done |
 | PLAT-046 | Opt-in preview channel with a way back to stable            | GP  | M3  | —       | —    | planned |
 | PLAT-047 | Supported platforms: current Chromium, Firefox and Safari on Windows, macOS, Linux, ChromeOS, Android and iOS | GP+ | M0  | —       | —    | in progress |
 | PLAT-048 | Settings: override a file's own stylesheet, layout, zoom, notation or sound when opening | GP  | M3  | —       | —    | planned |

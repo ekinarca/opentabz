@@ -7,6 +7,8 @@ import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { CommandPalette } from './CommandPalette.tsx';
+import { takeReopenOnce } from './pwa.ts';
+import { UpdateNotice } from './UpdateNotice.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { leaveFullScreen, useFullScreenSync } from './full-screen.ts';
 import { MetronomeTool } from './MetronomeTool.tsx';
@@ -46,9 +48,9 @@ export function App() {
     onEngineRestart(() => void useDocuments.getState().reopenAll());
   }, []);
 
-  // The scores open last time, when the settings ask (UX-028).
+  // The scores open last time, when the settings ask (UX-028), or once after a new version.
   useEffect(() => {
-    void reopenLastSession();
+    void reopenLastSession(takeReopenOnce());
   }, []);
 
   // The app is on screen and interactive: the "warm start" budget ends here.
@@ -109,6 +111,7 @@ export function App() {
         <ExportDialog />
         <MetronomeTool />
         <TunerTool />
+        <UpdateNotice />
         <Notices />
       </ToastProvider>
     </TooltipProvider>

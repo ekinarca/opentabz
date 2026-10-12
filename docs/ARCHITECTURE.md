@@ -41,8 +41,8 @@ recorded as ADRs in [DECISIONS.md](DECISIONS.md); measurements behind them are i
 │      ▼ stereo frames in a SharedArrayBuffer ring                       │
 │ AudioWorklet (audio thread): reads the ring, pings for more            │
 └────────────────────────────────────────────────────────────────────────┘
-┌────────────── service worker (planned, M3) ─────────────────────────────┐
-│ precache app + engine for offline · file handlers · share target       │
+┌────────────── service worker (src/sw, built as dist/sw.js) ─────────────┐
+│ keeps every built file for offline · share target · waits for "Reload" │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -288,8 +288,10 @@ selection and the active track are overlays on top.
 ## 6. Opening files
 
 1. **Intake (main thread):** drag-and-drop anywhere, file picker, clipboard paste (files),
-   `?url=` / open-from-URL (subject to CORS), multiple files at once → one tab each. Later: PWA
-   file handlers, share target, folders (M3).
+   `?url=` / open-from-URL (subject to CORS), multiple files at once → one tab each; files the
+   installed app is opened with (the manifest's file handlers, read from `launchQueue`) and files
+   shared to it (the share target: the service worker keeps them and opens `/?shared=N`). Later:
+   folders (M3).
 2. **Sniffing (worker, `@opentabz/core/formats`):** by content only — GP3–5 length-prefixed
    `FICHIER GUITAR PRO v…` header, GPX `BCFZ`/`BCFS`, ZIP containers classified by entry names
    (`Content/score.gpif` → GP7/8, `META-INF/container.xml` → MusicXML `.mxl`, `score.xml` →
