@@ -154,7 +154,11 @@ legato slurs, let-ring spans, tuplet groups) is cleared and worked out again in 
 begins), so the systems before it keep their ids and their painted SVG, and the page shows them
 unchanged while the rest is painted again. The page keeps the history of commands, to make them
 again should the engine restart, and saves a document with alphaTab's GPIF writer
-(`export/guitar-pro.ts`).
+(`export/guitar-pro.ts`). Copying a selection (EDIT-020, `edit/clip.ts`) gives the page a small
+score of its own in alphaTab's JSON form — the beats or bars selected, with their staves'
+strings, chord diagrams and drum articulations — which a paste command carries back: commands
+stay plain data, so an edit pasting can be made again after a restart or a reload, and pasted in
+another document. Copies of beats and notes use alphaTab's own cloners (patch 0061).
 
 ### 4.4 Music fonts
 

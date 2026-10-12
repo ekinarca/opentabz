@@ -20,6 +20,48 @@ export interface NoteAddress extends BeatAddress {
   readonly string: number;
 }
 
+/** A beat's place in a voice of a staff: its master bar, and its index in the bar. */
+export interface BeatPlace {
+  readonly bar: number;
+  readonly beat: number;
+}
+
+/**
+ * A selection (EDIT-020): the beats of one voice from one to another, both included, across bars;
+ * or whole bars of a run of tracks, every staff and voice of theirs.
+ */
+export type Selection =
+  | {
+      readonly kind: 'beats';
+      readonly track: number;
+      readonly staff: number;
+      readonly voice: number;
+      readonly from: BeatPlace;
+      readonly to: BeatPlace;
+    }
+  | {
+      readonly kind: 'bars';
+      readonly fromTrack: number;
+      readonly toTrack: number;
+      readonly fromBar: number;
+      readonly toBar: number;
+    };
+
+/**
+ * What was copied (EDIT-020): beats of a voice, or bars of tracks. Plain data, which the page keeps
+ * and hands back with each paste — in the score it came from or another — so that an edit pasting it
+ * can be made again, after a reload too.
+ */
+export interface Clip {
+  readonly kind: Selection['kind'];
+  /** How many beats were copied (none when bars were). */
+  readonly beats: number;
+  readonly bars: number;
+  readonly tracks: number;
+  /** The beats or bars, as a small score in alphaTab's JSON form. */
+  readonly score: unknown;
+}
+
 /** A written duration: 1 a whole note, 2 a half … 64 a sixty-fourth. */
 export type DurationValue = 1 | 2 | 4 | 8 | 16 | 32 | 64;
 
@@ -214,7 +256,22 @@ export type EditCommand =
   /** A track moved to another place among the others. */
   | { readonly kind: 'move-track'; readonly track: number; readonly to: number }
   /** A track's properties set. */
-  | { readonly kind: 'set-track'; readonly track: number; readonly properties: TrackProperties };
+  | { readonly kind: 'set-track'; readonly track: number; readonly properties: TrackProperties }
+  /** A copy of a track put in after it, its notes and all, on MIDI channels of its own. */
+  | { readonly kind: 'duplicate-track'; readonly track: number }
+  /** A selection's notes taken away: its beats are rests, its bars empty. */
+  | { readonly kind: 'clear'; readonly selection: Selection }
+  /**
+   * A selection taken away: its beats; its bars, from the score when every track is selected,
+   * else emptied (every bar of a score selected, they are emptied).
+   */
+  | { readonly kind: 'remove'; readonly selection: Selection }
+  /**
+   * What was copied written from a beat on (EDIT-020): beats over the beats there, as long as they
+   * are, across bar lines; bars over the bars from the beat's on, in its track and the next ones.
+   * Bars are put in at the end when the score is too short.
+   */
+  | { readonly kind: 'paste'; readonly at: BeatAddress; readonly clip: Clip };
 
 /** What an edit, an undo or a redo did to a document. */
 export interface EditOutcome {

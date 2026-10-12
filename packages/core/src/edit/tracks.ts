@@ -12,6 +12,7 @@ import {
   type TrackState,
 } from '../shared/edit.ts';
 import { TRACK_COLORS } from '../document/track-colors.ts';
+import { copyBeat, copyChord } from './clip.ts';
 import { EditError } from './error.ts';
 
 const { Clef, Ottavia } = alphaTab.model;
@@ -136,6 +137,80 @@ export function newTrack(score: alphaTab.model.Score, spec: NewTrack): alphaTab.
     voice.addBeat(beat);
   }
   return track;
+}
+
+/** Copies an object's own plain values (numbers, strings, flags) to another, but those named. */
+function copyValues(from: object, to: object, skip: readonly string[]): void {
+  for (const [key, value] of Object.entries(from)) {
+    if (skip.includes(key) || key.startsWith('_')) continue;
+    if (value === null || value === undefined || typeof value !== 'object') Reflect.set(to, key, value);
+  }
+}
+
+const LINKS = ['id', 'index'];
+
+/** A copy of a bar of a staff, its voices, beats and notes. */
+function copyBar(bar: alphaTab.model.Bar): alphaTab.model.Bar {
+  const copy = new alphaTab.model.Bar();
+  copyValues(bar, copy, LINKS);
+  if (bar.style !== undefined) copy.style = bar.style;
+  for (const pedal of bar.sustainPedals) {
+    const marker = new alphaTab.model.SustainPedalMarker();
+    marker.ratioPosition = pedal.ratioPosition;
+    marker.pedalType = pedal.pedalType;
+    marker.bar = copy;
+    copy.sustainPedals.push(marker);
+  }
+  for (const voice of bar.voices) {
+    const voiceCopy = new alphaTab.model.Voice();
+    if (voice.style !== undefined) voiceCopy.style = voice.style;
+    copy.addVoice(voiceCopy);
+    for (const beat of voice.beats) voiceCopy.addBeat(copyBeat(beat));
+  }
+  return copy;
+}
+
+/**
+ * A copy of a track (EDIT-030): its staves, bars, notes, chord diagrams and lyrics, its sound, on
+ * MIDI channels no other track plays on (drums on the drums' channel).
+ */
+export function duplicateTrack(
+  score: alphaTab.model.Score,
+  track: alphaTab.model.Track,
+): alphaTab.model.Track {
+  const copy = new alphaTab.model.Track();
+  copyValues(track, copy, LINKS);
+  copy.score = score;
+  copy.color = new alphaTab.model.Color(track.color.r, track.color.g, track.color.b, track.color.a);
+  copy.systemsLayout = [...track.systemsLayout];
+  copy.percussionArticulations = [...track.percussionArticulations];
+  if (track.style !== undefined) copy.style = track.style;
+  copy.lyrics = track.lyrics.map(lyrics => {
+    const verse = new alphaTab.model.Lyrics();
+    verse.startBar = lyrics.startBar;
+    verse.text = lyrics.text;
+    return verse;
+  });
+  copyValues(track.playbackInfo, copy.playbackInfo, []);
+  const percussion = track.staves.some(staff => staff.isPercussion);
+  const [primary, secondary] = percussion ? [DRUM_CHANNEL, DRUM_CHANNEL] : freeChannels(score);
+  copy.playbackInfo.primaryChannel = primary;
+  copy.playbackInfo.secondaryChannel = secondary;
+  copy.ensureStaveCount(track.staves.length);
+  track.staves.forEach((staff, index) => {
+    const staffCopy = copy.staves[index];
+    if (staffCopy === undefined) throw new Error('alphaTab made no staff for the track.');
+    copyValues(staff, staffCopy, LINKS);
+    staffCopy.displayStringOffsets = [...staff.displayStringOffsets];
+    staffCopy.stringTuning = new alphaTab.model.Tuning(
+      staff.stringTuning.name,
+      [...staff.stringTuning.tunings],
+      staff.stringTuning.isStandard,
+    );
+    for (const [id, chord] of staff.chords ?? []) staffCopy.addChord(id, copyChord(chord));
+    for (const bar of staff.bars) staffCopy.addBar(copyBar(bar));
+  });
+  return copy;
 }
 
 /** Sets a track's properties (its first staff's tuning, capo and transposition). */

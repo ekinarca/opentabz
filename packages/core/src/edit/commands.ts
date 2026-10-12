@@ -8,8 +8,10 @@ import { EditError } from './error.ts';
 import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
 import { setBarProperties } from './bar-properties.ts';
+import { detach, insertBar, removeBar } from './bars.ts';
+import { clearSelection, paste, removeSelection } from './clip.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
-import { newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
+import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
 
 export { EditError };
 
@@ -166,27 +168,6 @@ function partners(note: alphaTab.model.Note): alphaTab.model.Note[] {
   ].filter(partner => partner !== null);
 }
 
-/** Parts a note about to be taken away from the notes joined to it. */
-function detach(note: alphaTab.model.Note): void {
-  const { tieOrigin, tieDestination, slurOrigin, slurDestination } = note;
-  if (tieOrigin?.tieDestination === note) tieOrigin.tieDestination = null;
-  if (tieDestination?.tieOrigin === note) {
-    // The note it held on sounds as it is written, as it did.
-    tieDestination.tieOrigin = null;
-    tieDestination.isTieDestination = false;
-  }
-  if (slurOrigin?.slurDestination === note) slurOrigin.slurDestination = null;
-  if (slurDestination?.slurOrigin === note) {
-    slurDestination.slurOrigin = null;
-    slurDestination.isSlurDestination = false;
-  }
-  const { hammerPullOrigin, hammerPullDestination, slideOrigin, slideTarget } = note;
-  if (hammerPullOrigin?.hammerPullDestination === note) hammerPullOrigin.hammerPullDestination = null;
-  if (hammerPullDestination?.hammerPullOrigin === note) hammerPullDestination.hammerPullOrigin = null;
-  if (slideOrigin?.slideTarget === note) slideOrigin.slideTarget = null;
-  if (slideTarget?.slideOrigin === note) slideTarget.slideOrigin = null;
-}
-
 function voiceAt(score: alphaTab.model.Score, at: BeatAddress): alphaTab.model.Voice {
   const voice = score.tracks[at.track]?.staves[at.staff]?.bars[at.bar]?.voices[at.voice];
   if (voice === undefined) throw new EditError(`No voice at ${JSON.stringify(at)}.`);
@@ -204,46 +185,6 @@ function checkString(staff: alphaTab.model.Staff, string: number): void {
   if (staff.isPercussion || strings === 0) throw new EditError('The staff has no strings.');
   if (!Number.isInteger(string) || string < 1 || string > strings)
     throw new EditError(`No string ${String(string)} on a staff of ${String(strings)}.`);
-}
-
-/** The score's bars numbered and linked again, master bars and every staff's, after bars moved. */
-function relinkBars(score: alphaTab.model.Score): void {
-  score.masterBars.forEach((masterBar, index) => {
-    masterBar.index = index;
-    masterBar.score = score;
-    masterBar.previousMasterBar = score.masterBars[index - 1] ?? null;
-    masterBar.nextMasterBar = score.masterBars[index + 1] ?? null;
-  });
-  score.rebuildRepeatGroups();
-  for (const track of score.tracks) {
-    for (const staff of track.staves) {
-      staff.bars.forEach((bar, index) => {
-        bar.index = index;
-        bar.staff = staff;
-        bar.previousBar = staff.bars[index - 1] ?? null;
-        bar.nextBar = staff.bars[index + 1] ?? null;
-      });
-    }
-  }
-}
-
-/** An empty bar for a staff, with the clef, key and voices of a bar next to it. */
-function emptyBar(like: alphaTab.model.Bar | undefined): alphaTab.model.Bar {
-  const bar = new alphaTab.model.Bar();
-  if (like !== undefined) {
-    bar.clef = like.clef;
-    bar.clefOttava = like.clefOttava;
-    bar.keySignature = like.keySignature;
-    bar.keySignatureType = like.keySignatureType;
-  }
-  for (let index = 0; index < Math.max(1, like?.voices.length ?? 1); index++) {
-    const voice = new alphaTab.model.Voice();
-    bar.addVoice(voice);
-    const beat = new alphaTab.model.Beat();
-    beat.isEmpty = true;
-    voice.addBeat(beat);
-  }
-  return bar;
 }
 
 const DURATIONS: Readonly<Record<DurationValue, alphaTab.model.Duration>> = {
@@ -346,29 +287,9 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       voice.beats.splice(0, 1, empty);
       return;
     }
-    case 'insert-bar': {
-      const index = command.bar;
-      const count = score.masterBars.length;
-      if (!Number.isInteger(index) || index < 0 || index > count)
-        throw new EditError(`No place for a bar at ${String(index)}.`);
-      transaction.touchBars(index);
-      const like = score.masterBars[Math.min(index, count - 1)];
-      const masterBar = new alphaTab.model.MasterBar();
-      if (like !== undefined) {
-        masterBar.timeSignatureNumerator = like.timeSignatureNumerator;
-        masterBar.timeSignatureDenominator = like.timeSignatureDenominator;
-        masterBar.timeSignatureCommon = like.timeSignatureCommon;
-        masterBar.tripletFeel = like.tripletFeel;
-      }
-      score.masterBars.splice(index, 0, masterBar);
-      for (const track of score.tracks) {
-        for (const staff of track.staves) {
-          staff.bars.splice(index, 0, emptyBar(staff.bars[Math.min(index, staff.bars.length - 1)]));
-        }
-      }
-      relinkBars(score);
+    case 'insert-bar':
+      insertBar(transaction, command.bar);
       return;
-    }
     case 'set-note': {
       const beat = beatAt(score, command.at);
       const staff = beat.voice.bar.staff;
@@ -457,24 +378,30 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       transaction.mark(0);
       return;
     }
-    case 'remove-bar': {
-      const index = command.bar;
-      const count = score.masterBars.length;
-      if (!Number.isInteger(index) || index < 0 || index >= count)
-        throw new EditError(`No bar ${String(index)}.`);
-      if (count === 1) throw new EditError('A score keeps at least one bar.');
-      transaction.touchBars(index);
-      for (const track of score.tracks) {
-        for (const staff of track.staves) {
-          for (const voice of staff.bars[index]?.voices ?? []) {
-            for (const beat of voice.beats) for (const note of beat.notes) detach(note);
-          }
-          staff.bars.splice(index, 1);
-        }
-      }
-      score.masterBars.splice(index, 1);
-      relinkBars(score);
+    case 'remove-bar':
+      removeBar(transaction, command.bar);
+      return;
+    case 'duplicate-track': {
+      const track = trackAt(score, command.track);
+      transaction.touchTracks();
+      const copy = duplicateTrack(score, track);
+      // The copy is shown as the track is (its tuning, its chord diagrams).
+      const origins = score.tracks.map((_, index) => index);
+      origins.splice(command.track + 1, 0, command.track);
+      score.tracks.splice(command.track + 1, 0, copy);
+      reindexTracks(score, origins);
+      for (const staff of copy.staves) transaction.touch(staff, 0);
+      transaction.mark(0);
       return;
     }
+    case 'clear':
+      clearSelection(transaction, command.selection);
+      return;
+    case 'remove':
+      removeSelection(transaction, command.selection);
+      return;
+    case 'paste':
+      paste(transaction, command.at, command.clip);
+      return;
   }
 }

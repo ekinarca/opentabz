@@ -6,6 +6,7 @@ import { blankScore } from '../document/blank.ts';
 import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
 import { readBarProperties } from '../edit/bar-properties.ts';
+import { copySelection } from '../edit/clip.ts';
 import { readTrackProperties } from '../edit/tracks.ts';
 import { EditError } from '../edit/commands.ts';
 import { collectTrackBeats } from '../edit/track-beats.ts';
@@ -25,7 +26,7 @@ import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackBeats } from '../shared/beats.ts';
 import type { TrackChords } from '../shared/chords.ts';
-import type { BarState, EditOutcome, TrackState } from '../shared/edit.ts';
+import type { BarState, Clip, EditOutcome, TrackState } from '../shared/edit.ts';
 import type { TrackDrums } from '../shared/drums.ts';
 import type { ScoreOverview } from '../shared/overview.ts';
 import type { TrackLyrics } from '../shared/lyrics.ts';
@@ -179,6 +180,16 @@ export class EngineHost implements EngineMethods {
     document.editor ??= new ScoreEditor(document.score, new alphaTab.Settings());
     try {
       return this.edited(args.docId, document, document.editor.apply(args.commands));
+    } catch (error) {
+      if (error instanceof EditError) throw new EngineHostError(error.message);
+      throw error;
+    }
+  }
+
+  public copy(args: EngineArgs<'copy'>): Clip {
+    const document = this.document(args.docId);
+    try {
+      return copySelection(document.score, args.selection);
     } catch (error) {
       if (error instanceof EditError) throw new EngineHostError(error.message);
       throw error;

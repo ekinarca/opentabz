@@ -7,6 +7,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
+import { copySelection } from '../src/edit/clip.ts';
 import { EditError } from '../src/edit/commands.ts';
 import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
@@ -15,8 +16,10 @@ import {
   type BarProperties,
   type BeatAddress,
   type BeatTechniques,
+  type Clip,
   type EditCommand,
   type NoteTechniques,
+  type Selection,
 } from '../src/shared/edit.ts';
 import { fingerprint } from './fingerprint.ts';
 import { listFixtures, readFixture } from './helpers.ts';
@@ -442,6 +445,159 @@ describe('commands', () => {
   });
 });
 
+/** Beats of the first track's first voice, from one place to another. */
+function beats(from: [number, number], to: [number, number], track = 0): Selection {
+  return {
+    kind: 'beats',
+    track,
+    staff: 0,
+    voice: 0,
+    from: { bar: from[0], beat: from[1] },
+    to: { bar: to[0], beat: to[1] },
+  };
+}
+
+const EIGHTHS = '\\track "Guitar" 1.1.8 2.1.8 3.1.8 4.1.8 5.1.8 6.1.8 7.1.8 8.1.8 | 0.6.1';
+
+describe('copy and paste (EDIT-020)', () => {
+  it('pastes beats over as many beats as they last', () => {
+    const score = texScore(EIGHTHS);
+    const editor = editorOf(score);
+    const before = fingerprint(score);
+    const clip = copySelection(score, beats([0, 0], [0, 1]));
+    editor.apply([{ kind: 'paste', at: { ...AT, beat: 4 }, clip }]);
+    expect(written(score, 0)).toEqual([
+      '1.1:8',
+      '2.1:8',
+      '3.1:8',
+      '4.1:8',
+      '1.1:8',
+      '2.1:8',
+      '7.1:8',
+      '8.1:8',
+    ]);
+    editor.undo();
+    expect(fingerprint(score)).toBe(before);
+    // The copy is the score's as it was when copied, and can be pasted again.
+    editor.apply([{ kind: 'set-fret', at: { ...AT, string: tex(1) }, fret: 9 }]);
+    editor.apply([{ kind: 'paste', at: { ...AT, beat: 2 }, clip }]);
+    expect(written(score, 0).slice(0, 4)).toEqual(['9.1:8', '2.1:8', '1.1:8', '2.1:8']);
+  });
+
+  it('pastes across a bar line, filling what the beats leave of a bar with rests', () => {
+    const score = texScore(EIGHTHS);
+    const editor = editorOf(score);
+    const clip = copySelection(score, beats([0, 0], [0, 3]));
+    editor.apply([{ kind: 'paste', at: { ...AT, beat: 6 }, clip }]);
+    expect(written(score, 0).slice(6)).toEqual(['1.1:8', '2.1:8']);
+    expect(written(score, 1)).toEqual(['3.1:8', '4.1:8', 'r2', 'r4']);
+    expect(score.masterBars).toHaveLength(2);
+  });
+
+  it('puts bars in at the end when the score is too short', () => {
+    const score = texScore(EIGHTHS);
+    const editor = editorOf(score);
+    const clip = copySelection(score, beats([0, 0], [0, 7]));
+    editor.apply([{ kind: 'paste', at: { ...AT, bar: 1 }, clip }]);
+    expect(written(score, 1)).toEqual(written(score, 0));
+    editor.apply([{ kind: 'paste', at: { ...AT, bar: 1, beat: 4 }, clip }]);
+    expect(score.masterBars).toHaveLength(3);
+    expect(written(score, 1).slice(4)).toEqual(['1.1:8', '2.1:8', '3.1:8', '4.1:8']);
+    expect(written(score, 2)).toEqual(['5.1:8', '6.1:8', '7.1:8', '8.1:8', 'r2']);
+    editor.undo();
+    expect(score.masterBars).toHaveLength(2);
+  });
+
+  it('pastes bars of every track over the bars from the caret’s on', () => {
+    const score = texScore('\\track "Guitar" 1.1.1 | 2.1.1 | 3.1.1 \\track "Bass" 1.4.1 | 2.4.1 | 3.4.1');
+    const editor = editorOf(score);
+    const clip = copySelection(score, { kind: 'bars', fromTrack: 0, toTrack: 1, fromBar: 0, toBar: 1 });
+    editor.apply([{ kind: 'paste', at: { ...AT, bar: 2 }, clip }]);
+    expect(score.masterBars).toHaveLength(4);
+    const frets = (track: number) =>
+      score.tracks[track]?.staves[0]?.bars.map(bar => bar.voices[0]?.beats[0]?.notes[0]?.fret);
+    expect(frets(0)).toEqual([1, 2, 1, 2]);
+    expect(frets(1)).toEqual([1, 2, 1, 2]);
+    // Pasted in the second track, the bass's bars go there; the guitar's have no track after it.
+    editor.undo();
+    const bass = copySelection(score, { kind: 'bars', fromTrack: 1, toTrack: 1, fromBar: 2, toBar: 2 });
+    editor.apply([{ kind: 'paste', at: { ...AT, track: 1, bar: 0 }, clip: bass }]);
+    expect(frets(1)).toEqual([3, 2, 3]);
+    expect(frets(0)).toEqual([1, 2, 3]);
+  });
+
+  it('refuses to paste drums on strings, or notes on strings a track does not have', () => {
+    const score = texScore(
+      '\\track "Guitar" 1.1.4 2.6.4 r.2\n\\track "Bass"\n\\tuning (G2 D2 A1 E1) 3.4.1\n' +
+        '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:1 KickHit',
+    );
+    const editor = editorOf(score);
+    const high = copySelection(score, beats([0, 0], [0, 0]));
+    expect(() => editor.apply([{ kind: 'paste', at: { ...AT, track: 1 }, clip: high }])).toThrow(
+      'This track has fewer strings than the notes copied are written on.',
+    );
+    const low = copySelection(score, beats([0, 1], [0, 1]));
+    editor.apply([{ kind: 'paste', at: { ...AT, track: 1 }, clip: low }]);
+    expect(score.tracks[1]?.staves[0]?.bars[0]?.voices[0]?.beats[0]?.notes[0]?.fret).toBe(2);
+    expect(() => editor.apply([{ kind: 'paste', at: { ...AT, track: 2 }, clip: low }])).toThrow(
+      'Notes on strings are pasted on a track with strings.',
+    );
+    const unreadable = { ...low, score: { tracks: 'none' } };
+    expect(() => editor.apply([{ kind: 'paste', at: AT, clip: unreadable }])).toThrow(
+      'What was copied cannot be read.',
+    );
+  });
+
+  it('clears a selection’s notes, leaving rests, and takes beats and bars away', () => {
+    const score = texScore(
+      '\\track "Guitar" 1.1.4 2.1.4 3.1.4 4.1.4 | 5.1.1 | 6.1.1 \\track "Bass" 1.4.1 | 2.4.1 | 3.4.1',
+    );
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'clear', selection: beats([0, 1], [0, 2]) }]);
+    expect(written(score, 0)).toEqual(['1.1:4', 'r4', 'r4', '4.1:4']);
+    editor.apply([{ kind: 'remove', selection: beats([0, 3], [1, 0]) }]);
+    expect(written(score, 0)).toEqual(['1.1:4', 'r4', 'r4']);
+    expect(written(score, 1)).toEqual(['-']);
+    // Bars of one track are emptied; of every track, taken away.
+    editor.apply([
+      { kind: 'remove', selection: { kind: 'bars', fromTrack: 1, toTrack: 1, fromBar: 0, toBar: 0 } },
+    ]);
+    expect(score.tracks[1]?.staves[0]?.bars[0]?.isEmpty).toBe(true);
+    expect(score.masterBars).toHaveLength(3);
+    editor.apply([
+      { kind: 'remove', selection: { kind: 'bars', fromTrack: 0, toTrack: 1, fromBar: 0, toBar: 1 } },
+    ]);
+    expect(score.masterBars).toHaveLength(1);
+    expect(written(score, 0)).toEqual(['6.1:1']);
+    // Every bar of the score: they are emptied, a score keeping its bars.
+    editor.apply([
+      { kind: 'remove', selection: { kind: 'bars', fromTrack: 0, toTrack: 1, fromBar: 0, toBar: 0 } },
+    ]);
+    expect(score.masterBars).toHaveLength(1);
+    expect(written(score, 0)).toEqual(['-']);
+  });
+
+  it('duplicates a track, notes and all, on channels of its own', () => {
+    const score = texScore('\\track "Guitar" 1.1.4 2.1.4 3.1.2 | 5.1.1 \\track "Bass" 1.4.1 | 2.4.1');
+    const editor = editorOf(score);
+    const before = fingerprint(score);
+    expect(editor.apply([{ kind: 'duplicate-track', track: 0 }])?.trackOrigins).toEqual([0, -1, 1]);
+    expect(score.tracks.map(track => track.name)).toEqual(['Guitar', 'Guitar', 'Bass']);
+    const [guitar, copy] = score.tracks;
+    expect(copy?.staves[0]?.tuning).toEqual(guitar?.staves[0]?.tuning);
+    const frets = (track: alphaTab.model.Track | undefined) =>
+      track?.staves[0]?.bars.flatMap(bar => bar.voices[0]?.beats.map(each => each.notes[0]?.fret));
+    expect(frets(copy)).toEqual(frets(guitar));
+    expect(copy?.playbackInfo.primaryChannel).not.toBe(guitar?.playbackInfo.primaryChannel);
+    // The copy is its own: writing in it leaves the track it came from as it was.
+    editor.apply([{ kind: 'set-fret', at: { ...AT, track: 1, string: tex(1) }, fret: 12 }]);
+    expect(frets(guitar)?.[0]).toBe(1);
+    editor.undo();
+    editor.undo();
+    expect(fingerprint(score)).toBe(before);
+  });
+});
+
 describe('undo and redo', () => {
   it('undoes and redoes edits in turn; a new edit forgets what was undone', () => {
     const score = texScore('\\track "Guitar" 3.3 5.3 7.3 8.3');
@@ -625,6 +781,67 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
   }
 }
 
+/**
+ * A selection command at a random place (EDIT-020): what is selected copied and pasted somewhere,
+ * cleared or taken away, or a track duplicated. A copy is kept in `clip`.
+ */
+function randomSelectionCommand(score: alphaTab.model.Score, random: () => number): EditCommand | null {
+  const pick = (count: number): number => Math.floor(random() * count);
+  const staves = score.tracks.flatMap(track => track.staves);
+  const staff = staves[pick(staves.length)];
+  const bar = staff?.bars[pick(staff.bars.length)];
+  const voice = bar?.voices[pick(bar.voices.length)];
+  if (staff === undefined || bar === undefined || voice === undefined) return null;
+  const bars = score.masterBars.length;
+  const toBar = Math.min(bars - 1, bar.index + pick(3));
+  const last = staff.bars[toBar]?.voices[voice.index];
+  const selection: Selection =
+    random() < 0.6 && last !== undefined
+      ? {
+          kind: 'beats',
+          track: staff.track.index,
+          staff: staff.index,
+          voice: voice.index,
+          from: { bar: bar.index, beat: pick(voice.beats.length) },
+          to: { bar: toBar, beat: pick(last.beats.length) },
+        }
+      : {
+          kind: 'bars',
+          fromTrack: staff.track.index,
+          toTrack: Math.min(score.tracks.length - 1, staff.track.index + pick(2)),
+          fromBar: bar.index,
+          toBar,
+        };
+  switch (pick(5)) {
+    case 0:
+      return { kind: 'clear', selection };
+    case 1:
+      return { kind: 'remove', selection };
+    case 2:
+      return score.tracks.length < 6 ? { kind: 'duplicate-track', track: staff.track.index } : null;
+    default: {
+      let clip: Clip;
+      try {
+        clip = copySelection(score, selection);
+      } catch (error) {
+        if (error instanceof EditError) return null;
+        throw error;
+      }
+      // Pasted somewhere in the same staff and voice, as plain data, as the page keeps it.
+      const target = staff.bars[pick(staff.bars.length)];
+      const into = target?.voices[voice.index] ?? voice;
+      const at = {
+        track: staff.track.index,
+        staff: staff.index,
+        bar: into.bar.index,
+        voice: voice.index,
+        beat: pick(into.beats.length),
+      };
+      return { kind: 'paste', at, clip: structuredClone(clip) };
+    }
+  }
+}
+
 interface ScoreState {
   readonly written: string;
   readonly links: string;
@@ -660,10 +877,19 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
     const random = randomFrom(seedOf(path));
     const states = [stateOf(score)];
     for (let edit = 0; edit < EDITS; edit++) {
-      const command = randomCommand(score, random);
-      if (command === null) break;
+      const command = random() < 0.25 ? randomSelectionCommand(score, random) : randomCommand(score, random);
+      if (command === null) continue;
+      let result;
+      try {
+        result = editor.apply([command]);
+      } catch (error) {
+        // A paste a staff cannot take (drums on strings), refused: the score is as it was.
+        if (!(error instanceof EditError) || command.kind !== 'paste') throw error;
+        expect(stateOf(score), `refused ${JSON.stringify(command)}`).toEqual(states.at(-1));
+        continue;
+      }
       // An edit that changes nothing (a track moved to where it is) is not one to undo.
-      if (editor.apply([command]) === null) continue;
+      if (result === null) continue;
       const state = stateOf(score);
       expect(state.links, `edit ${String(edit)}: ${JSON.stringify(command)}`).not.toContain('detached');
       expect(links(reopened(score)), `edit ${String(edit)} opened afresh: ${JSON.stringify(command)}`).toBe(

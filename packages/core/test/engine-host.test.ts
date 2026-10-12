@@ -4,9 +4,12 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { EngineHost } from '../src/engine/host.ts';
 import { ALPHATAB_VERSION } from '../src/engine/version.ts';
+import { TRACK_BEAT_NOTE_STRIDE, TRACK_BEATS_STRIDE } from '../src/shared/beats.ts';
 import { BOUNDS_STAFF_LINES_STRIDE, STAFF_KIND } from '../src/shared/playback.ts';
 import type { ViewOptions } from '../src/shared/view.ts';
 import { readFixture } from './helpers.ts';
+
+const AT = { track: 0, staff: 0, bar: 0, voice: 0, beat: 0 };
 
 const VIEW: ViewOptions = {
   trackIndexes: [0],
@@ -205,6 +208,53 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(layOut(412)).toBe(bars);
     expect(layOut(383)).toBe(bars);
     expect(layOut(700)).toBe(bars);
+  });
+
+  it('copies bars from one document and pastes them in another (EDIT-020)', () => {
+    const host = new EngineHost();
+    const shuffle = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    const blank = host.open({
+      name: 'blank.atex',
+      bytes: new TextEncoder().encode('\\track "Guitar"\n r.1 | r.1').buffer,
+    });
+    if (!shuffle.ok || !blank.ok) throw new Error('documents did not open');
+    const copied = host.copy({
+      docId: shuffle.summary.id,
+      selection: { kind: 'bars', fromTrack: 0, toTrack: 0, fromBar: 0, toBar: 3 },
+    });
+    expect(copied).toMatchObject({ kind: 'bars', beats: 0, bars: 4, tracks: 1 });
+    // Plain data, as the page keeps it and sends it back.
+    const clip = structuredClone(copied);
+    const pasted = host.edit({ docId: blank.summary.id, commands: [{ kind: 'paste', at: AT, clip }] });
+    expect(pasted.summary.masterBars).toHaveLength(4);
+    // The first four bars' frets, beat by beat.
+    const frets = (docId: string): number[][] => {
+      const { beats, notes } = host.trackBeats({ docId, trackIndex: 0 });
+      const found: number[][] = [];
+      for (let at = 0; at < beats.length; at += TRACK_BEATS_STRIDE) {
+        if ((beats[at + 2] ?? 0) >= 4) continue;
+        const first = beats[at + 8] ?? 0;
+        const count = beats[at + 9] ?? 0;
+        found.push(
+          Array.from(
+            { length: count },
+            (_, note) => notes[(first + note) * TRACK_BEAT_NOTE_STRIDE + 1] ?? -1,
+          ),
+        );
+      }
+      return found;
+    };
+    expect(frets(blank.summary.id).flat().length).toBeGreaterThan(20);
+    expect(frets(blank.summary.id)).toEqual(frets(shuffle.summary.id));
+    expect(() =>
+      host.copy({
+        docId: blank.summary.id,
+        selection: { kind: 'bars', fromTrack: 0, toTrack: 3, fromBar: 0, toBar: 0 },
+      }),
+    ).toThrow(expect.objectContaining({ name: 'EngineHostError', message: 'No tracks 0 to 3.' }));
   });
 
   it('refuses an edit it cannot make, saying why, and leaves the document as it was', () => {
