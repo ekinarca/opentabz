@@ -10,7 +10,7 @@ import {
   type TrackProperties,
   type TrackState,
 } from '@opentabz/core/shared';
-import { Button, Dialog } from '@opentabz/ui';
+import { Button, Dialog, Switch } from '@opentabz/ui';
 import { useEffect, useId, useState } from 'react';
 import { create } from 'zustand';
 import { useDocuments } from '../state/documents.ts';
@@ -328,6 +328,8 @@ export function TrackDialog() {
         ? { open, was: start, now: start, instrument: 'electric-guitar' as const }
         : null;
   const instrument = current?.instrument ?? 'electric-guitar';
+  // A new tuning keeps the notes' pitches, unless asked to keep their frets (EDIT-054).
+  const [keepPitches, setKeepPitches] = useState(true);
 
   useEffect(() => {
     if (open?.mode !== 'edit') return undefined;
@@ -431,7 +433,11 @@ export function TrackDialog() {
                   });
                 } else {
                   const changes = trackChanges(current.was, current.now);
-                  if (Object.keys(changes).length > 0) setTrack(open.key, open.track, changes);
+                  if (Object.keys(changes).length > 0)
+                    setTrack(open.key, open.track, {
+                      ...changes,
+                      ...(changes.tuning !== undefined && keepPitches ? { keepPitches: true } : {}),
+                    });
                 }
               }
               close();
@@ -466,6 +472,16 @@ export function TrackDialog() {
             </Field>
           )}
           <TrackFields state={current.now} onChange={update} />
+          {open?.mode === 'edit' &&
+            current.now.tuning.length > 0 &&
+            'tuning' in trackChanges(current.was, current.now) && (
+              <Switch
+                label={s.keepPitches}
+                hint={keepPitches ? s.keepPitchesHint : s.keepFretsHint}
+                checked={keepPitches}
+                onCheckedChange={setKeepPitches}
+              />
+            )}
         </div>
       )}
     </Dialog>

@@ -10,6 +10,8 @@ import { AboutDialog } from './AboutDialog.tsx';
 import { BarDialog } from './BarDialog.tsx';
 import { TransposeDialog } from './TransposeDialog.tsx';
 import { MarksDialog } from './MarksDialog.tsx';
+import { VoicesDialog } from './VoicesDialog.tsx';
+import { HarmonizeDialog } from './HarmonizeDialog.tsx';
 import { CloseGuardDialog } from './CloseGuardDialog.tsx';
 import { RecoverDialog } from './RecoverDialog.tsx';
 import { TrackDialog } from './TrackDialog.tsx';
@@ -135,6 +137,8 @@ export function App() {
         <BarDialog />
         <TransposeDialog />
         <MarksDialog />
+        <VoicesDialog />
+        <HarmonizeDialog />
         <TrackDialog />
         <RecoverDialog />
         <Notices />

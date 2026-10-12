@@ -105,10 +105,18 @@ its beat.
 | Write in voice 2                               | `Ctrl 2`                                | `⌘ 2`                                   |
 | Write in voice 3                               | `Ctrl 3`                                | `⌘ 3`                                   |
 | Write in voice 4                               | `Ctrl 4`                                | `⌘ 4`                                   |
+| Move the notes to voice 1                      | `Alt 1`                                 | `⌥ 1`                                   |
+| Move the notes to voice 2                      | `Alt 2`                                 | `⌥ 2`                                   |
+| Move the notes to voice 3                      | `Alt 3`                                 | `⌥ 3`                                   |
+| Move the notes to voice 4                      | `Alt 4`                                 | `⌥ 4`                                   |
+| Move, copy or swap voices…                     | `Ctrl Shift M`                          | `⌘ ⇧ M`                                 |
 | Move the note a string up, at its pitch        | `Ctrl Alt ↑`                            | `⌘ ⌥ ↑`                                 |
 | Move the note a string down, at its pitch      | `Ctrl Alt ↓`                            | `⌘ ⌥ ↓`                                 |
 | Copy the selection                             | `Ctrl C`                                | `⌘ C`                                   |
 | Cut the selection                              | `Ctrl X`                                | `⌘ X`                                   |
+| Copy whole bars of every track                 | `Ctrl Shift C`                          | `⌘ ⇧ C`                                 |
+| Cut whole bars of every track                  | `Ctrl Shift X`                          | `⌘ ⇧ X`                                 |
+| Repeat the beat before                         | `C`                                     | `C`                                     |
 | Paste at the caret                             | `Ctrl V`                                | `⌘ V`                                   |
 | Insert a beat                                  | `Ctrl Insert`                           | `⌃ +`                                   |
 | Longer note                                    | `-` or `_`                              | `-` or `_`                              |

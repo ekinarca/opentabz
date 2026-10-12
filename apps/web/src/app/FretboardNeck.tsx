@@ -1,4 +1,4 @@
-import { useMemo, useState, type PointerEvent } from 'react';
+import { useMemo, useState, type MouseEvent, type PointerEvent } from 'react';
 import { NOTE_DEAD, NOTE_GHOST, NOTE_HARMONIC } from '@opentabz/core/shared';
 import {
   DOUBLE_INLAYS,
@@ -193,7 +193,10 @@ export function FretboardNeck({
   labels,
   notes,
   description,
+  onPlay,
 }: {
+  /** While the score is edited, a click writes the string and fret clicked (1 the highest string, frets from the nut). */
+  readonly onPlay?: ((string: number, fret: number) => void) | undefined;
   readonly stringCount: number;
   readonly tuning: readonly number[];
   readonly capo: number;
@@ -317,23 +320,33 @@ export function FretboardNeck({
     ...notes.current.map(note => ({ note, kind: 'current' as const })),
   ];
 
-  const point = (event: PointerEvent<SVGSVGElement>) => {
-    if (labels === 'off') return;
+  /** The string and fret under a point of the neck, or null off the strings. */
+  const placeAt = (
+    event: PointerEvent<SVGSVGElement> | MouseEvent<SVGSVGElement>,
+  ): { string: number; fret: number } | null => {
     const box = event.currentTarget.getBoundingClientRect();
     const x = mirror(event.clientX - box.left);
     const y = event.clientY - box.top;
     const string = Math.round((y - TOP) / gap) + 1;
-    if (string < 1 || string > stringCount || x < 0) {
-      setPointed(null);
-      return;
-    }
+    if (string < 1 || string > stringCount || x < 0) return null;
     let fret = 0;
     if (x >= nutX) {
       const share = (x - nutX) / length;
       fret = 1;
       while (fret < frets && wirePosition(fret, frets) < share) fret += 1;
     }
-    setPointed(current => (current?.string === string && current.fret === fret ? current : { string, fret }));
+    return { string, fret };
+  };
+  const point = (event: PointerEvent<SVGSVGElement>) => {
+    if (labels === 'off') return;
+    const place = placeAt(event);
+    setPointed(current =>
+      place === null
+        ? null
+        : current?.string === place.string && current.fret === place.fret
+          ? current
+          : place,
+    );
   };
   const pointedPitch = pointed === null ? null : pitchAt(tuning, pointed.string, pointed.fret, capo);
 
@@ -350,6 +363,15 @@ export function FretboardNeck({
       className="block"
       onPointerMove={point}
       onPointerDown={point}
+      {...(onPlay === undefined
+        ? {}
+        : {
+            onClick: (event: MouseEvent<SVGSVGElement>) => {
+              const place = placeAt(event);
+              if (place !== null) onPlay(place.string, place.fret);
+            },
+            'data-editing': '',
+          })}
       onPointerLeave={event => {
         // A finger lifted leaves too: on touch screens the name stays until the next touch.
         if (event.pointerType === 'mouse') setPointed(null);

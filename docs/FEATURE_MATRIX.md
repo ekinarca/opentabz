@@ -556,7 +556,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-006 | MIDI keyboard step entry                                         | GP  | M4  | —       | —    | planned |
 | EDIT-007 | MIDI real-time recording with quantize and click                 | OT  | M4  | —       | —    | planned |
 | EDIT-008 | Text entry (alphaTex superset)                                   | OT  | M5  | —       | —    | planned |
-| EDIT-010 | Durations, dots, tuplets, ties, rests                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-010 | Durations, dots, tuplets, ties, rests                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-011 | Up to 4 voices                                                   | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-012 | Beam control                                                     | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
@@ -584,9 +584,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-051 | Octave shift                                                     | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-052 | Move notes across strings                                        | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-053 | Automatic re-fret / fingering                                    | GP  | M5  | —       | —    | planned |
-| EDIT-054 | Convert between tunings and instruments (drop D, bass, ukulele…) | GP+ | M5  | —       | —    | planned |
-| EDIT-055 | Harmonize (3rds / 6ths / octaves)                                | OT  | M5  | —       | —    | planned |
-| EDIT-056 | Double a track                                                   | OT  | M5  | —       | —    | planned |
+| EDIT-054 | Convert between tunings and instruments (drop D, bass, ukulele…) | GP+ | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-055 | Harmonize (3rds / 6ths / octaves)                                | OT  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-056 | Double a track                                                   | OT  | M5  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-057 | Simplify for beginners                                           | OT  | M5  | —       | —    | planned |
 | EDIT-058 | Quantize                                                         | OT  | M5  | —       | —    | planned |
 | EDIT-059 | Mirror                                                           | OT  | M5  | —       | —    | planned |
@@ -623,24 +623,24 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-090 | Master track: song-wide tempo, sections, repeats, directions, key and master automations | GP  | M4  | —       | —    | planned |
 | EDIT-091 | Keyboard entry on standard notation with a chosen string (1–9) or automatic string (0) | GP  | M4  | —       | —    | planned |
 | EDIT-092 | Entry in any shown notation (tab, staff, slash, numbered) updates all of them | GP  | M4  | —       | —    | planned |
-| EDIT-093 | Insert and delete beats; delete a note; clear the selection      | GP  | M4  | —       | —    | planned |
-| EDIT-094 | Repeat the previous beat at the cursor                           | GP  | M4  | —       | —    | planned |
-| EDIT-095 | Cursor moves on when a bar is full, adding a bar at the end of the score | GP  | M4  | —       | —    | planned |
-| EDIT-096 | Notes sound as they are entered                                  | GP  | M4  | —       | —    | planned |
-| EDIT-097 | Note entry by clicking the fretboard, keyboard, drum or scale views | GP  | M4  | —       | —    | planned |
+| EDIT-093 | Insert and delete beats; delete a note; clear the selection      | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-094 | Repeat the previous beat at the cursor                           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-095 | Cursor moves on when a bar is full, adding a bar at the end of the score | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
+| EDIT-096 | Notes sound as they are entered                                  | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
+| EDIT-097 | Note entry by clicking the fretboard, keyboard, drum or scale views | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-098 | Slash (rhythm) entry; convert notes to slashes keeping their pitches | GP  | M4  | —       | —    | planned |
-| EDIT-099 | Beat-range copy, cut and paste across bar lines, all voices, between instruments | GP  | M4  | —       | —    | planned |
-| EDIT-100 | Multitrack copy and cut of whole bars                            | GP  | M4  | —       | —    | planned |
+| EDIT-099 | Beat-range copy, cut and paste across bar lines, all voices, between instruments | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-100 | Multitrack copy and cut of whole bars                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-101 | Special paste: repeat count, include the current bar, choose element types | GP  | M4  | —       | —    | planned |
-| EDIT-102 | Move, copy or swap voice contents                                | GP  | M4  | —       | —    | planned |
+| EDIT-102 | Move, copy or swap voice contents                                | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-103 | Live bar-completeness indicator naming the faulty voice          | GP  | M4  | —       | —    | planned |
 | EDIT-104 | Nested-tuplet entry, inner or outer first                        | GP  | M4  | —       | —    | planned |
 | EDIT-105 | Default beam grouping per time signature                         | GP  | M4  | —       | —    | planned |
-| EDIT-106 | Flip stem direction                                              | GP  | M4  | —       | —    | planned |
+| EDIT-106 | Flip stem direction                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-107 | Clefs and clef changes, optionally keeping pitches               | GP  | M4  | —       | —    | planned |
 | EDIT-108 | One- and two-bar simile marks                                    | GP  | M4  | —       | —    | planned |
-| EDIT-109 | Force or prevent a system break at a bar                         | GP  | M4  | —       | —    | planned |
-| EDIT-110 | Accidentals: sharp, flat, natural, double, courtesy              | GP  | M4  | —       | —    | planned |
+| EDIT-109 | Force or prevent a system break at a bar                         | GP  | M4  | —       | packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-110 | Accidentals: sharp, flat, natural, double, courtesy              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-111 | Bend editor: pitch curve with draggable points and presets       | GP  | M4  | —       | —    | planned |
 | EDIT-112 | Whammy-bar editor: pitch curve with presets in quarter-tone steps | GP  | M4  | —       | —    | planned |
 | EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |

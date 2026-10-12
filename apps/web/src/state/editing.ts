@@ -45,12 +45,16 @@ import {
   type Beaming,
   type Dynamic,
   type Finger,
+  type Harmony,
   type NoteTechniques,
   type Selection,
   type Spelling,
+  type Stem,
+  type Tuplet,
   type TrackBeats,
 } from '@opentabz/core/shared';
 import { create } from 'zustand';
+import { getAudioEngine } from '../audio/audio-engine.ts';
 import { getEngine } from '../engine/instance.ts';
 import { beatsSoundingAt, beatTicks } from '../score-view/timeline-lookup.ts';
 import { strings } from '../strings.ts';
@@ -84,6 +88,7 @@ import {
   type EditSelection,
 } from './edit-selection.ts';
 import { regenerateSong, usePlayer } from './player.ts';
+import { usePreferences } from './preferences.ts';
 
 export interface DocEditing {
   /** The score is being edited: the caret shows, and keys write. */
@@ -689,6 +694,7 @@ function apply(
   commands: readonly EditCommand[],
   after: CaretPlace | null = null,
   keepSelection = false,
+  heard: number | null = null,
 ): void {
   const issued = editingOf(key).caret;
   const before = placeOf(editingOf(key));
@@ -705,11 +711,21 @@ function apply(
     const current = editingOf(key).caret;
     const moved = issued !== null && current !== null && !sameCaret(issued, current);
     await changed(key, outcome, step.revision, moved ? null : step.after, keepSelection);
+    if (heard !== null) hear(doc.engineId, heard);
   };
   // Within an editing action, at once; otherwise after the work under way.
   const edits = acting.get(key);
   if (edits === undefined) void enqueue(key, work).catch(fail);
   else edits.push(work());
+}
+
+/** A beat written heard, when asked (EDIT-096): its notes as the edit left them. */
+function hear(docId: string, beatId: number): void {
+  if (!usePreferences.getState().hearNotes) return;
+  void getAudioEngine()
+    .ensureOutput()
+    .then(() => getEngine().call('previewBeats', { docId, beatIds: [beatId] }))
+    .catch(() => undefined);
 }
 
 /** The caret's beat and string, when the document is being edited and the caret is on a beat. */
@@ -728,7 +744,7 @@ function typeFretNow(key: string, digit: number, now: number): boolean {
   const { editing, caret, at } = found;
   const fret = typedFret(editing.typed, caret, digit, now);
   patch(key, { typed: { beatId: caret.beatId, string: caret.string, fret, at: now } });
-  apply(key, [{ kind: 'set-fret', at: { ...at, string: caret.string }, fret }]);
+  apply(key, [{ kind: 'set-fret', at: { ...at, string: caret.string }, fret }], null, false, caret.beatId);
   return true;
 }
 
@@ -739,7 +755,7 @@ function writeFretAtCaretNow(key: string, fret: number): boolean {
   const { caret, at } = found;
   if (!Number.isInteger(fret) || fret < 0 || fret > MAX_FRET) return true;
   patch(key, { typed: null });
-  apply(key, [{ kind: 'set-fret', at: { ...at, string: caret.string }, fret }]);
+  apply(key, [{ kind: 'set-fret', at: { ...at, string: caret.string }, fret }], null, false, caret.beatId);
   return true;
 }
 
@@ -872,6 +888,8 @@ export function duplicateTrack(key: string, track: number): boolean {
 export interface Marks {
   readonly dynamics?: Dynamic;
   readonly beaming?: Beaming;
+  readonly tuplet?: Tuplet;
+  readonly stem?: Stem;
   /** The caret's beat's text; null or empty for none. */
   readonly text?: string | null;
   /** The caret's note's fingers. */
@@ -900,17 +918,15 @@ export function applyMarks(key: string, marks: Marks): boolean {
       beat: row.beat,
     });
     const commands: EditCommand[] = [];
-    const { dynamics, beaming, text, leftFinger, rightFinger, spelling } = marks;
-    if (dynamics !== undefined || beaming !== undefined)
-      for (const row of rows)
-        commands.push({
-          kind: 'set-beat',
-          at: beatAt(row),
-          techniques: {
-            ...(dynamics === undefined ? {} : { dynamics }),
-            ...(beaming === undefined ? {} : { beaming }),
-          },
-        });
+    const { dynamics, beaming, tuplet, stem, text, leftFinger, rightFinger, spelling } = marks;
+    const beatMarks: BeatTechniques = {
+      ...(dynamics === undefined ? {} : { dynamics }),
+      ...(beaming === undefined ? {} : { beaming }),
+      ...(tuplet === undefined ? {} : { tuplet }),
+      ...(stem === undefined ? {} : { stem }),
+    };
+    if (Object.keys(beatMarks).length > 0)
+      for (const row of rows) commands.push({ kind: 'set-beat', at: beatAt(row), techniques: beatMarks });
     if (text !== undefined && own !== null && (own.flags & BEAT_EMPTY) === 0)
       commands.push({ kind: 'set-beat', at: beatAt(own), techniques: { text } });
     const onCaret = own?.notes.some(note => note.string === caret.string) === true;
@@ -933,6 +949,113 @@ export function applyMarks(key: string, marks: Marks): boolean {
               techniques: { spelling },
             });
     if (commands.length > 0) apply(key, commands, placeOf(editing), true);
+  });
+}
+
+/**
+ * A note played on an instrument view (EDIT-097): its string and fret written at the caret's beat,
+ * the caret on its string; the same note played again is taken away, as in Guitar Pro.
+ */
+export function playNoteAtCaret(key: string, string: number, fret: number): boolean {
+  if (!editingOf(key).on) return false;
+  return act(key, () => {
+    const found = atCaret(key);
+    if (found === null) return;
+    const { caret, at, editing } = found;
+    const beats = editing.beats;
+    if (beats === null) return;
+    const written = rowOf(beats, caret.beatId)?.notes.find(note => note.string === string);
+    if (!Number.isInteger(fret) || fret < 0 || fret > MAX_FRET) return;
+    patch(key, { caret: { ...caret, string }, typed: null });
+    apply(
+      key,
+      written?.fret === fret
+        ? [{ kind: 'remove-note', at: { ...at, string } }]
+        : [{ kind: 'set-fret', at: { ...at, string }, fret }],
+      { at, string },
+      false,
+      written?.fret === fret ? null : caret.beatId,
+    );
+  });
+}
+
+/** Writes the beat before the caret's over it again (Guitar Pro's C, EDIT-094); the caret goes on. */
+export function repeatBeat(key: string): boolean {
+  return act(key, () => {
+    const found = atCaret(key);
+    if (found === null) return;
+    const { caret, at, editing } = found;
+    const next = editing.beats === null ? caret : stepCaret(editing.beats, caret, 1);
+    const after =
+      next.beatId === caret.beatId || editing.beats === null ? null : caretAddress(editing.beats, next);
+    apply(key, [{ kind: 'repeat-beat', at }], after === null ? null : { at: after, string: caret.string });
+  });
+}
+
+/** Copies, or cuts, whole bars of every track: those the selection reaches, else the caret's (EDIT-100). */
+export function copyBars(key: string, cut: boolean): boolean {
+  const editing = editingOf(key);
+  const { caret, beats } = editing;
+  const doc = docOf(key);
+  if (!editing.on || caret === null || beats === null || doc === null) return false;
+  const reached = editing.selection === null ? null : selectedBars(editing.selection, caret, beats);
+  const bar = rowOf(beats, caret.beatId)?.bar;
+  if (reached === null && bar === undefined) return false;
+  const selection: Selection = {
+    kind: 'bars',
+    fromTrack: 0,
+    toTrack: doc.summary.tracks.length - 1,
+    fromBar: reached?.from ?? bar ?? 0,
+    toBar: reached?.to ?? bar ?? 0,
+  };
+  return act(key, async () => {
+    const clip = await getEngine().call('copy', { docId: doc.engineId, selection });
+    useClipboard.setState({ clip });
+    if (cut)
+      apply(key, [{ kind: 'remove', selection }], {
+        at: { track: caret.track, staff: caret.staff, voice: caret.voice, bar: selection.fromBar, beat: 0 },
+        string: caret.string,
+      });
+  });
+}
+
+/** Where a voice tool acts: the bars selected (else the caret's), or every bar of the track. */
+export type VoiceScope = 'bars' | 'track';
+
+/**
+ * Moves, copies or swaps a voice's contents with another's in the caret's staff (EDIT-102):
+ * moved, the caret goes with them to their voice.
+ */
+export function voiceContents(
+  key: string,
+  from: number,
+  to: number,
+  mode: 'move' | 'copy' | 'swap',
+  scope: VoiceScope = 'bars',
+): boolean {
+  return act(key, () => {
+    const editing = editingOf(key);
+    const { caret, beats } = editing;
+    const doc = docOf(key);
+    if (!editing.on || caret === null || beats === null || doc === null || from === to) return;
+    const row = rowOf(beats, caret.beatId);
+    if (row === null) return;
+    const reached = editing.selection === null ? null : selectedBars(editing.selection, caret, beats);
+    const [fromBar, toBar] =
+      scope === 'track'
+        ? [0, doc.summary.masterBars.length - 1]
+        : [reached?.from ?? row.bar, reached?.to ?? row.bar];
+    const follows = mode !== 'copy' && caret.voice === from;
+    apply(
+      key,
+      [{ kind: 'voice-contents', track: caret.track, staff: caret.staff, fromBar, toBar, from, to, mode }],
+      follows
+        ? {
+            at: { track: caret.track, staff: caret.staff, bar: row.bar, voice: to, beat: 0 },
+            string: caret.string,
+          }
+        : placeOf(editing),
+    );
   });
 }
 
@@ -1009,6 +1132,18 @@ export function transposeNotes(
     const selection = transposed(key, scope);
     if (selection === null || semitones === 0) return;
     apply(key, [{ kind: 'transpose', selection, semitones, chords }], placeOf(editingOf(key)), true);
+  });
+}
+
+/**
+ * Gives each note of what is selected (else the caret's beat) a harmony in the key (EDIT-055);
+ * what is selected stays so.
+ */
+export function harmonizeNotes(key: string, harmony: Harmony, below: boolean): boolean {
+  return act(key, () => {
+    const selection = transposed(key, 'selection');
+    if (selection === null) return;
+    apply(key, [{ kind: 'harmonize', selection, harmony, below }], placeOf(editingOf(key)), true);
   });
 }
 

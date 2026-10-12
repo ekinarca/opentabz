@@ -7,7 +7,7 @@
  * saved as a Guitar Pro file that opens again with the changes.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, openHome, test, viewTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -175,6 +175,81 @@ test.describe('on a computer', () => {
     await page.keyboard.press('Escape');
     await expect(shades).toHaveCount(0);
     await expect(editBar(page)).toBeVisible();
+  });
+
+  test('C repeats the beat before; ⌘/Ctrl Shift C copies whole bars of every track', async ({ page }) => {
+    await openShuffle(page);
+    const mod = await primary(page);
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('F2');
+    for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown');
+    // The second beat's note on the A string taken away, then the first beat repeated over it.
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Delete');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 5, nothing written');
+    await page.keyboard.press('c');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 0');
+    // Bar 1 of every track over bar 5's: the A string sounds where the D7 had nothing on it.
+    await page.keyboard.press(`${mod}+Shift+c`);
+    for (let step = 0; step < 4; step++) await page.keyboard.press(`${mod}+ArrowRight`);
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, nothing written');
+    await page.keyboard.press(`${mod}+v`);
+    await expect(caret(page)).toHaveText('Caret: bar 5, string 5, fret 0');
+  });
+
+  test('the bar dialog starts a new system at the caret’s bar (EDIT-109)', async ({ page }) => {
+    await openShuffle(page);
+    const mod = await primary(page);
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('F2');
+    await page.keyboard.press(`${mod}+ArrowRight`);
+    await expect(caret(page)).toHaveText('Caret: bar 2, string 1, nothing written');
+    const starts = page.locator(
+      '.ot-scroll:not([hidden]) .ot-partial[data-kind="system"][data-first-bar="1"]',
+    );
+    await expect(starts).toHaveCount(0);
+    await editTool(page, 'Bar properties');
+    const dialog = page.getByRole('dialog', { name: 'Bar 2' });
+    await dialog.getByRole('switch', { name: 'A new system starts here' }).click();
+    await dialog.getByRole('button', { name: 'Apply' }).click();
+    await expect(starts).toHaveCount(1);
+    await page.keyboard.press(`${mod}+z`);
+    await expect(starts).toHaveCount(0);
+  });
+
+  test('a fret written is heard when asked (EDIT-096)', async ({ page }) => {
+    // The engine's requests to play beats, counted.
+    await page.addInitScript(() => {
+      const heard: unknown[] = [];
+      Object.assign(window, { heard });
+      const Original = window.Worker;
+      window.Worker = class extends Original {
+        public override postMessage(message: unknown, transfer?: unknown): void {
+          const request = message as { method?: string; args?: { beatIds?: unknown } };
+          if (request.method === 'previewBeats') heard.push(request.args?.beatIds);
+          super.postMessage(message, transfer as Transferable[]);
+        }
+      };
+    });
+    const heard = () => page.evaluate(() => (window as unknown as { heard: unknown[] }).heard.length);
+    await openShuffle(page);
+    const score = page.getByRole('region', { name: /^Score: / });
+    await score.focus();
+    await page.keyboard.press('F2');
+    await page.keyboard.press('5');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+    await page.waitForTimeout(300);
+    expect(await heard()).toBe(0);
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const settings = page.getByRole('dialog', { name: 'Settings' });
+    await settings.getByRole('switch', { name: 'Hear the notes written' }).click();
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeHidden();
+    await score.focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('7');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 7');
+    await expect.poll(heard).toBe(1);
   });
 
   test('→ makes room for the next note, a bar at the end; bars are put in and taken away', async ({
@@ -656,6 +731,16 @@ test('notes are transposed by semitones and octaves, and moved from string to st
   if (!isMobile) await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
   if (!isMobile) await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
+
+  // A third below the caret's A, in A major: F♯, on the B string's 7th fret.
+  await expect.poll(() => firstSystemWrites(page, '7')).toBe(false);
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menuitem', { name: 'Harmonize…' }).click();
+  const harmonize = page.getByRole('dialog', { name: 'Harmonize' });
+  await harmonize.getByRole('radio', { name: 'Below' }).click();
+  await harmonize.getByRole('button', { name: 'Harmonize', exact: true }).click();
+  await expect(harmonize).toBeHidden();
+  await expect.poll(() => firstSystemWrites(page, '7')).toBe(true);
 });
 
 test('dynamics, beams, fingering, spelling and text for a note and its beat, directions from the bar dialog (EDIT-012, EDIT-013, EDIT-025, EDIT-043)', async ({
@@ -670,11 +755,15 @@ test('dynamics, beams, fingering, spelling and text for a note and its beat, dir
   const marks = page.getByRole('dialog', { name: 'Note and beat' });
   const open = async () => {
     await editBar(page).getByRole('button', { name: 'Techniques' }).click();
-    await page.getByRole('menuitem', { name: 'Dynamics, beam, fingering, spelling, text…' }).click();
+    await page
+      .getByRole('menuitem', { name: 'Dynamics, tuplet, stems, beam, fingering, spelling, text…' })
+      .click();
     await expect(marks).toBeVisible();
   };
   await open();
   await marks.getByLabel('Dynamics').selectOption({ label: 'pp, very soft' });
+  await marks.getByLabel('Tuplet').selectOption({ label: '5 in the time of 4' });
+  await marks.getByLabel('Stems').selectOption({ label: 'Down' });
   await marks.getByRole('radio', { name: 'Broken' }).click();
   await marks.getByLabel('Fretting hand').selectOption({ label: '3, ring' });
   await marks.getByLabel('Picking hand').selectOption({ label: 'i, index' });
@@ -686,6 +775,8 @@ test('dynamics, beams, fingering, spelling and text for a note and its beat, dir
   // Read back as set, as one edit.
   await open();
   await expect(marks.getByLabel('Dynamics')).toHaveValue('pp');
+  await expect(marks.getByLabel('Tuplet')).toHaveValue('5:4');
+  await expect(marks.getByLabel('Stems')).toHaveValue('down');
   await expect(marks.getByRole('radio', { name: 'Broken' })).toHaveAttribute('aria-checked', 'true');
   await expect(marks.getByLabel('Fretting hand')).toHaveValue('ring');
   await expect(marks.getByLabel('Picking hand')).toHaveValue('index');
@@ -736,4 +827,73 @@ test('the caret writes in voices 2 to 4, put in the staff as needed (EDIT-011)',
   await undo.click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
   await expect(undo).toBeDisabled();
+});
+
+test('a new tuning keeps the notes’ pitches, and a voice’s notes move to another (EDIT-054, EDIT-102)', async ({
+  page,
+  isMobile,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  // A note of one's own: on the low E string's 3rd fret, or on a phone the high E string's.
+  if (isMobile) {
+    await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+    await page.getByRole('button', { name: 'Fret 3', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 3');
+  } else {
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    for (let step = 0; step < 5; step++) await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('3');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 6, fret 3');
+  }
+  // Drop D: the note keeps its pitch (the high E string's is as it was).
+  await editTool(page, 'Track properties');
+  const track = page.getByRole('dialog', { name: 'Track: Rhythm Guitar' });
+  await track.getByLabel('Tuning', { exact: true }).selectOption({ label: 'Drop D (D A D G B E)' });
+  await expect(track.getByRole('switch', { name: 'Keep the notes’ pitches' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await track.getByRole('button', { name: 'Apply' }).click();
+  await expect(track).toBeHidden();
+  await expect(caret(page)).toHaveText(
+    isMobile ? 'Caret: bar 1, string 1, fret 3' : 'Caret: bar 1, string 6, fret 5',
+  );
+
+  // The first voice's notes of the bar to the second: the caret goes with them.
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menuitem', { name: 'Move, copy or swap voices…' }).click();
+  const voices = page.getByRole('dialog', { name: 'Voices' });
+  await expect(voices.getByLabel('To')).toHaveValue('1');
+  await voices.getByRole('button', { name: 'Apply' }).click();
+  await expect(voices).toBeHidden();
+  await expect(caret(page)).toHaveText(
+    isMobile ? 'Caret: bar 1, voice 2, string 1, fret 3' : 'Caret: bar 1, voice 2, string 6, fret 5',
+  );
+  if (!isMobile) {
+    // Back with Alt 1, as in Guitar Pro.
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('Alt+1');
+    await expect(caret(page)).toHaveText('Caret: bar 1, string 6, fret 5');
+  }
+});
+
+test('a note clicked on the fretboard is written at the caret, and taken away clicked again (EDIT-097)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await viewTool(page, 'Fretboard');
+  const neck = page.getByRole('region', { name: 'Fretboard' }).getByRole('img', { name: /^Fretboard of / });
+  await expect(neck).toBeVisible();
+  // The high E string, the top one (16 px down), a little way up the neck.
+  const box = await neck.boundingBox();
+  if (box === null) throw new Error('No fretboard.');
+  const point = { x: Math.min(box.width * 0.3, 260), y: 16 };
+  await neck.click({ position: point });
+  await expect(caret(page)).toHaveText(/^Caret: bar 1, string 1, fret \d+$/);
+  await neck.click({ position: point });
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
 });

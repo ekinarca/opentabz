@@ -93,6 +93,14 @@ export function SettingsDialog() {
               preferences.set({ invertedTab });
             }}
           />
+          <Switch
+            label={s.hearNotes}
+            hint={s.hearNotesHint}
+            checked={preferences.hearNotes}
+            onCheckedChange={hearNotes => {
+              preferences.set({ hearNotes });
+            }}
+          />
         </section>
         <section className="flex flex-col gap-3" aria-labelledby="settings-scores">
           <h3

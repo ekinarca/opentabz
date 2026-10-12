@@ -21,6 +21,7 @@ import '../instrument-view/fretboard.css';
 import { useTrackNotes } from '../instrument-view/use-track-notes.ts';
 import { useViewNotes, useWidth, type NotesAt } from '../instrument-view/use-view-notes.ts';
 import type { OpenDocument } from '../state/documents.ts';
+import { playNoteAtCaret, useEditing } from '../state/editing.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 import { FretboardNeck, neckGeometry } from './FretboardNeck.tsx';
@@ -101,6 +102,7 @@ export function FretboardPanel({ doc }: { readonly doc: OpenDocument }) {
   const leftHanded = usePreferences(state => state.leftHanded);
   const cursorColor = usePreferences(state => state.cursorColor);
   const setPreferences = usePreferences(state => state.set);
+  const editing = useEditing(state => state.docs[doc.key]?.on === true);
   const track = doc.summary.tracks[doc.activeTrack] ?? doc.summary.tracks[0];
   const staff = track?.staves.find(candidate => candidate.stringCount > 0 && !candidate.isPercussion) ?? null;
   const capo = staff?.capo ?? 0;
@@ -170,6 +172,15 @@ export function FretboardPanel({ doc }: { readonly doc: OpenDocument }) {
               labels={labels}
               notes={notes}
               description={describe(trackName, notes)}
+              onPlay={
+                editing && track !== undefined
+                  ? (string, fret) => {
+                      // The neck numbers strings from the highest and frets from the nut; the score
+                      // from the lowest, and from the capo.
+                      if (fret >= capo) playNoteAtCaret(doc.key, staff.stringCount - string + 1, fret - capo);
+                    }
+                  : undefined
+              }
             />
           )
         )}

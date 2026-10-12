@@ -110,6 +110,8 @@ export interface Preferences {
   readonly leftHanded: boolean;
   /** The tablature's strings the other way up, the lowest on top (REND-315). */
   readonly invertedTab: boolean;
+  /** Each fret written while editing is heard (EDIT-096). */
+  readonly hearNotes: boolean;
   readonly audioLatency: AudioLatency;
   /** How exported files are named, with tokens (see export/file-names.ts). */
   readonly exportFileName: string;
@@ -166,6 +168,7 @@ export function defaultPreferences(locale: string): Preferences {
     noteLabels: 'hover',
     leftHanded: false,
     invertedTab: false,
+    hearNotes: false,
     audioLatency: 'interactive',
     exportFileName: '%T',
     rememberRecent: true,
@@ -311,6 +314,7 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       noteLabels: oneOf(value.noteLabels, NOTE_LABELS, fallback.noteLabels),
       leftHanded: typeof value.leftHanded === 'boolean' ? value.leftHanded : fallback.leftHanded,
       invertedTab: typeof value.invertedTab === 'boolean' ? value.invertedTab : fallback.invertedTab,
+      hearNotes: typeof value.hearNotes === 'boolean' ? value.hearNotes : fallback.hearNotes,
       audioLatency: oneOf(value.audioLatency, AUDIO_LATENCIES, fallback.audioLatency),
       rememberRecent:
         typeof value.rememberRecent === 'boolean' ? value.rememberRecent : fallback.rememberRecent,
@@ -387,6 +391,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       noteLabels: state.noteLabels,
       leftHanded: state.leftHanded,
       invertedTab: state.invertedTab,
+      hearNotes: state.hearNotes,
       audioLatency: state.audioLatency,
       exportFileName: state.exportFileName,
       rememberRecent: state.rememberRecent,

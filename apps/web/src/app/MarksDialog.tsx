@@ -9,10 +9,14 @@ import {
   DYNAMICS,
   FINGERS,
   SPELLING_ORDER,
+  STEMS,
+  TUPLETS,
   type Beaming,
   type Dynamic,
   type Finger,
   type Spelling,
+  type Stem,
+  type Tuplet,
 } from '@opentabz/core/shared';
 import { Button, Dialog, SegmentedControl } from '@opentabz/ui';
 import { useId, useState } from 'react';
@@ -51,6 +55,8 @@ function MarksForm({ open }: { readonly open: Opened }) {
   const id = useId();
   const [dynamics, setDynamics] = useState<Dynamic | ''>(open.beat.dynamics ?? '');
   const [beaming, setBeaming] = useState<Beaming>(open.beat.beaming ?? 'auto');
+  const [tuplet, setTuplet] = useState<Tuplet | ''>(open.beat.tuplet ?? '');
+  const [stem, setStem] = useState<Stem>(open.beat.stem);
   const [text, setText] = useState(open.beat.text ?? '');
   const [leftFinger, setLeftFinger] = useState<Finger>(open.note?.leftFinger ?? 'none');
   const [rightFinger, setRightFinger] = useState<Finger>(open.note?.rightFinger ?? 'none');
@@ -63,6 +69,8 @@ function MarksForm({ open }: { readonly open: Opened }) {
     const marks: { -readonly [K in keyof Marks]: Marks[K] } = {};
     if (dynamics !== '' && dynamics !== was.dynamics) marks.dynamics = dynamics;
     if (beaming !== (was.beaming ?? 'auto')) marks.beaming = beaming;
+    if (tuplet !== '' && tuplet !== was.tuplet) marks.tuplet = tuplet;
+    if (stem !== was.stem) marks.stem = stem;
     if (text.trim() !== (was.text ?? '')) marks.text = text.trim().length === 0 ? null : text;
     if (leftFinger !== (open.note?.leftFinger ?? 'none')) marks.leftFinger = leftFinger;
     if (rightFinger !== (open.note?.rightFinger ?? 'none')) marks.rightFinger = rightFinger;
@@ -111,6 +119,41 @@ function MarksForm({ open }: { readonly open: Opened }) {
             {SPELLING_ORDER.map(value => (
               <option key={value} value={value}>
                 {e.spellings[value]}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={e.tuplet} htmlFor={`${id}-tuplet`}>
+          <select
+            id={`${id}-tuplet`}
+            value={tuplet}
+            onChange={event => {
+              setTuplet(TUPLETS.find(value => value === event.target.value) ?? '');
+            }}
+            className={INPUT_CLASS}
+          >
+            {tuplet === '' && <option value="">—</option>}
+            {TUPLETS.map(value => (
+              <option key={value} value={value}>
+                {e.tuplets[value]}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label={e.stem} htmlFor={`${id}-stem`}>
+          <select
+            id={`${id}-stem`}
+            value={stem}
+            onChange={event => {
+              setStem(STEMS.find(value => value === event.target.value) ?? 'auto');
+            }}
+            className={INPUT_CLASS}
+          >
+            {STEMS.map(value => (
+              <option key={value} value={value}>
+                {e.stems[value]}
               </option>
             ))}
           </select>

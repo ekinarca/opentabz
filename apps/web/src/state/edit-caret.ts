@@ -12,6 +12,8 @@ import {
   FINGERS,
   MAX_FRET,
   SPELLING_ORDER,
+  STEMS,
+  TUPLETS,
   TRACK_BEAT_MARK_STRIDE,
   TRACK_BEAT_NOTE_STRIDE,
   TRACK_BEATS_STRIDE,
@@ -22,7 +24,9 @@ import {
   type Dynamic,
   type Finger,
   type Spelling,
+  type Stem,
   type TrackBeats,
+  type Tuplet,
 } from '@opentabz/core/shared';
 
 export interface Caret {
@@ -52,6 +56,9 @@ export interface BeatRow {
   /** Its dynamics, its beam to the next beat and its text; null where none of the editor's. */
   readonly dynamics: Dynamic | null;
   readonly beaming: Beaming | null;
+  /** Its tuplet (null: one of the editor's does not name it) and which way its stems point. */
+  readonly tuplet: Tuplet | null;
+  readonly stem: Stem;
   readonly text: string | null;
   /** The beat's notes: string (1 the lowest), fret and techniques (TECHNIQUE_… flags). */
   readonly notes: readonly NoteRow[];
@@ -87,6 +94,8 @@ function rowAt(beats: TrackBeats, index: number): BeatRow {
   return {
     dynamics: DYNAMICS[beats.beatMarks[marks] ?? -1] ?? null,
     beaming: BEAMING_ORDER[beats.beatMarks[marks + 1] ?? -1] ?? null,
+    tuplet: TUPLETS[beats.beatMarks[marks + 2] ?? 0] ?? null,
+    stem: STEMS[beats.beatMarks[marks + 3] ?? 0] ?? 'auto',
     text: beats.texts.find(([id]) => id === beatId)?.[1] ?? null,
     beatId: value(0),
     staff: value(1),

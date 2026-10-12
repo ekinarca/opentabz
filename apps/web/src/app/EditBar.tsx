@@ -85,6 +85,8 @@ import { strings } from '../strings.ts';
 import { openBarDialog } from './BarDialog.tsx';
 import { openTransposeDialog } from './TransposeDialog.tsx';
 import { openMarksDialog } from './MarksDialog.tsx';
+import { openVoicesDialog } from './VoicesDialog.tsx';
+import { openHarmonizeDialog } from './HarmonizeDialog.tsx';
 import { DurationIcon } from './icons.tsx';
 import { focusScore, shortcutHint } from './keymap.ts';
 import { saveDocument } from './save.ts';
@@ -550,6 +552,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             <MenuSeparator />
             <MenuLabel>{e.voices}</MenuLabel>
             <VoiceItems docKey={key} voice={voice} />
+            <MenuItem disabled={!ready} onSelect={() => openVoicesDialog(key)}>
+              {strings.voicesDialog.open}
+            </MenuItem>
             <MenuSeparator />
             <MenuItem
               icon={<SquareDashedMousePointer size={16} aria-hidden />}
@@ -582,6 +587,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             </MenuItem>
             <MenuItem icon={<ArrowUpDown size={16} aria-hidden />} onSelect={() => openTransposeDialog(key)}>
               {strings.transposeDialog.open}
+            </MenuItem>
+            <MenuItem disabled={!ready} onSelect={() => openHarmonizeDialog(key)}>
+              {strings.harmonizeDialog.open}
             </MenuItem>
             <MenuSeparator />
             <MenuItem

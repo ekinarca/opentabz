@@ -89,6 +89,7 @@ export function barChanges(was: BarState, now: BarState): BarProperties {
   if (was.freeTime !== now.freeTime) changes.freeTime = now.freeTime;
   if (was.tripletFeel !== now.tripletFeel) changes.tripletFeel = now.tripletFeel;
   if (was.anacrusis !== now.anacrusis) changes.anacrusis = now.anacrusis;
+  if (was.systemBreak !== now.systemBreak) changes.systemBreak = now.systemBreak;
   if ([...was.directions].sort().join() !== [...now.directions].sort().join())
     changes.directions = now.directions;
   return changes;
@@ -415,6 +416,15 @@ export function BarDialog() {
               }}
             />
           )}
+
+          <Switch
+            label={s.systemBreak}
+            hint={s.systemBreakHint}
+            checked={now.systemBreak}
+            onCheckedChange={systemBreak => {
+              update({ systemBreak });
+            }}
+          />
 
           <fieldset className="flex flex-col gap-3">
             <legend className="mb-1 text-[13px] font-semibold text-ink">{s.directions}</legend>

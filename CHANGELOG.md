@@ -227,8 +227,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   press the bar on a phone. `Ctrl C`, `Ctrl X` and `Ctrl V` (`⌘` on a Mac), or the edit bar,
   copy, cut and paste at the caret: beats over as many beats as they last, across bar lines and
   with rests where they end early; bars over the bars from the caret's, in its track and the next;
-  bars are added at the end when needed. Delete clears the notes selected, `Shift Delete` takes
-  the beats away, `Ctrl Delete` the bars. What is copied can be pasted in another score open.
+  bars are added at the end when needed. `Ctrl Shift C` and `X` copy and cut whole bars of every
+  track, and `C` repeats the beat before at the caret, as in Guitar Pro. Delete clears the notes
+  selected, `Shift Delete` takes the beats away, `Ctrl Delete` the bars. What is copied can be
+  pasted in another score open.
   Drums paste on drum tracks only, and notes only on a track with strings enough.
 - **Transpose.** The edit bar's Transpose… moves notes up or down by any number of semitones —
   what is selected (or the caret's beat), the caret's track or every track — and the command
@@ -238,18 +240,34 @@ All notable changes to OpenTabz are recorded here. The format follows
   neck moves an octave the other way). What is selected stays selected, to move again. `Ctrl Alt ↑` and `↓` (`⌘ ⌥` on a Mac), as
   in Guitar Pro, move the caret's note to the next string up or down at its pitch, the caret with
   it.
-- **Dynamics, beams, fingering, spelling and text.** The Techniques menu's note and beat dialog
-  sets, as one edit, the dynamics (ppp to fff, marked and played) and the beam to the next beat
-  (as the meter groups it, broken or joined) of the beats selected or the caret's, the fretting
+- **Dynamics, tuplets, stems, beams, fingering, spelling and text.** The Techniques menu's note
+  and beat dialog sets, as one edit, the dynamics (ppp to fff, marked and played), the tuplet
+  (three to thirteen in the time of two, four or eight), the stems' direction and the beam to the
+  next beat (as the meter groups it, broken or joined) of the beats selected or the caret's, the fretting
   and picking fingers of the caret's note, its spelling in standard notation (with a sharp, a
   flat or a natural; every note selected, with a selection), and the text above the beat.
+- **Harmonize.** "Harmonize…" gives each note selected, or of the caret's beat, another a third,
+  a sixth or an octave above or below it, in the bar's key, on the nearest string with room; tied
+  notes keep their harmony tied.
+- **Retuning keeps the music.** A new tuning in the track dialog keeps the notes' pitches unless
+  asked to keep their frets: drop D, DADGAD or a bass's four strings, the notes find the frets
+  (and, where their string has none, the nearest string) that play them.
+- **Voice tools.** `Alt 1` to `4` (`⌥` on a Mac) move the notes of the caret's voice, in the
+  bars selected or the caret's, to another voice, and Move, copy or swap voices… (`Ctrl Shift M`)
+  does the same for any two voices, in the bars selected or the whole track.
 - **Four voices.** The edit bar's Voice menu, or `Ctrl 1` to `4` (`⌘` on a Mac) as in Guitar Pro,
   puts the caret in another voice of its staff, on the beat sounding with its own; a voice the
   staff does not have yet is put in, empty, as an edit to undo. The caret says which voice it
   writes in.
-- **Directions.** The bar dialog writes Segno, Segno segno, Coda, Double coda and Fine at a bar,
-  and a jump at its end (D.C., D.S., D.S.S. and their al Coda, al Double Coda and al Fine, To
-  Coda), which playback follows.
+- **Directions and system breaks.** The bar dialog writes Segno, Segno segno, Coda, Double coda
+  and Fine at a bar, and a jump at its end (D.C., D.S., D.S.S. and their al Coda, al Double Coda
+  and al Fine, To Coda), which playback follows; and starts a new system at a bar, on the page and
+  on screen.
+- **Write on the fretboard.** While the score is edited, a click on the fretboard writes that
+  string and fret at the caret's beat, and a click on a note written takes it away, as in Guitar
+  Pro.
+- **Hear the notes written.** A setting plays each fret written while editing, as the instrument
+  would.
 - **Duplicate a track.** The track dialog's Duplicate puts a copy of the track in after it, its
   notes, chord diagrams and lyrics and all, on MIDI channels of its own.
 - **Nothing lost.** Changes not saved are kept on the device as they are made, the file and its

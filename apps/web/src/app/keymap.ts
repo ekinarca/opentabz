@@ -20,10 +20,14 @@ import {
   cutSelection,
   deleteBarAtCaret,
   deleteBeatAtCaret,
+  editingOf,
   extendSelection,
+  copyBars,
   moveNoteString,
   pasteAtCaret,
+  repeatBeat,
   selectVoice,
+  voiceContents,
   selectAllToEdit,
   deleteNoteAtCaret,
   insertBarAtCaret,
@@ -53,6 +57,7 @@ import { leaveFullScreen, toggleFullScreen } from './full-screen.ts';
 import { pickFiles } from './open-actions.ts';
 import { saveDocument } from './save.ts';
 import { openAddTrack } from './TrackDialog.tsx';
+import { openVoicesDialog } from './VoicesDialog.tsx';
 import { modKey } from './platform.ts';
 
 export type ShortcutGroup = 'playback' | 'navigation' | 'selection' | 'editing' | 'view' | 'files' | 'help';
@@ -512,6 +517,30 @@ const EDITING: readonly Shortcut[] = [
     editing: true,
     run: () => onActive(key => selectVoice(key, voice - 1)),
   })),
+  ...([1, 2, 3, 4] as const).map((voice): Shortcut => ({
+    id: `move-to-voice-${String(voice)}`,
+    group: 'editing',
+    label: s[`moveToVoice${voice}`],
+    // Guitar Pro's keys: Alt 1 to 4, ⌥ 1 to 4 on a Mac (by the key: ⌥ types other characters).
+    bindings: [{ key: String(voice), code: `Digit${String(voice)}`, alt: true }],
+    needsScore: true,
+    editing: true,
+    run: () =>
+      onActive(key => {
+        const from = editingOf(key).caret?.voice ?? 0;
+        return voiceContents(key, from, voice - 1, 'move');
+      }),
+  })),
+  {
+    id: 'voice-tool',
+    group: 'editing',
+    label: s.voiceTool,
+    // Guitar Pro's keys: Ctrl Shift M, ⌘ ⇧ M on a Mac.
+    bindings: [{ key: 'm', code: 'KeyM', mod: true, shift: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(openVoicesDialog),
+  },
   {
     id: 'move-string-up',
     group: 'editing',
@@ -548,6 +577,34 @@ const EDITING: readonly Shortcut[] = [
     needsScore: true,
     editing: true,
     run: () => onActive(cutSelection),
+  },
+  {
+    id: 'copy-bars',
+    group: 'editing',
+    label: s.copyBars,
+    bindings: [{ key: 'c', mod: true, shift: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => copyBars(key, false)),
+  },
+  {
+    id: 'cut-bars',
+    group: 'editing',
+    label: s.cutBars,
+    bindings: [{ key: 'x', mod: true, shift: true }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(key => copyBars(key, true)),
+  },
+  {
+    id: 'repeat-beat',
+    group: 'editing',
+    label: s.repeatBeat,
+    // Guitar Pro's C.
+    bindings: [{ key: 'c' }],
+    needsScore: true,
+    editing: true,
+    run: () => onActive(repeatBeat),
   },
   {
     id: 'paste',
