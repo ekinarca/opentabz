@@ -3,7 +3,8 @@
  * remembered for the file, and "As in the file" brings the file's own style back. The staff
  * lines' thickness, the space between systems and the first system's indent (REND-228). The
  * music engraved or handwritten, on screen and in exported pages (REND-241). The chord diagrams'
- * size and spacing (REND-227), kept with the text as the score is scaled (REND-223).
+ * size and spacing (REND-227), kept with the text as the score is scaled (REND-223). The words
+ * printed for techniques (REND-242).
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -242,6 +243,29 @@ test('chord diagrams at the size and spacing asked, kept as the score is scaled 
   await dialog.getByRole('switch', { name: 'Chord diagrams above their beats' }).click();
   await expect(slider('Size of the diagrams above their beats')).toHaveAttribute('aria-valuetext', '× 1.0');
   await expect(slider('Room each takes along the staff')).toHaveAttribute('aria-valuetext', '× 1.0');
+});
+
+test('techniques are written with the words chosen, and as usual when left empty (REND-242)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  const written = (word: string) =>
+    page.locator('.ot-scroll:not([hidden]) .ot-partials text', { hasText: word });
+  await expect(written('P.M.').first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  const palmMute = dialog.getByRole('textbox', { name: 'Palm mute' });
+  await expect(palmMute).toHaveAttribute('placeholder', 'P.M.');
+  await palmMute.fill('mute');
+  await palmMute.press('Enter');
+  await expect(written('mute').first()).toBeVisible();
+  await expect(written('P.M.')).toHaveCount(0);
+
+  // Emptied: the usual word again.
+  await palmMute.fill('');
+  await palmMute.press('Enter');
+  await expect(written('P.M.').first()).toBeVisible();
 });
 
 const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));

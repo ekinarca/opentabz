@@ -48,6 +48,7 @@ available as source: the patch file is that source.
 | [0037](0037-left-handed-chord-diagrams.md)           | Chord diagrams mirrored for left-handed players                                    | Left-handed players read them with the highest string on the left          | not yet  |
 | [0038](0038-chord-display-and-fingering.md)          | What each chord shows, and its fingering                                           | Chords hid their name or diagram in vain; fingering was dropped            | not yet  |
 | [0039](0039-chord-diagram-size-and-spacing.md)       | Chord diagrams’ size and spacing                                                   | One size and spacing for all; diagrams above close beats overlapped        | not yet  |
+| [0040](0040-technique-labels.md)                     | Technique labels as asked                                                          | Guitar Pro 8 renames P.M., let ring, H and P and the rest                  | not yet  |
 
 ## Working on a patch
 

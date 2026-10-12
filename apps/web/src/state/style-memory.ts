@@ -17,6 +17,8 @@ import {
   STYLE_SCALE,
   STYLE_SPACING,
   STYLE_SYSTEM_SPACING,
+  TECHNIQUE_LABEL_MAX,
+  TECHNIQUE_LABELS,
   TEXT_ALIGNS,
   TEXT_BLOCKS,
   TEXT_ELEMENTS,
@@ -26,6 +28,7 @@ import {
   TRACK_NAME_TEXTS,
   type PageFurniture,
   type ScoreStyle,
+  type TechniqueLabels,
   type TextBlocks,
   type TextFonts,
   type TitleBlock,
@@ -100,6 +103,17 @@ function parseFonts(value: unknown, fallback: TextFonts): TextFonts | null {
   });
   if (fonts.some(font => font === null)) return null;
   return Object.fromEntries(fonts.filter(font => font !== null)) as unknown as TextFonts;
+}
+
+function parseTechniqueLabels(value: unknown, fallback: TechniqueLabels): TechniqueLabels | null {
+  if (!isRecord(value)) return null;
+  const labels = TECHNIQUE_LABELS.map(key => {
+    const label = value[key];
+    if (label === undefined) return [key, fallback[key]] as const;
+    return typeof label === 'string' && label.length <= TECHNIQUE_LABEL_MAX ? ([key, label] as const) : null;
+  });
+  if (labels.some(label => label === null)) return null;
+  return Object.fromEntries(labels.filter(label => label !== null)) as unknown as TechniqueLabels;
 }
 
 function parsePages(value: unknown): PageFurniture | null {
@@ -198,13 +212,18 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     raw.textBlocks === undefined ? fallback.textBlocks : parseTextBlocks(raw.textBlocks, fallback.textBlocks);
   const musicFont =
     raw.musicFont === undefined ? fallback.musicFont : isMusicFontId(raw.musicFont) ? raw.musicFont : null;
+  const techniqueLabels =
+    raw.techniqueLabels === undefined
+      ? fallback.techniqueLabels
+      : parseTechniqueLabels(raw.techniqueLabels, fallback.techniqueLabels);
   if (
     titleBlock === null ||
     textBlocks === null ||
     pages === null ||
     chordSpelling === null ||
     fonts === null ||
-    musicFont === null
+    musicFont === null ||
+    techniqueLabels === null
   )
     return null;
   return {
@@ -221,6 +240,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     chordSpelling,
     fonts,
     musicFont,
+    techniqueLabels,
   };
 }
 

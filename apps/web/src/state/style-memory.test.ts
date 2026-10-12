@@ -107,6 +107,29 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads the techniques’ words (REND-242), the usual ones for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        techniqueLabels: { ...DEFAULT_SCORE_STYLE.techniqueLabels, palmMute: 'mute', letRing: 'ring' },
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)?.techniqueLabels).toMatchObject({
+      palmMute: 'mute',
+      letRing: 'ring',
+      slide: '',
+    });
+    // Words left out of a stored style are the usual ones; anything but short words is refused.
+    expect(parseStyle({ ...stored, techniqueLabels: { palmMute: 'mute' } })?.techniqueLabels).toEqual({
+      ...DEFAULT_SCORE_STYLE.techniqueLabels,
+      palmMute: 'mute',
+    });
+    expect(parseStyle({ ...stored, techniqueLabels: { palmMute: 4 } })).toBeNull();
+    expect(parseStyle({ ...stored, techniqueLabels: { palmMute: 'x'.repeat(50) } })).toBeNull();
+    const { techniqueLabels: _labels, ...older } = stored;
+    expect(parseStyle(older)?.techniqueLabels).toEqual(DEFAULT_SCORE_STYLE.techniqueLabels);
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

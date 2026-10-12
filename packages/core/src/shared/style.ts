@@ -5,6 +5,7 @@
 import type { ChordSpelling } from './chord-spelling.ts';
 import { DEFAULT_MUSIC_FONT } from './music-font.ts';
 import { DEFAULT_TEXT_FONTS, sameTextFonts, type TextFonts } from './text-fonts.ts';
+import { DEFAULT_TECHNIQUE_LABELS, sameTechniqueLabels, type TechniqueLabels } from './technique-labels.ts';
 import {
   DEFAULT_PAGE_FURNITURE,
   DEFAULT_TEXT_BLOCKS,
@@ -130,6 +131,8 @@ export interface ScoreStyle {
   readonly fonts: TextFonts;
   /** The music font the notation is set in: Bravura, Petaluma or one's own (REND-241). */
   readonly musicFont: string;
+  /** The printed words of techniques; empty for the usual word (REND-242). */
+  readonly techniqueLabels: TechniqueLabels;
 }
 
 export const STYLE_SCALE = { min: 0.5, max: 2 } as const;
@@ -194,6 +197,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   pages: DEFAULT_PAGE_FURNITURE,
   fonts: DEFAULT_TEXT_FONTS,
   musicFont: DEFAULT_MUSIC_FONT,
+  techniqueLabels: DEFAULT_TECHNIQUE_LABELS,
 };
 
 const STYLE_KEYS = Object.keys(DEFAULT_SCORE_STYLE) as (keyof ScoreStyle)[];
@@ -208,6 +212,8 @@ function sameSetting(a: ScoreStyle, b: ScoreStyle, key: keyof ScoreStyle): boole
       return samePageFurniture(a.pages, b.pages);
     case 'fonts':
       return sameTextFonts(a.fonts, b.fonts);
+    case 'techniqueLabels':
+      return sameTechniqueLabels(a.techniqueLabels, b.techniqueLabels);
     default:
       return a[key] === b[key];
   }

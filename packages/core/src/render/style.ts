@@ -7,6 +7,7 @@ import * as alphaTab from '@coderline/alphatab';
 import { spellChord, type ChordSpelling } from '../shared/chord-spelling.ts';
 import { DEFAULT_PAGE_FURNITURE, DEFAULT_TEXT_BLOCKS } from '../shared/page-text.ts';
 import { DEFAULT_TEXT_FONTS } from '../shared/text-fonts.ts';
+import { DEFAULT_TECHNIQUE_LABELS, TECHNIQUE_LABELS } from '../shared/technique-labels.ts';
 import { DEFAULT_MUSIC_FONT } from '../shared/music-font.ts';
 import { engravingFor } from './music-fonts.ts';
 import { applyCommonTime, applyExtraRests } from './notation-toggles.ts';
@@ -116,6 +117,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     // Bravura.
     fonts: DEFAULT_TEXT_FONTS,
     musicFont: DEFAULT_MUSIC_FONT,
+    // Nor the words a Guitar Pro 8 stylesheet prints for techniques: the usual ones.
+    techniqueLabels: DEFAULT_TECHNIQUE_LABELS,
     // Guitar Pro's page numbers are not among what alphaTab reads: the pages start as ours.
     pages: DEFAULT_PAGE_FURNITURE,
   };
@@ -250,6 +253,7 @@ export function applyScoreStyle(
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
+      case 'techniqueLabels':
         break;
     }
   }
@@ -326,6 +330,11 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.chordDiagramSpacing = style.chordDiagramsOnTopSpacing * kept;
   settings.notation.inScoreChordDiagramScale = style.chordDiagramsInScoreSize * kept;
   settings.notation.inScoreChordDiagramSpacing = style.chordDiagramsInScoreSpacing;
+  // The printed words of techniques, as asked (REND-242); the usual ones where left empty.
+  for (const key of TECHNIQUE_LABELS) {
+    const label = style.techniqueLabels[key].trim();
+    if (label.length > 0) settings.notation.techniqueLabels.set(key, label);
+  }
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

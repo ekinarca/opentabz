@@ -20,6 +20,7 @@ import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { HeaderFooterSection } from './HeaderFooterSection.tsx';
+import { TechniqueLabelsSection } from './TechniqueLabelsSection.tsx';
 import { MusicFontField } from './MusicFontField.tsx';
 import { StylesheetChoices } from './StylesheetChoices.tsx';
 import { TextFontsSection } from './TextFontsSection.tsx';
@@ -523,6 +524,10 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
 
         <Section title={s.sections.text} wide>
           <TextFontsSection style={style} set={set} />
+        </Section>
+
+        <Section title={s.sections.techniqueLabels} wide>
+          <TechniqueLabelsSection style={style} set={set} />
         </Section>
       </div>
     </Dialog>

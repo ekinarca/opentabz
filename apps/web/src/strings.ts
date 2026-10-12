@@ -482,7 +482,23 @@ export const strings = {
       tablature: 'Tablature',
       headerFooter: 'Header and footer',
       text: 'Text',
+      techniqueLabels: 'Technique labels',
       choices: 'Stylesheets',
+    },
+    techniqueLabels: {
+      names: {
+        letRing: 'Let ring',
+        palmMute: 'Palm mute',
+        slide: 'Slide',
+        hammerOn: 'Hammer-on',
+        pullOff: 'Pull-off',
+        slap: 'Slap',
+        pop: 'Pop',
+        pickScrape: 'Pick scrape',
+        rasgueado: 'Rasgueado',
+        whammyBar: 'Whammy bar',
+      },
+      hint: 'The words printed for these techniques; left empty, the usual one.',
     },
     choices: {
       apply: 'Apply a stylesheet',
