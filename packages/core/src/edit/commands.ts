@@ -5,7 +5,10 @@
 import * as alphaTab from '@coderline/alphatab';
 import {
   MAX_FRET,
+  MAX_INFO,
+  MAX_INFO_TEXT,
   MAX_VOICES,
+  SCORE_INFO_FIELDS,
   type BeatAddress,
   type DurationValue,
   type EditCommand,
@@ -98,6 +101,12 @@ export class Transaction {
   public mark(bar: number): void {
     this.marked = true;
     this.engraved = Math.min(this.engraved, bar);
+  }
+
+  /** The whole score is laid out again, its title block too (its information changed). */
+  public markWhole(): void {
+    this.marked = true;
+    this.engraved = -1;
   }
 
   /** Keeps the score's tracks as they are, about to be put in, taken away or moved. */
@@ -468,6 +477,28 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
         // Moved, the notes keep what joins them; alphaTab joins them anew in their voice.
         if (mode === 'move') source.beats = emptyBeats(source);
       }
+      return;
+    }
+    case 'set-score': {
+      const changes = SCORE_INFO_FIELDS.flatMap(field => {
+        const value = command.info[field];
+        return value === undefined ? [] : [[field, value] as const];
+      });
+      for (const [field, value] of changes) {
+        const longest = field === 'instructions' || field === 'notices' ? MAX_INFO_TEXT : MAX_INFO;
+        if (typeof value !== 'string' || value.length > longest)
+          throw new EditError(`The ${field} is too long.`);
+      }
+      // alphaTab's name for the subtitle.
+      const property = (field: (typeof SCORE_INFO_FIELDS)[number]) =>
+        field === 'subtitle' ? 'subTitle' : field;
+      if (changes.every(([field, value]) => score[property(field)] === value)) return;
+      transaction.journal.keepFields(
+        score,
+        changes.map(([field]) => property(field)),
+      );
+      for (const [field, value] of changes) score[property(field)] = value;
+      transaction.markWhole();
       return;
     }
     case 'set-drum': {

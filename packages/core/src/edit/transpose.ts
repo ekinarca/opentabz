@@ -217,31 +217,53 @@ export function retune(
   tuning: readonly number[],
 ): void {
   const old = [...staff.tuning];
-  const openOld = (string: number): number => old[old.length - string] ?? 0;
-  const openNew = (string: number): number => tuning[tuning.length - string] ?? 0;
+  // Frets count from the capo, which stays: pitches with it, for notes on no string.
+  const capo = staff.capo;
+  const openOld = (string: number): number => (old[old.length - string] ?? 0) + capo;
+  const openNew = (string: number): number => (tuning[tuning.length - string] ?? 0) + capo;
   const strings = tuning.length;
-  if (strings === 0) throw new EditError('A tuning with strings keeps the notes’ pitches.');
   const moved = new Map<alphaTab.model.Note, number>();
   for (const bar of staff.bars) {
     let touched = false;
     for (const voice of bar.voices) {
       for (const beat of voice.beats) {
-        const notes = beat.notes.filter(note => note.isStringed);
+        const notes = beat.notes.filter(note => (note.isStringed && old.length > 0) || note.isPiano);
         if (notes.length === 0) continue;
         if (!touched) {
           transaction.touch(staff, bar.index);
           touched = true;
         }
-        const pitches = new Map(notes.map(note => [note, openOld(note.string) + note.fret]));
+        const pitches = new Map(
+          notes.map(note => [
+            note,
+            note.isStringed ? openOld(note.string) + note.fret : note.octave * 12 + note.tone,
+          ]),
+        );
         notes.sort((a, b) => (pitches.get(b) ?? 0) - (pitches.get(a) ?? 0));
         for (const note of notes) beat.removeNote(note);
+        // No strings (EDIT-076): the notes are written by their pitches alone.
+        if (strings === 0) {
+          for (const note of notes) {
+            const pitch = pitches.get(note) ?? 0;
+            note.string = -1;
+            note.fret = -1;
+            note.octave = Math.floor(pitch / 12);
+            note.tone = pitch % 12;
+            beat.addNote(note);
+          }
+          beat.notes.forEach((each, index) => {
+            each.index = index;
+          });
+          continue;
+        }
         const taken = new Set<number>();
         const placed: [alphaTab.model.Note, number, number][] = [];
         for (const note of notes) {
           const pitch = pitches.get(note) ?? 0;
           const origin =
             note.isTieDestination && note.tieOrigin !== null ? moved.get(note.tieOrigin) : undefined;
-          const preferred = origin ?? Math.min(note.string, strings);
+          // A note on no string goes on the highest that plays it.
+          const preferred = origin ?? (note.isStringed ? Math.min(note.string, strings) : strings);
           const order = Array.from({ length: strings }, (_, index) => index + 1)
             .filter(string => !taken.has(string))
             .sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred));
@@ -262,6 +284,8 @@ export function retune(
         for (const [note, string, fret] of placed) {
           note.string = string;
           note.fret = fret;
+          note.octave = -1;
+          note.tone = -1;
           beat.addNote(note);
         }
         beat.notes.forEach((each, index) => {

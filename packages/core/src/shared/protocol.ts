@@ -94,6 +94,15 @@ export interface EngineMethods {
   }): PlaybackTimeline;
   /** Sends the given beats to the synth to sound once, as if struck together (audible stepping). */
   previewBeats(args: { readonly docId: string; readonly beatIds: readonly number[] }): null;
+  /**
+   * Sounds notes once on a sound of its own (a General MIDI program), one after another or
+   * together, without moving the song: a tuning heard string by string (EDIT-071).
+   */
+  previewPitches(args: {
+    readonly program: number;
+    readonly pitches: readonly number[];
+    readonly together: boolean;
+  }): null;
   /** The notes of one track, beat by beat, for instrument views. */
   trackNotes(args: { readonly docId: string; readonly trackIndex: number }): TrackNotes;
   /** The chords of one track and the beats that carry them, for the chords panel. */

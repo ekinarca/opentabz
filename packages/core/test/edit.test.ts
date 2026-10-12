@@ -463,6 +463,34 @@ describe('commands', () => {
     expect(() => editor.apply([{ ...move, to: 4, mode: 'move' }])).toThrow('No voice 5.');
   });
 
+  it('writes a track without strings and back, keeping pitches; names its tuning (EDIT-073, EDIT-076)', () => {
+    const score = texScore('\\track "Guitar" (3.6 2.5).4 5.1.4 r.2');
+    const editor = editorOf(score);
+    const pitches = () =>
+      score.tracks[0]?.staves[0]?.bars[0]?.voices[0]?.beats.map(each =>
+        each.notes.map(note => note.realValue).sort((a, b) => a - b),
+      );
+    const before = pitches();
+    editor.apply([{ kind: 'set-track', track: 0, properties: { tuning: [], keepPitches: true } }]);
+    expect(pitches()).toEqual(before);
+    expect(beat(score, 0, 0).notes.every(note => !note.isStringed && note.isPiano)).toBe(true);
+    // Back on strings: the highest string that plays each note.
+    editor.apply([
+      {
+        kind: 'set-track',
+        track: 0,
+        properties: { tuning: [64, 59, 55, 50, 45, 38], keepPitches: true, tuningName: 'Drop D' },
+      },
+    ]);
+    expect(pitches()).toEqual(before);
+    expect(beat(score, 0, 1).notes.map(note => [note.string, note.fret])).toEqual([[6, 5]]);
+    expect(score.tracks[0]?.staves[0]?.stringTuning.name).toBe('Drop D');
+    editor.apply([{ kind: 'set-track', track: 0, properties: { tuningName: 'Dropped' } }]);
+    expect(score.tracks[0]?.staves[0]?.stringTuning.name).toBe('Dropped');
+    editor.undo();
+    expect(score.tracks[0]?.staves[0]?.stringTuning.name).toBe('Drop D');
+  });
+
   it('puts voices in a staff, empty, to write in (EDIT-011)', () => {
     const score = texScore('\\track "Guitar" 3.3.1 | 5.3.1');
     const editor = editorOf(score);
@@ -613,6 +641,56 @@ describe('commands', () => {
     editor.undo();
     expect(names()).toEqual(['0:Guitar', '1:Bass']);
     expect(() => editor.apply([{ kind: 'remove-track', track: 9 }])).toThrow(EditError);
+  });
+
+  it('puts in a track written in its clef and transposed: a cello, a B♭ clarinet (EDIT-067)', () => {
+    const score = texScore('\\track "Guitar" 3.3.1');
+    const editor = editorOf(score);
+    editor.apply([
+      {
+        kind: 'add-track',
+        at: 1,
+        track: {
+          name: 'Cello',
+          shortName: 'Vc.',
+          program: 42,
+          tuning: [57, 50, 43, 36],
+          percussion: false,
+          clef: 'bass',
+        },
+      },
+      {
+        kind: 'add-track',
+        at: 2,
+        track: {
+          name: 'Clarinet',
+          shortName: 'Cl.',
+          program: 71,
+          tuning: [],
+          percussion: false,
+          transposition: 2,
+        },
+      },
+    ]);
+    const [cello, clarinet] = [score.tracks[1]?.staves[0], score.tracks[2]?.staves[0]];
+    expect(cello?.bars[0]?.clef).toBe(alphaTab.model.Clef.F4);
+    expect(cello?.bars[0]?.clefOttava).toBe(alphaTab.model.Ottavia.Regular);
+    expect(clarinet?.bars[0]?.clef).toBe(alphaTab.model.Clef.G2);
+    expect(clarinet?.displayTranspositionPitch).toBe(-2);
+    // Written as tablature alone, then as standard notation alone (EDIT-066).
+    editor.apply([{ kind: 'set-track', track: 0, properties: { notation: 'tablature' } }]);
+    expect([
+      score.tracks[0]?.staves[0]?.showStandardNotation,
+      score.tracks[0]?.staves[0]?.showTablature,
+    ]).toEqual([false, true]);
+    editor.apply([{ kind: 'set-track', track: 0, properties: { notation: 'standard' } }]);
+    expect([
+      score.tracks[0]?.staves[0]?.showStandardNotation,
+      score.tracks[0]?.staves[0]?.showTablature,
+    ]).toEqual([true, false]);
+    // A clarinet has no tablature to write.
+    editor.apply([{ kind: 'set-track', track: 2, properties: { notation: 'tablature' } }]);
+    expect(clarinet?.showStandardNotation).toBe(true);
   });
 
   it('sets a track’s name, colour, sound, tuning, capo and transposition', () => {
@@ -1184,7 +1262,9 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(12)) {
+  switch (pick(13)) {
+    case 12:
+      return { kind: 'set-score', info: { title: random() < 0.5 ? '' : 'Retitled', artist: 'Someone' } };
     case 11:
       return staff.isPercussion
         ? {
@@ -1221,6 +1301,7 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
     case 8: {
       if (staff.isPercussion || staff.tuning.length === 0 || staff.index !== 0) return null;
       const tunings = [
+        [],
         [64, 59, 55, 50, 45, 38],
         [62, 57, 55, 50, 45, 38],
         [43, 38, 33, 28],

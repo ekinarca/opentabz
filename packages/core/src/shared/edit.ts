@@ -278,6 +278,10 @@ export interface TrackProperties {
   readonly program?: number;
   /** Its first staff's strings, as MIDI note numbers from the highest; none for a staff without strings. */
   readonly tuning?: readonly number[];
+  /** The tuning's name, shown with it in the score ("Drop D"); empty for none (EDIT-073). */
+  readonly tuningName?: string;
+  /** With strings, how its first staff is written (EDIT-066). */
+  readonly notation?: TrackNotation;
   readonly capo?: number;
   /** Semitones the part is written above how it sounds (a transposing instrument: 12 for a guitar). */
   readonly transposition?: number;
@@ -288,6 +292,45 @@ export interface TrackProperties {
   readonly keepPitches?: boolean;
 }
 
+/** A score's information (EDIT-089), as its title block and credits show it: each one given is set. */
+export interface ScoreInfo {
+  readonly title?: string;
+  readonly subtitle?: string;
+  readonly artist?: string;
+  readonly album?: string;
+  readonly words?: string;
+  readonly music?: string;
+  readonly copyright?: string;
+  /** Who wrote the tablature. */
+  readonly tab?: string;
+  readonly instructions?: string;
+  readonly notices?: string;
+}
+
+export const SCORE_INFO_FIELDS = [
+  'title',
+  'subtitle',
+  'artist',
+  'album',
+  'words',
+  'music',
+  'copyright',
+  'tab',
+  'instructions',
+  'notices',
+] as const satisfies readonly (keyof ScoreInfo)[];
+
+/** The longest a field of a score's information may be (instructions and notices: several lines). */
+export const MAX_INFO = 200;
+export const MAX_INFO_TEXT = 4000;
+
+/** How a track with strings is written: standard notation and tablature, or one of them (EDIT-066). */
+export type TrackNotation = 'both' | 'standard' | 'tablature';
+export const TRACK_NOTATIONS: readonly TrackNotation[] = ['both', 'standard', 'tablature'];
+
+/** The clef an instrument without strings is written in (EDIT-067). */
+export type TrackClef = 'treble' | 'bass' | 'alto';
+
 /** A track put in (EDIT-030). */
 export interface NewTrack {
   readonly name: string;
@@ -297,6 +340,12 @@ export interface NewTrack {
   readonly tuning: readonly number[];
   readonly percussion: boolean;
   readonly color?: string;
+  /** Its clef; by default a staff with strings is written as a guitar's or a bass's, others in treble. */
+  readonly clef?: TrackClef;
+  /** Semitones it is written above how it sounds (a B♭ clarinet: 2; a piccolo: −12). */
+  readonly transposition?: number;
+  /** With strings, how it is written; both by default. */
+  readonly notation?: TrackNotation;
 }
 
 /** A track's properties as they are. */
@@ -365,6 +414,8 @@ export type EditCommand =
   | { readonly kind: 'move-track'; readonly track: number; readonly to: number }
   /** A track's properties set. */
   | { readonly kind: 'set-track'; readonly track: number; readonly properties: TrackProperties }
+  /** A score's information set: title, artist, credits, instructions and notices (EDIT-089). */
+  | { readonly kind: 'set-score'; readonly info: ScoreInfo }
   /** A copy of a track put in after it, its notes and all, on MIDI channels of its own. */
   | { readonly kind: 'duplicate-track'; readonly track: number }
   /** A selection's notes taken away: its beats are rests, its bars empty. */

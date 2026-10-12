@@ -116,9 +116,11 @@ export class RenderSession {
     const laidOut = this.generation > 0;
     const edited = this.edited;
     const onlyWidthChanged = laidOut && edited === null && sameExceptWidth(this.options, options);
+    // An edit from bar −1 changed the title block: the score is laid out whole.
     const onlyEdited =
       laidOut &&
       edited !== null &&
+      edited >= 0 &&
       sameExceptWidth(this.options, options) &&
       this.options.width === options.width;
     this.options = options;

@@ -69,6 +69,13 @@ interface View {
   readonly session: RenderSession;
 }
 
+/** A preview's notes: on the last MIDI channel, an eighth apart at 120 a minute, a half note long. */
+const PREVIEW_CHANNEL = 15;
+const PREVIEW_TEMPO = 120;
+const PREVIEW_STEP = 480;
+const PREVIEW_LENGTH = 1920;
+const PREVIEW_VELOCITY = 95;
+
 export class EngineHostError extends Error {
   public constructor(message: string) {
     super(message);
@@ -304,6 +311,35 @@ export class EngineHost implements EngineMethods {
     // Transposition is applied per channel by the synthesizer, as for the song itself.
     generator.applyTranspositionPitches = false;
     for (const beat of beats) generator.generateSingleBeat(beat);
+    this.synth.postMessage({
+      type: 'preview',
+      midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),
+    });
+    return null;
+  }
+
+  public previewPitches(args: EngineArgs<'previewPitches'>): null {
+    if (this.synth === null) throw new EngineHostError('No synthesizer is connected.');
+    const { program, pitches, together } = args;
+    if (!Number.isInteger(program) || program < 0 || program > 127)
+      throw new EngineHostError(`No MIDI program ${String(program)}.`);
+    const notes = pitches.filter(pitch => Number.isInteger(pitch) && pitch >= 0 && pitch <= 127).slice(0, 16);
+    if (notes.length === 0) return null;
+    const midiFile = new alphaTab.midi.MidiFile();
+    const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
+    handler.addTempo(0, PREVIEW_TEMPO);
+    handler.addProgramChange(0, 0, PREVIEW_CHANNEL, program);
+    notes.forEach((pitch, index) => {
+      handler.addNote(
+        0,
+        together ? 0 : index * PREVIEW_STEP,
+        PREVIEW_LENGTH,
+        pitch,
+        PREVIEW_VELOCITY,
+        PREVIEW_CHANNEL,
+      );
+    });
+    handler.finishTrack(0, (together ? 0 : notes.length * PREVIEW_STEP) + PREVIEW_LENGTH);
     this.synth.postMessage({
       type: 'preview',
       midi: alphaTab.model.JsonConverter.midiFileToJsObject(midiFile),

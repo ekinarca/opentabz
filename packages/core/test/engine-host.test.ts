@@ -210,6 +210,41 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(layOut(700)).toBe(bars);
   });
 
+  it('sets a score’s information and lays out its title block again (EDIT-089)', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const header = () => {
+      const layout = host.layoutView({ viewId: 'v', docId, options: VIEW });
+      const first = layout.partials[0];
+      if (first === undefined) throw new Error('nothing laid out');
+      return (
+        host.paint({ viewId: 'v', generation: layout.generation, ids: [first.id] }).partials[0]?.svg ?? ''
+      );
+    };
+    expect(header()).toContain('Twelve-Bar Shuffle in A');
+    const edited = host.edit({
+      docId,
+      commands: [{ kind: 'set-score', info: { title: 'Blues for Ada', subtitle: '', artist: 'The Band' } }],
+    });
+    expect(edited.summary).toMatchObject({ title: 'Blues for Ada', subtitle: '', artist: 'The Band' });
+    expect(header()).toContain('Blues for Ada');
+    expect(header()).not.toContain('OpenTabz demo');
+    // As it is: no edit.
+    expect(
+      host.edit({ docId, commands: [{ kind: 'set-score', info: { title: 'Blues for Ada' } }] }).changed,
+    ).toBe(false);
+    host.undo({ docId });
+    expect(header()).toContain('Twelve-Bar Shuffle in A');
+    expect(() =>
+      host.edit({ docId, commands: [{ kind: 'set-score', info: { title: 'x'.repeat(201) } }] }),
+    ).toThrow('The title is too long.');
+  });
+
   it('starts a new system at a bar when asked, every track alike (EDIT-109)', () => {
     const host = new EngineHost();
     const opened = host.open({
@@ -369,5 +404,35 @@ describe('EngineHost — audible stepping', () => {
     // Unknown beats are ignored without sending anything.
     host.previewBeats({ docId: opened.summary.id, beatIds: [-1] });
     expect(sent).toHaveLength(1);
+  });
+
+  it('sounds a tuning string by string, or all at once, on its own sound (EDIT-071)', () => {
+    const host = new EngineHost();
+    const sent: unknown[] = [];
+    host.connectSynth({ port: { postMessage: message => sent.push(message) } });
+    const noteOns = (index: number) => {
+      const delivery = sent[index] as { type: string; midi: unknown };
+      expect(delivery.type).toBe('preview');
+      const file = alphaTab.model.JsonConverter.jsObjectToMidiFile(delivery.midi);
+      const program = file.events.find(event => event.type === alphaTab.midi.MidiEventType.ProgramChange);
+      expect((program as alphaTab.midi.ProgramChangeEvent | undefined)?.program).toBe(25);
+      return file.events
+        .filter(event => event.type === alphaTab.midi.MidiEventType.NoteOn)
+        .map(event => [event.tick, (event as alphaTab.midi.NoteOnEvent).noteKey]);
+    };
+    host.previewPitches({ program: 25, pitches: [40, 45, 50], together: false });
+    expect(noteOns(0)).toEqual([
+      [0, 40],
+      [480, 45],
+      [960, 50],
+    ]);
+    host.previewPitches({ program: 25, pitches: [40, 45, 999], together: true });
+    expect(noteOns(1)).toEqual([
+      [0, 40],
+      [0, 45],
+    ]);
+    expect(() => host.previewPitches({ program: 128, pitches: [40], together: true })).toThrow(
+      'No MIDI program 128.',
+    );
   });
 });

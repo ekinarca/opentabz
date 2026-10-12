@@ -7,6 +7,7 @@ import * as alphaTab from '@coderline/alphatab';
 import {
   MAX_CAPO,
   MAX_STRINGS,
+  TRACK_NOTATIONS,
   type NewTrack,
   type TrackProperties,
   type TrackState,
@@ -52,6 +53,9 @@ function checkTuning(tuning: readonly number[]): void {
 /** The clef a new staff is written in: a bass's, a guitar's (an octave lower), drums', a piano's. */
 function clefFor(track: NewTrack): [alphaTab.model.Clef, alphaTab.model.Ottavia] {
   if (track.percussion) return [Clef.Neutral, Ottavia.Regular];
+  if (track.clef === 'bass') return [Clef.F4, Ottavia.Regular];
+  if (track.clef === 'alto') return [Clef.C3, Ottavia.Regular];
+  if (track.clef === 'treble') return [Clef.G2, Ottavia.Regular];
   const lowest = Math.min(...track.tuning);
   if (track.tuning.length === 0) return [Clef.G2, Ottavia.Regular];
   return lowest < 40 ? [Clef.F4, Ottavia._8vb] : [Clef.G2, Ottavia._8vb];
@@ -115,8 +119,14 @@ export function newTrack(score: alphaTab.model.Score, spec: NewTrack): alphaTab.
   if (staff === undefined) throw new Error('alphaTab made no staff for the track.');
   staff.isPercussion = spec.percussion;
   staff.stringTuning = new alphaTab.model.Tuning('', [...spec.tuning], false);
-  staff.showTablature = spec.tuning.length > 0 && !spec.percussion;
-  staff.showStandardNotation = true;
+  const notation = spec.tuning.length > 0 && !spec.percussion ? (spec.notation ?? 'both') : 'standard';
+  staff.showTablature = notation !== 'standard';
+  staff.showStandardNotation = notation !== 'tablature';
+  if (spec.transposition !== undefined) {
+    if (!Number.isInteger(spec.transposition) || Math.abs(spec.transposition) > 48)
+      throw new EditError(`No transposition of ${String(spec.transposition)} semitones.`);
+    staff.displayTranspositionPitch = -spec.transposition;
+  }
   const [clef, ottava] = clefFor(spec);
   const first = score.tracks[0]?.staves[0];
   for (const masterBar of score.masterBars) {
@@ -215,7 +225,17 @@ export function duplicateTrack(
 
 /** Sets a track's properties (its first staff's tuning, capo and transposition). */
 export function setTrackProperties(track: alphaTab.model.Track, properties: TrackProperties): void {
-  const { name, shortName, color: css, program, tuning, capo, transposition } = properties;
+  const {
+    name,
+    shortName,
+    color: css,
+    program,
+    tuning,
+    capo,
+    transposition,
+    tuningName,
+    notation,
+  } = properties;
   const staff = track.staves[0];
   if (name !== undefined) {
     if (name.length > MAX_NAME) throw new EditError('A track name is too long.');
@@ -248,8 +268,24 @@ export function setTrackProperties(track: alphaTab.model.Track, properties: Trac
         }
       }
     }
-    staff.stringTuning = new alphaTab.model.Tuning('', [...tuning], false);
+    staff.stringTuning = new alphaTab.model.Tuning(tuningName ?? '', [...tuning], false);
     staff.showTablature = tuning.length > 0;
+  } else if (tuningName !== undefined) {
+    // A new tuning object: the old one, kept by the edit, stays as it was.
+    staff.stringTuning = new alphaTab.model.Tuning(
+      tuningName,
+      [...staff.tuning],
+      staff.stringTuning.isStandard,
+    );
+  }
+  if (tuningName !== undefined && tuningName.length > MAX_NAME)
+    throw new EditError('A tuning name is too long.');
+  if (notation !== undefined) {
+    if (!TRACK_NOTATIONS.includes(notation)) throw new EditError(`No notation "${notation}".`);
+    // Without strings there is no tablature: standard notation it is.
+    const stringed = staff.tuning.length > 0 && !staff.isPercussion;
+    staff.showTablature = stringed && notation !== 'standard';
+    staff.showStandardNotation = !stringed || notation !== 'tablature';
   }
   if (capo !== undefined) {
     if (!Number.isInteger(capo) || capo < 0 || capo > MAX_CAPO)
@@ -272,6 +308,8 @@ export function readTrackProperties(track: alphaTab.model.Track): TrackState {
     color: hex(track.color),
     program: track.playbackInfo.program,
     tuning: staff === undefined ? [] : [...staff.tuning],
+    tuningName: staff?.stringTuning.name ?? '',
+    notation: staff?.showTablature !== true ? 'standard' : staff.showStandardNotation ? 'both' : 'tablature',
     capo: staff?.capo ?? 0,
     transposition: -(staff?.displayTranspositionPitch ?? 0),
     percussion: staff?.isPercussion ?? false,
