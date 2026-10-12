@@ -265,14 +265,16 @@ All notable changes to OpenTabz are recorded here. The format follows
   (0033), level beams (0034), clefs and time signatures at the start of systems and sections
   as asked (0035), technique lines over rests (0036), chord diagrams mirrored for left-handed
   players (0037), what each chord shows, with its fingering (0038), chord diagrams' size and
-  spacing (0039), technique labels as asked (0040) and the tuning legend as asked (0041). See
-  [docs/upstream/](docs/upstream/).
+  spacing (0039), technique labels as asked (0040), the tuning legend as asked (0041) and the
+  stems and rests of four voices (0042). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
 
 ### Fixed
 
+- With four voices on a staff, voice 3's stems point up and a rest of voice 3 moves above the
+  other voices, as Guitar Pro writes them (voices 2 and 4 keep theirs down and below).
 - Let-ring ranges read "let ring", as in Guitar Pro, instead of "LetRing".
 - 8vb and 15mb passages show their sign and line below the staff (they were not drawn at all).
 - In bars with two voices, a rest of the second voice moves below the first voice instead of

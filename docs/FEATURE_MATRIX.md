@@ -67,7 +67,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-004 | Rhythm / slash notation                                                           | GP  | M2  | alphatab/guitarpro7/slash.gp                                | packages/core/test/track-staves.test.ts, apps/web/e2e/track-staves.spec.ts | done |
 | REND-005 | Numbered (jianpu) notation                                                        | GP  | M2  | —                                                           | packages/core/test/track-staves.test.ts, apps/web/e2e/track-staves.spec.ts | done |
 | REND-006 | Lead-sheet / chord-chart layout (chords over lyrics)                              | OT  | M5  | —                                                           | —    | planned |
-| REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | —    | planned |
+| REND-007 | Up to 4 voices with correct stem directions and rest placement                    | GP  | M2  | —                                                           | packages/core/test/four-voices.test.ts | done |
 | REND-010 | Page layout on A4 paper                                                           | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
 | REND-011 | Page layout on US Letter paper                                                    | GP  | M0  | — | apps/web/src/score-view/pagination.test.ts | done |
 | REND-012 | Custom paper size and margins                                                     | GP  | M2  | —                                                           | apps/web/e2e/page-setup.spec.ts, apps/web/src/score-view/pagination.test.ts | done |
