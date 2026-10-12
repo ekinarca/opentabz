@@ -99,6 +99,10 @@ export interface ScoreStyle {
   readonly tabStemsInside: boolean;
   /** Where the rhythm of voices 1 to 4 goes in the tablature (REND-244). */
   readonly tabRhythmVoices: readonly TabRhythmPlace[];
+  /** The tablature's beams go on over rests within their group; else a rest ends them (REND-245). */
+  readonly tabBeamsOverRests: boolean;
+  /** Half and whole notes circled in the tablature when it shows the rhythm (REND-245). */
+  readonly tabCircleLongNotes: boolean;
   /** Quarter rests in the tablature written as a dash (REND-250). */
   readonly dashQuarterRests: boolean;
   /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
@@ -210,6 +214,8 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tabRhythm: 'auto',
   tabStemsInside: true,
   tabRhythmVoices: ['below', 'below', 'below', 'below'],
+  tabBeamsOverRests: true,
+  tabCircleLongNotes: false,
   dashQuarterRests: false,
   voiceColors: false,
   flatBeams: false,

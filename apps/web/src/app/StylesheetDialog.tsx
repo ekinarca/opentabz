@@ -688,6 +688,21 @@ function TabRhythmFields({
               set({ tabStemsInside });
             }}
           />
+          <Switch
+            label={s.tabBeamsOverRests}
+            hint={s.tabBeamsOverRestsHint}
+            checked={style.tabBeamsOverRests}
+            onCheckedChange={tabBeamsOverRests => {
+              set({ tabBeamsOverRests });
+            }}
+          />
+          <Switch
+            label={s.tabCircleLongNotes}
+            checked={style.tabCircleLongNotes}
+            onCheckedChange={tabCircleLongNotes => {
+              set({ tabCircleLongNotes });
+            }}
+          />
           <Field label={s.tabRhythmVoices}>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {style.tabRhythmVoices.map((place, voice) => (

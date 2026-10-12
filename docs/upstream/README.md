@@ -53,6 +53,7 @@ available as source: the patch file is that source.
 | [0042](0042-four-voices.md)                          | Stems and rests of four voices                                                     | Voice 3 pointed its stems down and dropped its rests below                 | not yet  |
 | [0043](0043-artificial-harmonics-in-tab.md)          | Artificial harmonics in the tablature, as asked                                    | Guitar Pro can leave out the touch or dot octaves                          | not yet  |
 | [0044](0044-tab-rhythm.md)                           | The rhythm in the tablature, per voice and outside the staff                       | Guitar Pro places each voice’s tab rhythm and its stems                    | not yet  |
+| [0045](0045-tab-beams-and-circles.md)                | Beams over rests and circled long notes in the tablature                           | Guitar Pro chooses both                                                    | not yet  |
 
 ## Working on a patch
 

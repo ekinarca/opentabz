@@ -5,8 +5,8 @@
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
  * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
  * systems (REND-231); technique lines over rests (REND-243); where artificial harmonics are
- * touched, and octave harmonics as a dot (REND-247); the rhythm in the tablature (REND-244); in
- * the score on screen.
+ * touched, and octave harmonics as a dot (REND-247); the rhythm in the tablature (REND-244) and
+ * its circled long notes (REND-245); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -280,4 +280,12 @@ test('the rhythm in the tablature under a staff when asked, and each voice’s w
   // Voice 2's rhythm left out of the tablature: fewer stems.
   await dialog.getByLabel('Voice 2').selectOption('none');
   await expect.poll(rules).toBeLessThan(always);
+  // Its half and whole notes circled (REND-245): voice 1's half notes.
+  const circles = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"] path')
+      .evaluateAll(paths => paths.filter(path => (path.getAttribute('d') ?? '').includes('A1,1')).length);
+  const before = await circles();
+  await dialog.getByRole('switch', { name: 'Half and whole notes circled' }).click();
+  await expect.poll(circles).toBeGreaterThan(before);
 });

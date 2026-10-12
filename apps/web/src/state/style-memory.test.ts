@@ -163,28 +163,41 @@ describe('styles remembered per song', () => {
     });
   });
 
-  it('reads the rhythm in the tablature (REND-244), as usual for older styles', () => {
+  it('reads the rhythm in the tablature (REND-244, REND-245), as usual for older styles', () => {
     const stored = JSON.parse(
       JSON.stringify({
         ...DEFAULT_SCORE_STYLE,
         tabRhythm: 'always',
         tabStemsInside: false,
         tabRhythmVoices: ['below', 'above', 'none', 'below'],
+        tabBeamsOverRests: false,
+        tabCircleLongNotes: true,
       }),
     ) as Record<string, unknown>;
     expect(parseStyle(stored)).toMatchObject({
       tabRhythm: 'always',
       tabStemsInside: false,
       tabRhythmVoices: ['below', 'above', 'none', 'below'],
+      tabBeamsOverRests: false,
+      tabCircleLongNotes: true,
     });
     expect(parseStyle({ ...stored, tabRhythm: 'sometimes' })).toBeNull();
     expect(parseStyle({ ...stored, tabRhythmVoices: ['below', 'above'] })).toBeNull();
     expect(parseStyle({ ...stored, tabRhythmVoices: ['below', 'sideways', 'none', 'below'] })).toBeNull();
-    const { tabRhythm: _rhythm, tabStemsInside: _inside, tabRhythmVoices: _voices, ...older } = stored;
+    const {
+      tabRhythm: _rhythm,
+      tabStemsInside: _inside,
+      tabRhythmVoices: _voices,
+      tabBeamsOverRests: _beams,
+      tabCircleLongNotes: _circles,
+      ...older
+    } = stored;
     expect(parseStyle(older)).toMatchObject({
       tabRhythm: 'auto',
       tabStemsInside: true,
       tabRhythmVoices: ['below', 'below', 'below', 'below'],
+      tabBeamsOverRests: true,
+      tabCircleLongNotes: false,
     });
   });
 

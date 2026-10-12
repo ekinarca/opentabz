@@ -179,6 +179,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'harmonicTouch',
     'octaveHarmonicDot',
     'tabStemsInside',
+    'tabBeamsOverRests',
+    'tabCircleLongNotes',
     'dashQuarterRests',
     'voiceColors',
     'flatBeams',
