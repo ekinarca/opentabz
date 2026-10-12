@@ -23,5 +23,6 @@ export * from './note-colors.ts';
 export * from './reading-aids.ts';
 export * from './music-font.ts';
 export * from './edit.ts';
+export * from './harmonics.ts';
 export * from './beats.ts';
 export * from './track-colors.ts';

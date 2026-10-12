@@ -140,6 +140,11 @@ export interface NoteTechniques {
   readonly ornament?: Ornament;
   /** Tapped with the fretting hand. */
   readonly leftTap?: boolean;
+  /**
+   * Where a harmonic is touched (EDIT-113), one of HARMONIC_NODES: a natural harmonic's node (its
+   * fret follows), else the frets above the note held.
+   */
+  readonly harmonicAt?: number;
 }
 
 /** A note's techniques as they are. */
@@ -667,6 +672,17 @@ export type EditCommand =
       readonly selection: Selection;
       readonly harmony: Harmony;
       readonly below: boolean;
+    }
+  /**
+   * Palm muting or let ring set (or taken off) on the notes of a selection on chosen strings
+   * (EDIT-125, EDIT-126), strings as alphaTab numbers them (1 the lowest).
+   */
+  | {
+      readonly kind: 'mark-strings';
+      readonly selection: Selection;
+      readonly strings: readonly number[];
+      readonly technique: 'palm-mute' | 'let-ring';
+      readonly on: boolean;
     }
   /** A note moved to the next string higher or lower in pitch it can be played on, at its pitch (EDIT-052). */
   | { readonly kind: 'move-string'; readonly at: NoteAddress; readonly higher: boolean };

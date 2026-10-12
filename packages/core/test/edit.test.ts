@@ -13,6 +13,7 @@ import { harmonyOf } from '../src/edit/harmonize.ts';
 import { byDegrees, byInterval, fifthsOf, movedKey, spell } from '../src/edit/spelling.ts';
 import { readStaffBar } from '../src/edit/staff-bars.ts';
 import { readBeatTechniques, readNoteTechniques } from '../src/edit/techniques.ts';
+import { harmonicPitch, nodeOfFret } from '../src/shared/harmonics.ts';
 import { readBarProperties } from '../src/edit/bar-properties.ts';
 import { collectTrackBeats } from '../src/edit/track-beats.ts';
 import { SPELLING_ORDER } from '../src/shared/beats.ts';
@@ -1259,6 +1260,98 @@ describe('more techniques: strums, grace notes, fermatas, trills, ornaments… (
   });
 });
 
+describe('harmonics touched where asked, and the palm-mute and let-ring assistants (EDIT-113, EDIT-125, EDIT-126)', () => {
+  it('reckons a harmonic’s pitch from where it is touched, as Guitar Pro does', () => {
+    expect(harmonicPitch(12)).toBe(12);
+    expect(harmonicPitch(7)).toBe(19);
+    expect(harmonicPitch(5)).toBe(24);
+    expect(harmonicPitch(3.2)).toBe(31);
+    expect(harmonicPitch(2.4)).toBe(36);
+    expect(nodeOfFret(3)).toBe(3.2);
+    expect(nodeOfFret(10)).toBe(9.6);
+    expect(nodeOfFret(6)).toBe(12);
+  });
+
+  it('touches a natural harmonic at its fret’s node, an artificial one frets above the note held', () => {
+    const score = texScore('\\track "Guitar" 12.1.4 5.1.4 r.2');
+    const editor = editorOf(score);
+    const first = { ...AT, string: tex(1) };
+    const second = { ...first, beat: 1 };
+    const note = (index: number) => beat(score, 0, index).notes[0];
+    // The high E's twelfth-fret harmonic: an octave above the open string.
+    editor.apply([{ kind: 'set-note', at: first, techniques: { harmonic: 'natural' } }]);
+    expect(note(0)?.harmonicValue).toBe(12);
+    expect(note(0)?.realValue).toBe(76);
+    // Touched at the seventh fret's node instead: written there, an octave and a fifth up.
+    editor.apply([{ kind: 'set-note', at: first, techniques: { harmonicAt: 7 } }]);
+    expect(note(0)?.fret).toBe(7);
+    expect(note(0)?.realValue).toBe(83);
+    // An artificial harmonic of A (the fifth fret): an octave up, or touched seven frets higher.
+    editor.apply([{ kind: 'set-note', at: second, techniques: { harmonic: 'artificial' } }]);
+    expect(note(1)?.realValue).toBe(81);
+    editor.apply([{ kind: 'set-note', at: second, techniques: { harmonicAt: 7 } }]);
+    expect(note(1)?.realValue).toBe(88);
+    expect(readNoteTechniques(note(1) ?? new alphaTab.model.Note())).toMatchObject({
+      harmonic: 'artificial',
+      harmonicAt: 7,
+    });
+    expect(() => editor.apply([{ kind: 'set-note', at: second, techniques: { harmonicAt: 6 } }])).toThrow(
+      'No harmonic touched at 6.',
+    );
+    editor.apply([{ kind: 'set-note', at: second, techniques: { harmonic: 'none' } }]);
+    expect(() => editor.apply([{ kind: 'set-note', at: second, techniques: { harmonicAt: 12 } }])).toThrow(
+      'Only a harmonic is touched.',
+    );
+  });
+
+  it('palm-mutes or lets ring the notes on the strings chosen, across a selection', () => {
+    const score = texScore('\\track "Guitar" (0.6 2.5 2.4).4 (0.6 2.5 2.4).4 (0.6 2.5).4 r.4');
+    const editor = editorOf(score);
+    const muted = (index: number) =>
+      [...beat(score, 0, index).notes].sort((a, b) => a.string - b.string).map(note => note.isPalmMute);
+    // The low E and A strings of the first two beats.
+    editor.apply([
+      {
+        kind: 'mark-strings',
+        selection: beats([0, 0], [0, 1]),
+        strings: [tex(6), tex(5)],
+        technique: 'palm-mute',
+        on: true,
+      },
+    ]);
+    expect([muted(0), muted(1), muted(2)]).toEqual([
+      [true, true, false],
+      [true, true, false],
+      [false, false],
+    ]);
+    editor.apply([
+      {
+        kind: 'mark-strings',
+        selection: beats([0, 0], [0, 2]),
+        strings: [tex(4), tex(5)],
+        technique: 'let-ring',
+        on: true,
+      },
+    ]);
+    expect(
+      beat(score, 0, 2)
+        .notes.map(note => note.isLetRing)
+        .sort(),
+    ).toEqual([false, true]);
+    expect(() =>
+      editor.apply([
+        {
+          kind: 'mark-strings',
+          selection: beats([0, 0], [0, 1]),
+          strings: [],
+          technique: 'let-ring',
+          on: true,
+        },
+      ]),
+    ).toThrow('Choose the strings first.');
+  });
+});
+
 describe('clefs and simile marks (EDIT-107, EDIT-108)', () => {
   const at = { track: 0, staff: 0 };
 
@@ -1447,6 +1540,8 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
         { trill: random() < 0.5 ? { fret: pick(20), speed: 32 } : null },
         { ornament: ORNAMENTS[pick(ORNAMENTS.length)] ?? 'none' },
         { leftTap: random() < 0.5 },
+        { harmonic: 'artificial', harmonicAt: [5, 7, 12][pick(3)] ?? 12 },
+        { harmonicAt: [3.2, 7, 12, 19][pick(4)] ?? 12 },
       ];
       const chosen = techniques[pick(techniques.length)] ?? {};
       return note === undefined
@@ -1555,7 +1650,15 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(14)) {
+  switch (pick(15)) {
+    case 14:
+      return {
+        kind: 'mark-strings',
+        selection,
+        strings: [1 + pick(6), 1 + pick(6)],
+        technique: random() < 0.5 ? 'palm-mute' : 'let-ring',
+        on: random() < 0.7,
+      };
     case 12:
       return { kind: 'set-score', info: { title: random() < 0.5 ? '' : 'Retitled', artist: 'Someone' } };
     case 11:

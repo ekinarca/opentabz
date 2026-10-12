@@ -21,6 +21,7 @@ import { detach, emptyBeats, ensureVoices, insertBar, removeBar } from './bars.t
 import { articulationIn, clearSelection, copyBeat, paste, place, removeSelection, voiceOf } from './clip.ts';
 import { moveString, retune, transpose } from './transpose.ts';
 import { harmonize } from './harmonize.ts';
+import { markStrings } from './assistants.ts';
 import { setStaffBar } from './staff-bars.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
@@ -446,6 +447,9 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       return;
     case 'move-string':
       moveString(transaction, command.at, command.higher);
+      return;
+    case 'mark-strings':
+      markStrings(transaction, command.selection, command.strings, command.technique, command.on);
       return;
     case 'set-staff-bar':
       setStaffBar(transaction, command, command.properties);

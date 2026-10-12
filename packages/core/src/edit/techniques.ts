@@ -3,6 +3,7 @@
  * plain-data names to alphaTab's model.
  */
 import * as alphaTab from '@coderline/alphatab';
+import { HARMONIC_NODES, nodeOfFret } from '../shared/harmonics.ts';
 import {
   BRUSH_LENGTHS,
   TRILL_SPEEDS,
@@ -351,8 +352,17 @@ export function setNoteTechniques(note: alphaTab.model.Note, techniques: NoteTec
   if (ghost !== undefined) note.isGhost = flag(ghost, 'A ghost note');
   if (harmonic !== undefined) {
     note.harmonicType = named(HARMONICS, harmonic, 'harmonic');
-    // A natural harmonic sounds at its fret; the others an octave (12 frets) above it.
-    note.harmonicValue = harmonic === 'none' || harmonic === 'natural' ? 0 : 12;
+    // A natural harmonic is touched at its fret's node; the others an octave (12 frets) above it.
+    note.harmonicValue = harmonic === 'none' ? 0 : harmonic === 'natural' ? nodeOfFret(note.fret) : 12;
+  }
+  const { harmonicAt } = techniques;
+  if (harmonicAt !== undefined) {
+    if (!HARMONIC_NODES.some(node => node === harmonicAt))
+      throw new EditError(`No harmonic touched at ${String(harmonicAt)}.`);
+    if (note.harmonicType === HarmonicType.None) throw new EditError('Only a harmonic is touched.');
+    note.harmonicValue = harmonicAt;
+    // A natural harmonic is written at the fret it is touched over.
+    if (note.harmonicType === HarmonicType.Natural) note.fret = Math.round(harmonicAt);
   }
   if (accent !== undefined) note.accentuated = named(ACCENTS, accent, 'accent');
   if (staccato !== undefined) note.isStaccato = flag(staccato, 'Staccato');
@@ -406,6 +416,7 @@ export function readNoteTechniques(note: alphaTab.model.Note): NoteState {
       : null,
     ornament: nameIn(ORNAMENT_VALUES, note.ornament),
     leftTap: note.isLeftHandTapped,
+    harmonicAt: note.harmonicValue,
   };
 }
 
