@@ -67,7 +67,8 @@ interface Pending {
   readonly method: EngineMethod;
   readonly resolve: (value: unknown) => void;
   readonly reject: (error: Error) => void;
-  readonly timer: ReturnType<typeof setTimeout>;
+  /** Set once the request is the oldest pending one: the worker is working on it. */
+  timer: ReturnType<typeof setTimeout> | null;
 }
 
 /** The engine worker could not be started (repeated failures while loading). */
@@ -124,7 +125,7 @@ export class EngineClient {
   public dispose(): void {
     this.worker.terminate();
     for (const pending of this.pending.values()) {
-      clearTimeout(pending.timer);
+      if (pending.timer !== null) clearTimeout(pending.timer);
       pending.reject(new Error('The engine was shut down.'));
     }
     this.pending.clear();
@@ -136,15 +137,26 @@ export class EngineClient {
     transfer: Transferable[] = [],
   ): Promise<EngineResult<M>> {
     const id = this.nextId++;
-    const deadline = DEADLINES[method];
     return new Promise<EngineResult<M>>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.timeout(id);
-      }, deadline);
-      this.pending.set(id, { method, resolve: resolve as (value: unknown) => void, reject, timer });
+      this.pending.set(id, { method, resolve: resolve as (value: unknown) => void, reject, timer: null });
       const message: EngineRequestMessage<M> = { kind: 'request', id, method, args };
       this.worker.postMessage(message, transfer);
+      this.watchOldest();
     });
+  }
+
+  /**
+   * Starts the deadline of the oldest pending request. The worker answers requests one at a time,
+   * in order: a request waiting behind a long one is not late, only the one being worked on can be.
+   */
+  private watchOldest(): void {
+    const oldest = this.pending.entries().next();
+    if (oldest.done === true) return;
+    const [id, pending] = oldest.value;
+    if (pending.timer !== null) return;
+    pending.timer = setTimeout(() => {
+      this.timeout(id);
+    }, DEADLINES[pending.method]);
   }
 
   private start(): Promise<EngineInfo> {
@@ -185,7 +197,8 @@ export class EngineClient {
     const pending = this.pending.get(message.id);
     if (pending === undefined) return;
     this.pending.delete(message.id);
-    clearTimeout(pending.timer);
+    if (pending.timer !== null) clearTimeout(pending.timer);
+    this.watchOldest();
     if (message.ok) pending.resolve(message.result);
     else pending.reject(new EngineCallError(message.error));
   }
@@ -201,7 +214,7 @@ export class EngineClient {
 
   private failAll(error: Error): void {
     for (const pending of this.pending.values()) {
-      clearTimeout(pending.timer);
+      if (pending.timer !== null) clearTimeout(pending.timer);
       pending.reject(error);
     }
     this.pending.clear();

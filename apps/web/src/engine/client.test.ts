@@ -2,13 +2,18 @@ import type { EngineRequestMessage, EngineResponseMessage } from '@opentabz/core
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EngineCallError, EngineClient, EngineTimeoutError, EngineUnavailableError } from './client.ts';
 
-type Behaviour = (message: EngineRequestMessage) => 'respond' | 'hang' | 'fail' | 'crash';
+type Behaviour = (message: EngineRequestMessage) => 'respond' | 'slow' | 'hang' | 'fail' | 'crash';
+
+/** How long a slow request keeps the worker busy (within its deadline, past a quick one's). */
+const SLOW_MS = 18_000;
 
 /** A stand-in for the engine worker that answers, hangs, fails or crashes on demand. */
 class FakeWorker extends EventTarget {
   public terminated = false;
   public readonly received: EngineRequestMessage[] = [];
   private readonly behaviour: Behaviour;
+  /** Until when a slow request keeps the worker busy: what comes after waits, as in the worker. */
+  private busyUntil = 0;
 
   public constructor(behaviour: Behaviour) {
     super();
@@ -18,32 +23,44 @@ class FakeWorker extends EventTarget {
   public postMessage(message: EngineRequestMessage): void {
     this.received.push(message);
     const action = this.behaviour(message);
+    if (action === 'slow' || this.busyUntil > Date.now()) {
+      this.busyUntil = Math.max(this.busyUntil, Date.now()) + (action === 'slow' ? SLOW_MS : 0);
+      setTimeout(() => {
+        this.answer(message, 'respond');
+      }, this.busyUntil - Date.now());
+      return;
+    }
     queueMicrotask(() => {
-      if (this.terminated) return;
-      if (action === 'crash') {
-        this.dispatchEvent(new ErrorEvent('error', { message: 'boom', cancelable: true }));
-        return;
-      }
-      if (action === 'hang') return;
-      const data: EngineResponseMessage =
-        action === 'respond'
-          ? {
-              kind: 'response',
-              id: message.id,
-              ok: true,
-              result:
-                message.method === 'init'
-                  ? { alphaTabVersion: '1.8.4', warmupMs: 1 }
-                  : { echoed: message.method },
-            }
-          : {
-              kind: 'response',
-              id: message.id,
-              ok: false,
-              error: { name: 'OpenFailure', message: 'bad file', stack: null },
-            };
-      this.dispatchEvent(new MessageEvent('message', { data }));
+      this.answer(message, action);
     });
+  }
+
+  /** Answers a request as the behaviour says (a slow one, once it is done). */
+  private answer(message: EngineRequestMessage, action: ReturnType<Behaviour>): void {
+    if (this.terminated) return;
+    if (action === 'crash') {
+      this.dispatchEvent(new ErrorEvent('error', { message: 'boom', cancelable: true }));
+      return;
+    }
+    if (action === 'hang') return;
+    const data: EngineResponseMessage =
+      action === 'fail'
+        ? {
+            kind: 'response',
+            id: message.id,
+            ok: false,
+            error: { name: 'OpenFailure', message: 'bad file', stack: null },
+          }
+        : {
+            kind: 'response',
+            id: message.id,
+            ok: true,
+            result:
+              message.method === 'init'
+                ? { alphaTabVersion: '1.8.4', warmupMs: 1 }
+                : { echoed: message.method },
+          };
+    this.dispatchEvent(new MessageEvent('message', { data }));
   }
 
   public terminate(): void {
@@ -117,6 +134,22 @@ describe('EngineClient', () => {
     expect(onRestart).toHaveBeenCalledOnce();
     // The replacement serves new calls.
     await expect(engine.call('closeView', { viewId: 'v' })).resolves.toEqual({ echoed: 'closeView' });
+  });
+
+  it('gives a request waiting behind a slow one its deadline from when the worker starts on it', async () => {
+    const onRestart = vi.fn();
+    const { engine } = client(
+      [message => (message.method === 'unfoldDocument' ? 'slow' : 'respond')],
+      onRestart,
+    );
+    await engine.ready;
+    const slow = engine.call('unfoldDocument', { docId: 'd' });
+    // Quick (5 s), but answered after the slow one (18 s).
+    const quick = engine.call('closeView', { viewId: 'v' });
+    await vi.advanceTimersByTimeAsync(SLOW_MS + 1);
+    await expect(slow).resolves.toEqual({ echoed: 'unfoldDocument' });
+    await expect(quick).resolves.toEqual({ echoed: 'closeView' });
+    expect(onRestart).not.toHaveBeenCalled();
   });
 
   it('gives up after repeated start failures with an EngineUnavailableError', async () => {

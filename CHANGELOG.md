@@ -364,6 +364,8 @@ All notable changes to OpenTabz are recorded here. The format follows
 
 ### Fixed
 
+- The engine's watchdog times a request from when the engine starts on it: quick requests waiting
+  behind a long one (opening a large file while the score is painted) no longer restart it.
 - Tempo changes in Guitar Pro 3–5 and Capella files hold until the next one, as they do in Guitar
   Pro and Capella: a song going to 140 at bar 20 and to 100 at bar 40 no longer slows down over
   the twenty bars between. A tempo change a Guitar Pro 5.1 file hides is no longer drawn.
