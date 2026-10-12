@@ -7,6 +7,9 @@ import { beatsOf } from './clip.ts';
 import type { Transaction } from './commands.ts';
 import { EditError } from './error.ts';
 
+/** The note's flag each assistant sets. */
+const FLAGS = { 'palm-mute': 'isPalmMute', 'let-ring': 'isLetRing' } as const;
+
 /** Marks the selection's notes on `strings` (1 the lowest) palm-muted or let ring, or not. */
 export function markStrings(
   transaction: Transaction,
@@ -15,8 +18,8 @@ export function markStrings(
   technique: 'palm-mute' | 'let-ring',
   on: boolean,
 ): void {
-  if (technique !== 'palm-mute' && technique !== 'let-ring')
-    throw new EditError(`No assistant for "${String(technique)}".`);
+  if (!Object.hasOwn(FLAGS, technique)) throw new EditError(`No assistant for "${technique}".`);
+  const flag = FLAGS[technique];
   if (strings.length === 0) throw new EditError('Choose the strings first.');
   if (strings.some(string => !Number.isInteger(string) || string < 1))
     throw new EditError(`No strings ${strings.join(', ')}.`);
@@ -26,9 +29,6 @@ export function markStrings(
     const notes = beat.notes.filter(note => note.isStringed && chosen.has(note.string));
     if (notes.length === 0) continue;
     transaction.touch(staff, beat.voice.bar.index);
-    for (const note of notes) {
-      if (technique === 'palm-mute') note.isPalmMute = on;
-      else note.isLetRing = on;
-    }
+    for (const note of notes) note[flag] = on;
   }
 }
