@@ -10,7 +10,13 @@ import { describe, expect, it } from 'vitest';
 import { EditError } from '../src/edit/commands.ts';
 import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
-import { DURATION_VALUES, type BeatAddress, type EditCommand } from '../src/shared/edit.ts';
+import {
+  DURATION_VALUES,
+  type BeatAddress,
+  type BeatTechniques,
+  type EditCommand,
+  type NoteTechniques,
+} from '../src/shared/edit.ts';
 import { fingerprint } from './fingerprint.ts';
 import { listFixtures, readFixture } from './helpers.ts';
 import { links } from './score-links.ts';
@@ -168,6 +174,144 @@ describe('commands', () => {
     expect(editor.canUndo).toBe(false);
   });
 
+  it('puts in an empty bar in every track, in the meter, clef and key of the bar it goes before', () => {
+    const score = texScore(
+      '\\track "Guitar" \\ts 3 4 \\ks D 3.3 5.3 7.3 | \\ts 4 4 8.3 8.3 8.3 8.3 \\track "Bass" 3.4.2 | 5.4.1',
+    );
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'insert-bar', bar: 1 }]);
+    expect(score.masterBars).toHaveLength(3);
+    expect(score.masterBars.map(bar => [bar.index, bar.timeSignatureNumerator])).toEqual([
+      [0, 3],
+      [1, 4],
+      [2, 4],
+    ]);
+    expect(score.masterBars[1]?.start).toBe(3 * 960);
+    for (const track of score.tracks) {
+      const bars = track.staves[0]?.bars ?? [];
+      expect(bars.map(bar => bar.index)).toEqual([0, 1, 2]);
+      expect(bars[1]?.isEmpty).toBe(true);
+      expect(bars[1]?.previousBar).toBe(bars[0]);
+      expect(bars[1]?.nextBar).toBe(bars[2]);
+      expect(bars[1]?.keySignature).toBe(bars[2]?.keySignature);
+    }
+    expect(written(score, 2)).toEqual(['8.3:4', '8.3:4', '8.3:4', '8.3:4']);
+    // After the last: in the last bar's meter.
+    editor.apply([{ kind: 'insert-bar', bar: 3 }]);
+    expect(score.masterBars.map(bar => bar.timeSignatureNumerator)).toEqual([3, 4, 4, 4]);
+    expect(() => editor.apply([{ kind: 'insert-bar', bar: 9 }])).toThrow(EditError);
+  });
+
+  it('takes a bar away from every track; the last one stays', () => {
+    const score = texScore('\\track "Guitar" 3.3.1 | 5.3.1 | 7.3.1 \\track "Bass" 3.4.1 | 5.4.1 | 7.4.1');
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'remove-bar', bar: 1 }]);
+    expect(score.masterBars).toHaveLength(2);
+    expect(written(score, 1)).toEqual(['7.3:1']);
+    expect(score.tracks[1]?.staves[0]?.bars.map(bar => bar.index)).toEqual([0, 1]);
+    editor.apply([{ kind: 'remove-bar', bar: 0 }]);
+    expect(() => editor.apply([{ kind: 'remove-bar', bar: 0 }])).toThrow('A score keeps at least one bar.');
+    expect(written(score, 0)).toEqual(['7.3:1']);
+    editor.undo();
+    editor.undo();
+    expect(score.masterBars).toHaveLength(3);
+    expect(written(score, 1)).toEqual(['5.3:1']);
+  });
+
+  it('keeps repeats where they were as bars come and go', () => {
+    const score = texScore('\\track "Guitar" \\ro 3.3.1 | \\rc 2 5.3.1 | 7.3.1');
+    const editor = editorOf(score);
+    // [repeat start, repeat count, bars in its repeat group], bar by bar.
+    const repeats = () =>
+      score.masterBars.map(bar => [bar.isRepeatStart, bar.repeatCount, bar.repeatGroup.masterBars.length]);
+    expect(repeats()).toEqual([
+      [true, 0, 3],
+      [false, 2, 3],
+      [false, 0, 3],
+    ]);
+    editor.apply([{ kind: 'insert-bar', bar: 1 }]);
+    expect(repeats()).toEqual([
+      [true, 0, 4],
+      [false, 0, 4],
+      [false, 2, 4],
+      [false, 0, 4],
+    ]);
+    expect(score.masterBars.every(bar => bar.repeatGroup.masterBars.includes(bar))).toBe(true);
+    editor.apply([{ kind: 'remove-bar', bar: 0 }]);
+    expect(repeats()).toEqual([
+      [false, 0, 3],
+      [false, 2, 3],
+      [false, 0, 3],
+    ]);
+    editor.undo();
+    expect(repeats()).toEqual([
+      [true, 0, 4],
+      [false, 0, 4],
+      [false, 2, 4],
+      [false, 0, 4],
+    ]);
+  });
+
+  it('sets a note’s techniques, and a tie on an empty string holds the note before on', () => {
+    const score = texScore('\\track "Guitar" 5.3 7.3 7.3 r');
+    const editor = editorOf(score);
+    const note = (index: number) => beat(score, 0, index).getNoteOnString(tex(3));
+    editor.apply([
+      { kind: 'set-note', at: { ...AT, string: tex(3) }, techniques: { hammer: true, vibrato: 'slight' } },
+    ]);
+    expect(note(0)?.isHammerPullOrigin).toBe(true);
+    expect(note(0)?.vibrato).toBe(alphaTab.model.VibratoType.Slight);
+    // Joined to the next note on the string, as a hammer-on.
+    expect(note(1)?.isHammerPullDestination).toBe(true);
+    editor.apply([
+      {
+        kind: 'set-note',
+        at: { ...AT, beat: 1, string: tex(3) },
+        techniques: { palmMute: true, dead: true, harmonic: 'natural', accent: 'heavy', bend: 'full' },
+      },
+    ]);
+    expect(note(1)).toMatchObject({
+      isPalmMute: true,
+      isDead: true,
+      harmonicType: alphaTab.model.HarmonicType.Natural,
+      accentuated: alphaTab.model.AccentuationType.Heavy,
+      bendType: alphaTab.model.BendType.Bend,
+    });
+    expect(note(1)?.maxBendPoint?.value).toBe(4);
+    editor.apply([{ kind: 'set-note', at: { ...AT, beat: 3, string: tex(3) }, techniques: { tie: true } }]);
+    expect(note(3)?.isTieDestination).toBe(true);
+    expect(note(3)?.tieOrigin).toBe(note(2));
+    expect(note(3)?.fret).toBe(7);
+    editor.apply([
+      { kind: 'set-note', at: { ...AT, beat: 1, string: tex(3) }, techniques: { bend: 'none' } },
+    ]);
+    expect(note(1)?.hasBend).toBe(false);
+    expect(() =>
+      editor.apply([
+        { kind: 'set-note', at: { ...AT, beat: 1, string: tex(1) }, techniques: { dead: true } },
+      ]),
+    ).toThrow('No note on string 6.');
+  });
+
+  it('sets a beat’s techniques: a triplet, strokes, tremolo picking', () => {
+    const score = texScore('\\track "Guitar" 5.3.8 7.3.8 7.3.8 r.8 r.2');
+    const editor = editorOf(score);
+    for (const index of [0, 1, 2])
+      editor.apply([{ kind: 'set-beat', at: { ...AT, beat: index }, techniques: { tuplet: 'triplet' } }]);
+    expect(beat(score, 0, 0).tupletGroup?.beats).toHaveLength(3);
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { stroke: 'down', tremolo: 3, slap: true } }]);
+    expect(beat(score, 0, 0)).toMatchObject({
+      pickStroke: alphaTab.model.PickStroke.Down,
+      slap: true,
+      isTremolo: true,
+    });
+    editor.apply([{ kind: 'set-beat', at: AT, techniques: { tremolo: 0 } }]);
+    expect(beat(score, 0, 0).isTremolo).toBe(false);
+    editor.undo();
+    expect(beat(score, 0, 0).isTremolo).toBe(true);
+    expect(() => editor.apply([{ kind: 'set-beat', at: AT, techniques: { tremolo: 9 } }])).toThrow(EditError);
+  });
+
   it('refuses frets on a drum staff', () => {
     const score = texScore(
       '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:4 (KickHit HiHatClosed) HiHatClosed',
@@ -256,7 +400,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
   };
   const string = 1 + pick(staff.tuning.length);
   const notes = voice.beats[index]?.notes.filter(note => note.isStringed) ?? [];
-  switch (pick(6)) {
+  switch (pick(10)) {
     case 0:
       return { kind: 'set-fret', at: { ...at, string }, fret: pick(25) };
     case 1: {
@@ -280,8 +424,47 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
       };
     case 4:
       return { kind: 'insert-beat', at: { ...at, beat: pick(voice.beats.length + 1) } };
-    default:
+    case 5:
       return { kind: 'remove-beat', at };
+    case 6:
+      return { kind: 'insert-bar', bar: pick(score.masterBars.length + 1) };
+    case 8: {
+      const note = notes[pick(notes.length)];
+      const techniques: NoteTechniques[] = [
+        { tie: random() < 0.5 },
+        { hammer: random() < 0.5 },
+        { slide: random() < 0.5 ? 'legato' : 'none' },
+        { vibrato: random() < 0.5 ? 'slight' : 'none' },
+        { palmMute: random() < 0.5 },
+        { letRing: random() < 0.5 },
+        { dead: random() < 0.5 },
+        { ghost: random() < 0.5 },
+        { harmonic: random() < 0.5 ? 'natural' : 'none' },
+        { accent: random() < 0.5 ? 'heavy' : 'none' },
+        { staccato: random() < 0.5 },
+        { bend: random() < 0.5 ? 'full' : 'none' },
+      ];
+      const chosen = techniques[pick(techniques.length)] ?? {};
+      return note === undefined
+        ? { kind: 'set-note', at: { ...at, string }, techniques: { tie: true } }
+        : { kind: 'set-note', at: { ...at, string: note.string }, techniques: chosen };
+    }
+    case 9: {
+      const techniques: BeatTechniques[] = [
+        { tuplet: random() < 0.5 ? 'triplet' : 'none' },
+        { barVibrato: random() < 0.5 ? 'wide' : 'none' },
+        { slap: random() < 0.5 },
+        { tap: random() < 0.5 },
+        { fade: random() < 0.5 ? 'in' : 'none' },
+        { stroke: random() < 0.5 ? 'down' : 'none' },
+        { tremolo: pick(4) },
+      ];
+      return { kind: 'set-beat', at, techniques: techniques[pick(techniques.length)] ?? {} };
+    }
+    default:
+      return score.masterBars.length > 1
+        ? { kind: 'remove-bar', bar: pick(score.masterBars.length) }
+        : { kind: 'insert-bar', bar: 0 };
   }
 }
 

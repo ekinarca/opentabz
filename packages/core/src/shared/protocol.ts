@@ -73,6 +73,8 @@ export interface EngineMethods {
   trackBeats(args: { readonly docId: string; readonly trackIndex: number }): TrackBeats;
   /** A document as it is now, edited or not, as a Guitar Pro 7/8 file (EDIT-064). */
   saveDocument(args: { readonly docId: string }): { readonly bytes: ArrayBuffer };
+  /** A blank score to write in (COMP-001), as a Guitar Pro 7/8 file to open. */
+  blankDocument(args: { readonly title: string }): { readonly bytes: ArrayBuffer };
   /** Hands the engine a port to the synth worker; MIDI goes there directly. */
   connectSynth(args: { readonly port: MessagePort }): null;
   /** Generates MIDI for a document, sends it to the synth and returns the playback timeline. */

@@ -25,6 +25,7 @@ const DEADLINES: Readonly<Record<EngineMethod, number>> = {
   redo: 10_000,
   trackBeats: 10_000,
   saveDocument: 30_000,
+  blankDocument: 10_000,
   connectSynth: 5_000,
   preparePlayback: 20_000,
   previewBeats: 5_000,

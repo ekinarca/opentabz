@@ -157,6 +157,29 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(systemSvg(host, docId, bar).svg).toContain('>23<');
   });
 
+  it('lays out bars put in and taken away, in every track, and their undoing', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const bars = opened.summary.masterBars.length;
+    const lastBar = (): number =>
+      Math.max(...host.layoutView({ viewId: 'v', docId, options: VIEW }).partials.map(p => p.lastBar));
+    expect(lastBar()).toBe(bars - 1);
+    const added = host.edit({ docId, commands: [{ kind: 'insert-bar', bar: bars }] });
+    expect(added.summary.masterBars).toHaveLength(bars + 1);
+    expect(lastBar()).toBe(bars);
+    expect(host.trackBeats({ docId, trackIndex: 2 }).beats.length).toBeGreaterThan(0);
+    host.edit({ docId, commands: [{ kind: 'remove-bar', bar: 0 }] });
+    expect(lastBar()).toBe(bars - 1);
+    host.undo({ docId });
+    expect(host.undo({ docId }).summary.masterBars).toHaveLength(bars);
+    expect(lastBar()).toBe(bars - 1);
+  });
+
   it('refuses an edit it cannot make, saying why, and leaves the document as it was', () => {
     const host = new EngineHost();
     const opened = host.open({

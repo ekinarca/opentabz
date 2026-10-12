@@ -4,15 +4,12 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import { MAX_FRET, type BeatAddress, type DurationValue, type EditCommand } from '../shared/edit.ts';
+import { EditError } from './error.ts';
 import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
+import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 
-export class EditError extends Error {
-  public constructor(message: string) {
-    super(message);
-    this.name = 'EditError';
-  }
-}
+export { EditError };
 
 /** An edit being made: what it changes is kept before it changes, bar by bar. */
 export class Transaction {
@@ -32,6 +29,23 @@ export class Transaction {
   /** The first master bar whose engraving changed, before the edit and after it. */
   public firstChangedMasterBar(): number {
     return Math.min(this.engraved, ...this.regions.map(firstEngraved));
+  }
+
+  /**
+   * Keeps the score's bars as they are, about to be put in or taken away (their places, the links
+   * from each to the next, the repeat groups), and every staff's bars around `bar` as `touch` does.
+   */
+  public touchBars(bar: number): void {
+    const { journal, score } = this;
+    journal.keep(score);
+    for (const masterBar of score.masterBars) journal.keep(masterBar);
+    for (const track of score.tracks) {
+      for (const staff of track.staves) {
+        journal.keep(staff);
+        for (const staffBar of staff.bars) journal.keep(staffBar);
+        this.touch(staff, Math.min(bar, staff.bars.length - 1));
+      }
+    }
   }
 
   /**
@@ -116,6 +130,46 @@ function checkString(staff: alphaTab.model.Staff, string: number): void {
   if (staff.isPercussion || strings === 0) throw new EditError('The staff has no strings.');
   if (!Number.isInteger(string) || string < 1 || string > strings)
     throw new EditError(`No string ${String(string)} on a staff of ${String(strings)}.`);
+}
+
+/** The score's bars numbered and linked again, master bars and every staff's, after bars moved. */
+function relinkBars(score: alphaTab.model.Score): void {
+  score.masterBars.forEach((masterBar, index) => {
+    masterBar.index = index;
+    masterBar.score = score;
+    masterBar.previousMasterBar = score.masterBars[index - 1] ?? null;
+    masterBar.nextMasterBar = score.masterBars[index + 1] ?? null;
+  });
+  score.rebuildRepeatGroups();
+  for (const track of score.tracks) {
+    for (const staff of track.staves) {
+      staff.bars.forEach((bar, index) => {
+        bar.index = index;
+        bar.staff = staff;
+        bar.previousBar = staff.bars[index - 1] ?? null;
+        bar.nextBar = staff.bars[index + 1] ?? null;
+      });
+    }
+  }
+}
+
+/** An empty bar for a staff, with the clef, key and voices of a bar next to it. */
+function emptyBar(like: alphaTab.model.Bar | undefined): alphaTab.model.Bar {
+  const bar = new alphaTab.model.Bar();
+  if (like !== undefined) {
+    bar.clef = like.clef;
+    bar.clefOttava = like.clefOttava;
+    bar.keySignature = like.keySignature;
+    bar.keySignatureType = like.keySignatureType;
+  }
+  for (let index = 0; index < Math.max(1, like?.voices.length ?? 1); index++) {
+    const voice = new alphaTab.model.Voice();
+    bar.addVoice(voice);
+    const beat = new alphaTab.model.Beat();
+    beat.isEmpty = true;
+    voice.addBeat(beat);
+  }
+  return bar;
 }
 
 const DURATIONS: Readonly<Record<DurationValue, alphaTab.model.Duration>> = {
@@ -216,6 +270,72 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
       empty.isEmpty = true;
       empty.voice = voice;
       voice.beats.splice(0, 1, empty);
+      return;
+    }
+    case 'insert-bar': {
+      const index = command.bar;
+      const count = score.masterBars.length;
+      if (!Number.isInteger(index) || index < 0 || index > count)
+        throw new EditError(`No place for a bar at ${String(index)}.`);
+      transaction.touchBars(index);
+      const like = score.masterBars[Math.min(index, count - 1)];
+      const masterBar = new alphaTab.model.MasterBar();
+      if (like !== undefined) {
+        masterBar.timeSignatureNumerator = like.timeSignatureNumerator;
+        masterBar.timeSignatureDenominator = like.timeSignatureDenominator;
+        masterBar.timeSignatureCommon = like.timeSignatureCommon;
+        masterBar.tripletFeel = like.tripletFeel;
+      }
+      score.masterBars.splice(index, 0, masterBar);
+      for (const track of score.tracks) {
+        for (const staff of track.staves) {
+          staff.bars.splice(index, 0, emptyBar(staff.bars[Math.min(index, staff.bars.length - 1)]));
+        }
+      }
+      relinkBars(score);
+      return;
+    }
+    case 'set-note': {
+      const beat = beatAt(score, command.at);
+      const staff = beat.voice.bar.staff;
+      checkString(staff, command.at.string);
+      transaction.touch(staff, command.at.bar);
+      let note = beat.getNoteOnString(command.at.string);
+      if (note === null) {
+        // A tie on a string with nothing written holds the note before it on (Guitar Pro's L).
+        if (command.techniques.tie !== true)
+          throw new EditError(`No note on string ${String(command.at.string)}.`);
+        note = new alphaTab.model.Note();
+        note.string = command.at.string;
+        beat.isEmpty = false;
+        beat.addNote(note);
+      }
+      setNoteTechniques(note, command.techniques);
+      return;
+    }
+    case 'set-beat': {
+      const beat = beatAt(score, command.at);
+      transaction.touch(beat.voice.bar.staff, command.at.bar);
+      setBeatTechniques(beat, command.techniques);
+      return;
+    }
+    case 'remove-bar': {
+      const index = command.bar;
+      const count = score.masterBars.length;
+      if (!Number.isInteger(index) || index < 0 || index >= count)
+        throw new EditError(`No bar ${String(index)}.`);
+      if (count === 1) throw new EditError('A score keeps at least one bar.');
+      transaction.touchBars(index);
+      for (const track of score.tracks) {
+        for (const staff of track.staves) {
+          for (const voice of staff.bars[index]?.voices ?? []) {
+            for (const beat of voice.beats) for (const note of beat.notes) detach(note);
+          }
+          staff.bars.splice(index, 1);
+        }
+      }
+      score.masterBars.splice(index, 1);
+      relinkBars(score);
       return;
     }
   }

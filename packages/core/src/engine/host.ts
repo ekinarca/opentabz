@@ -2,6 +2,7 @@
  * The engine's request handlers, independent of any messaging mechanism. The worker entry
  * forwards protocol messages here; tests call it directly in Node.
  */
+import { blankScore } from '../document/blank.ts';
 import { summarizeScore, type SummaryMeta } from '../document/summary.ts';
 import { colorTracks } from '../document/track-colors.ts';
 import { EditError } from '../edit/commands.ts';
@@ -216,6 +217,10 @@ export class EngineHost implements EngineMethods {
 
   public saveDocument(args: EngineArgs<'saveDocument'>): EngineResult<'saveDocument'> {
     return { bytes: saveGuitarPro(this.document(args.docId).score).slice().buffer };
+  }
+
+  public blankDocument(args: EngineArgs<'blankDocument'>): EngineResult<'blankDocument'> {
+    return { bytes: saveGuitarPro(blankScore(args.title)).slice().buffer };
   }
 
   private document(docId: string): OpenDocument {

@@ -47,6 +47,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.trackBeats(message.args as EngineRequestMessage<'trackBeats'>['args']);
     case 'saveDocument':
       return host.saveDocument(message.args as EngineRequestMessage<'saveDocument'>['args']);
+    case 'blankDocument':
+      return host.blankDocument(message.args as EngineRequestMessage<'blankDocument'>['args']);
     case 'connectSynth':
       return host.connectSynth(message.args as EngineRequestMessage<'connectSynth'>['args']);
     case 'preparePlayback':
