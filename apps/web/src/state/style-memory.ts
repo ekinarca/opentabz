@@ -26,6 +26,9 @@ import {
   TITLE_ELEMENTS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  TUNING_DETAILS,
+  TUNING_LAYOUTS,
+  TUNING_PLACES,
   type PageFurniture,
   type ScoreStyle,
   type TechniqueLabels,
@@ -171,6 +174,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'timeSignatureOnEverySystem',
     'timeSignatureAtSections',
     'linesOverRests',
+    'tuningFrame',
   ] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   // Measures added later, likewise.
@@ -212,6 +216,14 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     raw.textBlocks === undefined ? fallback.textBlocks : parseTextBlocks(raw.textBlocks, fallback.textBlocks);
   const musicFont =
     raw.musicFont === undefined ? fallback.musicFont : isMusicFontId(raw.musicFont) ? raw.musicFont : null;
+  const tuning = {
+    tuningPlace: raw.tuningPlace === undefined ? fallback.tuningPlace : oneOf(raw.tuningPlace, TUNING_PLACES),
+    tuningDetail:
+      raw.tuningDetail === undefined ? fallback.tuningDetail : oneOf(raw.tuningDetail, TUNING_DETAILS),
+    tuningLayout:
+      raw.tuningLayout === undefined ? fallback.tuningLayout : oneOf(raw.tuningLayout, TUNING_LAYOUTS),
+  };
+  if (Object.values(tuning).some(entry => entry === null)) return null;
   const techniqueLabels =
     raw.techniqueLabels === undefined
       ? fallback.techniqueLabels
@@ -234,6 +246,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     ),
     ...(style as { [K in keyof typeof style]: NonNullable<(typeof style)[K]> }),
     ...(measures as Record<keyof typeof laterMeasures, number>),
+    ...(tuning as { [K in keyof typeof tuning]: NonNullable<(typeof tuning)[K]> }),
     titleBlock,
     textBlocks,
     pages,

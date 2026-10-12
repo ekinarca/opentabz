@@ -95,6 +95,11 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     extendBarLines: sheet.extendBarLines,
     systemSeparator: sheet.useSystemSignSeparator,
     tuning: sheet.globalDisplayTuning && !noneOf(sheet.perTrackDisplayTuning, tracks),
+    // How the legend looks is not among what alphaTab reads: as alphaTab draws it.
+    tuningPlace: 'top',
+    tuningDetail: 'auto',
+    tuningLayout: 'columns',
+    tuningFrame: false,
     chordDiagramsOnTop:
       sheet.globalDisplayChordDiagramsOnTop && !noneOf(sheet.perTrackChordDiagramsOnTop, tracks),
     chordDiagramsInScore: sheet.globalDisplayChordDiagramsInScore,
@@ -224,6 +229,10 @@ export function applyScoreStyle(
       case 'staffLineThickness':
       case 'systemSpacing':
       case 'firstSystemIndent':
+      case 'tuningPlace':
+      case 'tuningDetail':
+      case 'tuningLayout':
+      case 'tuningFrame':
       case 'chordDiagramsOnTopSize':
       case 'chordDiagramsOnTopSpacing':
       case 'chordDiagramsInScoreSize':
@@ -308,6 +317,11 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   if (engraving !== null) display.resources.engravingSettings = engraving;
   const { elements } = settings.notation;
   elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
+  // The tuning where, as much and as laid out as asked (REND-225).
+  settings.notation.tuningInTab = style.tuningPlace === 'tab';
+  settings.notation.tuningDetail = style.tuningDetail;
+  settings.notation.tuningLayout = style.tuningLayout;
+  settings.notation.tuningFrame = style.tuningFrame;
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);
   settings.notation.showTempoDecimals = style.tempoDecimals;
   settings.notation.showBentPitch = style.bentPitch;

@@ -32,6 +32,22 @@ export type TrackNameText = (typeof TRACK_NAME_TEXTS)[number];
 export const TEXT_ORIENTATIONS = ['horizontal', 'vertical'] as const;
 export type TextOrientation = (typeof TEXT_ORIENTATIONS)[number];
 
+/** Where the tuning is written: in a legend above the music, or before each track's tablature. */
+export const TUNING_PLACES = ['top', 'tab'] as const;
+export type TuningPlace = (typeof TUNING_PLACES)[number];
+
+/**
+ * What the tuning legend says (REND-225): the name, and the strings when the tuning is not
+ * standard (`auto`); the name only; the name and every string; or only the strings tuned other
+ * than standard, nothing for a standard tuning (`changed`).
+ */
+export const TUNING_DETAILS = ['auto', 'name', 'all', 'changed'] as const;
+export type TuningDetail = (typeof TUNING_DETAILS)[number];
+
+/** The tuning legend's strings in two columns or on one line. */
+export const TUNING_LAYOUTS = ['columns', 'line'] as const;
+export type TuningLayout = (typeof TUNING_LAYOUTS)[number];
+
 export interface ScoreStyle {
   /** The size of the whole score (Guitar Pro's overall scale), 1 = 100 %. */
   readonly scale: number;
@@ -91,6 +107,14 @@ export interface ScoreStyle {
   readonly systemSeparator: boolean;
   /** The tuning legend at the start of the score. */
   readonly tuning: boolean;
+  /** Where the tuning is written (REND-225). */
+  readonly tuningPlace: TuningPlace;
+  /** What the tuning legend says (REND-225). */
+  readonly tuningDetail: TuningDetail;
+  /** How the tuning legend lists the strings (REND-225). */
+  readonly tuningLayout: TuningLayout;
+  /** A frame around the tuning legend (REND-225). */
+  readonly tuningFrame: boolean;
   /** Chord diagrams in a grid above the music. */
   readonly chordDiagramsOnTop: boolean;
   /** Chord diagrams above the beats that carry them. */
@@ -176,6 +200,10 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   extendBarLines: false,
   systemSeparator: false,
   tuning: true,
+  tuningPlace: 'top',
+  tuningDetail: 'auto',
+  tuningLayout: 'columns',
+  tuningFrame: false,
   chordDiagramsOnTop: true,
   chordDiagramsInScore: false,
   chordDiagramsOnTopSize: 1,

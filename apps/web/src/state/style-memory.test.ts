@@ -130,6 +130,39 @@ describe('styles remembered per song', () => {
     expect(parseStyle(older)?.techniqueLabels).toEqual(DEFAULT_SCORE_STYLE.techniqueLabels);
   });
 
+  it('reads how the tuning is written (REND-225), as usual for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...DEFAULT_SCORE_STYLE,
+        tuningPlace: 'tab',
+        tuningDetail: 'changed',
+        tuningLayout: 'line',
+        tuningFrame: true,
+      }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({
+      tuningPlace: 'tab',
+      tuningDetail: 'changed',
+      tuningLayout: 'line',
+      tuningFrame: true,
+    });
+    expect(parseStyle({ ...stored, tuningDetail: 'everything' })).toBeNull();
+    expect(parseStyle({ ...stored, tuningFrame: 'yes' })).toBeNull();
+    const {
+      tuningPlace: _place,
+      tuningDetail: _detail,
+      tuningLayout: _layout,
+      tuningFrame: _frame,
+      ...older
+    } = stored;
+    expect(parseStyle(older)).toMatchObject({
+      tuningPlace: 'top',
+      tuningDetail: 'auto',
+      tuningLayout: 'columns',
+      tuningFrame: false,
+    });
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

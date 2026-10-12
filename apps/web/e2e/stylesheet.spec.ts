@@ -4,7 +4,8 @@
  * lines' thickness, the space between systems and the first system's indent (REND-228). The
  * music engraved or handwritten, on screen and in exported pages (REND-241). The chord diagrams'
  * size and spacing (REND-227), kept with the text as the score is scaled (REND-223). The words
- * printed for techniques (REND-242).
+ * printed for techniques (REND-242). The tuning legend, or the strings before the tablature
+ * (REND-225).
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -266,6 +267,36 @@ test('techniques are written with the words chosen, and as usual when left empty
   await palmMute.fill('');
   await palmMute.press('Enter');
   await expect(written('P.M.').first()).toBeVisible();
+});
+
+test('the tuning above the music, saying as much as asked, or before the tablature (REND-225)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  const written = (text: RegExp) =>
+    page.locator('.ot-scroll:not([hidden]) .ot-partials text', { hasText: text });
+  // The shuffle's guitar is in standard tuning: its name.
+  await expect(written(/^Standard$/).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  const detail = dialog.getByLabel('What the legend says');
+  await detail.selectOption('all');
+  // The name and every string: E for the first and the sixth.
+  await expect(written(/^\s*= E$/)).toHaveCount(2);
+  await detail.selectOption('changed');
+  // Nothing tuned otherwise: nothing to say.
+  await expect(written(/^Standard$/)).toHaveCount(0);
+  await expect(written(/^\s*= E$/)).toHaveCount(0);
+
+  await dialog
+    .getByRole('radiogroup', { name: 'Where the tuning goes' })
+    .getByRole('radio', { name: 'Before the tablature' })
+    .click();
+  await expect(detail).toHaveCount(0);
+  // The strings' names at the start of the tablature, from the highest.
+  await expect(written(/^B$/)).toHaveCount(1);
+  await expect(written(/^E$/)).toHaveCount(2);
 });
 
 const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));

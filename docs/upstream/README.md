@@ -49,6 +49,7 @@ available as source: the patch file is that source.
 | [0038](0038-chord-display-and-fingering.md)          | What each chord shows, and its fingering                                           | Chords hid their name or diagram in vain; fingering was dropped            | not yet  |
 | [0039](0039-chord-diagram-size-and-spacing.md)       | Chord diagrams’ size and spacing                                                   | One size and spacing for all; diagrams above close beats overlapped        | not yet  |
 | [0040](0040-technique-labels.md)                     | Technique labels as asked                                                          | Guitar Pro 8 renames P.M., let ring, H and P and the rest                  | not yet  |
+| [0041](0041-tuning-legend.md)                        | The tuning legend as asked                                                         | Guitar Pro chooses what it says, its layout and frame, or the tablature    | not yet  |
 
 ## Working on a patch
 

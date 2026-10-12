@@ -12,10 +12,13 @@ import {
   TEXT_ORIENTATIONS,
   TRACK_NAME_PLACES,
   TRACK_NAME_TEXTS,
+  TUNING_DETAILS,
+  TUNING_LAYOUTS,
+  TUNING_PLACES,
   type ScoreStyle,
 } from '@opentabz/core/shared';
 import { Button, Dialog, SegmentedControl, Slider, Switch } from '@opentabz/ui';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
@@ -24,7 +27,7 @@ import { TechniqueLabelsSection } from './TechniqueLabelsSection.tsx';
 import { MusicFontField } from './MusicFontField.tsx';
 import { StylesheetChoices } from './StylesheetChoices.tsx';
 import { TextFontsSection } from './TextFontsSection.tsx';
-import { Field } from './MetronomeSettingsForm.tsx';
+import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
 const s = strings.stylesheet;
 
@@ -425,6 +428,7 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ tuning });
             }}
           />
+          {style.tuning && <TuningFields style={style} set={set} />}
           <Switch
             label={s.chordDiagramsOnTop}
             checked={style.chordDiagramsOnTop}
@@ -562,5 +566,71 @@ function FactorField({
         }}
       />
     </Field>
+  );
+}
+
+/**
+ * How the tuning is written (REND-225): above the music or before each track's tablature; the
+ * legend above the music saying as much as asked, its strings in columns or on a line, framed.
+ */
+function TuningFields({
+  style,
+  set,
+}: {
+  readonly style: ScoreStyle;
+  readonly set: (patch: Partial<ScoreStyle>) => void;
+}) {
+  const detailId = useId();
+  return (
+    <>
+      <Field label={s.tuningPlace}>
+        <SegmentedControl
+          label={s.tuningPlace}
+          value={style.tuningPlace}
+          segments={TUNING_PLACES.map(value => ({ value, label: s.tuningPlaces[value] }))}
+          onValueChange={tuningPlace => {
+            set({ tuningPlace });
+          }}
+        />
+      </Field>
+      {style.tuningPlace === 'top' && (
+        <>
+          <Field label={s.tuningDetail} htmlFor={detailId}>
+            <select
+              id={detailId}
+              value={style.tuningDetail}
+              onChange={event => {
+                const tuningDetail = TUNING_DETAILS.find(value => value === event.target.value);
+                if (tuningDetail !== undefined) set({ tuningDetail });
+              }}
+              className={SELECT_CLASS}
+            >
+              {TUNING_DETAILS.map(value => (
+                <option key={value} value={value}>
+                  {s.tuningDetails[value]}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={s.tuningLayout}>
+            <SegmentedControl
+              label={s.tuningLayout}
+              value={style.tuningLayout}
+              segments={TUNING_LAYOUTS.map(value => ({ value, label: s.tuningLayouts[value] }))}
+              onValueChange={tuningLayout => {
+                set({ tuningLayout });
+              }}
+            />
+          </Field>
+          <Switch
+            label={s.tuningFrame}
+            checked={style.tuningFrame}
+            onCheckedChange={tuningFrame => {
+              set({ tuningFrame });
+            }}
+          />
+        </>
+      )}
+    </>
   );
 }
