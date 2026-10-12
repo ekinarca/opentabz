@@ -32,8 +32,12 @@ import {
   TECHNIQUE_TIE,
   TECHNIQUE_VIBRATO,
   TRACK_BEAT_NOTE_STRIDE,
+  BEAMING_ORDER,
+  SPELLING_ORDER,
   type TrackBeats,
 } from '../shared/beats.ts';
+import { DYNAMICS, FINGERS } from '../shared/edit.ts';
+import { BEAMINGS, DYNAMIC_VALUES, FINGER_VALUES, SPELLINGS } from './techniques.ts';
 
 const { AccentuationType, FadeType, HarmonicType, PickStroke, SlideOutType, VibratoType } = alphaTab.model;
 
@@ -76,10 +80,18 @@ function noteFlags(note: alphaTab.model.Note): number {
   );
 }
 
+/** Where a value is in a list of names, by the table that names them; −1 when none does. */
+function indexIn<K extends string, V>(order: readonly K[], table: Readonly<Record<K, V>>, value: V): number {
+  return order.findIndex(name => table[name] === value);
+}
+
 export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: number): TrackBeats {
   const track = score.tracks[trackIndex];
   const beats: number[] = [];
   const notes: number[] = [];
+  const beatMarks: number[] = [];
+  const noteMarks: number[] = [];
+  const texts: [number, string][] = [];
   for (const staff of track?.staves ?? []) {
     for (const bar of staff.bars) {
       for (const voice of bar.voices) {
@@ -98,11 +110,29 @@ export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: numbe
             beat.displayStart + beat.displayDuration,
             bar.masterBar.calculateDuration(),
           );
-          for (const note of beat.notes)
+          beatMarks.push(
+            indexIn(DYNAMICS, DYNAMIC_VALUES, beat.dynamics),
+            indexIn(BEAMING_ORDER, BEAMINGS, beat.beamingMode),
+          );
+          if (beat.text !== null && beat.text.length > 0) texts.push([beat.id, beat.text]);
+          for (const note of beat.notes) {
             notes.push(note.isStringed ? note.string : 0, note.fret, noteFlags(note));
+            noteMarks.push(
+              Math.max(0, indexIn(FINGERS, FINGER_VALUES, note.leftHandFinger)),
+              Math.max(0, indexIn(FINGERS, FINGER_VALUES, note.rightHandFinger)),
+              indexIn(SPELLING_ORDER, SPELLINGS, note.accidentalMode),
+            );
+          }
         }
       }
     }
   }
-  return { trackIndex, beats: Int32Array.from(beats), notes: Int32Array.from(notes) };
+  return {
+    trackIndex,
+    beats: Int32Array.from(beats),
+    notes: Int32Array.from(notes),
+    beatMarks: Int32Array.from(beatMarks),
+    noteMarks: Int32Array.from(noteMarks),
+    texts,
+  };
 }

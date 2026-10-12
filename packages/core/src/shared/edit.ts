@@ -70,6 +70,12 @@ export const DURATION_VALUES: readonly DurationValue[] = [1, 2, 4, 8, 16, 32, 64
 /** The highest fret a note may be written on. */
 export const MAX_FRET = 99;
 
+/** The most voices a staff has, as in Guitar Pro (EDIT-011). */
+export const MAX_VOICES = 4;
+
+/** The most semitones a transposition moves notes (four octaves). */
+export const MAX_TRANSPOSE = 48;
+
 export type SlideOut = 'none' | 'legato' | 'shift' | 'out-down' | 'out-up';
 export type Vibrato = 'none' | 'slight' | 'wide';
 export type Harmonic = 'none' | 'natural' | 'artificial' | 'pinch' | 'tap' | 'semi' | 'feedback';
@@ -95,7 +101,71 @@ export interface NoteTechniques {
   readonly accent?: Accent;
   readonly staccato?: boolean;
   readonly bend?: Bend;
+  /** The fretting hand's finger (EDIT-043). */
+  readonly leftFinger?: Finger;
+  /** The picking hand's finger. */
+  readonly rightFinger?: Finger;
+  /** Its spelling in standard notation (EDIT-013). */
+  readonly spelling?: Spelling;
 }
+
+/** A dynamic, from ppp to fff (EDIT-043). */
+export type Dynamic = 'ppp' | 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'fff';
+export const DYNAMICS: readonly Dynamic[] = ['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'];
+
+/** A finger of the fretting or the picking hand, or none (EDIT-043). */
+export type Finger = 'none' | 'thumb' | 'index' | 'middle' | 'ring' | 'little';
+export const FINGERS: readonly Finger[] = ['none', 'thumb', 'index', 'middle', 'ring', 'little'];
+
+/** How a beat's beam goes on to the next beat: as the meter groups it, broken, or joined (EDIT-012). */
+export type Beaming = 'auto' | 'split' | 'join';
+
+/** How a note is spelled in standard notation: as the key has it, or with a sharp, a flat, a natural (EDIT-013). */
+export type Spelling = 'auto' | 'sharp' | 'flat' | 'natural';
+
+/** A direction written at a bar (EDIT-025): a place jumped to, or a jump. */
+export type BarDirection =
+  | 'fine'
+  | 'segno'
+  | 'segno-segno'
+  | 'coda'
+  | 'double-coda'
+  | 'da-capo'
+  | 'da-capo-al-coda'
+  | 'da-capo-al-double-coda'
+  | 'da-capo-al-fine'
+  | 'dal-segno'
+  | 'dal-segno-al-coda'
+  | 'dal-segno-al-double-coda'
+  | 'dal-segno-al-fine'
+  | 'dal-segno-segno'
+  | 'dal-segno-segno-al-coda'
+  | 'dal-segno-segno-al-double-coda'
+  | 'dal-segno-segno-al-fine'
+  | 'da-coda'
+  | 'da-double-coda';
+
+export const BAR_DIRECTIONS: readonly BarDirection[] = [
+  'fine',
+  'segno',
+  'segno-segno',
+  'coda',
+  'double-coda',
+  'da-capo',
+  'da-capo-al-coda',
+  'da-capo-al-double-coda',
+  'da-capo-al-fine',
+  'dal-segno',
+  'dal-segno-al-coda',
+  'dal-segno-al-double-coda',
+  'dal-segno-al-fine',
+  'dal-segno-segno',
+  'dal-segno-segno-al-coda',
+  'dal-segno-segno-al-double-coda',
+  'dal-segno-segno-al-fine',
+  'da-coda',
+  'da-double-coda',
+];
 
 export type Tuplet = 'none' | 'triplet';
 export type Fade = 'none' | 'in' | 'out' | 'swell';
@@ -164,6 +234,8 @@ export interface BarProperties {
   readonly tripletFeel?: TripletFeel;
   /** A pickup bar, as long as its notes (the first bar only). */
   readonly anacrusis?: boolean;
+  /** The directions written at it: Segno, Coda, Fine, D.C., D.S. and their kinds (EDIT-025). */
+  readonly directions?: readonly BarDirection[];
 }
 
 /** A bar's properties as they are (all of them). */
@@ -215,6 +287,12 @@ export interface BeatTechniques {
   readonly stroke?: Stroke;
   /** Tremolo picking: the marks across the stem (3: thirty-second notes, Guitar Pro's "), or 0. */
   readonly tremolo?: number;
+  /** Text above the beat, or none (EDIT-043). */
+  readonly text?: string | null;
+  /** How loud the beat's notes are played and marked (EDIT-043). */
+  readonly dynamics?: Dynamic;
+  /** How its beam goes on to the next beat (EDIT-012). */
+  readonly beaming?: Beaming;
 }
 
 export type EditCommand =
@@ -271,7 +349,26 @@ export type EditCommand =
    * are, across bar lines; bars over the bars from the beat's on, in its track and the next ones.
    * Bars are put in at the end when the score is too short.
    */
-  | { readonly kind: 'paste'; readonly at: BeatAddress; readonly clip: Clip };
+  | { readonly kind: 'paste'; readonly at: BeatAddress; readonly clip: Clip }
+  /**
+   * The notes of a selection a number of semitones higher or lower (EDIT-050, EDIT-051): a note on
+   * strings keeps its string while the frets allow, else goes to the nearest string that has room;
+   * drums stay as they are. With `chords`, the chord diagrams and names of its beats move too
+   * (EDIT-144).
+   */
+  | {
+      readonly kind: 'transpose';
+      readonly selection: Selection;
+      readonly semitones: number;
+      readonly chords?: boolean;
+    }
+  /**
+   * Voices put in a staff (EDIT-011): every bar gets as many as `count`, those put in (or left
+   * without a beat) empty, to be written in.
+   */
+  | { readonly kind: 'add-voices'; readonly track: number; readonly staff: number; readonly count: number }
+  /** A note moved to the next string higher or lower in pitch it can be played on, at its pitch (EDIT-052). */
+  | { readonly kind: 'move-string'; readonly at: NoteAddress; readonly higher: boolean };
 
 /** What an edit, an undo or a redo did to a document. */
 export interface EditOutcome {

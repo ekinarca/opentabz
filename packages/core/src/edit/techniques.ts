@@ -5,20 +5,71 @@
 import * as alphaTab from '@coderline/alphatab';
 import type {
   Accent,
+  Beaming,
   BeatTechniques,
   Bend,
+  Dynamic,
   Fade,
+  Finger,
   Harmonic,
   NoteTechniques,
   SlideOut,
+  Spelling,
   Stroke,
   Tuplet,
   Vibrato,
 } from '../shared/edit.ts';
 import { EditError } from './error.ts';
 
-const { AccentuationType, BendType, FadeType, HarmonicType, PickStroke, SlideOutType, VibratoType } =
-  alphaTab.model;
+const {
+  AccentuationType,
+  BeatBeamingMode,
+  BendType,
+  DynamicValue,
+  FadeType,
+  Fingers,
+  HarmonicType,
+  NoteAccidentalMode,
+  PickStroke,
+  SlideOutType,
+  VibratoType,
+} = alphaTab.model;
+
+export const DYNAMIC_VALUES: Readonly<Record<Dynamic, alphaTab.model.DynamicValue>> = {
+  ppp: DynamicValue.PPP,
+  pp: DynamicValue.PP,
+  p: DynamicValue.P,
+  mp: DynamicValue.MP,
+  mf: DynamicValue.MF,
+  f: DynamicValue.F,
+  ff: DynamicValue.FF,
+  fff: DynamicValue.FFF,
+};
+
+export const FINGER_VALUES: Readonly<Record<Finger, alphaTab.model.Fingers>> = {
+  none: Fingers.Unknown,
+  thumb: Fingers.Thumb,
+  index: Fingers.IndexFinger,
+  middle: Fingers.MiddleFinger,
+  ring: Fingers.AnnularFinger,
+  little: Fingers.LittleFinger,
+};
+
+export const BEAMINGS: Readonly<Record<Beaming, alphaTab.model.BeatBeamingMode>> = {
+  auto: BeatBeamingMode.Auto,
+  split: BeatBeamingMode.ForceSplitToNext,
+  join: BeatBeamingMode.ForceMergeWithNext,
+};
+
+export const SPELLINGS: Readonly<Record<Spelling, alphaTab.model.NoteAccidentalMode>> = {
+  auto: NoteAccidentalMode.Default,
+  sharp: NoteAccidentalMode.ForceSharp,
+  flat: NoteAccidentalMode.ForceFlat,
+  natural: NoteAccidentalMode.ForceNatural,
+};
+
+/** The longest text written above a beat. */
+const MAX_TEXT = 200;
 
 const SLIDES: Readonly<Record<SlideOut, alphaTab.model.SlideOutType>> = {
   none: SlideOutType.None,
@@ -102,8 +153,23 @@ const TUPLETS: Readonly<Record<Tuplet, readonly [number, number]>> = {
 
 /** Sets a note's techniques; a tie is joined to the note before it on the string by alphaTab. */
 export function setNoteTechniques(note: alphaTab.model.Note, techniques: NoteTechniques): void {
-  const { tie, hammer, slide, vibrato, palmMute, letRing, dead, ghost, harmonic, accent, staccato, bend } =
-    techniques;
+  const {
+    tie,
+    hammer,
+    slide,
+    vibrato,
+    palmMute,
+    letRing,
+    dead,
+    ghost,
+    harmonic,
+    accent,
+    staccato,
+    bend,
+    leftFinger,
+    rightFinger,
+    spelling,
+  } = techniques;
   if (tie !== undefined) {
     note.isTieDestination = flag(tie, 'A tie');
     if (!tie) note.tieOrigin = null;
@@ -123,11 +189,14 @@ export function setNoteTechniques(note: alphaTab.model.Note, techniques: NoteTec
   if (accent !== undefined) note.accentuated = named(ACCENTS, accent, 'accent');
   if (staccato !== undefined) note.isStaccato = flag(staccato, 'Staccato');
   if (bend !== undefined) named(BENDS, bend, 'bend')(note);
+  if (leftFinger !== undefined) note.leftHandFinger = named(FINGER_VALUES, leftFinger, 'finger');
+  if (rightFinger !== undefined) note.rightHandFinger = named(FINGER_VALUES, rightFinger, 'finger');
+  if (spelling !== undefined) note.accidentalMode = named(SPELLINGS, spelling, 'spelling');
 }
 
 /** Sets a beat's techniques. */
 export function setBeatTechniques(beat: alphaTab.model.Beat, techniques: BeatTechniques): void {
-  const { tuplet, barVibrato, slap, pop, tap, fade, stroke, tremolo } = techniques;
+  const { tuplet, barVibrato, slap, pop, tap, fade, stroke, tremolo, text, dynamics, beaming } = techniques;
   if (tuplet !== undefined) [beat.tupletNumerator, beat.tupletDenominator] = named(TUPLETS, tuplet, 'tuplet');
   if (barVibrato !== undefined) beat.vibrato = named(VIBRATOS, barVibrato, 'vibrato');
   if (slap !== undefined) beat.slap = flag(slap, 'Slapping');
@@ -145,4 +214,11 @@ export function setBeatTechniques(beat: alphaTab.model.Beat, techniques: BeatTec
       beat.tremoloPicking = effect;
     }
   }
+  if (text !== undefined) {
+    if (text !== null && (typeof text !== 'string' || text.length > MAX_TEXT))
+      throw new EditError('A beat’s text is too long.');
+    beat.text = text === null || text.trim().length === 0 ? null : text.trim();
+  }
+  if (dynamics !== undefined) beat.dynamics = named(DYNAMIC_VALUES, dynamics, 'dynamic');
+  if (beaming !== undefined) beat.beamingMode = named(BEAMINGS, beaming, 'beaming');
 }

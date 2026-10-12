@@ -127,6 +127,17 @@ function selectedBars(
   return { tracks, from, to };
 }
 
+/** The beats of a selection, in the score's order: staff by staff, bar by bar, voice by voice. */
+export function beatsOf(score: alphaTab.model.Score, selection: Selection): alphaTab.model.Beat[] {
+  if (selection.kind === 'beats') return selectedBeats(score, selection);
+  const { tracks, from, to } = selectedBars(score, selection);
+  return tracks.flatMap(track =>
+    track.staves.flatMap(staff =>
+      staff.bars.slice(from, to + 1).flatMap(bar => bar.voices.flatMap(voice => voice.beats)),
+    ),
+  );
+}
+
 /** The copy's master bar for one of the score's: its time signature, its triplet feel. */
 function copyMasterBar(copy: alphaTab.model.Score, masterBar: alphaTab.model.MasterBar): void {
   const bar = new alphaTab.model.MasterBar();

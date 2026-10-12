@@ -10,6 +10,7 @@ import {
   MAX_TEMPO,
   METER_DENOMINATORS,
   MIN_TEMPO,
+  type BarDirection,
   type BarLine,
   type BarProperties,
   type BarState,
@@ -17,7 +18,30 @@ import {
 } from '../shared/edit.ts';
 import { EditError } from './error.ts';
 
-const { TripletFeel: Feel, KeySignature, KeySignatureType, BarLineStyle } = alphaTab.model;
+const { TripletFeel: Feel, KeySignature, KeySignatureType, BarLineStyle, Direction } = alphaTab.model;
+
+/** The directions a bar may have written, by name (EDIT-025). */
+const DIRECTIONS: Readonly<Record<BarDirection, alphaTab.model.Direction>> = {
+  fine: Direction.TargetFine,
+  segno: Direction.TargetSegno,
+  'segno-segno': Direction.TargetSegnoSegno,
+  coda: Direction.TargetCoda,
+  'double-coda': Direction.TargetDoubleCoda,
+  'da-capo': Direction.JumpDaCapo,
+  'da-capo-al-coda': Direction.JumpDaCapoAlCoda,
+  'da-capo-al-double-coda': Direction.JumpDaCapoAlDoubleCoda,
+  'da-capo-al-fine': Direction.JumpDaCapoAlFine,
+  'dal-segno': Direction.JumpDalSegno,
+  'dal-segno-al-coda': Direction.JumpDalSegnoAlCoda,
+  'dal-segno-al-double-coda': Direction.JumpDalSegnoAlDoubleCoda,
+  'dal-segno-al-fine': Direction.JumpDalSegnoAlFine,
+  'dal-segno-segno': Direction.JumpDalSegnoSegno,
+  'dal-segno-segno-al-coda': Direction.JumpDalSegnoSegnoAlCoda,
+  'dal-segno-segno-al-double-coda': Direction.JumpDalSegnoSegnoAlDoubleCoda,
+  'dal-segno-segno-al-fine': Direction.JumpDalSegnoSegnoAlFine,
+  'da-coda': Direction.JumpDaCoda,
+  'da-double-coda': Direction.JumpDaDoubleCoda,
+};
 
 /** Keys from seven flats to seven sharps. */
 const KEYS: readonly alphaTab.model.KeySignature[] = [
@@ -169,6 +193,15 @@ export function setBarProperties(score: alphaTab.model.Score, bar: number, prope
     if (anacrusis && bar !== 0) throw new EditError('Only the first bar can be a pickup bar.');
     masterBar.isAnacrusis = anacrusis;
   }
+  if (properties.directions !== undefined) {
+    const directions = new Set(
+      properties.directions.map(name => {
+        if (!Object.hasOwn(DIRECTIONS, name)) throw new EditError(`No direction "${name}".`);
+        return DIRECTIONS[name];
+      }),
+    );
+    masterBar.directions = directions.size === 0 ? null : directions;
+  }
 }
 
 /** A bar's properties as they are. */
@@ -198,5 +231,8 @@ export function readBarProperties(score: alphaTab.model.Score, bar: number): Bar
     freeTime: masterBar.isFreeTime,
     tripletFeel: feel,
     anacrusis: masterBar.isAnacrusis,
+    directions: (Object.keys(DIRECTIONS) as BarDirection[]).filter(
+      name => masterBar.directions?.has(DIRECTIONS[name]) === true,
+    ),
   };
 }

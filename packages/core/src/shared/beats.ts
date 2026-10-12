@@ -18,10 +18,30 @@ export interface TrackBeats {
    * (TECHNIQUE_…)].
    */
   readonly notes: Int32Array;
+  /**
+   * Per beat, as `beats` lists them: [dynamics (its index in DYNAMICS, −1 another), beaming (0
+   * automatic, 1 split, 2 joined, −1 another)].
+   */
+  readonly beatMarks: Int32Array;
+  /**
+   * Per note, as `notes` lists them: [fretting finger, picking finger (their index in FINGERS),
+   * spelling (0 automatic, 1 sharp, 2 flat, 3 natural, −1 another)].
+   */
+  readonly noteMarks: Int32Array;
+  /** The text written above beats: [beatId, text]. */
+  readonly texts: readonly (readonly [number, string])[];
 }
 
 export const TRACK_BEATS_STRIDE = 12;
 export const TRACK_BEAT_NOTE_STRIDE = 3;
+export const TRACK_BEAT_MARK_STRIDE = 2;
+export const TRACK_NOTE_MARK_STRIDE = 3;
+
+/** Beaming as `beatMarks` numbers it. */
+export const BEAMING_ORDER = ['auto', 'split', 'join'] as const;
+
+/** Spelling as `noteMarks` numbers it. */
+export const SPELLING_ORDER = ['auto', 'sharp', 'flat', 'natural'] as const;
 
 /** The beat of an empty bar, which holds its place until something is written. */
 export const BEAT_EMPTY = 1;

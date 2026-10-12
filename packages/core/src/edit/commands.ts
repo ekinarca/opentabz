@@ -3,13 +3,20 @@
  * changes in the edit's journal before changing them, so that the edit can be undone (EDIT-060).
  */
 import * as alphaTab from '@coderline/alphatab';
-import { MAX_FRET, type BeatAddress, type DurationValue, type EditCommand } from '../shared/edit.ts';
+import {
+  MAX_FRET,
+  MAX_VOICES,
+  type BeatAddress,
+  type DurationValue,
+  type EditCommand,
+} from '../shared/edit.ts';
 import { EditError } from './error.ts';
 import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
 import { setBarProperties } from './bar-properties.ts';
-import { detach, insertBar, removeBar } from './bars.ts';
+import { detach, emptyBeats, insertBar, removeBar } from './bars.ts';
 import { clearSelection, paste, removeSelection } from './clip.ts';
+import { moveString, transpose } from './transpose.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
 
@@ -31,6 +38,7 @@ const MASTER_BAR_PROPERTIES = [
   'isFreeTime',
   'tripletFeel',
   'isAnacrusis',
+  'directions',
 ];
 
 /** Where a staff's bar is, and how it is linked to the others. */
@@ -403,5 +411,28 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
     case 'paste':
       paste(transaction, command.at, command.clip);
       return;
+    case 'transpose':
+      transpose(transaction, command.selection, command.semitones, command.chords === true);
+      return;
+    case 'move-string':
+      moveString(transaction, command.at, command.higher);
+      return;
+    case 'add-voices': {
+      const staff = score.tracks[command.track]?.staves[command.staff];
+      if (staff === undefined)
+        throw new EditError(`No staff ${String(command.staff)} in track ${String(command.track)}.`);
+      if (!Number.isInteger(command.count) || command.count < 1 || command.count > MAX_VOICES)
+        throw new EditError(`A staff has 1 to ${String(MAX_VOICES)} voices.`);
+      for (const bar of staff.bars) {
+        const short = bar.voices.length < command.count;
+        const bare = bar.voices.slice(0, command.count).some(voice => voice.beats.length === 0);
+        if (!short && !bare) continue;
+        transaction.touch(staff, bar.index);
+        while (bar.voices.length < command.count) bar.addVoice(new alphaTab.model.Voice());
+        for (const voice of bar.voices.slice(0, command.count))
+          if (voice.beats.length === 0) voice.beats = emptyBeats(voice);
+      }
+      return;
+    }
   }
 }

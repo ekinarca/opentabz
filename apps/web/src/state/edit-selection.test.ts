@@ -27,6 +27,9 @@ function beats(): TrackBeats {
       ...[5, 0, 2, 0, 0, 1, 0, 0, 3, 1, 3840, 3840],
     ),
     notes: Int32Array.of(5, 3, 0, 5, 5, 0, 4, 7, 0, 3, 2, 0),
+    beatMarks: new Int32Array(),
+    noteMarks: new Int32Array(),
+    texts: [],
   };
 }
 

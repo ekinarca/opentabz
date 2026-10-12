@@ -33,6 +33,9 @@ function beats(): TrackBeats {
       ...[3, 0, 1, 0, 0, 4, 0, BEAT_EMPTY | BEAT_REST, 2, 0, 960, 3840],
     ),
     notes: Int32Array.of(5, 3, 0, 2, 7, 0),
+    beatMarks: new Int32Array(),
+    noteMarks: new Int32Array(),
+    texts: [],
   };
 }
 
