@@ -184,6 +184,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Detached codas.** A coda starts a system of its own, below the music before it, as Guitar
+  Pro draws it; the stylesheet sets the space above it (10 mm unless changed) or runs it on, and
+  its sign stays within the system.
 - **Tempo ramps.** A tempo that changes gradually up to the next one (a Guitar Pro 7 or 8 ramp,
   played that way) is marked accel. when it speeds up and rit. when it slows down, after its
   tempo mark.
@@ -292,8 +295,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
   (0049), fingering as asked (0050), tablature that skips notes without a string (0051), drum
   tablature (0052), sound-change labels (0053), the tempo changes of Guitar Pro 3–5 and Capella
-  files as steps (0054), and tempo ramps marked accel. or rit. (0055). See
-  [docs/upstream/](docs/upstream/).
+  files as steps (0054), tempo ramps marked accel. or rit. (0055), and detached codas (0056).
+  See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

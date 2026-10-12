@@ -12,6 +12,7 @@ import {
   STYLE_DIAGRAM_SPACING,
   STYLE_SCALE,
   STYLE_INDENT_MM,
+  STYLE_CODA_GAP_MM,
   STYLE_LINE_THICKNESS,
   STYLE_SPACING,
   STYLE_SYSTEM_SPACING,
@@ -175,6 +176,27 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               step={1}
               onValueChange={firstSystemIndent => {
                 set({ firstSystemIndent: Math.round(firstSystemIndent) });
+              }}
+            />
+          </Field>
+          <Switch
+            label={s.detachedCoda}
+            checked={style.detachedCoda}
+            onCheckedChange={detachedCoda => {
+              set({ detachedCoda });
+            }}
+          />
+          <Field label={s.codaGap} value={s.codaGapValue(style.codaGap)}>
+            <Slider
+              label={s.codaGap}
+              valueText={s.codaGapValue(style.codaGap)}
+              value={style.codaGap}
+              min={STYLE_CODA_GAP_MM.min}
+              max={STYLE_CODA_GAP_MM.max}
+              step={1}
+              disabled={!style.detachedCoda}
+              onValueChange={codaGap => {
+                set({ codaGap: Math.round(codaGap) });
               }}
             />
           </Field>

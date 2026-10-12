@@ -95,6 +95,10 @@ export interface ScoreStyle {
   readonly systemSpacing: number;
   /** How far the first system is indented, in millimetres (REND-228). */
   readonly firstSystemIndent: number;
+  /** A coda starts a system of its own, apart from the music before it (REND-200). */
+  readonly detachedCoda: boolean;
+  /** The space above a detached coda, in millimetres (REND-200). */
+  readonly codaGap: number;
   readonly hideDynamics: boolean;
   /** 4/4 and 2/2 written as C and cut C (REND-248). */
   readonly commonTime: boolean;
@@ -235,6 +239,7 @@ export const STYLE_SPACING = { min: 0.5, max: 2 } as const;
 export const STYLE_LINE_THICKNESS = { min: 0.5, max: 3 } as const;
 export const STYLE_SYSTEM_SPACING = { min: 0, max: 4 } as const;
 export const STYLE_INDENT_MM = { min: 0, max: 50 } as const;
+export const STYLE_CODA_GAP_MM = { min: 0, max: 50 } as const;
 export const STYLE_DIAGRAM_SIZE = { min: 0.5, max: 2 } as const;
 export const STYLE_DIAGRAM_SPACING = { min: 0, max: 3 } as const;
 export const STYLE_FINGERING_SIZE = { min: 0.5, max: 2 } as const;
@@ -247,6 +252,9 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   staffLineThickness: 1,
   systemSpacing: 1,
   firstSystemIndent: 0,
+  // Not alphaTab's, which runs a coda on: apart, as Guitar Pro draws it (REND-200).
+  detachedCoda: true,
+  codaGap: 10,
   hideDynamics: false,
   commonTime: false,
   bentPitch: true,

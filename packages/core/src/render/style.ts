@@ -66,6 +66,9 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     staffLineThickness: 1,
     systemSpacing: 1,
     firstSystemIndent: 0,
+    // A coda apart from the music before it, as Guitar Pro draws one.
+    detachedCoda: true,
+    codaGap: 10,
     chordDiagramsOnTopSize: 1,
     chordDiagramsOnTopSpacing: 1,
     chordDiagramsInScoreSize: 1,
@@ -251,6 +254,8 @@ export function applyScoreStyle(
       case 'staffLineThickness':
       case 'systemSpacing':
       case 'firstSystemIndent':
+      case 'detachedCoda':
+      case 'codaGap':
       case 'capoAndTuningInNotation':
       case 'tuningPlace':
       case 'tuningDetail':
@@ -358,6 +363,9 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   display.systemPaddingTop = SYSTEM_PADDING * style.systemSpacing;
   display.systemPaddingBottom = SYSTEM_PADDING * style.systemSpacing;
   display.firstSystemIndent = style.firstSystemIndent * PX_PER_MM;
+  // A coda on a system of its own, the space above it as asked (REND-200).
+  settings.notation.detachedCoda = style.detachedCoda;
+  settings.notation.codaGap = style.codaGap * PX_PER_MM;
   // The music font's engraving (REND-241), its staff lines as thick as asked (REND-228).
   const engraving = engravingFor(style.musicFont, style.staffLineThickness);
   if (engraving !== null) display.resources.engravingSettings = engraving;

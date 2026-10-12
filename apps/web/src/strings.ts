@@ -627,6 +627,9 @@ export const strings = {
     systemSpacingValue: (factor: number) => `× ${factor.toFixed(1)}`,
     firstSystemIndent: 'First system indent',
     firstSystemIndentValue: (mm: number) => `${mm} mm`,
+    detachedCoda: 'Coda on a system of its own',
+    codaGap: 'Space above the coda',
+    codaGapValue: (mm: number) => `${mm} mm`,
     brackets: 'Brackets',
     bracketModes: {
       none: 'None',

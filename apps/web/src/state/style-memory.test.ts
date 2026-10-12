@@ -74,6 +74,20 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads whether the coda stands apart and the space above it (REND-200), in range', () => {
+    const stored = JSON.parse(
+      JSON.stringify({ ...DEFAULT_SCORE_STYLE, detachedCoda: true, codaGap: 25 }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({ detachedCoda: true, codaGap: 25 });
+    expect(parseStyle({ ...stored, detachedCoda: 'yes' })).toBeNull();
+    expect(parseStyle({ ...stored, codaGap: 51 })).toBeNull();
+    // Older styles: as the file's style says, else as usual.
+    const { detachedCoda: _detached, codaGap: _gap, ...older } = stored;
+    expect(parseStyle(older)).toMatchObject({ detachedCoda: true, codaGap: 10 });
+    const file = { ...DEFAULT_SCORE_STYLE, detachedCoda: false, codaGap: 12 };
+    expect(parseStyle(older, file)).toMatchObject({ detachedCoda: false, codaGap: 12 });
+  });
+
   it('reads the chord diagrams’ sizes and spacing (REND-227), in range, as usual for older styles', () => {
     const stored = JSON.parse(
       JSON.stringify({

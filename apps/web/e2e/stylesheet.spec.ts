@@ -184,6 +184,48 @@ test('staff lines thicker, systems further apart, the first system indented', as
   await expect.poll(gap).toBeCloseTo(gapBefore + 60, 0);
 });
 
+test('the coda on a system of its own, the space above it as asked (REND-200)', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/playback/coda-march.atex')]);
+  await expectScore(page);
+  const systems = page.locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]');
+  /** The system with the coda (bar 7): its first bar, and the space between it and the one above. */
+  const coda = () =>
+    systems.evaluateAll(elements => {
+      const boxes = (elements as HTMLElement[]).map(element => ({
+        first: Number(element.dataset['firstBar']),
+        last: Number(element.dataset['lastBar']),
+        top: Number.parseFloat(element.style.top),
+        bottom: Number.parseFloat(element.style.top) + Number.parseFloat(element.style.height),
+      }));
+      const index = boxes.findIndex(box => box.first <= 6 && box.last >= 6);
+      const own = boxes[index];
+      const above = boxes[index - 1];
+      return own === undefined || above === undefined
+        ? null
+        : { first: own.first, gap: own.top - above.bottom };
+    });
+  // As Guitar Pro draws it: the coda starts a system, 10 mm below the music before it.
+  await expect.poll(async () => (await coda())?.first).toBe(6);
+  const usual = (await coda())?.gap ?? 0;
+
+  await page.getByRole('region', { name: /^Score/ }).focus();
+  await page.keyboard.press('F7');
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  const space = dialog.getByRole('slider', { name: 'Space above the coda' });
+  await expect(space).toHaveAttribute('aria-valuetext', '10 mm');
+  await space.focus();
+  await page.keyboard.press('End');
+  await expect(space).toHaveAttribute('aria-valuetext', '50 mm');
+  // 40 mm more: 151 px at 96 dpi, as the score is zoomed (at least half of it).
+  await expect.poll(async () => ((await coda())?.gap ?? 0) - usual).toBeGreaterThan(75);
+
+  // Attached: no space set apart above it, wherever it falls.
+  await dialog.getByRole('switch', { name: 'Coda on a system of its own' }).click();
+  await expect(space).toHaveAttribute('data-disabled', '');
+  await expect.poll(async () => (await coda())?.gap ?? 0).toBeLessThan(usual - 15);
+});
+
 test('chord diagrams at the size and spacing asked, kept as the score is scaled (REND-227, REND-223)', async ({
   page,
 }) => {

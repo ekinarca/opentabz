@@ -12,6 +12,8 @@ export interface SliderProps {
   readonly className?: string;
   /** For values on both sides of a centre (pan, balance, tuning): the fill starts here. */
   readonly origin?: number;
+  /** Shown but not settable, as when what it sets is off. */
+  readonly disabled?: boolean;
 }
 
 export function Slider({
@@ -24,12 +26,14 @@ export function Slider({
   valueText,
   className,
   origin,
+  disabled = false,
 }: SliderProps) {
   const percent = (input: number) => ((input - min) / (max - min)) * 100;
   return (
     <RadixSlider.Root
-      className={`relative flex h-5 touch-none items-center select-none ${className ?? ''}`}
+      className={`relative flex h-5 touch-none items-center select-none data-[disabled]:opacity-40 ${className ?? ''}`}
       value={[value]}
+      disabled={disabled}
       min={min}
       max={max}
       step={step}

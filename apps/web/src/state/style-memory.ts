@@ -14,6 +14,7 @@ import {
   LYRICS_PLACES,
   PAGE_LINES,
   RIGHT_FINGER_LABELS,
+  STYLE_CODA_GAP_MM,
   STYLE_DIAGRAM_SIZE,
   STYLE_DIAGRAM_SPACING,
   STYLE_FINGERING_SIZE,
@@ -200,6 +201,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'linesOverRests',
     'tuningFrame',
     'capoAndTuningInNotation',
+    'detachedCoda',
   ] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   // Measures added later, likewise.
@@ -207,6 +209,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     staffLineThickness: STYLE_LINE_THICKNESS,
     systemSpacing: STYLE_SYSTEM_SPACING,
     firstSystemIndent: STYLE_INDENT_MM,
+    codaGap: STYLE_CODA_GAP_MM,
     chordDiagramsOnTopSize: STYLE_DIAGRAM_SIZE,
     chordDiagramsOnTopSpacing: STYLE_DIAGRAM_SPACING,
     chordDiagramsInScoreSize: STYLE_DIAGRAM_SIZE,
