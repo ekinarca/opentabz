@@ -15,6 +15,9 @@ appears below with the same keys. Press `?` in the app to see the same list.
   and other widgets keep typed characters too.
 - Single-key shortcuts (`-`, `=`, `?` …) can be turned off in the shortcut sheet, for screen
   reader users and keyboards that need those keys (WCAG 2.2 SC 2.1.4).
+- Any action's keys can be changed in the shortcut sheet: click its keys, then press the new
+  ones (Esc keeps them as they were). Keys another action has are taken from it only when asked;
+  one action's keys or every key can be put back. The keys listed below are the actions' own.
 - On macOS, ⌘⌥← and ⌘⌥→ switch browser tabs before a web page sees them, so the sections also
   answer to ⌥ Page Up and ⌥ Page Down.
 - In the standalone metronome, `T` taps the tempo (outside its text fields).

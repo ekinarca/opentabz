@@ -2,6 +2,7 @@ import { ToastProvider, TooltipProvider } from '@opentabz/ui';
 import { useEffect } from 'react';
 import { onEngineRestart } from '../engine/instance.ts';
 import { useDocuments } from '../state/documents.ts';
+import { usePreferences } from '../state/preferences.ts';
 import { reopenLastSession } from '../state/reopen.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
@@ -30,6 +31,9 @@ export function App() {
   useTheme();
   useShortcuts();
   const dragging = useGlobalIntake();
+  // Tooltips, menus and the palette write the keys set in the shortcut sheet (PLAT-036): the app
+  // draws again when they change, which is seldom.
+  usePreferences(state => state.keyBindings);
   const aboutOpen = useUi(state => state.panel === 'about');
   const urlOpen = useUi(state => state.panel === 'url');
   const setPanelOpen = useUi(state => state.setPanelOpen);

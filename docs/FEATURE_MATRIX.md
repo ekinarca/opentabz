@@ -855,7 +855,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-033 | Settings: synth and sound-pack selection                    | GP  | M7  | —       | —    | planned |
 | PLAT-034 | Settings: audio latency hint                                | OT  | M1  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/settings.spec.ts | done |
 | PLAT-035 | Settings: left-handed                                       | GP  | M1  | —       | apps/web/src/state/preferences.test.ts, apps/web/e2e/fretboard.spec.ts | done |
-| PLAT-036 | Settings: rebindable shortcuts                              | GP  | M3  | —       | —    | planned |
+| PLAT-036 | Settings: rebindable shortcuts                              | GP  | M3  | —       | apps/web/src/app/keymap.test.ts, apps/web/e2e/shortcut-keys.spec.ts | done |
 | PLAT-040 | Sandboxed scripting API that reads and transforms the score | OT  | M8  | —       | —    | planned |
 | PLAT-041 | Scripts add commands and panels                             | OT  | M8  | —       | —    | planned |
 | PLAT-042 | Scripts register exporters                                  | OT  | M8  | —       | —    | planned |

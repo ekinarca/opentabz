@@ -5,7 +5,15 @@
 import { useEffect } from 'react';
 import { useDocuments } from '../state/documents.ts';
 import { usePreferences } from '../state/preferences.ts';
-import { isCharacterBinding, matches, SHORTCUTS, type KeyBinding, type Shortcut } from './keymap.ts';
+import {
+  bindingsOf,
+  isCharacterBinding,
+  matches,
+  SHORTCUTS,
+  type KeyBinding,
+  type KeyOverrides,
+  type Shortcut,
+} from './keymap.ts';
 import { modKey } from './platform.ts';
 
 /** Widgets that use Space, Enter, arrows or typed characters themselves (typeahead, values). */
@@ -65,18 +73,23 @@ function allowedOn(kind: 'widget' | 'button', binding: KeyBinding): boolean {
   return kind === 'button' && isCharacterBinding(binding);
 }
 
+interface ShortcutContext {
+  readonly hasScore: boolean;
+  readonly singleKeyShortcuts: boolean;
+  readonly apple: boolean;
+  /** Keys set in the shortcut sheet (PLAT-036). */
+  readonly overrides?: KeyOverrides;
+}
+
 /** The shortcut a key event triggers, given where focus is, or null. */
-export function shortcutFor(
-  event: KeyboardEvent,
-  context: { readonly hasScore: boolean; readonly singleKeyShortcuts: boolean; readonly apple: boolean },
-): Shortcut | null {
+export function shortcutFor(event: KeyboardEvent, context: ShortcutContext): Shortcut | null {
   const target = event.target;
   const inLayer = insideLayer(target);
   const typing = isTextField(target);
   const control = controlKind(target);
   for (const shortcut of SHORTCUTS) {
     if (shortcut.needsScore && !context.hasScore) continue;
-    for (const binding of shortcut.bindings) {
+    for (const binding of bindingsOf(shortcut, context.overrides ?? {})) {
       if (!matches(binding, event, context.apple)) continue;
       if (typing && shortcut.inTextFields !== true) continue;
       if (inLayer && shortcut.inTextFields !== true) continue;
@@ -96,6 +109,7 @@ export function useShortcuts(): void {
         hasScore: useDocuments.getState().activeKey !== null,
         singleKeyShortcuts: usePreferences.getState().singleKeyShortcuts,
         apple: modKey() === '⌘',
+        overrides: usePreferences.getState().keyBindings,
       });
       if (shortcut?.run() === true) event.preventDefault();
     };

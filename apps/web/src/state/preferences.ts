@@ -14,6 +14,7 @@ import {
   type StaffDisplay,
 } from '@opentabz/core/shared';
 import { create } from 'zustand';
+import type { KeyBinding, KeyOverrides } from '../app/keymap.ts';
 import {
   FRETBOARD_SHOWS,
   NOTE_LABELS,
@@ -116,6 +117,8 @@ export interface Preferences {
   readonly rememberRecent: boolean;
   /** The scores open when the app was last left open again at the start (UX-028). */
   readonly reopenSession: boolean;
+  /** Keys set in the shortcut sheet in place of the shortcuts' own (PLAT-036). */
+  readonly keyBindings: KeyOverrides;
 }
 
 /** The longest file-name template kept. */
@@ -167,7 +170,40 @@ export function defaultPreferences(locale: string): Preferences {
     exportFileName: '%T',
     rememberRecent: true,
     reopenSession: false,
+    keyBindings: {},
   };
+}
+
+/** A binding read back, or null when it is not one. */
+function parseBinding(value: unknown): KeyBinding | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const record = value as Record<string, unknown>;
+  const key = record['key'];
+  if (typeof key !== 'string' || key.length === 0 || key.length > 20) return null;
+  const code = record['code'];
+  if (code !== undefined && typeof code !== 'string') return null;
+  const flags = ['mod', 'shift', 'alt', 'ctrl'] as const;
+  if (flags.some(flag => record[flag] !== undefined && typeof record[flag] !== 'boolean')) return null;
+  return {
+    key,
+    ...(typeof code === 'string' ? { code } : {}),
+    ...(record['mod'] === true ? { mod: true } : {}),
+    ...(record['shift'] === true ? { shift: true } : {}),
+    ...(record['alt'] === true ? { alt: true } : {}),
+    ...(record['ctrl'] === true ? { ctrl: true } : {}),
+  };
+}
+
+/** Keys set in the shortcut sheet, read back; whatever is not a list of bindings is dropped. */
+export function parseKeyBindings(value: unknown): KeyOverrides {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
+  const overrides: Record<string, readonly KeyBinding[]> = {};
+  for (const [id, list] of Object.entries(value as Record<string, unknown>)) {
+    if (!Array.isArray(list)) continue;
+    const bindings = list.map(parseBinding);
+    if (bindings.every(binding => binding !== null)) overrides[id] = bindings;
+  }
+  return overrides;
 }
 
 function oneOf<T>(value: unknown, options: readonly T[], fallback: T): T {
@@ -279,6 +315,8 @@ export function parsePreferences(raw: string | null, fallback: Preferences): Pre
       rememberRecent:
         typeof value.rememberRecent === 'boolean' ? value.rememberRecent : fallback.rememberRecent,
       reopenSession: typeof value.reopenSession === 'boolean' ? value.reopenSession : fallback.reopenSession,
+      keyBindings:
+        value.keyBindings === undefined ? fallback.keyBindings : parseKeyBindings(value.keyBindings),
       exportFileName:
         typeof value.exportFileName === 'string' && value.exportFileName.length <= MAX_FILE_NAME_TEMPLATE
           ? value.exportFileName
@@ -353,6 +391,7 @@ export const usePreferences = create<PreferencesStore>((set, get) => ({
       exportFileName: state.exportFileName,
       rememberRecent: state.rememberRecent,
       reopenSession: state.reopenSession,
+      keyBindings: state.keyBindings,
     });
   },
 }));

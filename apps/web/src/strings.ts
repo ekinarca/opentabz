@@ -1204,7 +1204,18 @@ export const strings = {
 
   shortcuts: {
     title: 'Keyboard shortcuts',
-    description: 'Keys follow Guitar Pro wherever it has a shortcut for the same action.',
+    description:
+      'Keys follow Guitar Pro wherever it has a shortcut for the same action. Click an action’s keys to change them.',
+    edit: {
+      change: (action: string) => `Change the keys of ${action}`,
+      pressKeys: 'Press the new keys…',
+      none: 'No keys',
+      reset: (action: string) => `Put back the keys of ${action}`,
+      resetAll: 'Put back every key',
+      taken: (keys: string, action: string) => `${keys} is already for ${action}.`,
+      useHere: 'Use it here',
+      keep: 'Keep as it was',
+    },
     groups: {
       playback: 'Playback',
       navigation: 'Moving around',

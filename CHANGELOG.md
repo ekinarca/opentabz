@@ -184,6 +184,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **Keys of one's own.** The shortcut sheet (`?`) changes any action's keys: click them and press
+  the new ones. Keys another action has are taken from it only when asked, one action's keys or
+  every key can be put back, and the keys are kept on this device; tooltips and the command
+  palette show them.
 - **A toolbar that folds.** On narrow screens the score view's tools that do not fit go into a
   "More view tools" menu, where they work as on the toolbar; the menus' names and the layout's
   words make room on screens narrower than 1536 pixels, so that a 1280-pixel window shows every

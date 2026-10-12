@@ -1,14 +1,18 @@
 import type { MasterBarSummary } from '@opentabz/core/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  bindingFromKey,
   formatBinding,
   isCharacterBinding,
   matches,
   onPlatform,
+  sameBinding,
   sectionTick,
+  shortcutUsing,
   SHORTCUTS,
   type KeyInput,
 } from './keymap.ts';
+import { parseKeyBindings } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { shortcutFor } from './use-shortcuts.ts';
 
@@ -206,5 +210,61 @@ describe('shortcut context', () => {
     useUi.getState().setFullScreen(true);
     expect(escape?.run()).toBe(true);
     expect(useUi.getState().fullScreen).toBe(false);
+  });
+});
+
+describe('keys of one’s own (PLAT-036)', () => {
+  it('records the keys pressed: the primary modifier per platform, letters with Alt by their key', () => {
+    expect(bindingFromKey(key('l'), true)).toEqual({ key: 'l' });
+    expect(bindingFromKey(key('K', { metaKey: true, shiftKey: true }), true)).toEqual({
+      key: 'k',
+      mod: true,
+      shift: true,
+    });
+    expect(bindingFromKey(key('k', { ctrlKey: true }), false)).toEqual({ key: 'k', mod: true });
+    // ⌃ beside ⌘ on Apple platforms.
+    expect(bindingFromKey(key('f', { metaKey: true, ctrlKey: true }), true)).toEqual({
+      key: 'f',
+      mod: true,
+      ctrl: true,
+    });
+    expect(bindingFromKey(key('µ', { altKey: true, code: 'KeyM' }), true)).toEqual({
+      key: 'm',
+      code: 'KeyM',
+      alt: true,
+    });
+    // Shift belongs to a printable symbol; a modifier alone is no binding.
+    expect(bindingFromKey(key('?', { shiftKey: true }), true)).toEqual({ key: '?' });
+    expect(bindingFromKey(key('Shift', { shiftKey: true }), true)).toBeNull();
+    // What is recorded is what is matched.
+    const recorded = bindingFromKey(key('F', { metaKey: true, shiftKey: true }), true);
+    expect(recorded !== null && matches(recorded, key('F', { metaKey: true, shiftKey: true }), true)).toBe(
+      true,
+    );
+  });
+
+  it('runs a shortcut by the keys set for it, no longer by its own', () => {
+    const loop = SHORTCUTS.find(shortcut => shortcut.id === 'loop');
+    const overrides = { loop: [{ key: 'l' }] };
+    expect(shortcutFor(event('l'), { ...context, overrides })?.id).toBe('loop');
+    expect(shortcutFor(event('F9'), { ...context, overrides })?.id).not.toBe('loop');
+    expect(loop !== undefined && sameBinding({ key: 'F9' }, loop.bindings[0] ?? { key: '' })).toBe(true);
+  });
+
+  it('tells which action already has the keys', () => {
+    expect(shortcutUsing({ key: ' ' }, 'loop', {})?.id).toBe('play-pause');
+    expect(shortcutUsing({ key: ' ' }, 'play-pause', {})).toBeNull();
+    // Taken from Play, Space is the loop's alone.
+    expect(shortcutUsing({ key: ' ' }, 'stop', { 'play-pause': [], loop: [{ key: ' ' }] })?.id).toBe('loop');
+  });
+
+  it('reads back the keys kept, and drops what is not keys', () => {
+    expect(parseKeyBindings({ loop: [{ key: 'l', mod: true }], stop: [] })).toEqual({
+      loop: [{ key: 'l', mod: true }],
+      stop: [],
+    });
+    expect(parseKeyBindings({ loop: [{ key: 7 }], stop: 'x' })).toEqual({});
+    expect(parseKeyBindings({ loop: [{ key: 'l', shift: 'yes' }] })).toEqual({});
+    expect(parseKeyBindings(null)).toEqual({});
   });
 });

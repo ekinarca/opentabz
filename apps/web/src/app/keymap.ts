@@ -777,9 +777,24 @@ export function formatBinding(binding: KeyBinding, mod: string = modKey()): stri
   return parts.join(' ');
 }
 
+/** Keys set in the shortcut sheet in place of a shortcut's own, by shortcut (PLAT-036). */
+export type KeyOverrides = Readonly<Record<string, readonly KeyBinding[]>>;
+
+/** The keys of a shortcut: those set for it in the shortcut sheet, else its own. */
+export function bindingsOf(
+  shortcut: Shortcut,
+  overrides: KeyOverrides = usePreferences.getState().keyBindings,
+): readonly KeyBinding[] {
+  return overrides[shortcut.id] ?? shortcut.bindings;
+}
+
 /** The bindings of a shortcut on this platform. */
-export function platformBindings(shortcut: Shortcut, mod: string = modKey()): readonly KeyBinding[] {
-  return shortcut.bindings.filter(binding => onPlatform(binding, mod === '⌘'));
+export function platformBindings(
+  shortcut: Shortcut,
+  mod: string = modKey(),
+  overrides: KeyOverrides = usePreferences.getState().keyBindings,
+): readonly KeyBinding[] {
+  return bindingsOf(shortcut, overrides).filter(binding => onPlatform(binding, mod === '⌘'));
 }
 
 /** The first binding of a shortcut on this platform, formatted, for tooltips. */
@@ -787,4 +802,58 @@ export function shortcutHint(id: string): string | undefined {
   const shortcut = SHORTCUTS.find(candidate => candidate.id === id);
   const binding = shortcut === undefined ? undefined : platformBindings(shortcut)[0];
   return binding === undefined ? undefined : formatBinding(binding);
+}
+
+/** Whether two bindings are the same keys. */
+export function sameBinding(a: KeyBinding, b: KeyBinding): boolean {
+  return (
+    a.key === b.key &&
+    (a.code ?? null) === (b.code ?? null) &&
+    (a.mod === true) === (b.mod === true) &&
+    (a.shift === true) === (b.shift === true) &&
+    (a.alt === true) === (b.alt === true) &&
+    (a.ctrl === true) === (b.ctrl === true)
+  );
+}
+
+const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock', 'Fn', 'OS']);
+
+/**
+ * The binding a key press makes, as the shortcut sheet records it: ⌘ on Apple platforms, Ctrl
+ * elsewhere, as the primary modifier; letters with Alt by their key code (⌥M types "µ"); a
+ * modifier alone makes none.
+ */
+export function bindingFromKey(event: KeyInput, apple: boolean): KeyBinding | null {
+  if (MODIFIER_KEYS.has(event.key)) return null;
+  const letter = /^Key([A-Z])$/.exec(event.code);
+  const byCode = event.altKey && letter !== null;
+  const key = byCode
+    ? (letter[1] ?? '').toLowerCase()
+    : event.key.length === 1
+      ? event.key.toLowerCase()
+      : event.key;
+  // A printable character already says whether Shift was needed to type it (+, _, ?).
+  const printable = key.length === 1 && key !== ' ' && !/[a-z0-9]/.test(key);
+  return {
+    key,
+    ...(byCode ? { code: event.code } : {}),
+    ...((apple ? event.metaKey : event.ctrlKey) ? { mod: true } : {}),
+    ...(event.shiftKey && !printable ? { shift: true } : {}),
+    ...(event.altKey ? { alt: true } : {}),
+    ...(apple && event.ctrlKey ? { ctrl: true } : {}),
+  };
+}
+
+/** The other shortcut, if any, that a binding already belongs to. */
+export function shortcutUsing(
+  binding: KeyBinding,
+  except: string,
+  overrides: KeyOverrides = usePreferences.getState().keyBindings,
+): Shortcut | null {
+  return (
+    SHORTCUTS.find(
+      shortcut =>
+        shortcut.id !== except && bindingsOf(shortcut, overrides).some(other => sameBinding(other, binding)),
+    ) ?? null
+  );
 }
