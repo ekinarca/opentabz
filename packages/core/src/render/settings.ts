@@ -42,6 +42,7 @@ export function createRenderSettings(options: ViewOptions): alphaTab.Settings {
   resources.barNumberColor = color(SCORE_COLOR_SENTINELS['bar-number']);
   resources.scoreInfoColor = color(SCORE_COLOR_SENTINELS.info);
   if (options.style !== undefined) applyStyleSettings(settings, options.style);
+  settings.notation.leftHandedDiagrams = options.leftHanded === true;
   return settings;
 }
 

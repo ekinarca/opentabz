@@ -65,6 +65,8 @@ export interface ScoreViewState {
   readonly letRing: readonly number[];
   /** A key to the drums under the title block (REND-318). */
   readonly drumKey: boolean;
+  /** Chord diagrams mirrored, the highest string on the left (REND-314). */
+  readonly leftHanded: boolean;
   readonly trackIndexes: readonly number[];
   readonly zoom: number;
   /** The score's information, for the pages' header and footer. */
@@ -598,6 +600,7 @@ export class ScoreView {
       ...(state.readingAids === undefined ? {} : { readingAids: state.readingAids }),
       ...(state.letRing.length === 0 ? {} : { letRing: state.letRing }),
       ...(state.drumKey ? { drumKey: true } : {}),
+      ...(state.leftHanded ? { leftHanded: true } : {}),
       width,
       notationScale: 1,
       // The pages' header and footer are drawn here: changing them needs no new layout.
@@ -904,6 +907,7 @@ function sameOptions(a: ViewOptions, b: ViewOptions): boolean {
     sameReadingAids(a.readingAids, b.readingAids) &&
     sameIndexes(a.letRing, b.letRing) &&
     a.drumKey === b.drumKey &&
+    a.leftHanded === b.leftHanded &&
     a.width === b.width &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
@@ -927,6 +931,7 @@ function sameExceptZoom(a: ScoreViewState, b: ScoreViewState): boolean {
     sameReadingAids(a.readingAids, b.readingAids) &&
     sameIndexes(a.letRing, b.letRing) &&
     a.drumKey === b.drumKey &&
+    a.leftHanded === b.leftHanded &&
     a.trackIndexes.length === b.trackIndexes.length &&
     a.trackIndexes.every((value, index) => value === b.trackIndexes[index])
   );

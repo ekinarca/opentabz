@@ -298,6 +298,7 @@ function sameExceptWidth(a: ViewOptions, b: ViewOptions): boolean {
     sameReadingAids(a.readingAids, b.readingAids) &&
     sameIndexes(a.letRing, b.letRing) &&
     a.drumKey === b.drumKey &&
+    a.leftHanded === b.leftHanded &&
     a.notationScale === b.notationScale &&
     (a.style === b.style ||
       (a.style !== undefined && b.style !== undefined && sameScoreStyle(a.style, b.style))) &&

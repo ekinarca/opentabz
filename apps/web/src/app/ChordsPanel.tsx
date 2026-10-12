@@ -53,6 +53,7 @@ function chordsReader(doc: OpenDocument, changes: readonly ChordChange[]): () =>
  */
 export function ChordsPanel({ doc }: { readonly doc: OpenDocument }) {
   const cursorColor = usePreferences(state => state.cursorColor);
+  const leftHanded = usePreferences(state => state.leftHanded);
   const setPreferences = usePreferences(state => state.set);
   const track = doc.summary.tracks[doc.activeTrack] ?? doc.summary.tracks[0];
   const trackChords = useTrackChords(doc.engineId, track?.index ?? 0);
@@ -116,7 +117,7 @@ export function ChordsPanel({ doc }: { readonly doc: OpenDocument }) {
                 –
               </span>
             ) : (
-              <ChordDiagram chord={current} size={1.15} />
+              <ChordDiagram chord={current} size={1.15} leftHanded={leftHanded} />
             )}
           </div>
           <div className="flex shrink-0 flex-col items-center gap-1" data-testid="chord-next">
@@ -129,7 +130,7 @@ export function ChordsPanel({ doc }: { readonly doc: OpenDocument }) {
               </span>
             ) : (
               <>
-                <ChordDiagram chord={next} size={0.9} />
+                <ChordDiagram chord={next} size={0.9} leftHanded={leftHanded} />
                 {shown.countdown !== null && (
                   <span
                     className="rounded-full bg-accent-soft px-2 py-0.5 text-[12px] font-medium text-ink tabular-nums"
@@ -157,7 +158,7 @@ export function ChordsPanel({ doc }: { readonly doc: OpenDocument }) {
                     shown.current === index ? 'border-[var(--ot-cursor)] bg-sunken' : 'border-transparent',
                   )}
                 >
-                  <ChordDiagram chord={chord} size={0.7} label={chord.name} />
+                  <ChordDiagram chord={chord} size={0.7} label={chord.name} leftHanded={leftHanded} />
                 </button>
               </li>
             ))}

@@ -363,7 +363,7 @@ export const strings = {
         ? 'Not started yet: press Play.'
         : `Output delay ${Math.round(latency)} ms · audio skipped ${Math.round(missed)} ms`,
     views: 'Instrument views',
-    leftHanded: 'Left-handed fretboard',
+    leftHanded: 'Left-handed fretboard and chord diagrams',
     keyboard: 'Keyboard',
   },
 

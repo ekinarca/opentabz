@@ -69,7 +69,7 @@ test.describe('settings', () => {
   test('the left-handed fretboard and single-key shortcuts are settings too', async ({ page }) => {
     await openShuffle(page);
     const dialog = await openSettings(page);
-    await dialog.getByRole('switch', { name: 'Left-handed fretboard' }).click();
+    await dialog.getByRole('switch', { name: 'Left-handed fretboard and chord diagrams' }).click();
     await dialog.getByRole('switch', { name: 'Single-key shortcuts (−, =, ?)' }).click();
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Fretboard', exact: true }).click();

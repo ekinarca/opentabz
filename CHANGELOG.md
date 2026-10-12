@@ -62,8 +62,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   interpretation does; changes apply while playing and are remembered for the file. A track whose
   notes all ring on says "let ring throughout" over its first bar, on screen and on paper.
 - **Settings.** The audio delay (shortest, balanced or steadiest, for devices where the sound
-  breaks up), with the output's delay and any audio it had to skip shown live; the left-handed
-  fretboard; single-key shortcuts.
+  breaks up), with the output's delay and any audio it had to skip shown live; left-handed
+  playing, which mirrors the fretboard and every chord diagram (in the score, on paper and in
+  the chords panel) with the highest string on the left; single-key shortcuts.
 - **Fretboard.** The active track's neck under the score: any number of strings (3 to 10) and
   tunings, a capo, the notes being played lit in the cursor colour, with the next notes to play
   as rings or the rest of the bar in a lighter colour; dead notes, harmonics and ghost notes
@@ -251,7 +252,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   system indented (0031), tuplets without brackets or bends without the pitch they reach on
   request (0032), tied frets, dashed rests, arpeggio arrowheads and trill notes on request
   (0033), level beams (0034), clefs and time signatures at the start of systems and sections
-  as asked (0035) and technique lines over rests (0036). See [docs/upstream/](docs/upstream/).
+  as asked (0035), technique lines over rests (0036) and chord diagrams mirrored for left-handed
+  players (0037). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

@@ -5,20 +5,23 @@ import { strings } from '../strings.ts';
 const MIN_FRETS = 4;
 
 /**
- * A chord diagram as players read them: the lowest string on the left, the nut (or the first
- * fret's number) on top, dots on the frets held, open strings as rings and strings not played as
- * crosses, barres as bars.
+ * A chord diagram as players read them: the lowest string on the left (the highest, mirrored, for
+ * left-handed players), the nut (or the first fret's number) on top, dots on the frets held, open
+ * strings as rings and strings not played as crosses, barres as bars.
  */
 export function ChordDiagram({
   chord,
   size = 1,
   label,
+  leftHanded = false,
 }: {
   readonly chord: ChordShape;
   /** Scale of the drawing (1: a diagram about 90 pixels wide for six strings). */
   readonly size?: number;
   /** Accessible name; the chord's name and frets if absent. */
   readonly label?: string;
+  /** Mirrored for left-handed players (REND-314). */
+  readonly leftHanded?: boolean;
 }) {
   const count = chord.strings.length;
   const name = chord.name.trim().length > 0 ? chord.name : '?';
@@ -34,8 +37,10 @@ export function ChordDiagram({
       </div>
     );
   }
-  // From the lowest string (left) to the highest.
-  const frets = [...chord.strings].reverse();
+  // From the lowest string to the highest, as they are named.
+  const lowToHigh = [...chord.strings].reverse();
+  // As drawn, left to right.
+  const frets = leftHanded ? [...chord.strings] : lowToHigh;
   const highest = Math.max(0, ...frets);
   const rows = Math.max(MIN_FRETS, highest - chord.firstFret + 1);
   const gap = 14;
@@ -47,7 +52,7 @@ export function ChordDiagram({
   const x = (string: number) => left + string * gap;
   const y = (fret: number) => top + (fret - chord.firstFret + 0.5) * fretGap;
 
-  const spoken = frets
+  const spoken = lowToHigh
     .map(fret =>
       fret < 0 ? strings.chords.mutedString : fret === 0 ? strings.chords.openString : String(fret),
     )
@@ -60,6 +65,7 @@ export function ChordDiagram({
       height={height * size}
       viewBox={`0 0 ${width} ${height}`}
       className="ot-chord block"
+      data-left-handed={leftHanded}
     >
       <text x={width / 2} y={13} textAnchor="middle" fontSize={13} fontWeight={600} fill="var(--ot-text)">
         {name}
