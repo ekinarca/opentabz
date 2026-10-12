@@ -143,6 +143,12 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'bentPitch',
     'hideExtraRests',
     'tupletBrackets',
+    'arpeggioArrows',
+    'trillNote',
+    'slideLabel',
+    'tiedTabNotes',
+    'dashQuarterRests',
+    'voiceColors',
   ] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   // Measures added later, likewise.

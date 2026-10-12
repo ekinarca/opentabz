@@ -330,6 +330,27 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.arpeggioArrows}
+            checked={style.arpeggioArrows}
+            onCheckedChange={arpeggioArrows => {
+              set({ arpeggioArrows });
+            }}
+          />
+          <Switch
+            label={s.trillNote}
+            checked={style.trillNote}
+            onCheckedChange={trillNote => {
+              set({ trillNote });
+            }}
+          />
+          <Switch
+            label={s.slideLabel}
+            checked={style.slideLabel}
+            onCheckedChange={slideLabel => {
+              set({ slideLabel });
+            }}
+          />
+          <Switch
             label={s.tempoMarks}
             checked={style.tempoMarks}
             onCheckedChange={tempoMarks => {
@@ -382,6 +403,32 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               }}
             />
           </Field>
+        </Section>
+
+        <Section title={s.sections.tablature}>
+          <Switch
+            label={s.tiedTabNotes}
+            hint={s.tiedTabNotesHint}
+            checked={style.tiedTabNotes}
+            onCheckedChange={tiedTabNotes => {
+              set({ tiedTabNotes });
+            }}
+          />
+          <Switch
+            label={s.dashQuarterRests}
+            checked={style.dashQuarterRests}
+            onCheckedChange={dashQuarterRests => {
+              set({ dashQuarterRests });
+            }}
+          />
+          <Switch
+            label={s.voiceColors}
+            hint={s.voiceColorsHint}
+            checked={style.voiceColors}
+            onCheckedChange={voiceColors => {
+              set({ voiceColors });
+            }}
+          />
         </Section>
 
         <Section title={s.sections.headerFooter} wide>

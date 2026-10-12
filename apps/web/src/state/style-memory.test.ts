@@ -105,6 +105,32 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads the technique and tablature switches (REND-249, REND-250), older styles as alphaTab draws', () => {
+    const switches = {
+      arpeggioArrows: false,
+      trillNote: false,
+      slideLabel: false,
+      tiedTabNotes: true,
+      dashQuarterRests: true,
+      voiceColors: true,
+    };
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, ...switches })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)).toMatchObject(switches);
+    expect(parseStyle({ ...stored, voiceColors: 1 })).toBeNull();
+    const older = Object.fromEntries(Object.entries(stored).filter(([key]) => !(key in switches)));
+    expect(parseStyle(older)).toMatchObject({
+      arpeggioArrows: true,
+      trillNote: true,
+      slideLabel: true,
+      tiedTabNotes: false,
+      dashQuarterRests: false,
+      voiceColors: false,
+    });
+  });
+
   it('reads tempo decimals shown or not (REND-240), older styles taking the file’s', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, tempoDecimals: false })) as Record<
       string,

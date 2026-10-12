@@ -70,6 +70,12 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     bentPitch: true,
     hideExtraRests: false,
     tupletBrackets: true,
+    arpeggioArrows: true,
+    trillNote: true,
+    slideLabel: true,
+    tiedTabNotes: false,
+    dashQuarterRests: false,
+    voiceColors: false,
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
@@ -215,6 +221,12 @@ export function applyScoreStyle(
       case 'tupletBrackets':
       case 'commonTime':
       case 'hideExtraRests':
+      case 'arpeggioArrows':
+      case 'trillNote':
+      case 'slideLabel':
+      case 'tiedTabNotes':
+      case 'dashQuarterRests':
+      case 'voiceColors':
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
@@ -276,6 +288,11 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.showTempoDecimals = style.tempoDecimals;
   settings.notation.showBentPitch = style.bentPitch;
   settings.notation.showTupletBrackets = style.tupletBrackets;
+  settings.notation.showArpeggioArrows = style.arpeggioArrows;
+  settings.notation.showTrillNote = style.trillNote;
+  elements.set(alphaTab.NotationElement.EffectSlideText, style.slideLabel);
+  settings.notation.showTiedTabNotes = style.tiedTabNotes;
+  settings.notation.dashQuarterRests = style.dashQuarterRests;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

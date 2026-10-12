@@ -1,10 +1,13 @@
 /**
- * What the stylesheet shows or leaves out (REND-207, REND-210), and transposing instruments
- * written at concert pitch or as their parts read (REND-032).
+ * What the stylesheet shows or leaves out (REND-207, REND-210, REND-240, REND-248, REND-249,
+ * REND-250), and transposing instruments written at concert pitch or as their parts read
+ * (REND-032).
  */
 import { describe, expect, it } from 'vitest';
+import { openScore } from '../src/open/open.ts';
+import { RenderSession } from '../src/render/session.ts';
 import { readScoreStyle } from '../src/render/style.ts';
-import { DEFAULT_SCORE_STYLE } from '../src/shared/style.ts';
+import { DEFAULT_SCORE_STYLE, type ScoreStyle } from '../src/shared/style.ts';
 import { engraveFixture, engraveTex, glyphs, GUITAR, texts, type Engraving } from './engraving.ts';
 
 function count(view: Engraving, name: string): number {
@@ -101,6 +104,79 @@ describe('the stylesheet’s notation switches (REND-248)', () => {
     expect(brackets(bracketed)).toBe(1);
     expect(brackets(bare)).toBe(0);
     expect(glyphs(bare.marks)).toContain('Tuplet3');
+  });
+});
+
+describe('the stylesheet’s technique and tablature switches (REND-249, REND-250)', () => {
+  const style = (changes: Partial<ScoreStyle>) => ({ style: { ...DEFAULT_SCORE_STYLE, ...changes } });
+
+  it('draws arpeggios with or without arrowheads; strums keep theirs (REND-249)', () => {
+    const tex = ':4 (0.6 2.5 2.4){au} (0.6 2.5 2.4){ad} (0.6 2.5 2.4){bu} r |';
+    const arrowheads = (view: Engraving) =>
+      view.marks.filter(mark => mark.kind === 'path' && mark.name === 'fill' && mark.commands === 'MLLz')
+        .length;
+    // Arpeggios up and down on the staff and the tablature, and the strum on the tablature.
+    expect(arrowheads(engraveTex(tex))).toBe(5);
+    expect(arrowheads(engraveTex(tex, style({ arpeggioArrows: false })))).toBe(1);
+  });
+
+  it('writes a trill’s second note and "sl." over slides, or leaves them out (REND-249)', () => {
+    const trill = ':4 3.3{tr (5 16)} 3.3 3.3 3.3 |';
+    expect(texts(engraveTex(trill).marks)).toContain('(5)');
+    expect(texts(engraveTex(trill, style({ trillNote: false })).marks)).not.toContain('(5)');
+    const slide = ':4 5.3{sl} 7.3 5.3 5.3 |';
+    expect(texts(engraveTex(slide).marks).filter(text => text === 'sl.')).toHaveLength(2);
+    expect(texts(engraveTex(slide, style({ slideLabel: false })).marks)).not.toContain('sl.');
+  });
+
+  it('writes every tied note’s fret in the tablature on request (REND-250)', () => {
+    const tex = ':2 5.3 -.3 | 5.3 5.3 |';
+    expect(texts(engraveTex(tex).marks)).not.toContain('(5)');
+    expect(texts(engraveTex(tex, style({ tiedTabNotes: true })).marks)).toContain('(5)');
+  });
+
+  it('writes quarter rests in the tablature as a dash on request (REND-250)', () => {
+    const tex = '\\track "Guitar"\n\\staff {tabs}\n\\tuning (E4 B3 G3 D3 A2 E2)\n:4 5.3 r 5.3 r |';
+    const rests = (view: Engraving) => glyphs(view.marks).filter(name => name === 'RestQuarter');
+    expect(rests(engraveTex(tex))).toHaveLength(2);
+    const dashed = engraveTex(tex, style({ dashQuarterRests: true }));
+    expect(rests(dashed)).toHaveLength(0);
+    // Two short dashes where the rests were, on the tablature's middle.
+    const dashes = dashed.marks.filter(
+      mark => mark.kind === 'rect' && mark.width > 4 && mark.width < 20 && mark.height < 4,
+    );
+    expect(dashes).toHaveLength(2);
+  });
+
+  it('colours the tablature frets of voices 2 to 4, the first voice’s staying as they are (REND-250)', () => {
+    const tex = `${GUITAR.replace('{score tabs}', '{tabs}')}\n\\voice\n:2 5.3 7.3 |\n\\voice\n:2 0.6 3.6 |`;
+    const { score } = openScore(new TextEncoder().encode(tex), 'voices.atex');
+    const svg = (voiceColors: boolean) => {
+      const session = new RenderSession(score, {
+        trackIndexes: [0],
+        layout: 'page',
+        systemsLayout: 'auto',
+        staffDisplay: 'default',
+        width: 900,
+        notationScale: 1,
+        style: { ...DEFAULT_SCORE_STYLE, voiceColors },
+      });
+      try {
+        const layout = session.layout();
+        return session
+          .paint(layout.partials.map(partial => partial.id))
+          .map(painted => painted.svg)
+          .join('');
+      } finally {
+        session.dispose();
+      }
+    };
+    expect(svg(false)).not.toContain('#2E9B4F');
+    const colored = svg(true);
+    // Voice 2's two frets in green.
+    expect(colored.match(/fill="#2E9B4F"[^>]*>[03]</g)).toHaveLength(2);
+    // The score keeps its notes' own styles.
+    expect(score.tracks[0]?.staves[0]?.bars[0]?.voices[1]?.beats[0]?.notes[0]?.style).toBeUndefined();
   });
 });
 

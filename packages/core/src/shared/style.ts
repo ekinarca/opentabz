@@ -53,6 +53,18 @@ export interface ScoreStyle {
   readonly hideExtraRests: boolean;
   /** Tuplets bracketed, besides their numbers (REND-248). */
   readonly tupletBrackets: boolean;
+  /** Arpeggios (rolled chords) with arrowheads (REND-249). */
+  readonly arpeggioArrows: boolean;
+  /** A trill's second note written in the tablature (REND-249). */
+  readonly trillNote: boolean;
+  /** "sl." written over slides (REND-249). */
+  readonly slideLabel: boolean;
+  /** Every tied note's fret written in the tablature, not only at the start of a bar (REND-250). */
+  readonly tiedTabNotes: boolean;
+  /** Quarter rests in the tablature written as a dash (REND-250). */
+  readonly dashQuarterRests: boolean;
+  /** Tablature frets of voices 2 to 4 in green, pink and purple (REND-250). */
+  readonly voiceColors: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
   /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
@@ -118,6 +130,12 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   bentPitch: true,
   hideExtraRests: false,
   tupletBrackets: true,
+  arpeggioArrows: true,
+  trillNote: true,
+  slideLabel: true,
+  tiedTabNotes: false,
+  dashQuarterRests: false,
+  voiceColors: false,
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,

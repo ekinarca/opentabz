@@ -23,6 +23,7 @@ import { applyLetRingThroughout } from './let-ring.ts';
 import { applyScoreStyle, readScoreStyle } from './style.ts';
 import { applyNoteColors } from './note-colors.ts';
 import { applyReadingAids } from './reading-aids.ts';
+import { applyVoiceColors } from './voice-colors.ts';
 import { layoutDrumKey } from './drum-key.ts';
 import { layoutTextBlocks, type TextBlocksLayout } from './text-blocks.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
@@ -229,6 +230,8 @@ export class RenderSession {
     const tracks = tracksFor(this.score, this.options.trackIndexes);
     const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
+    // Voices' colours first: the view's note colours win where both apply.
+    const restoreVoices = applyVoiceColors(tracks, this.options.style?.voiceColors === true);
     const restoreColors = applyNoteColors(tracks, this.options.noteColors);
     const restoreAids = applyReadingAids(tracks, this.options.readingAids);
     const restoreLetRing = applyLetRingThroughout(tracks, this.options.letRing);
@@ -236,6 +239,7 @@ export class RenderSession {
       restoreLetRing();
       restoreAids();
       restoreColors();
+      restoreVoices();
       restorePitch();
       restoreStaves();
     };

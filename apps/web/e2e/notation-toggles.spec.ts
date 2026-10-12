@@ -1,7 +1,9 @@
 /**
  * Transposing instruments at concert pitch (REND-032), and tempo marks shown or hidden
  * (REND-210), with their decimals or rounded (REND-240); C and cut C, the pitch a bend reaches,
- * the rests of the lower voices and tuplet brackets (REND-248); in the score on screen.
+ * the rests of the lower voices and tuplet brackets (REND-248); arpeggio arrowheads, a trill's
+ * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
+ * the tablature (REND-250); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -109,4 +111,57 @@ test('cut C, the pitch a bend reaches, the lower voices’ rests and tuplet brac
   await expect.poll(() => count(QUARTER_REST)).toBeLessThan(rests);
   await dialog.getByRole('switch', { name: 'Tuplet brackets' }).click();
   await expect.poll(brackets).toBe(0);
+});
+
+test('arpeggio arrowheads, a trill’s second note, "sl.", tied frets, dashes and coloured voices', async ({
+  page,
+}) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/techniques.atex')]);
+  await expectScore(page);
+  const texts = () => scoreTexts(page);
+  const arrowheads = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial path')
+      .evaluateAll(
+        paths =>
+          paths.filter(path => /^M[^ML]*L[^ML]*L[^MLz]*z$/.test((path.getAttribute('d') ?? '').trim()))
+            .length,
+      );
+  const green = () => page.locator('.ot-scroll:not([hidden]) .ot-partial text[fill="#2E9B4F"]').count();
+  await expect.poll(texts).toContain('(5)');
+  expect(await arrowheads()).toBe(3);
+  expect((await texts()).filter(text => text === 'sl.')).toHaveLength(2);
+  expect(await texts()).not.toContain('(7)');
+  expect(await green()).toBe(0);
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'Arrowheads on arpeggios' }).click();
+  // The strum keeps its arrowhead.
+  await expect.poll(arrowheads).toBe(1);
+  await dialog.getByRole('switch', { name: 'A trill’s second note in the tablature' }).click();
+  await expect.poll(texts).not.toContain('(5)');
+  await dialog.getByRole('switch', { name: '"sl." over slides' }).click();
+  await expect.poll(texts).not.toContain('sl.');
+  await dialog.getByRole('switch', { name: 'Every tied note’s fret' }).click();
+  await expect.poll(texts).toContain('(7)');
+  await dialog.getByRole('switch', { name: 'Voices 2 to 4 in colour' }).click();
+  await expect.poll(green).toBeGreaterThan(2);
+  await dialog.getByRole('switch', { name: 'Quarter rests as a dash' }).click();
+  await page.keyboard.press('Escape');
+
+  // Quarter rests show in the tablature where it stands alone: as dashes now.
+  const QUARTER_REST = String.fromCodePoint(0xe4e5);
+  await page.getByRole('button', { name: /^Staves: / }).click();
+  await page.getByRole('menuitemradio', { name: 'Tab', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect.poll(texts).toContain('(7)');
+  expect((await texts()).join('')).not.toContain(QUARTER_REST);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Stylesheet' })
+    .getByRole('switch', { name: 'Quarter rests as a dash' })
+    .click();
+  await expect.poll(async () => (await texts()).join('').split(QUARTER_REST).length - 1).toBe(2);
 });
