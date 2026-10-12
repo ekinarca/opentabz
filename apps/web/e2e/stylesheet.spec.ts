@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { unzipSync } from 'fflate';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -40,7 +40,7 @@ test('changes show in the score, are remembered for the file, and go back to the
   await expect(trackName(page).first()).toBeVisible();
   const height = await systemHeight(page);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'As in the file' })).toBeDisabled();
@@ -88,14 +88,14 @@ test('chord names are spelled in the style chosen, in the score and the chords p
   const texts = () => page.locator('.ot-scroll:not([hidden]) .ot-partials text').allTextContents();
   await expect.poll(async () => (await texts()).includes('Cm')).toBe(true);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('radiogroup', { name: 'Chord names' }).getByRole('radio', { name: 'Jazz' }).click();
   await expect.poll(async () => (await texts()).includes('C-')).toBe(true);
   expect(await texts()).not.toContain('Cm');
   await page.keyboard.press('Escape');
 
-  await page.getByRole('button', { name: 'Chords', exact: true }).click();
+  await viewTool(page, 'Chords');
   await expect(
     page.getByRole('region', { name: 'Chords', exact: true }).getByText('C-', { exact: true }).first(),
   ).toBeVisible();
@@ -110,7 +110,7 @@ test('looks and stylesheets of one’s own, one the default for scores opened fr
   const texts = () => page.locator('.ot-scroll:not([hidden]) .ot-partials text').allTextContents();
   await expect.poll(async () => (await texts()).includes('Cm')).toBe(true);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByLabel('Apply a stylesheet').selectOption({ label: 'Jazz chart' });
   await expect.poll(async () => (await texts()).includes('C-')).toBe(true);
@@ -262,7 +262,7 @@ test('chord diagrams at the size and spacing asked, kept as the score is scaled 
   await expect.poll(async () => (await diagrams()).strings).toBe(18);
   const usual = await diagrams();
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   const slider = (name: string) => dialog.getByRole('slider', { name, exact: true });
   await slider('Size of the diagrams above the music').focus();
@@ -296,7 +296,7 @@ test('techniques are written with the words chosen, and as usual when left empty
     page.locator('.ot-scroll:not([hidden]) .ot-partials text', { hasText: word });
   await expect(written('P.M.').first()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   const palmMute = dialog.getByRole('textbox', { name: 'Palm mute' });
   await expect(palmMute).toHaveAttribute('placeholder', 'P.M.');
@@ -320,7 +320,7 @@ test('the tuning above the music, saying as much as asked, or before the tablatu
   // The shuffle's guitar is in standard tuning: its name.
   await expect(written(/^Standard$/).first()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   const detail = dialog.getByLabel('What the legend says');
   await detail.selectOption('all');
@@ -360,7 +360,7 @@ test('the lyrics under the staff, or above the staves (REND-239)', async ({ page
         return y < Math.min(...lines) ? -1 : y > Math.max(...lines) ? 1 : 0;
       });
   await expect.poll(side).toBe(1);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   await page
     .getByRole('dialog', { name: 'Stylesheet' })
     .getByRole('radiogroup', { name: 'Where the lyrics go' })
@@ -382,7 +382,7 @@ test('fingering labelled and placed as asked (REND-252)', async ({ page }) => {
   const T = 0xed18;
   // The study's right hand: p i m a.
   await expect.poll(() => count(P)).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog
     .getByRole('radiogroup', { name: 'Right-hand fingers' })

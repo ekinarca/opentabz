@@ -5,7 +5,17 @@
  * the file gives, under the panel's diagrams (REND-208).
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test, topBarTool } from './support.ts';
+import {
+  dropFiles,
+  expect,
+  expectScore,
+  fixture,
+  openHome,
+  test,
+  topBarTool,
+  viewTool,
+  viewToolOn,
+} from './support.ts';
 
 /** SMuFL's chord diagram marks: a string not played, an open string. */
 const MUTED = '\u{E859}';
@@ -37,9 +47,8 @@ test('shows the chord now, the next one counting down, and plays from a chord', 
   await page.getByRole('button', { name: 'a blues shuffle' }).click();
   await expectScore(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
-  const toggle = page.getByRole('button', { name: 'Chords', exact: true });
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await viewTool(page, 'Chords');
+  await expect.poll(() => viewToolOn(page, 'Chords')).toBe(true);
   const panel = page.getByRole('region', { name: 'Chords', exact: true });
 
   // A7 for four bars, then D7: sixteen beats to go.
@@ -75,7 +84,7 @@ test('mirrors the diagrams for left-handed players, in the panel and in the scor
   await openHome(page);
   await page.getByRole('button', { name: 'a blues shuffle' }).click();
   await expectScore(page);
-  await page.getByRole('button', { name: 'Chords', exact: true }).click();
+  await viewTool(page, 'Chords');
   const now = page
     .getByRole('region', { name: 'Chords', exact: true })
     .getByTestId('chord-now')
@@ -107,7 +116,7 @@ test('writes the fingering the file gives under the panel’s diagrams', async (
   await openHome(page);
   await dropFiles(page, [fixture('alphatab/guitarpro7/chords.gp')]);
   await expectScore(page);
-  await page.getByRole('button', { name: 'Chords', exact: true }).click();
+  await viewTool(page, 'Chords');
   const panel = page.getByRole('region', { name: 'Chords', exact: true });
   // C, from the lowest string: the third finger, the second, the first.
   const now = panel.getByTestId('chord-now').getByRole('img');

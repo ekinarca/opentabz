@@ -10,8 +10,11 @@ export interface Segment<T extends string> {
   readonly iconOnly?: boolean;
 }
 
-/** `collapse`: below the md breakpoint, segments with an icon show only the icon. */
-export type SegmentedDensity = 'regular' | 'collapse';
+/**
+ * `collapse`: below the md breakpoint, segments with an icon show only the icon; `icons`: the same
+ * below 2xl, for a toolbar that needs its room for other tools.
+ */
+export type SegmentedDensity = 'regular' | 'collapse' | 'icons';
 
 export interface SegmentedControlProps<T extends string> {
   readonly label: string;
@@ -51,7 +54,13 @@ export function SegmentedControl<T extends string>({
             {segment.iconOnly === true ? null : (
               <span
                 className={
-                  density === 'collapse' && segment.icon !== undefined ? 'max-md:sr-only' : undefined
+                  segment.icon === undefined
+                    ? undefined
+                    : density === 'collapse'
+                      ? 'max-md:sr-only'
+                      : density === 'icons'
+                        ? 'max-2xl:sr-only'
+                        : undefined
                 }
               >
                 {segment.label}
@@ -59,7 +68,8 @@ export function SegmentedControl<T extends string>({
             )}
           </ToggleGroup.Item>
         );
-        return segment.iconOnly === true ? (
+        // Where only the icon shows, the label is its tooltip.
+        return segment.iconOnly === true || (density === 'icons' && segment.icon !== undefined) ? (
           <Tooltip key={segment.value} label={segment.label}>
             {item}
           </Tooltip>

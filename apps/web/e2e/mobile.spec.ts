@@ -1,4 +1,8 @@
-/** Phones: everything fits the screen and works with touch. */
+/**
+ * Phones (PLAT-010, PLAT-011, PLAT-012): everything fits the screen, down to 360 pixels wide, and
+ * works with touch: a tap plays, or moves playback to the note tapped; a long press selects; a
+ * swipe scrolls the music; the playback bar sits at the bottom.
+ */
 import type { Page } from '@playwright/test';
 import { elapsedSeconds, expect, expectScore, openHome, test, transportText } from './support.ts';
 
@@ -69,5 +73,40 @@ test.describe('phones', () => {
     await expect(menu.getByRole('menuitem', { name: /^Clear selection/ }).locator('kbd')).toHaveText('Esc');
     await page.getByRole('menuitem', { name: 'Clear selection' }).tap();
     await expect(page.locator('.ot-selection:not([hidden])')).toHaveCount(0);
+  });
+
+  test('a tap on the music moves playback there, and a swipe scrolls it', async ({ page }) => {
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).tap();
+    await expectScore(page);
+    const position = page.getByRole('button', { name: /^Go to: / });
+    await expect(position).toHaveAccessibleName(/^Go to: Bar 1, beat 1,/);
+    const system = page.locator('.ot-partial[data-kind="system"]').first();
+    const box = await system.boundingBox();
+    if (box === null) throw new Error('no system on screen');
+    await page.touchscreen.tap(box.x + box.width * 0.7, box.y + box.height * 0.45);
+    await expect(position).not.toHaveAccessibleName(/^Go to: Bar 1, beat 1,/);
+    // The browser pans the music under a finger: nothing takes the swipe for itself.
+    const scroller = page.locator('.ot-scroll:not([hidden])');
+    expect(await scroller.evaluate(element => getComputedStyle(element).touchAction)).not.toBe('none');
+    expect(await scroller.evaluate(element => getComputedStyle(element).overflowY)).toMatch(/auto|scroll/);
+  });
+
+  test('fits a screen 360 pixels wide: the home page, the score, the top bar and the playback bar', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await openHome(page);
+    await noHorizontalOverflow(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).tap();
+    await expectScore(page);
+    await noHorizontalOverflow(page);
+    for (const bar of [page.getByRole('banner'), page.getByRole('toolbar', { name: 'Playback' })]) {
+      const overflow = await bar.evaluate(element => element.scrollWidth - element.clientWidth);
+      expect(overflow).toBeLessThanOrEqual(0);
+    }
+    // The playback bar at the bottom of the screen.
+    const transport = await page.getByRole('toolbar', { name: 'Playback' }).boundingBox();
+    expect((transport?.y ?? 0) + (transport?.height ?? 0)).toBeGreaterThan(740 - 120);
   });
 });

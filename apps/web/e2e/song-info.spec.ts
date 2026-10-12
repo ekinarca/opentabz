@@ -1,11 +1,11 @@
 /** Song info (VIEW-011): every field of the score, its instructions and notices, and its tracks. */
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool } from './support.ts';
 
 test('shows the score information, instructions and notices included', async ({ page }) => {
   await openHome(page);
   await dropFiles(page, [fixture('alphatex/views/lyrics.atex')]);
   await expectScore(page);
-  await page.getByRole('button', { name: 'Song info', exact: true }).click();
+  await viewTool(page, 'Song info');
   const dialog = page.getByRole('dialog', { name: 'Lyrics Views' });
   await expect(dialog).toBeVisible();
   const field = (name: string) => dialog.locator('dt', { hasText: name }).locator('+ dd');

@@ -3,7 +3,7 @@
  * whole bar), any number of strings, a capo, note names, left-handed, switching tracks, phones.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool, viewToolOn } from './support.ts';
 
 async function ready(page: Page): Promise<void> {
   await expectScore(page);
@@ -11,9 +11,8 @@ async function ready(page: Page): Promise<void> {
 }
 
 async function openFretboard(page: Page) {
-  const toggle = page.getByRole('button', { name: 'Fretboard', exact: true });
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await viewTool(page, 'Fretboard');
+  await expect.poll(() => viewToolOn(page, 'Fretboard')).toBe(true);
   const panel = page.getByRole('region', { name: 'Fretboard' });
   await expect(panel.getByRole('img', { name: /^Fretboard of / })).toBeVisible();
   return panel;
@@ -167,10 +166,7 @@ test.describe('fretboard', () => {
     await page.reload();
     await page.getByRole('button', { name: 'a blues shuffle' }).click();
     await ready(page);
-    await expect(page.getByRole('button', { name: 'Fretboard', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect.poll(() => viewToolOn(page, 'Fretboard')).toBe(true);
     await expect(page.getByRole('img', { name: /^Fretboard of / })).toHaveAttribute(
       'data-left-handed',
       'true',

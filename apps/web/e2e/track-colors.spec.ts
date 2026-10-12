@@ -3,7 +3,7 @@
  * song overview (its name and the bars it plays) and the instrument views' active track; tracks
  * of a file that gives no colours get one each, told apart.
  */
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool } from './support.ts';
 
 /** Red, Green, Yellow and Blue, as the file names and colours its tracks. */
 const NAMES = ['Red', 'Green', 'Yellow', 'Blue'];
@@ -21,7 +21,7 @@ test('marks every track with its colour from the file', async ({ page }) => {
     ).toHaveCSS('background-color', COLORS[index] ?? '');
   await page.keyboard.press('Escape');
 
-  await page.getByRole('button', { name: 'Song overview', exact: true }).click();
+  await viewTool(page, 'Song overview');
   const panel = page.getByRole('region', { name: 'Song overview' });
   const tracks = panel.getByRole('group', { name: 'Tracks' });
   for (const [index, name] of NAMES.entries())
@@ -32,7 +32,7 @@ test('marks every track with its colour from the file', async ({ page }) => {
   await panel.getByRole('button', { name: 'Close the song overview' }).click();
 
   // The instrument views' active track, in its colour, as it changes.
-  await page.getByRole('button', { name: 'Fretboard', exact: true }).click();
+  await viewTool(page, 'Fretboard');
   const fretboard = page.getByRole('region', { name: 'Fretboard', exact: true });
   const swatch = fretboard.locator('[data-track-color]');
   await expect(swatch).toHaveCSS('background-color', COLORS[0] ?? '');
@@ -44,7 +44,7 @@ test('gives the tracks of a file without colours one each, the bars they play in
   await openHome(page);
   await dropFiles(page, [fixture('musicxml-testsuite/41a-MultiParts-Partorder.xml')]);
   await expectScore(page);
-  await page.getByRole('button', { name: 'Song overview', exact: true }).click();
+  await viewTool(page, 'Song overview');
   const panel = page.getByRole('region', { name: 'Song overview' });
   const swatches = panel
     .getByRole('group', { name: 'Tracks' })

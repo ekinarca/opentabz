@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Locator, type Page } from '@playwright/test';
 
 export const FIXTURES = join(import.meta.dirname, '..', '..', '..', 'fixtures');
 
@@ -167,4 +167,49 @@ export async function openThemes(page: Page): Promise<void> {
     .locator('header')
     .getByRole('button', { name: shown === 'button' ? 'Theme' : 'More', exact: true })
     .click();
+}
+
+/** The score view's toolbar. */
+export function viewToolbar(page: Page): Locator {
+  return page.getByRole('toolbar', { name: 'Score view' });
+}
+
+/** A view tool's item in the "More view tools" menu, which this opens. */
+async function foldedTool(page: Page, name: string): Promise<Locator> {
+  await viewToolbar(page).getByRole('button', { name: 'More view tools' }).click();
+  const menu = page.getByRole('menu');
+  return menu
+    .getByRole('menuitem', { name, exact: true })
+    .or(menu.getByRole('menuitemcheckbox', { name, exact: true }));
+}
+
+/**
+ * Runs one of the score view's tools: its button, or its item in the "More view tools" menu when
+ * the toolbar is too narrow for it (UX-029).
+ */
+export async function viewTool(page: Page, name: string): Promise<void> {
+  const button = await toolButton(page, name);
+  if ((await button.count()) > 0) await button.click();
+  else await (await foldedTool(page, name)).click();
+}
+
+/**
+ * A view tool's button, once the toolbar can be read: a menu closing hides the rest of the page
+ * from assistive technology for a moment, its buttons and "More view tools" with it.
+ */
+async function toolButton(page: Page, name: string): Promise<Locator> {
+  const button = viewToolbar(page).getByRole('button', { name, exact: true });
+  const more = viewToolbar(page).getByRole('button', { name: 'More view tools' });
+  await expect(button.or(more)).not.toHaveCount(0);
+  return button;
+}
+
+/** Whether a view tool that is on or off is on: its button pressed, or its menu item checked. */
+export async function viewToolOn(page: Page, name: string): Promise<boolean> {
+  const button = await toolButton(page, name);
+  if ((await button.count()) > 0) return (await button.getAttribute('aria-pressed')) === 'true';
+  const item = await foldedTool(page, name);
+  const checked = (await item.getAttribute('aria-checked')) === 'true';
+  await page.keyboard.press('Escape');
+  return checked;
 }

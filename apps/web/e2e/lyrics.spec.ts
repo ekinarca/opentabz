@@ -3,16 +3,15 @@
  * written with their headings, the syllable being sung lit, and singing from a syllable clicked.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool, viewToolOn } from './support.ts';
 
 async function openLyrics(page: Page) {
   await openHome(page);
   await dropFiles(page, [fixture('alphatex/views/lyrics.atex')]);
   await expectScore(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
-  const toggle = page.getByRole('button', { name: 'Lyrics', exact: true });
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await viewTool(page, 'Lyrics');
+  await expect.poll(() => viewToolOn(page, 'Lyrics')).toBe(true);
   return page.getByRole('region', { name: 'Lyrics', exact: true });
 }
 

@@ -4,16 +4,15 @@
  * request; names never, on hover or always, large on request.
  */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, test, viewTool, viewToolOn } from './support.ts';
 
 async function openDrums(page: Page) {
   await openHome(page);
   await page.getByRole('button', { name: 'a blues shuffle' }).click();
   await expectScore(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
-  const toggle = page.getByRole('button', { name: 'Drums', exact: true });
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await viewTool(page, 'Drums');
+  await expect.poll(() => viewToolOn(page, 'Drums')).toBe(true);
   const panel = page.getByRole('region', { name: 'Drums', exact: true });
   await panel.getByRole('combobox', { name: 'Track' }).selectOption('3');
   return panel;

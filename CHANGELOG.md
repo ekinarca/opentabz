@@ -184,6 +184,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   to overdriven at the chorus), the score writes the new sound's label over the beat it changes
   on, in the file's own words; a change the file hides stays unwritten, and the copy with
   repeats written out keeps the labels.
+- **A toolbar that folds.** On narrow screens the score view's tools that do not fit go into a
+  "More view tools" menu, where they work as on the toolbar; the menus' names and the layout's
+  words make room on screens narrower than 1536 pixels, so that a 1280-pixel window shows every
+  tool.
 - **Install it, use it offline.** OpenTabz installs as an app (Chrome, Edge and Android offer to
   install it; Safari adds it to the Home Screen) and, after its first visit, opens and plays
   scores with no network: a service worker keeps every file of the app on the device, and talks

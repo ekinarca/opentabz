@@ -4,7 +4,7 @@
  * makes the track the active one; a drag selects bars; the keys step bars and sections.
  */
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, test, viewTool } from './support.ts';
 
 /** A bar's column and a track's row in the overview, in CSS pixels. */
 const COLUMN = 20;
@@ -33,7 +33,7 @@ test('shows the bars each track plays under the sections; a click goes there wit
   isMobile,
 }) => {
   await openShuffle(page);
-  await page.getByRole('button', { name: 'Song overview', exact: true }).click();
+  await viewTool(page, 'Song overview');
   const panel = page.getByRole('region', { name: 'Song overview' });
   await expect(panel).toBeVisible();
 

@@ -4,7 +4,7 @@
  * way out. The toolbar button, F11 or ⌃⌘F, and Esc.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool } from './support.ts';
 
 async function open(page: Page): Promise<void> {
   await openHome(page);
@@ -31,7 +31,7 @@ test('the toolbar button puts the bars away, keeps zoom and the way out', async 
   const score = page.getByRole('region', { name: /^Score/ });
   const before = (await score.boundingBox())?.height ?? 0;
 
-  await page.getByRole('button', { name: 'Full screen', exact: true }).click();
+  await viewTool(page, 'Full screen');
   await expectFullScreen(page, true);
   const strip = page.getByRole('toolbar', { name: 'Full screen' });
   await expect(strip).toContainText('Lyrics Views');

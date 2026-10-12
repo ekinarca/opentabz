@@ -3,7 +3,7 @@
  * what the output reports while playing (no audio skipped), and the other settings.
  */
 import type { Page } from '@playwright/test';
-import { elapsedSeconds, expect, expectScore, openHome, test, topBarTool } from './support.ts';
+import { elapsedSeconds, expect, expectScore, openHome, test, topBarTool, viewTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -84,7 +84,7 @@ test.describe('settings', () => {
     await expect(page.getByRole('menuitemcheckbox', { name: 'Concert pitch' })).toBeChecked();
     await page.keyboard.press('Escape');
     // Compact: four fifths of the size.
-    await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+    await viewTool(page, 'Stylesheet');
     await expect(
       page.getByRole('dialog', { name: 'Stylesheet' }).getByRole('slider', { name: 'Scale' }),
     ).toHaveAttribute('aria-valuetext', '80 %');
@@ -139,7 +139,7 @@ test.describe('settings', () => {
     await dialog.getByRole('switch', { name: 'Left-handed fretboard and chord diagrams' }).click();
     await dialog.getByRole('switch', { name: 'Single-key shortcuts (−, =, ?)' }).click();
     await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Fretboard', exact: true }).click();
+    await viewTool(page, 'Fretboard');
     await expect(page.getByRole('img', { name: /^Fretboard of / })).toHaveAttribute(
       'data-left-handed',
       'true',

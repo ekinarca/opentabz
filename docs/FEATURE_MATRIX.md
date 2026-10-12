@@ -841,9 +841,9 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAT-002 | Fully offline after first load                              | OT  | M3  | —       | apps/web/e2e/pwa.spec.ts | done |
 | PLAT-003 | File-handler registration for every supported extension     | OT  | M3  | —       | apps/web/src/app/manifest.test.ts, apps/web/src/app/pwa.test.ts | done |
 | PLAT-004 | Share target                                                | OT  | M3  | —       | apps/web/src/app/manifest.test.ts, apps/web/e2e/pwa.spec.ts | done |
-| PLAT-010 | Responsive down to 360 px                                   | OT  | M3  | —       | —    | planned |
-| PLAT-011 | Touch gestures: pinch zoom, tap-to-seek, swipe              | OT  | M3  | —       | —    | planned |
-| PLAT-012 | Bottom transport bar on mobile                              | OT  | M3  | —       | —    | planned |
+| PLAT-010 | Responsive down to 360 px                                   | OT  | M3  | —       | apps/web/e2e/mobile.spec.ts | done |
+| PLAT-011 | Touch gestures: pinch zoom, tap-to-seek, swipe              | OT  | M3  | —       | apps/web/e2e/mobile.spec.ts, apps/web/e2e/zoom.spec.ts | done |
+| PLAT-012 | Bottom transport bar on mobile                              | OT  | M3  | —       | apps/web/e2e/mobile.spec.ts | done |
 | PLAT-020 | Full keyboard operation and focus management                | GP+ | M3  | —       | —    | planned |
 | PLAT-021 | ARIA semantics and live-region announcements                | OT  | M3  | —       | —    | planned |
 | PLAT-022 | High-contrast support                                       | OT  | M3  | —       | —    | planned |
@@ -901,7 +901,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-026 | What's-new area on the home page                                                                                            | GP  | M3  | —        | —    | planned |
 | UX-027 | Choose which home-page sections are shown                                                                                   | GP  | M3  | —        | —    | planned |
 | UX-028 | Optionally reopen the previous session's documents                                                                          | GP  | M3  | —        | apps/web/src/state/session.test.ts, apps/web/e2e/recent-scores.spec.ts | done |
-| UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | —    | planned |
+| UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | apps/web/e2e/toolbar.spec.ts, apps/web/src/app/use-folding.test.ts | done |
 | UX-030 | Context menus (right-click or long-press) on tracks, bars, symbols, document tabs and the waveform                          | GP  | M3  | —        | —    | planned |
 | UX-031 | Shortcut hints in tooltips and menus | GP  | M1  | —        | apps/web/e2e/practice.spec.ts, apps/web/e2e/mobile.spec.ts | done |
 | UX-032 | Command palette lists every command; unavailable ones disabled with the reason                                              | GP  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | done |

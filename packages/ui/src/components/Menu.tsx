@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import type { ReactNode } from 'react';
 import { Kbd } from './Kbd.tsx';
+import { ariaKeyShortcuts } from './key-shortcuts.ts';
 
 export const Menu = DropdownMenu.Root;
 export const MenuTrigger = DropdownMenu.Trigger;
@@ -49,28 +50,48 @@ export interface MenuItemProps {
   readonly disabled?: boolean;
 }
 
+/** An item's keys: shown, and announced apart from its name. */
+function Shortcut({ keys }: { readonly keys: string | undefined }) {
+  return keys === undefined ? null : (
+    <span aria-hidden className="contents">
+      <Kbd>{keys}</Kbd>
+    </span>
+  );
+}
+
 export function MenuItem({ children, onSelect, icon, shortcut, disabled }: MenuItemProps) {
   return (
-    <DropdownMenu.Item className={ITEM} onSelect={onSelect} disabled={disabled ?? false}>
+    <DropdownMenu.Item
+      className={ITEM}
+      onSelect={onSelect}
+      disabled={disabled ?? false}
+      {...(shortcut === undefined ? {} : { 'aria-keyshortcuts': ariaKeyShortcuts(shortcut) })}
+    >
       <span className="absolute left-2 inline-flex size-4 items-center justify-center text-ink-muted">
         {icon}
       </span>
       <span className="flex-1">{children}</span>
-      {shortcut !== undefined && <Kbd>{shortcut}</Kbd>}
+      <Shortcut keys={shortcut} />
     </DropdownMenu.Item>
   );
 }
 
+/**
+ * A menu item turned on or off. The menu stays open, for the next item to be turned on or off too,
+ * unless it closes on select (an item that opens what it turns on, to be seen).
+ */
 export function MenuCheckboxItem({
   children,
   checked,
   onCheckedChange,
   shortcut,
+  closeOnSelect = false,
 }: {
   readonly children: ReactNode;
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
   readonly shortcut?: string | undefined;
+  readonly closeOnSelect?: boolean;
 }) {
   return (
     <DropdownMenu.CheckboxItem
@@ -78,14 +99,15 @@ export function MenuCheckboxItem({
       checked={checked}
       onCheckedChange={onCheckedChange}
       onSelect={event => {
-        event.preventDefault();
+        if (!closeOnSelect) event.preventDefault();
       }}
+      {...(shortcut === undefined ? {} : { 'aria-keyshortcuts': ariaKeyShortcuts(shortcut) })}
     >
       <DropdownMenu.ItemIndicator className="absolute left-2 inline-flex size-4 items-center justify-center text-accent">
         <Check size={14} aria-hidden />
       </DropdownMenu.ItemIndicator>
       {children}
-      {shortcut !== undefined && <Kbd>{shortcut}</Kbd>}
+      <Shortcut keys={shortcut} />
     </DropdownMenu.CheckboxItem>
   );
 }

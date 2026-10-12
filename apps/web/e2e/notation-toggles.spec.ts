@@ -10,7 +10,7 @@
  * (REND-229); a capo's notes as they sound or as fingered (REND-232); in the score on screen.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool } from './support.ts';
 
 /** SMuFL's sharp, as the score's music font writes it. */
 const SHARP = '';
@@ -60,7 +60,7 @@ test('tempo marks are shown or hidden', async ({ page }) => {
   await expectScore(page);
   const tempo = async () => (await scoreTexts(page)).some(text => text.includes('112'));
   await expect.poll(tempo).toBe(true);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   await page.getByRole('dialog', { name: 'Stylesheet' }).getByRole('switch', { name: 'Tempo marks' }).click();
   await expect.poll(tempo).toBe(false);
 });
@@ -71,7 +71,7 @@ test('tempo marks with their decimals, or rounded', async ({ page }) => {
   await expectScore(page);
   const tempos = async () => (await scoreTexts(page)).filter(text => text.includes('= '));
   await expect.poll(tempos).toEqual([' = 92.5', ' = 120.25']);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'Tempo decimals (120.5)' }).click();
   await expect.poll(tempos).toEqual([' = 93', ' = 120']);
@@ -105,7 +105,7 @@ test('cut C, the pitch a bend reaches, the lower voices’ rests and tuplet brac
   expect(await count(CUT_COMMON)).toBe(0);
   expect(await brackets()).toBeGreaterThan(0);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'C and cut C for 4/4 and 2/2' }).click();
   await expect.poll(() => count(CUT_COMMON)).toBe(1);
@@ -139,7 +139,7 @@ test('arpeggio arrowheads, a trill’s second note, "sl.", tied frets, dashes an
   expect(await texts()).not.toContain('(7)');
   expect(await green()).toBe(0);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'Arrowheads on arpeggios' }).click();
   // The strum keeps its arrowhead.
@@ -164,7 +164,7 @@ test('arpeggio arrowheads, a trill’s second note, "sl.", tied frets, dashes an
   await expect.poll(async () => /[\u{E050}\u{E052}]/u.test((await texts()).join(''))).toBe(false);
   await expect.poll(texts).toContain('(7)');
   expect((await texts()).join('')).not.toContain(QUARTER_REST);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   await page
     .getByRole('dialog', { name: 'Stylesheet' })
     .getByRole('switch', { name: 'Quarter rests as a dash' })
@@ -188,7 +188,7 @@ test('beams drawn level on request', async ({ page }) => {
         }).length,
     );
   await expect.poll(sloped).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   await page
     .getByRole('dialog', { name: 'Stylesheet' })
     .getByRole('switch', { name: 'Level beams on the staff' })
@@ -209,7 +209,7 @@ test('the clef on every system or the first only, the time signature on every sy
   const signed = await fours();
   expect(signed).toBe(2);
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'Clef on every system' }).click();
   await expect.poll(clefs).toBe(1);
@@ -223,7 +223,7 @@ test('palm mutes either side of a rest drawn as one line on request', async ({ p
   await expectScore(page);
   const mutes = async () => (await scoreTexts(page)).filter(text => text === 'P.M.').length;
   await expect.poll(mutes).toBe(2);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   await page
     .getByRole('dialog', { name: 'Stylesheet' })
     .getByRole('switch', { name: 'Technique lines over rests' })
@@ -240,7 +240,7 @@ test('artificial harmonics with where they are touched, without, or octaves as a
   await expect
     .poll(async () => (await texts()).filter(text => text.startsWith('<')))
     .toEqual(['<17>', '<19>', '<12>', '<12>', '<12>', '<12>']);
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'A dot for octave harmonics' }).click();
   await expect.poll(async () => (await texts()).filter(text => /^\d+\.$/.test(text))).toEqual(['5.', '7.']);
@@ -267,7 +267,7 @@ test('hammer-ons and pull-offs with or without H and P, a chord’s slurs over i
   await expect.poll(letters).toBeGreaterThan(0);
   const slurs = await curves();
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: '"H" and "P" over hammer-ons and pull-offs' }).click();
   await expect.poll(letters).toBe(0);
@@ -298,7 +298,7 @@ test('the rhythm in the tablature under a staff when asked, and each voice’s w
   await expect.poll(rules).toBeGreaterThan(0);
   const staffOnly = await rules();
 
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog
     .getByRole('radiogroup', { name: 'Rhythm in the tablature' })
@@ -341,7 +341,7 @@ test('slash notation with or without its line and barlines, and single notes’ 
       });
   await expect.poll(async () => (await rules()).lines).toBeGreaterThan(0);
   const usual = await rules();
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'A line behind slash notation' }).click();
   await expect.poll(async () => (await rules()).lines).toBe(0);
@@ -363,7 +363,7 @@ test('a capo’s notes as they sound, or as fingered in their own key', async ({
   // Capo 2 in B flat: two flats in the key.
   await expect.poll(flats).toBeGreaterThan(0);
   const sounding = await flats();
-  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await viewTool(page, 'Stylesheet');
   const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
   await dialog.getByRole('switch', { name: 'Capos and tunings change the written notes' }).click();
   // As fingered: A flat, four flats in the key.
