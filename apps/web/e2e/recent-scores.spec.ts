@@ -115,7 +115,7 @@ test('keeps recent scores beside the music fonts an earlier version kept', async
   await expect(
     recent(page).getByRole('button', { name: 'Open Twelve-Bar Shuffle in A again' }),
   ).toBeVisible();
-  // Both kinds of store side by side.
+  // The earlier stores beside those added since (changes not saved, EDIT-124).
   const stores = await page.evaluate(
     () =>
       new Promise<string[]>(resolve => {
@@ -126,5 +126,5 @@ test('keeps recent scores beside the music fonts an earlier version kept', async
         };
       }),
   );
-  expect(stores).toEqual(['files', 'musicFonts', 'recent']);
+  expect(stores).toEqual(['drafts', 'files', 'musicFonts', 'recent']);
 });
