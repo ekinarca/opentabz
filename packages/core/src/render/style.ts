@@ -107,6 +107,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     extendBarLines: sheet.extendBarLines,
     systemSeparator: sheet.useSystemSignSeparator,
     tuning: sheet.globalDisplayTuning && !noneOf(sheet.perTrackDisplayTuning, tracks),
+    // As alphaTab writes them: as they sound.
+    capoAndTuningInNotation: true,
     // How the legend looks is not among what alphaTab reads: as alphaTab draws it.
     tuningPlace: 'top',
     tuningDetail: 'auto',
@@ -241,6 +243,7 @@ export function applyScoreStyle(
       case 'staffLineThickness':
       case 'systemSpacing':
       case 'firstSystemIndent':
+      case 'capoAndTuningInNotation':
       case 'tuningPlace':
       case 'tuningDetail':
       case 'tuningLayout':

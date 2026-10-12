@@ -198,7 +198,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   barlines and its single notes' frets and strings, where artificial
   harmonics are touched (or not, or a dot for an octave), the tuning
   legend (what it says, its strings in columns or on a line, framed) or the strings' names before
-  the tablature instead, and where chord diagrams go, at what size and how far apart (those above their beats
+  the tablature instead, capos and tunings in the written notes or guitars written as fingered in
+  their own key, and where chord diagrams go, at what size and how far apart (those above their beats
   keep apart), and the words printed for let ring, palm mute, slide, hammer-on, pull-off, slap,
   pop, pick scrape, rasgueado and the whammy bar. It starts as the file asks (Guitar Pro stylesheets are
   honoured, the tuning legend included), applies as it is changed, prints and exports the same, and
@@ -272,8 +273,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   spacing (0039), technique labels as asked (0040), the tuning legend as asked (0041), the stems
   and rests of four voices (0042), artificial harmonics in the tablature as asked (0043) and the
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
-  circled long notes (0045), and slash notation as asked (0046). See
-  [docs/upstream/](docs/upstream/).
+  circled long notes (0045), slash notation as asked (0046), and notes written apart from where
+  they sound, string by string (0047). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

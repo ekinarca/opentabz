@@ -27,6 +27,7 @@ import { applyVoiceColors } from './voice-colors.ts';
 import { layoutDrumKey } from './drum-key.ts';
 import { layoutTextBlocks, type TextBlocksLayout } from './text-blocks.ts';
 import { applyConcertPitch, applyStaffDisplay } from './staff-display.ts';
+import { applyWrittenAsStandard } from './written-pitch.ts';
 
 export interface LayoutResult {
   /** Increases with every layout; partial ids are only valid within their generation. */
@@ -230,6 +231,11 @@ export class RenderSession {
     const tracks = tracksFor(this.score, this.options.trackIndexes);
     const restoreStaves = applyStaffDisplay(tracks, this.options.staffDisplay, this.options.staves);
     const restorePitch = applyConcertPitch(tracks, this.options.concertPitch === true);
+    // Guitars as if in standard tuning without a capo, when the style asks (REND-232).
+    const restoreWritten = applyWrittenAsStandard(
+      tracks,
+      this.options.style?.capoAndTuningInNotation === false,
+    );
     // Voices' colours first: the view's note colours win where both apply.
     const restoreVoices = applyVoiceColors(tracks, this.options.style?.voiceColors === true);
     const restoreColors = applyNoteColors(tracks, this.options.noteColors);
@@ -240,6 +246,7 @@ export class RenderSession {
       restoreAids();
       restoreColors();
       restoreVoices();
+      restoreWritten();
       restorePitch();
       restoreStaves();
     };

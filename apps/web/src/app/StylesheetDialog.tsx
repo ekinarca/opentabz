@@ -432,6 +432,14 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
           />
           {style.tuning && <TuningFields style={style} set={set} />}
           <Switch
+            label={s.capoAndTuningInNotation}
+            hint={s.capoAndTuningInNotationHint}
+            checked={style.capoAndTuningInNotation}
+            onCheckedChange={capoAndTuningInNotation => {
+              set({ capoAndTuningInNotation });
+            }}
+          />
+          <Switch
             label={s.chordDiagramsOnTop}
             checked={style.chordDiagramsOnTop}
             onCheckedChange={chordDiagramsOnTop => {

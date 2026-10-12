@@ -138,6 +138,11 @@ export interface ScoreStyle {
   readonly systemSeparator: boolean;
   /** The tuning legend at the start of the score. */
   readonly tuning: boolean;
+  /**
+   * Capos and tunings change the written notes: standard notation as it sounds, in one key; off,
+   * guitars written as if in standard tuning without a capo, in their own key (REND-232).
+   */
+  readonly capoAndTuningInNotation: boolean;
   /** Where the tuning is written (REND-225). */
   readonly tuningPlace: TuningPlace;
   /** What the tuning legend says (REND-225). */
@@ -241,6 +246,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   extendBarLines: false,
   systemSeparator: false,
   tuning: true,
+  capoAndTuningInNotation: true,
   tuningPlace: 'top',
   tuningDetail: 'auto',
   tuningLayout: 'columns',

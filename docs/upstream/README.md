@@ -55,6 +55,7 @@ available as source: the patch file is that source.
 | [0044](0044-tab-rhythm.md)                           | The rhythm in the tablature, per voice and outside the staff                       | Guitar Pro places each voice’s tab rhythm and its stems                    | not yet  |
 | [0045](0045-tab-beams-and-circles.md)                | Beams over rests and circled long notes in the tablature                           | Guitar Pro chooses both                                                    | not yet  |
 | [0046](0046-slash-notation.md)                       | Slash notation as asked                                                            | Guitar Pro hides its line and barlines, and writes single notes’ frets     | not yet  |
+| [0047](0047-written-pitch.md)                        | Notes written apart from where they sound, string by string                        | Guitar Pro writes guitars as if in standard tuning without a capo          | not yet  |
 
 ## Working on a patch
 

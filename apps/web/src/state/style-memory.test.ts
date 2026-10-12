@@ -130,7 +130,7 @@ describe('styles remembered per song', () => {
     expect(parseStyle(older)?.techniqueLabels).toEqual(DEFAULT_SCORE_STYLE.techniqueLabels);
   });
 
-  it('reads how the tuning is written (REND-225), as usual for older styles', () => {
+  it('reads how the tuning is written (REND-225, REND-232), as usual for older styles', () => {
     const stored = JSON.parse(
       JSON.stringify({
         ...DEFAULT_SCORE_STYLE,
@@ -138,6 +138,7 @@ describe('styles remembered per song', () => {
         tuningDetail: 'changed',
         tuningLayout: 'line',
         tuningFrame: true,
+        capoAndTuningInNotation: false,
       }),
     ) as Record<string, unknown>;
     expect(parseStyle(stored)).toMatchObject({
@@ -145,6 +146,7 @@ describe('styles remembered per song', () => {
       tuningDetail: 'changed',
       tuningLayout: 'line',
       tuningFrame: true,
+      capoAndTuningInNotation: false,
     });
     expect(parseStyle({ ...stored, tuningDetail: 'everything' })).toBeNull();
     expect(parseStyle({ ...stored, tuningFrame: 'yes' })).toBeNull();
@@ -153,6 +155,7 @@ describe('styles remembered per song', () => {
       tuningDetail: _detail,
       tuningLayout: _layout,
       tuningFrame: _frame,
+      capoAndTuningInNotation: _capo,
       ...older
     } = stored;
     expect(parseStyle(older)).toMatchObject({
@@ -160,6 +163,7 @@ describe('styles remembered per song', () => {
       tuningDetail: 'auto',
       tuningLayout: 'columns',
       tuningFrame: false,
+      capoAndTuningInNotation: true,
     });
   });
 

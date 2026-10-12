@@ -7,7 +7,7 @@
  * systems (REND-231); technique lines over rests (REND-243); where artificial harmonics are
  * touched, and octave harmonics as a dot (REND-247); the rhythm in the tablature (REND-244) and
  * its circled long notes (REND-245); slash notation's line, barlines and single notes' frets
- * (REND-229); in the score on screen.
+ * (REND-229); a capo's notes as they sound or as fingered (REND-232); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -160,6 +160,8 @@ test('arpeggio arrowheads, a trill’s second note, "sl.", tied frets, dashes an
   await page.getByRole('button', { name: /^Staves: / }).click();
   await page.getByRole('menuitemradio', { name: 'Tab', exact: true }).click();
   await page.keyboard.press('Escape');
+  // Laid out again without the staff: its treble clef gone (the rests read before were its own).
+  await expect.poll(async () => /[\u{E050}\u{E052}]/u.test((await texts()).join(''))).toBe(false);
   await expect.poll(texts).toContain('(7)');
   expect((await texts()).join('')).not.toContain(QUARTER_REST);
   await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
@@ -323,4 +325,20 @@ test('slash notation with or without its line and barlines, and single notes’ 
   await expect
     .poll(async () => (await scoreTexts(page)).filter(text => text === '5' || text === '7'))
     .toEqual(['5', '7']);
+});
+
+test('a capo’s notes as they sound, or as fingered in their own key', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/fretboard.atex')]);
+  await expectScore(page);
+  /** SMuFL's flat, as the score's music font writes it. */
+  const flats = async () => (await scoreTexts(page)).join('').split('\u{E260}').length - 1;
+  // Capo 2 in B flat: two flats in the key.
+  await expect.poll(flats).toBeGreaterThan(0);
+  const sounding = await flats();
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'Capos and tunings change the written notes' }).click();
+  // As fingered: A flat, four flats in the key.
+  await expect.poll(flats).toBeGreaterThan(sounding);
 });
