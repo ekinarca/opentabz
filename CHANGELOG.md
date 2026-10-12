@@ -288,13 +288,17 @@ All notable changes to OpenTabz are recorded here. The format follows
   circled long notes (0045), slash notation as asked (0046), notes written apart from where they
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
   (0049), fingering as asked (0050), tablature that skips notes without a string (0051), drum
-  tablature (0052), and sound-change labels (0053). See [docs/upstream/](docs/upstream/).
+  tablature (0052), sound-change labels (0053), and the tempo changes of Guitar Pro 3–5 and
+  Capella files as steps (0054). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
 
 ### Fixed
 
+- Tempo changes in Guitar Pro 3–5 and Capella files hold until the next one, as they do in Guitar
+  Pro and Capella: a song going to 140 at bar 20 and to 100 at bar 40 no longer slows down over
+  the twenty bars between. A tempo change a Guitar Pro 5.1 file hides is no longer drawn.
 - With four voices on a staff, voice 3's stems point up and a rest of voice 3 moves above the
   other voices, as Guitar Pro writes them (voices 2 and 4 keep theirs down and below).
 - Let-ring ranges read "let ring", as in Guitar Pro, instead of "LetRing".

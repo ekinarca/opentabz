@@ -290,7 +290,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-020 | Repeat traversal identical to Guitar Pro              | GP  | M1  | alphatab/guitarpro7/repeat-close-multi.gp             | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-021 | Alternate-ending traversal                            | GP  | M1  | alphatab/guitarpro7/repeat-close-alternate-endings.gp | packages/core/test/playback-traversal.test.ts | done |
 | PLAY-022 | Direction traversal (D.C., D.S., Coda, Fine variants) | GP  | M1  | alphatab/guitarpro8/directions.gp                     | packages/core/test/playback-traversal.test.ts | done |
-| PLAY-023 | Full tempo map including ramps                        | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts, packages/core/test/playback-realism.test.ts | done |
+| PLAY-023 | Full tempo map including ramps                        | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts, packages/core/test/playback-realism.test.ts, packages/core/test/tempo-steps.test.ts | done |
 | PLAY-024 | Dynamics affect velocity                              | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts | done |
 | PLAY-025 | Volume and pan automation                             | GP  | M1  | —                                                     | packages/core/test/playback-tempo-dynamics.test.ts | done |
 | PLAY-030 | Audible bends as pitch-bend curves                    | GP  | M1  | alphatab/guitarpro7/bends.gp                          | packages/core/test/playback-pitch-effects.test.ts | done |

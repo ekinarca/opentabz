@@ -36,7 +36,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro3/bends.gp3
 
 exports[`every fixture imports to the same score > alphatab/guitarpro3/dead.gp3 1`] = `"3444cf8eaa749d3a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro3/effects.gp3 1`] = `"2b5c9fedbe88a439"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro3/effects.gp3 1`] = `"e063887ebd179ab9"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro3/grace.gp3 1`] = `"d1e1b5be51f195fc"`;
 
@@ -46,7 +46,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro3/harmonics
 
 exports[`every fixture imports to the same score > alphatab/guitarpro3/notes.gp3 1`] = `"5637fcce60db71d6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro3/other-effects.gp3 1`] = `"d97c4fd08263690a"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro3/other-effects.gp3 1`] = `"1a6ed9edbec05e19"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro3/ranges.gp3 1`] = `"da32dbe3aadcb443"`;
 
@@ -72,7 +72,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro4/colors.gp
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/dead.gp4 1`] = `"3444cf8eaa749d3a"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro4/effects.gp4 1`] = `"01af656ce69c9473"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro4/effects.gp4 1`] = `"04e35f85a59dc9b6"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/fingering.gp4 1`] = `"018e0a6e75ddf91d"`;
 
@@ -86,7 +86,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro4/harmonics
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/notes.gp4 1`] = `"5637fcce60db71d6"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro4/other-effects.gp4 1`] = `"5538d61798540ae6"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro4/other-effects.gp4 1`] = `"a6c083a27e5fe80a"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro4/ranges.gp4 1`] = `"9a17666b85ff9185"`;
 
@@ -128,7 +128,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/dead.gp5 
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/directions.gp5 1`] = `"081702bdda173c68"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/effects.gp5 1`] = `"72c3e6cedd255372"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/effects.gp5 1`] = `"a82337145f8e82f1"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/fingering.gp5 1`] = `"5cc69c3403a44c76"`;
 
@@ -158,7 +158,7 @@ exports[`every fixture imports to the same score > alphatab/guitarpro5/layout-co
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/notes.gp5 1`] = `"acc5a5e443fd0d08"`;
 
-exports[`every fixture imports to the same score > alphatab/guitarpro5/other-effects.gp5 1`] = `"385f07d53283f034"`;
+exports[`every fixture imports to the same score > alphatab/guitarpro5/other-effects.gp5 1`] = `"72c64a8d6d76d94e"`;
 
 exports[`every fixture imports to the same score > alphatab/guitarpro5/ottavia.gp5 1`] = `"e94f8662a8f49554"`;
 
@@ -448,9 +448,9 @@ exports[`every fixture imports to the same score > alphatab/lyrics/template.gpx 
 
 exports[`every fixture imports to the same score > alphatab/musicxml3/compressed.mxl 1`] = `"abdb1de69959d8c7"`;
 
-exports[`every fixture imports to the same score > capella/original-air.capx 1`] = `"28f14091b65bb020"`;
+exports[`every fixture imports to the same score > capella/original-air.capx 1`] = `"bc5003d6e8920023"`;
 
-exports[`every fixture imports to the same score > capella/original-air.capxml 1`] = `"28f14091b65bb020"`;
+exports[`every fixture imports to the same score > capella/original-air.capxml 1`] = `"bc5003d6e8920023"`;
 
 exports[`every fixture imports to the same score > musicxml/original-timewise.musicxml 1`] = `"fde795035aa8f065"`;
 
