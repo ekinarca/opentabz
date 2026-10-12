@@ -37,6 +37,8 @@ function beats(): TrackBeats {
     beatMarks: new Int32Array(),
     noteMarks: new Int32Array(),
     texts: [],
+    drumSounds: [],
+    drumNames: [],
   };
 }
 

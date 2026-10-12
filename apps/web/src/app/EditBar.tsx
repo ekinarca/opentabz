@@ -68,6 +68,7 @@ import {
   insertBeatAtCaret,
   isDirty,
   NOT_EDITING,
+  onDrums,
   pasteAtCaret,
   redoEdit,
   selectAllToEdit,
@@ -153,6 +154,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
   const ready = row !== null;
   const key = doc.key;
   const selected = editing.selection !== null;
+  // On a drum staff the caret marks beats: sounds go on from the drum view or by their MIDI keys.
+  const drums = onDrums(caret);
+  const drumName = (sound: string): string => beats?.drumNames.find(([id]) => id === sound)?.[1] ?? sound;
   const voice = caret?.voice ?? 0;
   const copied = useClipboard(state => state.clip !== null);
 
@@ -310,7 +314,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             <button
               type="button"
               aria-label={e.fretPad}
-              disabled={!ready}
+              disabled={!ready || drums}
               className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink disabled:pointer-events-none disabled:opacity-40"
             >
               <Hash size={18} aria-hidden />
@@ -507,8 +511,16 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           ? e.noStrings
           : caret === null || row === null
             ? ''
-            : // Strings counted from the highest, as players count them.
-              e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret, caret.voice + 1)}
+            : drums
+              ? e.caretDrums(
+                  row.bar + 1,
+                  row.notes.flatMap(note =>
+                    note.sound === undefined || note.sound === '' ? [] : [drumName(note.sound)],
+                  ),
+                  caret.voice + 1,
+                )
+              : // Strings counted from the highest, as players count them.
+                e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret, caret.voice + 1)}
       </p>
       <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2 md:pl-2">
         {dirty && (

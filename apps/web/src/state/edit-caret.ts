@@ -71,6 +71,8 @@ export interface NoteRow {
   readonly leftFinger?: Finger;
   readonly rightFinger?: Finger;
   readonly spelling?: Spelling | null;
+  /** On a drum staff, the note's sound ("Snare.38"). */
+  readonly sound?: string;
 }
 
 function rowAt(beats: TrackBeats, index: number): BeatRow {
@@ -87,6 +89,7 @@ function rowAt(beats: TrackBeats, index: number): BeatRow {
       leftFinger: FINGERS[beats.noteMarks[markAt] ?? 0] ?? 'none',
       rightFinger: FINGERS[beats.noteMarks[markAt + 1] ?? 0] ?? 'none',
       spelling: SPELLING_ORDER[beats.noteMarks[markAt + 2] ?? 0] ?? null,
+      sound: beats.drumSounds[firstNote + note] ?? '',
     };
   });
   const marks = index * TRACK_BEAT_MARK_STRIDE;

@@ -1358,7 +1358,9 @@ export const strings = {
     /** The tablature's caret, for assistive technology. */
     caret: (bar: number, string: number, fret: number | null, voice = 1) =>
       `Caret: bar ${String(bar)}, ${voice > 1 ? `voice ${String(voice)}, ` : ''}string ${String(string)}, ${fret === null ? 'nothing written' : `fret ${String(fret)}`}`,
-    noStrings: 'This track has no strings to write frets on: choose a guitar or bass track.',
+    caretDrums: (bar: number, sounds: readonly string[], voice = 1) =>
+      `Caret: bar ${String(bar)}, ${voice > 1 ? `voice ${String(voice)}, ` : ''}${sounds.length === 0 ? 'nothing written' : sounds.join(', ')}`,
+    noStrings: 'This track has neither strings nor drums to write on: choose a guitar, bass or drum track.',
     hint: 'Type a fret, or click a string of the tablature; the arrows move the caret.',
     duration: 'Note length',
     durations: {

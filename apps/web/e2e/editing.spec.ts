@@ -383,9 +383,9 @@ test('a click puts the caret on a string; the edit bar writes frets and lengths,
   await editTool(page, 'Redo');
   await expect.poll(() => hasLength(page, 'Quarter note')).toBe(true);
 
-  // A track without strings has nothing to write frets on.
+  // On a drum track the caret marks beats and names their sounds.
   await editBar(page).getByRole('combobox', { name: 'Track' }).selectOption({ label: '4. Drums' });
-  await expect(caret(page)).toHaveText(/no strings to write frets on/);
+  await expect(caret(page)).toHaveText(/^Caret: bar \d+, (nothing written|.*\((hit|closed|open)\))/);
   await editBar(page).getByRole('combobox', { name: 'Track' }).selectOption({ label: '1. Rhythm Guitar' });
   await expect(caret(page)).toHaveText(/^Caret: bar \d+, string 1/);
 
@@ -911,4 +911,33 @@ test('a key clicked on the keyboard view is written at the caret, on a string th
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
   await key.click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+});
+
+test('drums are written beat by beat: pads of the drum view, or General MIDI keys typed (EDIT-034, EDIT-115)', async ({
+  page,
+  isMobile,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('combobox', { name: 'Track' }).selectOption({ label: '4. Drums' });
+  // The first beat: a kick and a closed hi-hat.
+  await expect(caret(page)).toHaveText('Caret: bar 1, Kick (hit), Hi-Hat (closed)');
+  await viewTool(page, 'Drums');
+  const pads = page.getByRole('region', { name: 'Drums', exact: true });
+  const snare = pads.getByRole('button', { name: 'Snare', exact: true });
+  await expect(snare).toHaveAttribute('aria-pressed', 'false');
+  await snare.click();
+  await expect(snare).toHaveAttribute('aria-pressed', 'true');
+  await expect(caret(page)).toHaveText(/Snare \(hit\)/);
+  await snare.click();
+  await expect(caret(page)).not.toHaveText(/Snare/);
+  if (!isMobile) {
+    // Guitar Pro 5's way: 3 then 8, a snare; Delete takes the beat's sounds off.
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('3');
+    await page.keyboard.press('8');
+    await expect(caret(page)).toHaveText(/Snare \(hit\)/);
+    await page.keyboard.press('Delete');
+    await expect(caret(page)).toHaveText(/nothing written$/);
+  }
 });

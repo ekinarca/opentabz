@@ -23,6 +23,8 @@ import {
 import { FRETBOARD_SHOWS, indexTrackNotes, NO_NOTES, NOTE_LABELS } from '../instrument-view/fretboard.ts';
 import { useTrackDrums } from '../instrument-view/use-track-notes.ts';
 import type { OpenDocument } from '../state/documents.ts';
+import { rowOf } from '../state/edit-caret.ts';
+import { onDrums, playDrumAtCaret, useEditing } from '../state/editing.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
@@ -147,6 +149,18 @@ export function DrumsPanel({ doc }: { readonly doc: OpenDocument }) {
   const read = useMemo(() => lightsReader(doc.key, drums, pads, show), [doc.key, drums, pads, show]);
   const lights = useSyncExternalStore(usePlayer.subscribe, read);
   const trackName = track === undefined ? '' : track.name.trim().length > 0 ? track.name : track.shortName;
+  // While the drums are edited, the pads put sounds on the caret's beat and take them off (EDIT-097).
+  const caretSounds = useEditing(state => {
+    const editing = state.docs[doc.key];
+    if (editing?.on !== true || !onDrums(editing.caret) || editing.caret?.track !== track?.index) return null;
+    if (editing.beats === null || editing.caret === null) return null;
+    return (
+      rowOf(editing.beats, editing.caret.beatId)
+        ?.notes.map(note => note.sound ?? '')
+        .join('|') ?? ''
+    );
+  });
+  const atCaret = caretSounds === null ? null : new Set(caretSounds.split('|').filter(sound => sound !== ''));
   const playing = pads.flatMap(pad => {
     const light = lights.get(pad.key);
     return light?.kind === 'current' ? [drums?.sounds[light.sound]?.name ?? pad.label] : [];
@@ -197,15 +211,31 @@ export function DrumsPanel({ doc }: { readonly doc: OpenDocument }) {
             const name =
               mode === 'kit' && light?.kind === 'current' && sound !== undefined ? sound.name : pad.label;
             const shown = labels === 'always';
+            const keys = pad.sounds.flatMap(index => drums?.sounds[index]?.key ?? []);
+            const on = atCaret === null ? undefined : keys.find(sound => atCaret.has(sound));
+            const Pad = atCaret === null ? 'div' : 'button';
             return (
               <li key={pad.key}>
-                <div
+                <Pad
+                  {...(atCaret === null
+                    ? {}
+                    : {
+                        type: 'button' as const,
+                        'aria-pressed': on !== undefined,
+                        'aria-label': pad.label,
+                        onClick: () => {
+                          const sound = on ?? keys[0];
+                          if (sound !== undefined) playDrumAtCaret(doc.key, sound);
+                        },
+                      })}
                   title={s.pad(pad.label, pad.midi)}
                   data-pad={pad.key}
                   data-kind={light?.kind ?? 'none'}
                   data-used={pad.used}
                   className={cx(
                     'group relative flex flex-col items-center justify-center gap-0.5 rounded-full border-2 text-center transition-colors duration-100',
+                    atCaret !== null &&
+                      'cursor-pointer hover:border-[var(--ot-cursor)] aria-pressed:ring-2 aria-pressed:ring-[var(--ot-cursor)] aria-pressed:ring-offset-2 aria-pressed:ring-offset-surface',
                     large ? 'size-[92px]' : 'size-[72px]',
                     light?.kind === 'current'
                       ? 'border-[var(--ot-cursor)] bg-[var(--ot-cursor)] text-[var(--ot-on-cursor)]'
@@ -242,7 +272,7 @@ export function DrumsPanel({ doc }: { readonly doc: OpenDocument }) {
                       {pad.midi}
                     </span>
                   )}
-                </div>
+                </Pad>
               </li>
             );
           })}

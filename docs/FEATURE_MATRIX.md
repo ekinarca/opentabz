@@ -573,7 +573,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-031 | Instrument and program                                           | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-032 | Tuning editor (any string count, capo, presets, custom)          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-033 | Microtonal tuning offsets                                        | OT  | M4  | —       | —    | planned |
-| EDIT-034 | Percussion tracks with drum-map editing                          | GP  | M4  | —       | —    | planned |
+| EDIT-034 | Percussion tracks with drum-map editing                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-035 | Track name, short name, colour                                   | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-036 | Transposing-instrument settings                                  | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-040 | Chord library and custom diagram editor                          | GP  | M5  | —       | —    | planned |
@@ -645,7 +645,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-112 | Whammy-bar editor: pitch curve with presets in quarter-tone steps | GP  | M4  | —       | —    | planned |
 | EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |
 | EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | —    | planned |
-| EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | —    | planned |
+| EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | —    | planned |
 | EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | —    | planned |
 | EDIT-118 | Transpose scope: selection or whole score, one track or all      | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |

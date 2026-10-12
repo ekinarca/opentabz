@@ -239,10 +239,17 @@ function fail(error: unknown): void {
 
 /** The staff of a track frets are written on: its first staff with strings, if any. */
 function stringedStaff(doc: OpenDocument, track: number): { staff: number; strings: number } | null {
-  const staff = doc.summary.tracks[track]?.staves.find(
-    candidate => candidate.stringCount > 0 && !candidate.isPercussion,
-  );
-  return staff === undefined ? null : { staff: staff.index, strings: staff.stringCount };
+  const staves = doc.summary.tracks[track]?.staves ?? [];
+  const staff = staves.find(candidate => candidate.stringCount > 0 && !candidate.isPercussion);
+  if (staff !== undefined) return { staff: staff.index, strings: staff.stringCount };
+  // A drum staff: the caret marks beats, sounds put on and taken off them (EDIT-034).
+  const drums = staves.find(candidate => candidate.isPercussion);
+  return drums === undefined ? null : { staff: drums.index, strings: 0 };
+}
+
+/** Whether the caret is on a drum staff, where it marks beats rather than strings (string 0). */
+export function onDrums(caret: Caret | null): boolean {
+  return caret !== null && caret.string === 0;
 }
 
 function placeOf(editing: DocEditing): CaretPlace | null {
@@ -330,17 +337,19 @@ export function setCaretAt(
     const doc = docOf(key);
     if (doc === null) return;
     const strings = doc.summary.tracks[spot.track]?.staves[spot.staff];
-    if (strings === undefined || strings.stringCount === 0 || strings.isPercussion) return;
+    if (strings === undefined || (strings.stringCount === 0 && !strings.isPercussion)) return;
     const beats =
       editing.caret?.track === spot.track && editing.beats !== null
         ? editing.beats
         : await getEngine().call('trackBeats', { docId: doc.engineId, trackIndex: spot.track });
     const row = rowOf(beats, spot.beatId);
     if (row === null) return;
-    const string = Math.min(
-      strings.stringCount,
-      Math.max(1, spot.string ?? editing.caret?.string ?? strings.stringCount),
-    );
+    const string = strings.isPercussion
+      ? 0
+      : Math.min(
+          strings.stringCount,
+          Math.max(1, spot.string ?? editing.caret?.string ?? strings.stringCount),
+        );
     const caret = { track: spot.track, staff: row.staff, voice: row.voice, beatId: row.beatId, string };
     patch(key, {
       beats,
@@ -744,6 +753,11 @@ function typeFretNow(key: string, digit: number, now: number): boolean {
   const { editing, caret, at } = found;
   const fret = typedFret(editing.typed, caret, digit, now);
   patch(key, { typed: { beatId: caret.beatId, string: caret.string, fret, at: now } });
+  // On drums, two digits are a General MIDI key, as Guitar Pro 5 types them: 38 a snare.
+  if (onDrums(caret)) {
+    if (fret >= 10) apply(key, [{ kind: 'set-drum', at, sound: fret, on: true }], null, false, caret.beatId);
+    return true;
+  }
   apply(key, [{ kind: 'set-fret', at: { ...at, string: caret.string }, fret }], null, false, caret.beatId);
   return true;
 }
@@ -764,6 +778,7 @@ function deleteNoteAtCaretNow(key: string): boolean {
   const found = atCaret(key);
   if (found === null) return editingOf(key).on;
   const { editing, caret, at } = found;
+  if (onDrums(caret)) return restAtCaretNow(key);
   if (editing.beats === null || fretAtCaret(editing.beats, caret) === null) return true;
   apply(key, [{ kind: 'remove-note', at: { ...at, string: caret.string } }]);
   return true;
@@ -1006,6 +1021,23 @@ export function playPitchAtCaret(key: string, pitch: number): boolean {
       .sort((a, b) => Math.abs(a - caret.string) - Math.abs(b - caret.string));
     const string = strings.find(candidate => pitch - open(candidate) >= 0 && pitch - open(candidate) <= 24);
     if (string !== undefined) playNoteAtCaret(key, string, pitch - open(string));
+  });
+}
+
+/**
+ * A drum sound played on the drum view (EDIT-097, EDIT-034): put on the caret's beat, or taken off
+ * when it is there.
+ */
+export function playDrumAtCaret(key: string, sound: string): boolean {
+  if (!editingOf(key).on) return false;
+  return act(key, () => {
+    const found = atCaret(key);
+    if (found === null || !onDrums(found.caret) || found.editing.beats === null) return;
+    const { caret, at, editing } = found;
+    const beats = editing.beats;
+    if (beats === null) return;
+    const there = rowOf(beats, caret.beatId)?.notes.some(note => note.sound === sound) === true;
+    apply(key, [{ kind: 'set-drum', at, sound, on: !there }], null, false, there ? null : caret.beatId);
   });
 }
 
@@ -1289,6 +1321,8 @@ function toggleNoteTechniqueNow(key: string, toggle: NoteToggle): boolean {
   const found = atCaret(key);
   if (found === null) return editingOf(key).on;
   const { editing, caret, at } = found;
+  // Drum notes have no strings to tie, slide or bend on.
+  if (onDrums(caret)) return true;
   const [flag, set] = NOTE_TOGGLES[toggle];
   const note =
     editing.beats === null
@@ -1305,6 +1339,7 @@ function togglePalmMuteBeatNow(key: string): boolean {
   const found = atCaret(key);
   if (found === null) return editingOf(key).on;
   const { editing, caret, at } = found;
+  if (onDrums(caret)) return true;
   const notes = editing.beats === null ? [] : (rowOf(editing.beats, caret.beatId)?.notes ?? []);
   if (notes.length === 0) return true;
   const on = !notes.every(note => (note.flags & TECHNIQUE_PALM_MUTE) !== 0);
@@ -1340,7 +1375,11 @@ function restAtCaretNow(key: string): boolean {
   if (notes.length > 0)
     apply(
       key,
-      notes.map(note => ({ kind: 'remove-note', at: { ...at, string: note.string } })),
+      notes.map(note =>
+        note.sound !== undefined && note.sound !== ''
+          ? { kind: 'set-drum' as const, at, sound: note.sound, on: false }
+          : { kind: 'remove-note' as const, at: { ...at, string: note.string } },
+      ),
     );
   return true;
 }

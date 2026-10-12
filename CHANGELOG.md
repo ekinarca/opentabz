@@ -265,6 +265,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   and Fine at a bar, and a jump at its end (D.C., D.S., D.S.S. and their al Coda, al Double Coda
   and al Fine, To Coda), which playback follows; and starts a new system at a bar, on the page and
   on screen.
+- **Drums written.** On a drum track the caret marks beats and says what sounds on them; the
+  drum view's pads put sounds on the caret's beat and take them off, and two digits typed put on
+  the sound with that General MIDI key, as Guitar Pro 5 types drums (38, a snare). Delete clears
+  the beat.
 - **Write on the fretboard and the keyboard.** While the score is edited, a click on the
   fretboard writes that string and fret at the caret's beat, a click on the keyboard view that
   note on the caret's string (or the nearest one that plays it), and a click on a note written
