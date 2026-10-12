@@ -9,6 +9,7 @@ import * as alphaTab from '@coderline/alphatab';
 import { describe, expect, it } from 'vitest';
 import { copySelection } from '../src/edit/clip.ts';
 import { moveChordName } from '../src/edit/transpose.ts';
+import { harmonyOf } from '../src/edit/harmonize.ts';
 import { readBarProperties } from '../src/edit/bar-properties.ts';
 import { collectTrackBeats } from '../src/edit/track-beats.ts';
 import { EditError } from '../src/edit/commands.ts';
@@ -19,6 +20,9 @@ import {
   DURATION_VALUES,
   DYNAMICS,
   FINGERS,
+  HARMONIES,
+  STEMS,
+  TUPLETS,
   type BarProperties,
   type BeatAddress,
   type BeatTechniques,
@@ -358,6 +362,104 @@ describe('commands', () => {
     expect(() => editor.apply([{ kind: 'set-beat', at: AT, techniques: { text: 'x'.repeat(201) } }])).toThrow(
       'A beat’s text is too long.',
     );
+  });
+
+  it('writes tuplets of three to thirteen, and stems up or down (EDIT-010, EDIT-106)', () => {
+    const score = texScore('\\track "Guitar" 5.3.16 5.3.16 5.3.16 5.3.16 5.3.16 r.4 r.2');
+    const editor = editorOf(score);
+    editor.apply(
+      [0, 1, 2, 3, 4].map(index => ({
+        kind: 'set-beat' as const,
+        at: { ...AT, beat: index },
+        techniques: { tuplet: '5:4' as const, stem: 'down' as const },
+      })),
+    );
+    expect(beat(score, 0, 0).tupletGroup?.beats).toHaveLength(5);
+    expect(beat(score, 0, 0)).toMatchObject({
+      tupletNumerator: 5,
+      tupletDenominator: 4,
+      preferredBeamDirection: alphaTab.rendering.BeamDirection.Down,
+    });
+    // Five sixteenths in the time of four: the rest after them starts on the second beat.
+    expect(beat(score, 0, 5).playbackStart).toBe(960);
+    const listed = collectTrackBeats(score, 0);
+    expect([...listed.beatMarks.slice(2, 4)]).toEqual([2, 2]);
+  });
+
+  it('repeats the beat before over a beat, across the bar line (EDIT-094)', () => {
+    const score = texScore('\\track "Guitar" 3.3.4 (5.2 7.3).8 r.8 r.2 | r.1');
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'repeat-beat', at: { ...AT, beat: 2 } }]);
+    expect(written(score, 0)).toEqual(['3.3:4', '5.2 7.3:8', '5.2 7.3:8', 'r2']);
+    editor.apply([{ kind: 'repeat-beat', at: { ...AT, bar: 1 } }]);
+    expect(written(score, 1)).toEqual(['r2']);
+    expect(() => editor.apply([{ kind: 'repeat-beat', at: AT }])).toThrow('No beat before to repeat.');
+  });
+
+  it('retunes a track keeping its notes’ pitches: to drop D, and to a bass (EDIT-054)', () => {
+    const score = texScore('\\track "Guitar" (3.6 2.5).4 (0.6 2.4).4 5.1.4 -.1.4 | 22.1.1');
+    const editor = editorOf(score);
+    const pitches = () =>
+      score.tracks[0]?.staves[0]?.bars.flatMap(bar =>
+        bar.voices[0]?.beats.map(each => each.notes.map(note => note.realValue).sort((a, b) => a - b)),
+      );
+    const before = pitches();
+    // Drop D: the low E string a tone lower; its notes two frets higher.
+    const dropD = [64, 59, 55, 50, 45, 38];
+    editor.apply([{ kind: 'set-track', track: 0, properties: { tuning: dropD, keepPitches: true } }]);
+    expect(pitches()).toEqual(before);
+    expect(written(score, 0)[0]).toBe('2.5 5.6:4');
+    expect(written(score, 0)[1]).toBe('2.4 2.6:4');
+    // The tied note follows the note it holds on.
+    expect(beat(score, 0, 3).notes[0]?.tieOrigin).toBe(beat(score, 0, 2).notes[0]);
+    // A bass, four strings an octave down: the high notes go as far up the neck as they must.
+    editor.undo();
+    editor.apply([
+      { kind: 'set-track', track: 0, properties: { tuning: [43, 38, 33, 28], keepPitches: true } },
+    ]);
+    expect(pitches()).toEqual(before);
+    expect(
+      score.tracks[0]?.staves[0]?.bars.every(bar =>
+        bar.voices[0]?.beats.every(each => each.notes.every(note => note.string <= 4)),
+      ),
+    ).toBe(true);
+    // Too high for any string: refused, as it was.
+    const piccolo = texScore('\\track "Guitar" 99.1.1');
+    expect(() =>
+      editorOf(piccolo).apply([
+        { kind: 'set-track', track: 0, properties: { tuning: [43, 38, 33, 28], keepPitches: true } },
+      ]),
+    ).toThrow('A note has no string to be played on in the new tuning.');
+  });
+
+  it('moves, copies and swaps the contents of voices in bars (EDIT-102)', () => {
+    const score = texScore('\\track "Guitar" 3.3.2 5.3.2 | 7.3.1');
+    const editor = editorOf(score);
+    const contents = (bar: number, voice: number) =>
+      (score.tracks[0]?.staves[0]?.bars[bar]?.voices[voice]?.beats ?? []).map(each =>
+        each.isEmpty ? '-' : each.notes.map(note => note.fret).join(' '),
+      );
+    const move = {
+      kind: 'voice-contents' as const,
+      track: 0,
+      staff: 0,
+      fromBar: 0,
+      toBar: 0,
+      from: 0,
+      to: 1,
+    };
+    editor.apply([{ ...move, mode: 'move' }]);
+    expect(contents(0, 0)).toEqual(['-']);
+    expect(contents(0, 1)).toEqual(['3', '5']);
+    editor.apply([{ ...move, from: 1, to: 0, fromBar: 0, toBar: 1, mode: 'copy' }]);
+    expect(contents(0, 0)).toEqual(['3', '5']);
+    expect(contents(1, 0)).toEqual(['-']);
+    editor.undo();
+    editor.apply([{ ...move, toBar: 1, mode: 'swap' }]);
+    expect(contents(0, 0)).toEqual(['3', '5']);
+    expect(contents(0, 1)).toEqual(['-']);
+    expect(contents(1, 1)).toEqual(['7']);
+    expect(() => editor.apply([{ ...move, to: 4, mode: 'move' }])).toThrow('No voice 5.');
   });
 
   it('puts voices in a staff, empty, to write in (EDIT-011)', () => {
@@ -725,6 +827,36 @@ describe('transposing and moving notes from string to string (EDIT-050 … EDIT-
     );
   });
 
+  it('finds harmonies in the key: thirds, sixths and octaves, above and below (EDIT-055)', () => {
+    // C major: C's third is E, its sixth A; below, A and E.
+    expect(harmonyOf(60, 0, 'third', false)).toBe(64);
+    expect(harmonyOf(60, 0, 'sixth', false)).toBe(69);
+    expect(harmonyOf(60, 0, 'third', true)).toBe(57);
+    expect(harmonyOf(60, 0, 'octave', true)).toBe(48);
+    // G major (one sharp): F♯'s third is A; E♭ (three flats): G's third is B♭.
+    expect(harmonyOf(66, 1, 'third', false)).toBe(69);
+    expect(harmonyOf(67, -3, 'third', false)).toBe(70);
+    // Out of the key: as far from the key's third as the note is from its own degree.
+    expect(harmonyOf(61, 0, 'third', false)).toBe(65);
+    expect(harmonyOf(127, 0, 'octave', false)).toBeNull();
+  });
+
+  it('harmonizes notes on the nearest free string, a tied note’s harmony held too (EDIT-055)', () => {
+    const score = texScore('\\track "Guitar" 5.3.2 -.3.2 | 0.6.1');
+    const editor = editorOf(score);
+    editor.apply([{ kind: 'harmonize', selection: beats([0, 0], [0, 1]), harmony: 'third', below: false }]);
+    expect(written(score, 0)).toEqual(['5.2 5.3:2', '5.2 5.3:2']);
+    expect(beat(score, 0, 1).notes.find(note => note.string === tex(2))?.tieOrigin).toBe(
+      beat(score, 0, 0).notes.find(note => note.string === tex(2)),
+    );
+    // The low E open, a third below: no string goes lower; refused, as it was.
+    expect(() =>
+      editor.apply([{ kind: 'harmonize', selection: beats([1, 0], [1, 0]), harmony: 'third', below: true }]),
+    ).toThrow('No string has room for the notes’ harmonies.');
+    editor.apply([{ kind: 'harmonize', selection: beats([1, 0], [1, 0]), harmony: 'octave', below: false }]);
+    expect(written(score, 1)).toEqual(['7.5 0.6:1']);
+  });
+
   it('moves chord names: the root and the bass, not a name of one’s own', () => {
     expect(moveChordName('A7', 2)).toBe('B7');
     expect(moveChordName('D/F#', 2)).toBe('E/G#');
@@ -945,6 +1077,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
         { freeTime: random() < 0.5 },
         { tripletFeel: random() < 0.5 ? 'triplet-8th' : 'none' },
         { directions: BAR_DIRECTIONS.filter(() => random() < 0.15) },
+        { systemBreak: random() < 0.5 },
       ];
       return {
         kind: 'set-bar',
@@ -954,7 +1087,8 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
     }
     case 9: {
       const techniques: BeatTechniques[] = [
-        { tuplet: random() < 0.5 ? 'triplet' : 'none' },
+        { tuplet: TUPLETS[pick(TUPLETS.length)] ?? 'none' },
+        { stem: STEMS[pick(STEMS.length)] ?? 'auto' },
         { barVibrato: random() < 0.5 ? 'wide' : 'none' },
         { slap: random() < 0.5 },
         { tap: random() < 0.5 },
@@ -1005,9 +1139,52 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(8)) {
+  switch (pick(11)) {
+    case 10:
+      return {
+        kind: 'harmonize',
+        selection,
+        harmony: HARMONIES[pick(HARMONIES.length)] ?? 'third',
+        below: random() < 0.5,
+      };
+    case 9:
+      return {
+        kind: 'voice-contents',
+        track: staff.track.index,
+        staff: staff.index,
+        fromBar: bar.index,
+        toBar: Math.min(staff.bars.length - 1, bar.index + pick(3)),
+        from: pick(4),
+        to: pick(4),
+        mode: (['move', 'copy', 'swap'] as const)[pick(3)] ?? 'move',
+      };
+    case 8: {
+      if (staff.isPercussion || staff.tuning.length === 0 || staff.index !== 0) return null;
+      const tunings = [
+        [64, 59, 55, 50, 45, 38],
+        [62, 57, 55, 50, 45, 38],
+        [43, 38, 33, 28],
+        [64, 59, 55, 50, 45, 40, 35],
+      ];
+      return {
+        kind: 'set-track',
+        track: staff.track.index,
+        properties: { tuning: tunings[pick(tunings.length)] ?? [], keepPitches: true },
+      };
+    }
     case 7:
-      return { kind: 'add-voices', track: staff.track.index, staff: staff.index, count: 1 + pick(4) };
+      return random() < 0.5
+        ? { kind: 'add-voices', track: staff.track.index, staff: staff.index, count: 1 + pick(4) }
+        : {
+            kind: 'repeat-beat',
+            at: {
+              track: staff.track.index,
+              staff: staff.index,
+              bar: bar.index,
+              voice: voice.index,
+              beat: pick(voice.beats.length),
+            },
+          };
     case 5:
       return { kind: 'transpose', selection, semitones: pick(25) - 12, chords: random() < 0.5 };
     case 6: {
@@ -1100,7 +1277,12 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
       } catch (error) {
         // A paste a staff cannot take (drums on strings), notes moved past the frets or the
         // strings: refused, the score as it was.
-        if (!(error instanceof EditError) || !['paste', 'transpose', 'move-string'].includes(command.kind))
+        if (
+          !(error instanceof EditError) ||
+          !['paste', 'transpose', 'move-string', 'repeat-beat', 'set-track', 'harmonize'].includes(
+            command.kind,
+          )
+        )
           throw error;
         expect(stateOf(score), `refused ${JSON.stringify(command)}`).toEqual(states.at(-1));
         continue;

@@ -193,6 +193,15 @@ export function setBarProperties(score: alphaTab.model.Score, bar: number, prope
     if (anacrusis && bar !== 0) throw new EditError('Only the first bar can be a pickup bar.');
     masterBar.isAnacrusis = anacrusis;
   }
+  if (properties.systemBreak !== undefined) {
+    for (const track of score.tracks) {
+      const breaks = new Set(track.lineBreaks ?? []);
+      if (properties.systemBreak) breaks.add(bar);
+      else breaks.delete(bar);
+      if (breaks.size === 0) delete track.lineBreaks;
+      else track.lineBreaks = breaks;
+    }
+  }
   if (properties.directions !== undefined) {
     const directions = new Set(
       properties.directions.map(name => {
@@ -231,6 +240,7 @@ export function readBarProperties(score: alphaTab.model.Score, bar: number): Bar
     freeTime: masterBar.isFreeTime,
     tripletFeel: feel,
     anacrusis: masterBar.isAnacrusis,
+    systemBreak: score.tracks.length > 0 && score.tracks.every(track => track.lineBreaks?.has(bar) === true),
     directions: (Object.keys(DIRECTIONS) as BarDirection[]).filter(
       name => masterBar.directions?.has(DIRECTIONS[name]) === true,
     ),

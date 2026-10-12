@@ -210,6 +210,28 @@ describe('EngineHost — editing (EDIT-001, EDIT-060)', () => {
     expect(layOut(700)).toBe(bars);
   });
 
+  it('starts a new system at a bar when asked, every track alike (EDIT-109)', () => {
+    const host = new EngineHost();
+    const opened = host.open({
+      name: 'shuffle.atex',
+      bytes: buffer('alphatex/demos/twelve-bar-shuffle.atex'),
+    });
+    if (!opened.ok) throw new Error('demo did not open');
+    const docId = opened.summary.id;
+    const starts = () =>
+      host
+        .layoutView({ viewId: 'v', docId, options: { ...VIEW, width: 1200 } })
+        .partials.filter(p => p.kind === 'system')
+        .map(p => p.firstBar);
+    expect(starts()).not.toContain(4);
+    host.edit({ docId, commands: [{ kind: 'set-bar', bar: 4, properties: { systemBreak: true } }] });
+    expect(starts()).toContain(4);
+    expect(host.barProperties({ docId, bar: 4 }).systemBreak).toBe(true);
+    host.undo({ docId });
+    expect(starts()).not.toContain(4);
+    expect(host.barProperties({ docId, bar: 4 }).systemBreak).toBe(false);
+  });
+
   it('copies bars from one document and pastes them in another (EDIT-020)', () => {
     const host = new EngineHost();
     const shuffle = host.open({

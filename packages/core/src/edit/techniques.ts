@@ -15,6 +15,7 @@ import type {
   NoteTechniques,
   SlideOut,
   Spelling,
+  Stem,
   Stroke,
   Tuplet,
   Vibrato,
@@ -145,10 +146,25 @@ const BENDS: Readonly<Record<Bend, (note: alphaTab.model.Note) => void>> = {
   full: bendFull,
 };
 
-/** Notes played in the time of how many: none (−1), or three in the time of two. */
-const TUPLETS: Readonly<Record<Tuplet, readonly [number, number]>> = {
+/** Notes played in the time of how many: none (−1), three in the time of two, five in four… */
+export const TUPLET_RATIOS: Readonly<Record<Tuplet, readonly [number, number]>> = {
   none: [-1, -1],
   triplet: [3, 2],
+  '5:4': [5, 4],
+  '6:4': [6, 4],
+  '7:4': [7, 4],
+  '9:8': [9, 8],
+  '10:8': [10, 8],
+  '11:8': [11, 8],
+  '12:8': [12, 8],
+  '13:8': [13, 8],
+};
+
+/** Stems as the notes have them (no preference), up or down. */
+export const STEM_DIRECTIONS: Readonly<Record<Stem, alphaTab.rendering.BeamDirection | null>> = {
+  auto: null,
+  up: alphaTab.rendering.BeamDirection.Up,
+  down: alphaTab.rendering.BeamDirection.Down,
 };
 
 /** Sets a note's techniques; a tie is joined to the note before it on the string by alphaTab. */
@@ -196,8 +212,11 @@ export function setNoteTechniques(note: alphaTab.model.Note, techniques: NoteTec
 
 /** Sets a beat's techniques. */
 export function setBeatTechniques(beat: alphaTab.model.Beat, techniques: BeatTechniques): void {
-  const { tuplet, barVibrato, slap, pop, tap, fade, stroke, tremolo, text, dynamics, beaming } = techniques;
-  if (tuplet !== undefined) [beat.tupletNumerator, beat.tupletDenominator] = named(TUPLETS, tuplet, 'tuplet');
+  const { tuplet, barVibrato, slap, pop, tap, fade, stroke, tremolo, text, dynamics, beaming, stem } =
+    techniques;
+  if (tuplet !== undefined)
+    [beat.tupletNumerator, beat.tupletDenominator] = named(TUPLET_RATIOS, tuplet, 'tuplet');
+  if (stem !== undefined) beat.preferredBeamDirection = named(STEM_DIRECTIONS, stem, 'stem direction');
   if (barVibrato !== undefined) beat.vibrato = named(VIBRATOS, barVibrato, 'vibrato');
   if (slap !== undefined) beat.slap = flag(slap, 'Slapping');
   if (pop !== undefined) beat.pop = flag(pop, 'Popping');

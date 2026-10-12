@@ -36,8 +36,15 @@ import {
   SPELLING_ORDER,
   type TrackBeats,
 } from '../shared/beats.ts';
-import { DYNAMICS, FINGERS } from '../shared/edit.ts';
-import { BEAMINGS, DYNAMIC_VALUES, FINGER_VALUES, SPELLINGS } from './techniques.ts';
+import { DYNAMICS, FINGERS, STEMS, TUPLETS } from '../shared/edit.ts';
+import {
+  BEAMINGS,
+  DYNAMIC_VALUES,
+  FINGER_VALUES,
+  SPELLINGS,
+  STEM_DIRECTIONS,
+  TUPLET_RATIOS,
+} from './techniques.ts';
 
 const { AccentuationType, FadeType, HarmonicType, PickStroke, SlideOutType, VibratoType } = alphaTab.model;
 
@@ -113,6 +120,13 @@ export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: numbe
           beatMarks.push(
             indexIn(DYNAMICS, DYNAMIC_VALUES, beat.dynamics),
             indexIn(BEAMING_ORDER, BEAMINGS, beat.beamingMode),
+            beat.hasTuplet
+              ? TUPLETS.findIndex(name => {
+                  const [numerator, denominator] = TUPLET_RATIOS[name];
+                  return beat.tupletNumerator === numerator && beat.tupletDenominator === denominator;
+                })
+              : 0,
+            Math.max(0, indexIn(STEMS, STEM_DIRECTIONS, beat.preferredBeamDirection)),
           );
           if (beat.text !== null && beat.text.length > 0) texts.push([beat.id, beat.text]);
           for (const note of beat.notes) {

@@ -206,6 +206,73 @@ export function transpose(
 }
 
 /**
+ * A staff retuned with its notes keeping their pitches (EDIT-054): each beat's notes, highest
+ * first, on their strings (counted from the lowest) while a fret up to the 24th plays them there,
+ * else on the nearest string left free with such a fret, else as far up the neck as the frets go;
+ * a tied note on the string of the note it holds on. Refused when a note has no string at all.
+ */
+export function retune(
+  transaction: Transaction,
+  staff: alphaTab.model.Staff,
+  tuning: readonly number[],
+): void {
+  const old = [...staff.tuning];
+  const openOld = (string: number): number => old[old.length - string] ?? 0;
+  const openNew = (string: number): number => tuning[tuning.length - string] ?? 0;
+  const strings = tuning.length;
+  if (strings === 0) throw new EditError('A tuning with strings keeps the notes’ pitches.');
+  const moved = new Map<alphaTab.model.Note, number>();
+  for (const bar of staff.bars) {
+    let touched = false;
+    for (const voice of bar.voices) {
+      for (const beat of voice.beats) {
+        const notes = beat.notes.filter(note => note.isStringed);
+        if (notes.length === 0) continue;
+        if (!touched) {
+          transaction.touch(staff, bar.index);
+          touched = true;
+        }
+        const pitches = new Map(notes.map(note => [note, openOld(note.string) + note.fret]));
+        notes.sort((a, b) => (pitches.get(b) ?? 0) - (pitches.get(a) ?? 0));
+        for (const note of notes) beat.removeNote(note);
+        const taken = new Set<number>();
+        const placed: [alphaTab.model.Note, number, number][] = [];
+        for (const note of notes) {
+          const pitch = pitches.get(note) ?? 0;
+          const origin =
+            note.isTieDestination && note.tieOrigin !== null ? moved.get(note.tieOrigin) : undefined;
+          const preferred = origin ?? Math.min(note.string, strings);
+          const order = Array.from({ length: strings }, (_, index) => index + 1)
+            .filter(string => !taken.has(string))
+            .sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred));
+          const fits = (string: number, highest: number): boolean => {
+            const fret = pitch - openNew(string);
+            return fret >= 0 && fret <= highest;
+          };
+          const string =
+            (origin !== undefined && !taken.has(origin) ? origin : undefined) ??
+            order.find(candidate => fits(candidate, PLAYABLE_FRET)) ??
+            order.find(candidate => fits(candidate, MAX_FRET));
+          if (string === undefined)
+            throw new EditError('A note has no string to be played on in the new tuning.');
+          taken.add(string);
+          placed.push([note, string, pitch - openNew(string)]);
+          moved.set(note, string);
+        }
+        for (const [note, string, fret] of placed) {
+          note.string = string;
+          note.fret = fret;
+          beat.addNote(note);
+        }
+        beat.notes.forEach((each, index) => {
+          each.index = index;
+        });
+      }
+    }
+  }
+}
+
+/**
  * Moves a note to the next string higher or lower in pitch it can be played on, at its pitch, and
  * the notes tied to it along with it; strings with a note of their own in the beat are passed.
  */

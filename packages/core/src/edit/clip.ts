@@ -8,7 +8,7 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import type { BeatAddress, Clip, Selection } from '../shared/edit.ts';
-import { detach, detachBar, emptyBeats, insertBar, removeBar } from './bars.ts';
+import { detach, detachBar, emptyBeats, ensureVoices, insertBar, removeBar } from './bars.ts';
 import type { Transaction } from './commands.ts';
 import { EditError } from './error.ts';
 
@@ -266,7 +266,7 @@ function readClip(clip: Clip): alphaTab.model.Score {
 }
 
 /** Beats as the voice holds them: theirs, in it. */
-function place(voice: alphaTab.model.Voice, beats: alphaTab.model.Beat[]): alphaTab.model.Beat[] {
+export function place(voice: alphaTab.model.Voice, beats: alphaTab.model.Beat[]): alphaTab.model.Beat[] {
   for (const beat of beats) beat.voice = voice;
   return beats;
 }
@@ -412,13 +412,14 @@ function beatFor(
   return copied;
 }
 
-/** A voice of a bar, put in (empty) when the bar has fewer. */
-function voiceOf(bar: alphaTab.model.Bar, index: number): alphaTab.model.Voice {
-  while (bar.voices.length <= index) {
-    const voice = new alphaTab.model.Voice();
-    bar.addVoice(voice);
-    voice.beats = emptyBeats(voice);
-  }
+/** A voice of a bar; one the staff has not, put in every bar of it, empty. */
+export function voiceOf(
+  transaction: Transaction,
+  bar: alphaTab.model.Bar,
+  index: number,
+): alphaTab.model.Voice {
+  if (bar.voices.length <= index || bar.voices[index]?.beats.length === 0)
+    ensureVoices(transaction, bar.staff, index + 1);
   const voice = bar.voices[index];
   if (voice === undefined) throw new Error('alphaTab put in no voice.');
   return voice;
@@ -478,7 +479,7 @@ function pasteBeats(transaction: Transaction, at: BeatAddress, copy: alphaTab.mo
     const staffBar = staff.bars[index];
     if (staffBar === undefined) throw new Error('The score was not made long enough to paste in.');
     transaction.touch(staff, index);
-    const voice = voiceOf(staffBar, at.voice);
+    const voice = voiceOf(transaction, staffBar, at.voice);
     const first = index === at.bar ? at.beat : 0;
     let end = first;
     let room = 0;
@@ -539,7 +540,7 @@ function pasteBars(transaction: Transaction, at: BeatAddress, copy: alphaTab.mod
       transaction.touch(staff, bar.index);
       detachBar(bar);
       from.voices.forEach((source, index) => {
-        const voice = voiceOf(bar, index);
+        const voice = voiceOf(transaction, bar, index);
         const beats = source.beats
           .filter(beat => !beat.isEmpty)
           .map(beat => beatFor(transaction, staff, beat));

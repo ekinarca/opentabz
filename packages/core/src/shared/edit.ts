@@ -167,7 +167,28 @@ export const BAR_DIRECTIONS: readonly BarDirection[] = [
   'da-double-coda',
 ];
 
-export type Tuplet = 'none' | 'triplet';
+/** Notes played in the time of others (EDIT-010): three in the time of two, five in four… */
+export type Tuplet = 'none' | 'triplet' | '5:4' | '6:4' | '7:4' | '9:8' | '10:8' | '11:8' | '12:8' | '13:8';
+export const TUPLETS: readonly Tuplet[] = [
+  'none',
+  'triplet',
+  '5:4',
+  '6:4',
+  '7:4',
+  '9:8',
+  '10:8',
+  '11:8',
+  '12:8',
+  '13:8',
+];
+
+/** A harmony a note is given (EDIT-055): a third, a sixth or an octave, in the key. */
+export type Harmony = 'third' | 'sixth' | 'octave';
+export const HARMONIES: readonly Harmony[] = ['third', 'sixth', 'octave'];
+
+/** Which way a beat's stems point (EDIT-106): as the notes have it, up or down. */
+export type Stem = 'auto' | 'up' | 'down';
+export const STEMS: readonly Stem[] = ['auto', 'up', 'down'];
 export type Fade = 'none' | 'in' | 'out' | 'swell';
 export type Stroke = 'none' | 'up' | 'down';
 
@@ -236,6 +257,8 @@ export interface BarProperties {
   readonly anacrusis?: boolean;
   /** The directions written at it: Segno, Coda, Fine, D.C., D.S. and their kinds (EDIT-025). */
   readonly directions?: readonly BarDirection[];
+  /** A new system starts at the bar (EDIT-109). */
+  readonly systemBreak?: boolean;
 }
 
 /** A bar's properties as they are (all of them). */
@@ -258,6 +281,11 @@ export interface TrackProperties {
   readonly capo?: number;
   /** Semitones the part is written above how it sounds (a transposing instrument: 12 for a guitar). */
   readonly transposition?: number;
+  /**
+   * With a new tuning, the notes keep their pitches (EDIT-054): their frets change, and a note
+   * goes to another string where its own has no fret for it. Without, they keep their frets.
+   */
+  readonly keepPitches?: boolean;
 }
 
 /** A track put in (EDIT-030). */
@@ -272,12 +300,14 @@ export interface NewTrack {
 }
 
 /** A track's properties as they are. */
-export type TrackState = Required<TrackProperties> & { readonly percussion: boolean };
+export type TrackState = Required<Omit<TrackProperties, 'keepPitches'>> & { readonly percussion: boolean };
 
 /** A beat's techniques (EDIT-014): each one given is set. */
 export interface BeatTechniques {
-  /** Three in the time of two (/), or none. */
+  /** Three in the time of two (/), five in four…, or none. */
   readonly tuplet?: Tuplet;
+  /** Which way its stems point. */
+  readonly stem?: Stem;
   /** Vibrato with the tremolo bar (W). */
   readonly barVibrato?: Vibrato;
   readonly slap?: boolean;
@@ -363,10 +393,39 @@ export type EditCommand =
       readonly chords?: boolean;
     }
   /**
+   * The beat before a beat (in its voice, across the bar line) written again over it, as Guitar
+   * Pro's C key repeats it (EDIT-094).
+   */
+  | { readonly kind: 'repeat-beat'; readonly at: BeatAddress }
+  /**
+   * A voice's contents moved, copied or swapped with another's, in a staff's bars (EDIT-102), as
+   * Guitar Pro's voice tool does: moved, the voice left is empty; copied, both have them.
+   */
+  | {
+      readonly kind: 'voice-contents';
+      readonly track: number;
+      readonly staff: number;
+      readonly fromBar: number;
+      readonly toBar: number;
+      readonly from: number;
+      readonly to: number;
+      readonly mode: 'move' | 'copy' | 'swap';
+    }
+  /**
    * Voices put in a staff (EDIT-011): every bar gets as many as `count`, those put in (or left
    * without a beat) empty, to be written in.
    */
   | { readonly kind: 'add-voices'; readonly track: number; readonly staff: number; readonly count: number }
+  /**
+   * Each note of a selection given another a third, a sixth or an octave above (or below) it, in
+   * its bar's key, on the nearest string with room (EDIT-055).
+   */
+  | {
+      readonly kind: 'harmonize';
+      readonly selection: Selection;
+      readonly harmony: Harmony;
+      readonly below: boolean;
+    }
   /** A note moved to the next string higher or lower in pitch it can be played on, at its pitch (EDIT-052). */
   | { readonly kind: 'move-string'; readonly at: NoteAddress; readonly higher: boolean };
 

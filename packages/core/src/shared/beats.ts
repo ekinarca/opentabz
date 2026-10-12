@@ -20,7 +20,8 @@ export interface TrackBeats {
   readonly notes: Int32Array;
   /**
    * Per beat, as `beats` lists them: [dynamics (its index in DYNAMICS, −1 another), beaming (0
-   * automatic, 1 split, 2 joined, −1 another)].
+   * automatic, 1 split, 2 joined, −1 another), tuplet (its index in TUPLETS, −1 another), stem
+   * (its index in STEMS)].
    */
   readonly beatMarks: Int32Array;
   /**
@@ -34,7 +35,7 @@ export interface TrackBeats {
 
 export const TRACK_BEATS_STRIDE = 12;
 export const TRACK_BEAT_NOTE_STRIDE = 3;
-export const TRACK_BEAT_MARK_STRIDE = 2;
+export const TRACK_BEAT_MARK_STRIDE = 4;
 export const TRACK_NOTE_MARK_STRIDE = 3;
 
 /** Beaming as `beatMarks` numbers it. */

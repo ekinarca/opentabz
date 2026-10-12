@@ -14,9 +14,10 @@ import { EditError } from './error.ts';
 import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
 import { setBarProperties } from './bar-properties.ts';
-import { detach, emptyBeats, insertBar, removeBar } from './bars.ts';
-import { clearSelection, paste, removeSelection } from './clip.ts';
-import { moveString, transpose } from './transpose.ts';
+import { detach, emptyBeats, ensureVoices, insertBar, removeBar } from './bars.ts';
+import { clearSelection, copyBeat, paste, place, removeSelection, voiceOf } from './clip.ts';
+import { moveString, retune, transpose } from './transpose.ts';
+import { harmonize } from './harmonize.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
 
@@ -325,6 +326,12 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
     case 'set-bar': {
       if (score.masterBars[command.bar] === undefined) throw new EditError(`No bar ${String(command.bar)}.`);
       transaction.touchBarProperties(command.bar);
+      // Systems start where every track says so: the tracks' breaks are kept, and the layout
+      // starts again from the bar before, whose system the bar may join or leave.
+      if (command.properties.systemBreak !== undefined) {
+        for (const track of score.tracks) transaction.journal.keepFields(track, ['lineBreaks']);
+        transaction.mark(Math.max(0, command.bar - 1));
+      }
       // A new meter moves the beats in their bars: the staves are worked out again.
       if (command.properties.meter !== undefined) {
         for (const track of score.tracks)
@@ -378,6 +385,11 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
     case 'set-track': {
       const track = trackAt(score, command.track);
       transaction.touchTrack(track);
+      const { tuning, keepPitches } = command.properties;
+      const staff = track.staves[0];
+      // The notes moved to the new tuning first, at their pitches, when asked.
+      if (keepPitches === true && tuning !== undefined && staff !== undefined && !staff.isPercussion)
+        retune(transaction, staff, tuning);
       setTrackProperties(track, command.properties);
       // A new tuning moves every note's pitch: the track's staves are worked out again.
       if (command.properties.tuning !== undefined || command.properties.capo !== undefined) {
@@ -417,21 +429,66 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
     case 'move-string':
       moveString(transaction, command.at, command.higher);
       return;
+    case 'harmonize':
+      harmonize(transaction, command.selection, command.harmony, command.below);
+      return;
+    case 'voice-contents': {
+      const staff = score.tracks[command.track]?.staves[command.staff];
+      if (staff === undefined)
+        throw new EditError(`No staff ${String(command.staff)} in track ${String(command.track)}.`);
+      const { from, to, mode } = command;
+      for (const voice of [from, to])
+        if (!Number.isInteger(voice) || voice < 0 || voice >= MAX_VOICES)
+          throw new EditError(`No voice ${String(voice + 1)}.`);
+      const [first, last] = [
+        Math.min(command.fromBar, command.toBar),
+        Math.max(command.fromBar, command.toBar),
+      ];
+      if (first < 0 || last >= staff.bars.length)
+        throw new EditError(`No bars ${String(first)} to ${String(last)}.`);
+      if (from === to) return;
+      for (const bar of staff.bars.slice(first, last + 1)) {
+        transaction.touch(staff, bar.index);
+        const source = voiceOf(transaction, bar, from);
+        const target = voiceOf(transaction, bar, to);
+        const moving = source.beats.filter(beat => !beat.isEmpty);
+        if (mode === 'swap') {
+          const kept = target.beats.filter(beat => !beat.isEmpty);
+          source.beats = kept.length > 0 ? place(source, kept) : emptyBeats(source);
+          target.beats = moving.length > 0 ? place(target, moving) : emptyBeats(target);
+          continue;
+        }
+        for (const beat of target.beats) for (const note of beat.notes) detach(note);
+        target.beats =
+          moving.length > 0
+            ? place(target, mode === 'copy' ? moving.map(copyBeat) : moving)
+            : emptyBeats(target);
+        // Moved, the notes keep what joins them; alphaTab joins them anew in their voice.
+        if (mode === 'move') source.beats = emptyBeats(source);
+      }
+      return;
+    }
+    case 'repeat-beat': {
+      const voice = voiceAt(score, command.at);
+      const beat = beatAt(score, command.at);
+      const previous =
+        voice.beats[command.at.beat - 1] ??
+        voice.bar.previousBar?.voices[command.at.voice]?.beats.findLast(each => !each.isEmpty);
+      if (previous === undefined || previous.isEmpty) throw new EditError('No beat before to repeat.');
+      transaction.touch(voice.bar.staff, command.at.bar);
+      for (const note of beat.notes) detach(note);
+      const copy = copyBeat(previous);
+      copy.voice = voice;
+      voice.beats = voice.beats.map(each => (each === beat ? copy : each));
+      return;
+    }
     case 'add-voices': {
       const staff = score.tracks[command.track]?.staves[command.staff];
       if (staff === undefined)
         throw new EditError(`No staff ${String(command.staff)} in track ${String(command.track)}.`);
       if (!Number.isInteger(command.count) || command.count < 1 || command.count > MAX_VOICES)
         throw new EditError(`A staff has 1 to ${String(MAX_VOICES)} voices.`);
-      for (const bar of staff.bars) {
-        const short = bar.voices.length < command.count;
-        const bare = bar.voices.slice(0, command.count).some(voice => voice.beats.length === 0);
-        if (!short && !bare) continue;
-        transaction.touch(staff, bar.index);
-        while (bar.voices.length < command.count) bar.addVoice(new alphaTab.model.Voice());
-        for (const voice of bar.voices.slice(0, command.count))
-          if (voice.beats.length === 0) voice.beats = emptyBeats(voice);
-      }
+      ensureVoices(transaction, staff, command.count);
       return;
     }
   }

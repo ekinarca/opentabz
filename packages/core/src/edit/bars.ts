@@ -61,6 +61,23 @@ export function emptyBeats(voice: alphaTab.model.Voice): alphaTab.model.Beat[] {
   return [beat];
 }
 
+/**
+ * Voices put in a staff (EDIT-011): every bar gets as many as `count`, those put in (or left
+ * without a beat) with an empty beat — alphaTab goes from a voice to the same one of the next bar,
+ * so every bar of a staff has its voices.
+ */
+export function ensureVoices(transaction: Transaction, staff: alphaTab.model.Staff, count: number): void {
+  for (const bar of staff.bars) {
+    const short = bar.voices.length < count;
+    const bare = bar.voices.slice(0, count).some(voice => voice.beats.length === 0);
+    if (!short && !bare) continue;
+    transaction.touch(staff, bar.index);
+    while (bar.voices.length < count) bar.addVoice(new alphaTab.model.Voice());
+    for (const voice of bar.voices.slice(0, count))
+      if (voice.beats.length === 0) voice.beats = emptyBeats(voice);
+  }
+}
+
 /** An empty bar for a staff, with the clef, key and voices of a bar next to it. */
 export function emptyBar(like: alphaTab.model.Bar | undefined): alphaTab.model.Bar {
   const bar = new alphaTab.model.Bar();
