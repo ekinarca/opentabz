@@ -4,6 +4,7 @@
  */
 import type {
   BracketMode,
+  BuiltInMusicFont,
   ChordSpelling,
   FormatId,
   LayoutKind,
@@ -621,6 +622,28 @@ export const strings = {
     texts: { full: 'Full name', short: 'Short name' } satisfies Record<TrackNameText, string>,
     orientations: { horizontal: 'Across', vertical: 'Upright' } satisfies Record<TextOrientation, string>,
     dynamics: 'Dynamics',
+    musicFont: 'Music font',
+    musicFonts: {
+      bravura: 'Engraved (Bravura)',
+      petaluma: 'Handwritten (Petaluma)',
+    } satisfies Record<BuiltInMusicFont, string>,
+    musicFontHints: {
+      bravura: 'Bravura: the notes as music is printed.',
+      petaluma: 'Petaluma: the notes as if written by hand.',
+    } satisfies Record<BuiltInMusicFont, string>,
+    ownFonts: {
+      group: 'Your own',
+      add: 'Add a SMuFL font…',
+      files: 'SMuFL font and its metadata',
+      remove: (name: string) => `Remove ${name}`,
+      missing: 'Your own font (not in this browser)',
+      ownHint: 'A SMuFL font of your own, kept in this browser only.',
+      missingHint: 'That font is not kept in this browser: the score is set in Bravura.',
+      chooseBoth: 'Choose the font (.otf, .ttf or .woff) and its SMuFL metadata (.json) together.',
+      notMetadata: (file: string) => `${file} is not a SMuFL font metadata file.`,
+      notSmufl: (file: string) => `${file} has no SMuFL music symbols.`,
+      notReadable: (file: string, detail: string) => `${file} cannot be read: ${detail}`,
+    },
     tempoMarks: 'Tempo marks',
     tempoDecimals: 'Tempo decimals (120.5)',
     lyrics: 'Lyrics',
@@ -1382,7 +1405,7 @@ export const strings = {
     engine: 'Notation engine',
     engineCredit:
       'Scores are parsed and engraved by alphaTab (Mozilla Public License 2.0) by Daniel Kuschny and contributors. OpenTabz applies small patches, published with its source code.',
-    font: 'Music font: Bravura by Steinberg Media Technologies (SIL Open Font License 1.1).',
+    font: 'Music fonts: Bravura and Petaluma by Steinberg Media Technologies (SIL Open Font License 1.1).',
     privacy:
       'Privacy: OpenTabz has no server. Your files are opened in this browser tab and never uploaded. There are no cookies, analytics or trackers.',
     trademark:

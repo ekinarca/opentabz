@@ -80,7 +80,8 @@
 
 /* alphaTab draws music symbols as text in the SMuFL font. */
 .ot-partial .at {
-  font-family: 'Bravura', serif;
+  /* The music font the view's stylesheet chose (REND-241), Bravura where it lacks a symbol. */
+  font-family: var(--ot-music-font, 'Bravura'), serif;
   font-size: 36px;
   font-style: normal;
   font-weight: normal;

@@ -6,6 +6,7 @@
  */
 import {
   DEFAULT_PAGE_FURNITURE,
+  musicFontStack,
   samePageFurniture,
   sameColoring,
   sameIndexes,
@@ -258,6 +259,8 @@ export class ScoreView {
 
     if (previous?.zoom !== state.zoom) this.applyZoom(previous?.zoom ?? state.zoom, state.zoom);
     this.zoomAnchor = null;
+    if (previous?.style.musicFont !== state.style.musicFont)
+      this.sheet.style.setProperty('--ot-music-font', musicFontStack(state.style.musicFont));
     // Pages moved (another arrangement, or the grid fits more or fewer to a row): no new layout.
     if (
       previous !== null &&

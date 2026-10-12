@@ -14,6 +14,7 @@ or sponsored by Arobas Music; the name is used only to say which files OpenTabz 
 | ----------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------------------------------------------------------------- |
 | [alphaTab](https://github.com/CoderLine/alphaTab)                                                                 | 1.8.4   | MPL-2.0    | Import, layout, SVG rendering, MIDI, synthesizer                 |
 | [Bravura](https://github.com/steinbergmedia/bravura) (font)                                                       | —       | OFL-1.1    | Music symbols (shipped with alphaTab), drawn in exported pages   |
+| [Petaluma](https://github.com/steinbergmedia/petaluma) (font, via `@vexflow-fonts/petaluma`)                      | 1.0.1   | OFL-1.1    | Handwritten music symbols, on request; drawn in exported pages   |
 | SONiVOX EAS sound bank (`sonivox.sf2`)                                                                            | —       | Apache-2.0 | Default playback sounds (shipped with alphaTab)                  |
 | [React](https://react.dev), React DOM, scheduler                                                                  | 19.3.0  | MIT        | User interface                                                   |
 | [Radix UI](https://www.radix-ui.com/primitives)                                                                   | 1.7.0   | MIT        | Accessible menus, dialogs, popovers, sliders, tooltips           |
@@ -50,6 +51,13 @@ modified source is that patch applied to the published package, and each change 
 
 Copyright © 2015, Steinberg Media Technologies GmbH, with Reserved Font Name "Bravura". Licensed
 under the SIL Open Font License 1.1.
+
+### Petaluma
+
+Copyright © 2018, Steinberg Media Technologies GmbH, with Reserved Font Name "Petaluma". Licensed
+under the SIL Open Font License 1.1. Shipped unmodified (its font files and SMuFL metadata, from
+Steinberg's redistribution as packaged by the VexFlow project) and loaded only for scores set in
+it; exported pages draw its symbols from its outlines.
 
 ### Arimo and Gelasio
 

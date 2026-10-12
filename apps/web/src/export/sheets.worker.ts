@@ -4,8 +4,11 @@
  * where they sit.
  */
 import {
+  musicGlyphsOf,
   PdfWriter,
+  readOutlines,
   sheetSvg,
+  type MusicGlyphs,
   type PdfMetadata,
   type RasterText,
   type Sheet,
@@ -16,11 +19,25 @@ import { PRINT_PALETTE } from '@opentabz/core/shared';
 import { strToU8, zipSync, type Zippable } from 'fflate';
 import { TEXT_FONTS } from './text-fonts.ts';
 
+/** Where a music font's outlines are read from (an .otf, .ttf or WOFF 1.0 file); Bravura if null. */
+export interface MusicFontFile {
+  readonly id: string;
+  readonly url: string;
+}
+
 export interface SheetsMethods {
   /** One page as a standalone SVG file. */
-  svg(args: { readonly sheet: Sheet; readonly options: SheetSvgOptions }): { readonly svg: string };
+  svg(args: {
+    readonly sheet: Sheet;
+    readonly options: SheetSvgOptions;
+    readonly musicFont?: MusicFontFile | null;
+  }): Promise<{ readonly svg: string }>;
   /** Pages as a PDF document. */
-  pdf(args: { readonly sheets: readonly Sheet[]; readonly metadata: PdfMetadata }): Promise<{
+  pdf(args: {
+    readonly sheets: readonly Sheet[];
+    readonly metadata: PdfMetadata;
+    readonly musicFont?: MusicFontFile | null;
+  }): Promise<{
     readonly bytes: Uint8Array;
   }>;
   /** Files in a ZIP archive, in order. */
@@ -90,10 +107,38 @@ function rasterize(text: string, style: TextStyle): RasterText | null {
   };
 }
 
+/** Music fonts' glyphs, read once per font (REND-241). */
+const musicFonts = new Map<string, Promise<MusicGlyphs>>();
+
+/** A music font's glyphs, Bravura's where it lacks one; nothing for Bravura itself. */
+async function glyphsOf(font: MusicFontFile | null | undefined): Promise<{ glyphs?: MusicGlyphs }> {
+  if (font === null || font === undefined) return {};
+  let glyphs = musicFonts.get(font.id);
+  if (glyphs === undefined) {
+    glyphs = fetch(font.url)
+      .then(response => {
+        if (!response.ok) throw new Error(`The music font could not be loaded (${response.status}).`);
+        return response.arrayBuffer();
+      })
+      .then(buffer => musicGlyphsOf(readOutlines(new Uint8Array(buffer))));
+    musicFonts.set(font.id, glyphs);
+    glyphs.catch(() => musicFonts.delete(font.id));
+  }
+  return { glyphs: await glyphs };
+}
+
 const methods: SheetsMethods = {
-  svg: ({ sheet, options }) => ({ svg: sheetSvg(sheet, options) }),
-  pdf: async ({ sheets, metadata }) => {
-    const writer = new PdfWriter({ palette: PRINT_PALETTE, metadata, fonts: TEXT_FONTS, rasterize });
+  svg: async ({ sheet, options, musicFont }) => ({
+    svg: sheetSvg(sheet, { ...options, ...(await glyphsOf(musicFont)) }),
+  }),
+  pdf: async ({ sheets, metadata, musicFont }) => {
+    const writer = new PdfWriter({
+      palette: PRINT_PALETTE,
+      metadata,
+      fonts: TEXT_FONTS,
+      rasterize,
+      ...(await glyphsOf(musicFont)),
+    });
     for (const sheet of sheets) await writer.addSheet(sheet);
     return { bytes: await writer.finish() };
   },

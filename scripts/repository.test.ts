@@ -81,6 +81,7 @@ describe('repository', () => {
       '@fontsource/arimo': 'Arimo',
       '@fontsource/gelasio': 'Gelasio',
       '@fontsource/instrument-serif': 'Instrument Serif',
+      '@vexflow-fonts/petaluma': 'Petaluma',
       fflate: 'fflate',
       'lucide-react': 'Lucide',
       'radix-ui': 'Radix UI',

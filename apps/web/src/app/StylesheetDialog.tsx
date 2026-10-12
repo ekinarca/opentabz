@@ -18,6 +18,7 @@ import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { HeaderFooterSection } from './HeaderFooterSection.tsx';
+import { MusicFontField } from './MusicFontField.tsx';
 import { StylesheetChoices } from './StylesheetChoices.tsx';
 import { TextFontsSection } from './TextFontsSection.tsx';
 import { Field } from './MetronomeSettingsForm.tsx';
@@ -287,6 +288,12 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
         </Section>
 
         <Section title={s.sections.notation}>
+          <MusicFontField
+            value={style.musicFont}
+            onChange={musicFont => {
+              set({ musicFont });
+            }}
+          />
           <Switch
             label={s.dynamics}
             checked={!style.hideDynamics}

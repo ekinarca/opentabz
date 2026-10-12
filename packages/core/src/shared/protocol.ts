@@ -6,6 +6,7 @@
 import type { OpenError } from './open-error.ts';
 import type { TrackChords } from './chords.ts';
 import type { TrackDrums } from './drums.ts';
+import type { SmuflMetadataJson } from './music-font.ts';
 import type { ScoreOverview } from './overview.ts';
 import type { TrackLyrics } from './lyrics.ts';
 import type { TrackNotes } from './notes.ts';
@@ -80,6 +81,11 @@ export interface EngineMethods {
   trackDrums(args: { readonly docId: string; readonly trackIndex: number }): TrackDrums;
   /** The bars each track plays in, for the song overview. */
   scoreOverview(args: { readonly docId: string }): ScoreOverview;
+  /**
+   * Makes a music font other than Bravura known for views to engrave with (REND-241): its id and
+   * its SMuFL metadata. Fonts are forgotten when the engine restarts.
+   */
+  registerMusicFont(args: { readonly id: string; readonly metadata: SmuflMetadataJson }): null;
   /**
    * The song for an audio export: the MIDI playback would send the synthesizer (with a silent
    * tail for the last notes to die away) and its timeline, returned rather than sent.

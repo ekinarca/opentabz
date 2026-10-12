@@ -20,3 +20,4 @@ export * from './chord-spelling.ts';
 export * from './text-fonts.ts';
 export * from './note-colors.ts';
 export * from './reading-aids.ts';
+export * from './music-font.ts';

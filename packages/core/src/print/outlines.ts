@@ -3,7 +3,7 @@
  * glyph table keeps Bravura's), from an OpenType font with PostScript (CFF) or TrueType outlines,
  * plain or in WOFF 1.0: what exports draw a music font other than Bravura with (REND-241).
  */
-import type { MusicGlyph } from './glyphs.ts';
+import { musicGlyph, type MusicGlyph, type MusicGlyphs } from './glyphs.ts';
 import {
   FontFormatError,
   readCmap,
@@ -21,6 +21,11 @@ export const OUTLINE_UNITS_PER_EM = 1000;
 export interface FontOutlines {
   /** The glyph a code point is drawn with, or undefined where the font has none. */
   glyph(codePoint: number): MusicGlyph | undefined;
+}
+
+/** A music font's glyphs, Bravura's where it has none of its own (as the engine engraves them). */
+export function musicGlyphsOf(outlines: FontOutlines): MusicGlyphs {
+  return codePoint => outlines.glyph(codePoint) ?? musicGlyph(codePoint);
 }
 
 /** Reads a font's outlines from an .otf or .ttf file, or a WOFF 1.0 file. */

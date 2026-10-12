@@ -136,7 +136,17 @@ the paged view, the cursor and the exports need no special case.
 From M4, edits mutate the worker's `Score` and re-render with
 `renderHints.firstChangedMasterBar`, so only systems from the edit onward are laid out again.
 
-### 4.4 Text measurement in workers
+### 4.4 Music fonts
+
+alphaTab draws music symbols as text in the SMuFL font the page's CSS names, and lays them out
+with the metrics of that font's SMuFL metadata. Bravura is built in; any other font (Petaluma,
+or one of one's own kept in IndexedDB) is loaded by the UI only when a score asks for it: a
+`FontFace` for the screen, its metadata registered with the engine worker (`registerMusicFont`,
+again after a restart; what the font lacks takes Bravura's metrics), and its file read by the
+sheets worker, whose OpenType/TrueType reader (`print/outlines.ts`) gives exports the symbols'
+outlines. The score view sets the font stack in a CSS variable, Bravura last.
+
+### 4.5 Text measurement in workers
 
 Upstream alphaTab measures text with a DOM canvas on the main thread and falls back to a
 fixed 8 px/char estimate in workers. Our patch
@@ -403,7 +413,8 @@ Strict CSP via Netlify headers (`default-src 'self'`; workers and blobs from sel
 third-party origins), no cookies, no storage of file contents outside the device. Open-from-URL
 fetches only the URL the user typed. The tuner asks for the microphone only when it opens and
 releases it when it closes; the sound is analysed in memory (`audio/microphone.ts`, YIN pitch
-detection in `@opentabz/audio/pitch`) and never recorded, kept or sent. `vite preview` serves the same `_headers`, so the
+detection in `@opentabz/audio/pitch`) and never recorded, kept or sent. Music fonts of one's own
+stay in the browser's IndexedDB and are read from there only. `vite preview` serves the same `_headers`, so the
 end-to-end tests run under the production CSP, and the build never inlines assets as `data:`
 URLs (the CSP would block them). **(planned, M8)** User scripts run in a sandboxed iframe /
 worker with a capability-based API.

@@ -11,6 +11,7 @@ import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { scoreFields } from '../state/score-fields.ts';
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, useDocuments, type OpenDocument } from '../state/documents.ts';
 import { ringingTracks } from '../state/mixer-memory.ts';
+import { prepareMusicFont } from '../state/music-fonts.ts';
 import { usePreferences, type Preferences } from '../state/preferences.ts';
 import { strings } from '../strings.ts';
 
@@ -219,25 +220,35 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
   }, [key, doc.view.autoFit, doc.view.layout, doc.view.page, doc.view.zoom, hidden]);
 
   useEffect(() => {
-    if (doc.view.autoFit) return;
-    viewRef.current?.update({
-      docId: doc.engineId,
-      layout: doc.view.layout,
-      page: doc.view.page,
-      arrangement: doc.view.arrangement,
-      style: doc.view.style,
-      systemsLayout: doc.view.systemsLayout,
-      staffDisplay: doc.view.staffDisplay,
-      staves: doc.view.staves,
-      concertPitch: doc.view.concertPitch,
-      noteColors: coloring,
-      readingAids: aids,
-      letRing,
-      drumKey,
-      trackIndexes: doc.view.trackIndexes,
-      zoom: doc.view.zoom,
-      fields,
-    });
+    if (doc.view.autoFit) return undefined;
+    let current = true;
+    const update = () => {
+      if (!current) return;
+      viewRef.current?.update({
+        docId: doc.engineId,
+        layout: doc.view.layout,
+        page: doc.view.page,
+        arrangement: doc.view.arrangement,
+        style: doc.view.style,
+        systemsLayout: doc.view.systemsLayout,
+        staffDisplay: doc.view.staffDisplay,
+        staves: doc.view.staves,
+        concertPitch: doc.view.concertPitch,
+        noteColors: coloring,
+        readingAids: aids,
+        letRing,
+        drumKey,
+        trackIndexes: doc.view.trackIndexes,
+        zoom: doc.view.zoom,
+        fields,
+      });
+    };
+    // A music font other than Bravura is loaded and made known to the engine first; should it
+    // fail, the score is engraved in Bravura.
+    prepareMusicFont(doc.view.style.musicFont).then(update, update);
+    return () => {
+      current = false;
+    };
   }, [doc.engineId, doc.view, fields, coloring, aids, letRing, drumKey]);
 
   return (

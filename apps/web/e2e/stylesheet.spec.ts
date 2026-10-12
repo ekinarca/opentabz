@@ -1,9 +1,14 @@
 /**
  * The stylesheet (REND-218): F7 or the toolbar opens it; a change shows in the score at once, is
  * remembered for the file, and "As in the file" brings the file's own style back. The staff
- * lines' thickness, the space between systems and the first system's indent (REND-228).
+ * lines' thickness, the space between systems and the first system's indent (REND-228). The
+ * music engraved or handwritten, on screen and in exported pages (REND-241).
  */
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { unzipSync } from 'fflate';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
@@ -174,4 +179,82 @@ test('staff lines thicker, systems further apart, the first system indented', as
   await expect.poll(async () => (await lines()).thickness).toBeCloseTo(before.thickness * 3, 1);
   await expect.poll(async () => (await lines()).left - before.left).toBeCloseTo((50 * 96) / 25.4, 0);
   await expect.poll(gap).toBeCloseTo(gapBefore + 60, 0);
+});
+
+const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));
+const PETALUMA = { otf: join(petaluma, 'petaluma.otf'), metadata: join(petaluma, 'metadata.json') };
+
+/** The music symbols' outlines the first exported SVG page draws, by code point. */
+async function exportedSymbols(page: Page): Promise<Map<string, string>> {
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Export' });
+  await dialog.getByRole('radio', { name: 'SVG' }).click();
+  const downloading = page.waitForEvent('download', { timeout: 60_000 });
+  await dialog.getByRole('button', { name: 'Export SVG' }).click();
+  const bytes = readFileSync(await (await downloading).path());
+  const files = unzipSync(new Uint8Array(bytes));
+  const first = new TextDecoder().decode(files[Object.keys(files)[0] ?? ''] ?? new Uint8Array());
+  await page.keyboard.press('Escape');
+  return new Map(
+    [...first.matchAll(/<path id="g([0-9a-f]+)" d="([^"]*)"\/>/g)].map(match => [
+      match[1] ?? '',
+      match[2] ?? '',
+    ]),
+  );
+}
+
+test('the music engraved, handwritten or in a SMuFL font of one’s own, on screen and in exports', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  const symbol = page.locator('.ot-scroll:not([hidden]) .ot-partial .at').first();
+  await expect(symbol).toBeAttached();
+  const family = () => symbol.evaluate(element => getComputedStyle(element).fontFamily);
+  expect(await family()).toMatch(/^"?Bravura"?/);
+  const engraved = await exportedSymbols(page);
+  expect(engraved.size).toBeGreaterThan(5);
+
+  const stylesheet = async () => {
+    await page.getByRole('region', { name: /^Score/ }).focus();
+    await page.keyboard.press('F7');
+    return page.getByRole('dialog', { name: 'Stylesheet' });
+  };
+  let dialog = await stylesheet();
+  let font = dialog.getByRole('combobox', { name: 'Music font' });
+  await font.selectOption({ label: 'Handwritten (Petaluma)' });
+  await expect(dialog.getByText('Petaluma: the notes as if written by hand.')).toBeVisible();
+  // Petaluma, Bravura standing in for the symbols it lacks.
+  await expect.poll(family).toMatch(/^"?Petaluma"?, "?Bravura"?/);
+  await expect.poll(() => page.evaluate(() => document.fonts.check('36px Petaluma'))).toBe(true);
+  await page.keyboard.press('Escape');
+
+  // Exported pages draw the same symbols, from Petaluma's outlines.
+  const handwritten = await exportedSymbols(page);
+  expect([...handwritten.keys()].sort()).toEqual([...engraved.keys()].sort());
+  const redrawn = [...handwritten].filter(([codePoint, d]) => d !== engraved.get(codePoint));
+  expect(redrawn.length).toBeGreaterThan(5);
+
+  // A font of one's own: its file and its metadata chosen together (Petaluma's stand in for one).
+  dialog = await stylesheet();
+  font = dialog.getByRole('combobox', { name: 'Music font' });
+  const files = dialog.getByLabel('SMuFL font and its metadata');
+  await files.setInputFiles([PETALUMA.metadata]);
+  await expect(dialog.getByRole('alert')).toHaveText(
+    'Choose the font (.otf, .ttf or .woff) and its SMuFL metadata (.json) together.',
+  );
+  await files.setInputFiles([PETALUMA.otf, PETALUMA.metadata]);
+  await expect(font).toHaveValue(/^own:[0-9a-f]{16}$/);
+  await expect(dialog.getByText('A SMuFL font of your own, kept in this browser only.')).toBeVisible();
+  await expect.poll(family).toMatch(/^"?OpenTabz music [0-9a-f]{12}"?, "?Bravura"?/);
+  await page.keyboard.press('Escape');
+  const own = await exportedSymbols(page);
+  expect(own).toEqual(handwritten);
+
+  // Kept in this browser: the score opened again is set in it; then it is removed.
+  await openShuffle(page);
+  await expect.poll(family).toMatch(/^"?OpenTabz music [0-9a-f]{12}"?/);
+  dialog = await stylesheet();
+  await dialog.getByRole('button', { name: 'Remove Petaluma' }).click();
+  await expect(dialog.getByRole('combobox', { name: 'Music font' })).toHaveValue('bravura');
+  await expect.poll(family).toMatch(/^"?Bravura"?/);
 });

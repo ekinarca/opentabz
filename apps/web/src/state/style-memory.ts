@@ -8,6 +8,7 @@ import {
   CHORD_SPELLINGS,
   DEFAULT_SCORE_STYLE,
   FONT_SIZE,
+  isMusicFontId,
   PAGE_LINES,
   STYLE_INDENT_MM,
   STYLE_LINE_THICKNESS,
@@ -169,12 +170,15 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   const fonts = raw.fonts === undefined ? fallback.fonts : parseFonts(raw.fonts, fallback.fonts);
   const textBlocks =
     raw.textBlocks === undefined ? fallback.textBlocks : parseTextBlocks(raw.textBlocks, fallback.textBlocks);
+  const musicFont =
+    raw.musicFont === undefined ? fallback.musicFont : isMusicFontId(raw.musicFont) ? raw.musicFont : null;
   if (
     titleBlock === null ||
     textBlocks === null ||
     pages === null ||
     chordSpelling === null ||
-    fonts === null
+    fonts === null ||
+    musicFont === null
   )
     return null;
   return {
@@ -190,6 +194,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     pages,
     chordSpelling,
     fonts,
+    musicFont,
   };
 }
 

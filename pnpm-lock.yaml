@@ -73,6 +73,9 @@ importers:
       '@opentabz/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@vexflow-fonts/petaluma':
+        specifier: 1.0.1
+        version: 1.0.1
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -166,6 +169,9 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@vexflow-fonts/petaluma':
+        specifier: 1.0.1
+        version: 1.0.1
       pdfjs-dist:
         specifier: 6.4.299
         version: 6.4.299
@@ -1466,6 +1472,9 @@ packages:
   '@typescript-eslint/visitor-keys@8.71.1':
     resolution: {integrity: sha512-0GxiUGqMU0qXJt58cBsiG3DP8lUmBaFo2vChtUX+CT7PnR3v/VGLLrzVP4K9r1lNiZXjHYefMBbPunplr09v6w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@vexflow-fonts/petaluma@1.0.1':
+    resolution: {integrity: sha512-ZsYtmFaLYhliBnvYDwD0V2MVmfF26Y6aARbNbV8poIPQNpJcQe2RdOyrQ49nExAXcDa1woSj7K6H2y7pPlIRkg==}
 
   '@vitejs/plugin-react@6.1.2':
     resolution: {integrity: sha512-fhJNGUdscQa4HkI0xFxwonWyhnVReCPDbXI7FH7jmzpnVCrFQI7PRrhWecO263610vOrs9tr2Y4xcf8uAdFxbw==}
@@ -4143,6 +4152,8 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.71.1
       eslint-visitor-keys: 5.0.1
+
+  '@vexflow-fonts/petaluma@1.0.1': {}
 
   '@vitejs/plugin-react@6.1.2(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0))':
     dependencies:

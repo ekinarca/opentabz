@@ -3,6 +3,7 @@
  * in the Stylesheet panel. Plain data for the UI and the engine.
  */
 import type { ChordSpelling } from './chord-spelling.ts';
+import { DEFAULT_MUSIC_FONT } from './music-font.ts';
 import { DEFAULT_TEXT_FONTS, sameTextFonts, type TextFonts } from './text-fonts.ts';
 import {
   DEFAULT_PAGE_FURNITURE,
@@ -86,6 +87,8 @@ export interface ScoreStyle {
   readonly pages: PageFurniture;
   /** The font of each kind of text (REND-238). */
   readonly fonts: TextFonts;
+  /** The music font the notation is set in: Bravura, Petaluma or one's own (REND-241). */
+  readonly musicFont: string;
 }
 
 export const STYLE_SCALE = { min: 0.5, max: 2 } as const;
@@ -127,6 +130,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   textBlocks: DEFAULT_TEXT_BLOCKS,
   pages: DEFAULT_PAGE_FURNITURE,
   fonts: DEFAULT_TEXT_FONTS,
+  musicFont: DEFAULT_MUSIC_FONT,
 };
 
 const STYLE_KEYS = Object.keys(DEFAULT_SCORE_STYLE) as (keyof ScoreStyle)[];

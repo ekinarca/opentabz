@@ -8,6 +8,7 @@ import { getEngine } from '../engine/instance.ts';
 import { contentWidth, pageGeometry, paginate, type Size } from '../score-view/pagination.ts';
 import type { OpenDocument } from '../state/documents.ts';
 import { ringingTracks } from '../state/mixer-memory.ts';
+import { musicFontSource, prepareMusicFont, type MusicFontSource } from '../state/music-fonts.ts';
 import { noteColoring, readingAids } from '../state/note-coloring.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { pagesTexts, scoreFields } from '../state/score-fields.ts';
@@ -16,6 +17,8 @@ export interface PagedScore {
   readonly pageCount: number;
   /** Paper size in layout units (CSS pixels at 96 dpi). */
   readonly paper: Size;
+  /** Where the music font's outlines are read from, or null for Bravura (REND-241). */
+  readonly musicFont: MusicFontSource | null;
   /** Page `index` (from 0), its partials painted. */
   sheet(index: number): Promise<Sheet>;
   /** Releases the engine view. */
@@ -38,6 +41,9 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
   const coloring = noteColoring(usePreferences.getState());
   const aids = readingAids(usePreferences.getState());
   const letRing = ringingTracks(doc.mix);
+  const { musicFont } = doc.view.style;
+  // Engraved in the music font chosen; in Bravura should it fail to load.
+  await prepareMusicFont(musicFont).catch(() => undefined);
   const layout = await engine.call('layoutView', {
     viewId,
     docId: doc.engineId,
@@ -68,6 +74,7 @@ export async function layoutPages(doc: OpenDocument, bars: BarRange | null = nul
   return {
     pageCount,
     paper: geometry.paper,
+    musicFont: musicFontSource(musicFont),
     async sheet(index) {
       const page = sheets.pages[index];
       if (page === undefined) throw new RangeError(`There is no page ${index + 1}.`);

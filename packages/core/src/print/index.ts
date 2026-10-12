@@ -16,7 +16,15 @@ export {
   type TextStyle,
 } from './drawing.ts';
 export { parsePath, pathBounds, type Segment } from './path.ts';
-export { MUSIC_FONT_SIZE, musicGlyph, placeSymbols, type MusicGlyph, type PlacedGlyph } from './glyphs.ts';
+export {
+  MUSIC_FONT_SIZE,
+  musicGlyph,
+  placeSymbols,
+  type MusicGlyph,
+  type MusicGlyphs,
+  type PlacedGlyph,
+} from './glyphs.ts';
+export { musicGlyphsOf, OUTLINE_UNITS_PER_EM, readOutlines, type FontOutlines } from './outlines.ts';
 export {
   sheetSvg,
   pageTexts,

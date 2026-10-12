@@ -80,7 +80,7 @@ export async function exportPageFiles(
       onProgress(((done + 1) / options.pages.length) * PDF_DRAWING_SHARE);
     }
     if (signal.aborted) throw new PagesCancelled();
-    const { bytes } = await callSheets('pdf', { sheets, metadata });
+    const { bytes } = await callSheets('pdf', { sheets, metadata, musicFont: paged.musicFont });
     onProgress(1);
     return { bytes, name: `${base}.pdf`, type: TYPES.pdf };
   }
@@ -95,6 +95,7 @@ export async function exportPageFiles(
     const sheet = await paged.sheet(index);
     const { svg } = await callSheets('svg', {
       sheet,
+      musicFont: paged.musicFont,
       options: {
         palette: PRINT_PALETTE,
         background: options.transparent ? null : PAPER_WHITE,
@@ -132,6 +133,7 @@ export async function printSheets(
     const sheet = await paged.sheet(index);
     const { svg } = await callSheets('svg', {
       sheet,
+      musicFont: paged.musicFont,
       options: { palette: PRINT_PALETTE, background: PAPER_WHITE, idPrefix: `p${index + 1}-` },
     });
     svgs.push(svg);

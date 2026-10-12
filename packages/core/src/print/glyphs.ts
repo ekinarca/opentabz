@@ -45,10 +45,19 @@ export interface PlacedGlyph {
   readonly glyph: MusicGlyph | undefined;
 }
 
+/**
+ * Where a music font's glyphs come from: Bravura's table, or another font's outlines in the same
+ * units (outlines.ts).
+ */
+export type MusicGlyphs = (codePoint: number) => MusicGlyph | undefined;
+
 /** The glyphs of a row of symbols, set one after another as the music font sets them. */
-export function placeSymbols(op: Extract<DrawOp, { kind: 'symbols' }>): PlacedGlyph[] {
+export function placeSymbols(
+  op: Extract<DrawOp, { kind: 'symbols' }>,
+  glyphOf: MusicGlyphs = musicGlyph,
+): PlacedGlyph[] {
   const scale = (MUSIC_FONT_SIZE * op.scale) / MUSIC_GLYPH_UNITS_PER_EM;
-  const glyphs = op.codePoints.map(codePoint => ({ codePoint, glyph: musicGlyph(codePoint) }));
+  const glyphs = op.codePoints.map(codePoint => ({ codePoint, glyph: glyphOf(codePoint) }));
   const total = glyphs.reduce((sum, { glyph }) => sum + (glyph?.advance ?? 0) * scale, 0);
   let x = op.anchor === 'middle' ? op.x - total / 2 : op.anchor === 'end' ? op.x - total : op.x;
   return glyphs.map(({ codePoint, glyph }) => {

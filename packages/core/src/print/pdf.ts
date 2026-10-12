@@ -8,7 +8,7 @@
 import { zlibSync } from 'fflate';
 import { resolveScoreColor, type ScorePalette } from '../shared/score-colors.ts';
 import { readDrawing, type DrawOp, type Shade, type TextStyle } from './drawing.ts';
-import { musicGlyph, placeSymbols } from './glyphs.ts';
+import { musicGlyph, placeSymbols, type MusicGlyphs } from './glyphs.ts';
 import { parsePath, pathBounds, type Segment } from './path.ts';
 import { pageTexts, UNITS_PER_POINT, type Sheet } from './sheet.ts';
 import {
@@ -55,6 +55,8 @@ export interface PdfOptions {
   readonly fonts: TextFontSource;
   /** Draws text that no font file covers (scripts the fonts lack); without it, it is left out. */
   readonly rasterize?: TextRasterizer;
+  /** The music font's glyphs (REND-241); Bravura's if absent. */
+  readonly glyphs?: MusicGlyphs;
 }
 
 const encoder = new TextEncoder();
@@ -296,11 +298,16 @@ export class PdfWriter {
     return this.file.bytes(this.catalog, this.info, id);
   }
 
+  /** Where the music symbols' outlines come from. */
+  public get glyphs(): MusicGlyphs {
+    return this.options.glyphs ?? musicGlyph;
+  }
+
   /** The form drawing a music symbol, written on first use. */
   public glyphForm(codePoint: number): { readonly resource: string; readonly id: number } | null {
     const existing = this.glyphForms.get(codePoint);
     if (existing !== undefined) return existing;
-    const glyph = musicGlyph(codePoint);
+    const glyph = (this.options.glyphs ?? musicGlyph)(codePoint);
     if (glyph === undefined || glyph.d.length === 0) return null;
     const segments = parsePath(glyph.d);
     const bounds = pathBounds(segments);
@@ -555,7 +562,7 @@ class PageContent {
         case 'symbols': {
           const paint = this.paint('fill', op.fill);
           const placed: string[] = [];
-          for (const glyph of placeSymbols(op)) {
+          for (const glyph of placeSymbols(op, this.writer.glyphs)) {
             const form = this.writer.glyphForm(glyph.codePoint);
             if (form === null) continue;
             this.xObjects.set(form.resource, form.id);

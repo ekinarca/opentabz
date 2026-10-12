@@ -143,6 +143,11 @@ All notable changes to OpenTabz are recorded here. The format follows
   their part in the chord over them (root, third, fifth, seventh); in standard colours, colour-blind
   safe ones (Okabe and Ito's, Paul Tol's) or string colours of one's own, with what each colour
   stands for. Exports print the same; the choice is remembered.
+- **Music fonts.** The stylesheet sets the music in Bravura, as printed music, or Petaluma, as if
+  written by hand, or in any SMuFL font of one's own, added from its font file and metadata and
+  kept in this browser only. Symbols a font lacks are drawn from Bravura. The score is laid out
+  with the font's own metrics, and exported pages and printing draw its symbols from its
+  outlines; the choice is remembered per file.
 - **Stylesheet looks and stylesheets of one's own.** The stylesheet applies a look (Classic,
   Pop, Jazz chart, Large print, Compact) over the file's style, saves the style under a name, and
   makes one of them the stylesheet scores opened from then on start with.

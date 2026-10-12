@@ -7,7 +7,7 @@ import type { PageText, TextAlign } from '../shared/page-text.ts';
 import { fontFamilies } from '../shared/text-fonts.ts';
 import { resolveScoreColor, type ScorePalette } from '../shared/score-colors.ts';
 import { readDrawing, type DrawOp, type Shade, type TextStyle } from './drawing.ts';
-import { musicGlyph, placeSymbols } from './glyphs.ts';
+import { musicGlyph, placeSymbols, type MusicGlyphs } from './glyphs.ts';
 
 export interface SheetPartial {
   /** The partial's SVG as the engine painted it. */
@@ -131,11 +131,14 @@ export interface SheetSvgOptions {
   readonly idPrefix: string;
   /** Size in pixels, for drawing into an image of that size; the paper size in millimetres if absent. */
   readonly pixels?: { readonly width: number; readonly height: number };
+  /** The music font's glyphs (REND-241); Bravura's if absent. */
+  readonly glyphs?: MusicGlyphs;
 }
 
 /** One sheet as a standalone SVG file: vector, its music symbols drawn from their outlines. */
 export function sheetSvg(sheet: Sheet, options: SheetSvgOptions): string {
   const { palette, idPrefix } = options;
+  const glyphOf = options.glyphs ?? musicGlyph;
   const used = new Map<number, string>();
   const paint = (name: 'fill' | 'stroke', value: Shade) => {
     if (value === false) return ` ${name}="none"`;
@@ -179,7 +182,7 @@ export function sheetSvg(sheet: Sheet, options: SheetSvgOptions): string {
           break;
         }
         case 'symbols':
-          for (const placed of placeSymbols(op)) {
+          for (const placed of placeSymbols(op, glyphOf)) {
             if (placed.glyph === undefined || placed.glyph.d.length === 0) continue;
             let id = used.get(placed.codePoint);
             if (id === undefined) {
@@ -208,7 +211,7 @@ export function sheetSvg(sheet: Sheet, options: SheetSvgOptions): string {
   }
   write(pageTexts(sheet), body);
 
-  const defs = [...used].map(([codePoint, id]) => `<path id="${id}" d="${musicGlyph(codePoint)?.d ?? ''}"/>`);
+  const defs = [...used].map(([codePoint, id]) => `<path id="${id}" d="${glyphOf(codePoint)?.d ?? ''}"/>`);
   const mm = (units: number) => `${formatNumber(units / UNITS_PER_MM)}mm`;
   const width = options.pixels === undefined ? mm(sheet.width) : formatNumber(options.pixels.width);
   const height = options.pixels === undefined ? mm(sheet.height) : formatNumber(options.pixels.height);

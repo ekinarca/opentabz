@@ -7,6 +7,8 @@ import * as alphaTab from '@coderline/alphatab';
 import { spellChord, type ChordSpelling } from '../shared/chord-spelling.ts';
 import { DEFAULT_PAGE_FURNITURE, DEFAULT_TEXT_BLOCKS } from '../shared/page-text.ts';
 import { DEFAULT_TEXT_FONTS } from '../shared/text-fonts.ts';
+import { DEFAULT_MUSIC_FONT } from '../shared/music-font.ts';
+import { engravingFor } from './music-fonts.ts';
 import { applyTextFonts } from './text-fonts.ts';
 import {
   styleChanges,
@@ -88,8 +90,10 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     titleBlock: readTitleBlock(score),
     // Nor does it read whether Guitar Pro shows the instructions and notice: they start hidden.
     textBlocks: DEFAULT_TEXT_BLOCKS,
-    // alphaTab reads no fonts from Guitar Pro files: the texts start in its own.
+    // alphaTab reads no fonts from Guitar Pro files: the texts start in its own, the music in
+    // Bravura.
     fonts: DEFAULT_TEXT_FONTS,
+    musicFont: DEFAULT_MUSIC_FONT,
     // Guitar Pro's page numbers are not among what alphaTab reads: the pages start as ours.
     pages: DEFAULT_PAGE_FURNITURE,
   };
@@ -203,6 +207,7 @@ export function applyScoreStyle(
       case 'tempoDecimals':
       case 'lyrics':
       case 'fonts':
+      case 'musicFont':
         break;
     }
   }
@@ -237,19 +242,6 @@ function respellChords(score: alphaTab.model.Score, spelling: ChordSpelling): ()
 const SYSTEM_PADDING = 10;
 const PX_PER_MM = 96 / 25.4;
 
-/** Bravura's engraving with its staff lines `factor` times as thick, made once per factor. */
-const ENGRAVINGS = new Map<number, alphaTab.EngravingSettings>();
-function engravingWithLines(factor: number): alphaTab.EngravingSettings {
-  let engraving = ENGRAVINGS.get(factor);
-  if (engraving === undefined) {
-    engraving = new alphaTab.EngravingSettings();
-    engraving.fillFromSmufl(alphaTab.EngravingSettings.bravuraMetadata);
-    engraving.staffLineThickness *= factor;
-    ENGRAVINGS.set(factor, engraving);
-  }
-  return engraving;
-}
-
 export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyle): void {
   const display = settings.display;
   display.scale *= style.scale;
@@ -257,8 +249,9 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   display.systemPaddingTop = SYSTEM_PADDING * style.systemSpacing;
   display.systemPaddingBottom = SYSTEM_PADDING * style.systemSpacing;
   display.firstSystemIndent = style.firstSystemIndent * PX_PER_MM;
-  if (style.staffLineThickness !== 1)
-    display.resources.engravingSettings = engravingWithLines(style.staffLineThickness);
+  // The music font's engraving (REND-241), its staff lines as thick as asked (REND-228).
+  const engraving = engravingFor(style.musicFont, style.staffLineThickness);
+  if (engraving !== null) display.resources.engravingSettings = engraving;
   const { elements } = settings.notation;
   elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);

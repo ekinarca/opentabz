@@ -74,6 +74,20 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)?.musicFont).toBe('petaluma');
+    expect(parseStyle({ ...stored, musicFont: `own:${'0f'.repeat(8)}` })?.musicFont).toBe(
+      `own:${'0f'.repeat(8)}`,
+    );
+    expect(parseStyle({ ...stored, musicFont: 'comic-sans' })).toBeNull();
+    const { musicFont: _musicFont, ...older } = stored;
+    expect(parseStyle(older)?.musicFont).toBe('bravura');
+  });
+
   it('reads tempo decimals shown or not (REND-240), older styles taking the file’s', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, tempoDecimals: false })) as Record<
       string,

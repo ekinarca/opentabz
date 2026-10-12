@@ -11,6 +11,7 @@ import { collectScoreOverview } from '../playback/score-overview.ts';
 import { collectTrackDrums } from '../playback/track-drums.ts';
 import { collectTrackLyrics } from '../playback/track-lyrics.ts';
 import { collectTrackNotes } from '../playback/track-notes.ts';
+import { registerMusicFont } from '../render/music-fonts.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
 import type { TrackChords } from '../shared/chords.ts';
@@ -229,6 +230,15 @@ export class EngineHost implements EngineMethods {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
     return collectTrackDrums(document.score, args.trackIndex);
+  }
+
+  public registerMusicFont(args: EngineArgs<'registerMusicFont'>): null {
+    try {
+      registerMusicFont(args.id, args.metadata);
+    } catch (error) {
+      throw new EngineHostError(error instanceof Error ? error.message : String(error));
+    }
+    return null;
   }
 
   public scoreOverview(args: EngineArgs<'scoreOverview'>): ScoreOverview {

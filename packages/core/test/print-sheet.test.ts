@@ -12,6 +12,7 @@ import { musicGlyphsModule, readSvgFont } from '../scripts/music-glyphs.ts';
 import { openScore } from '../src/open/open.ts';
 import { readDrawing, walkDrawing, type DrawOp } from '../src/print/drawing.ts';
 import { MUSIC_FONT_SIZE, musicGlyph, placeSymbols } from '../src/print/glyphs.ts';
+import { musicGlyphsOf, readOutlines } from '../src/print/outlines.ts';
 import { parsePath, pathBounds } from '../src/print/path.ts';
 import { pageTexts, sheetSvg, UNITS_PER_MM, type Sheet } from '../src/print/sheet.ts';
 import { RenderSession } from '../src/render/session.ts';
@@ -297,6 +298,34 @@ describe('sheets as SVG pages', () => {
     ).toBe(1);
     expect(svg).toContain('>Page 1 of 1</text>');
     expect(svg.trimEnd().endsWith('</svg>')).toBe(true);
+  });
+
+  it('draws the symbols from the music font chosen, Bravura’s where it has none (REND-241)', () => {
+    const otf = new Uint8Array(
+      readFileSync(join(dirname(require.resolve('@vexflow-fonts/petaluma/package.json')), 'petaluma.otf')),
+    );
+    const petaluma = readOutlines(otf);
+    const options = { palette: PRINT_PALETTE, background: null, idPrefix: 'p1-' } as const;
+    const bravura = sheetSvg(shuffleSheet(null), options);
+    const handwritten = sheetSvg(shuffleSheet(null), { ...options, glyphs: musicGlyphsOf(petaluma) });
+    const definitions = (svg: string) =>
+      new Map(
+        [...svg.matchAll(/<path id="p1-g([0-9a-f]+)" d="([^"]*)"\/>/g)].map(match => [match[1], match[2]]),
+      );
+    const engraved = definitions(bravura);
+    const written = definitions(handwritten);
+    // The same symbols, each drawn as the chosen font draws it, or as Bravura does without it.
+    expect([...written.keys()].sort()).toEqual([...engraved.keys()].sort());
+    let own = 0;
+    for (const [codePoint, d] of written) {
+      const glyph = petaluma.glyph(Number.parseInt(codePoint ?? '0', 16));
+      expect(d).toBe(glyph?.d ?? engraved.get(codePoint));
+      if (glyph !== undefined) {
+        expect(d).not.toBe(engraved.get(codePoint));
+        own++;
+      }
+    }
+    expect(own).toBeGreaterThan(5);
   });
 
   it('leaves the background out when it should be transparent', () => {
