@@ -264,6 +264,13 @@ All notable changes to OpenTabz are recorded here. The format follows
   spells them — C♯ a major third up is E♯ — or by steps of each bar's scale, keeping the
   accidentals written. Whole bars (a track, every track, bars selected) can take their key
   signatures with them: A major a tone down is G major.
+- **More effects.** "Strums, grace notes, fermatas, trills, ornaments…" sets, on the beats
+  selected or the caret's, a strum or an arpeggio up or down and how long it takes, a grace
+  note before or on the beat, a fermata (every track's at that moment), a crescendo or
+  decrescendo, an ottava, a rasgueado, a golpe, the wah pedal, a barre (whole or half), a dead
+  slap, a slur to the next beat and a timer; and on the caret's note a slide in, a trill with a
+  fret and a speed, a turn or a mordent, and left-hand tapping. A fermata now stays at its
+  moment of the bar when beats are put in before it.
 - **Clefs and simile marks.** The bar dialog sets the caret's staff's clef (treble, bass, alto,
   tenor, neutral) and its octave (8va, 8vb, 15ma, 15mb) up to the next change of clef, the notes
   keeping their pitches or their places on the staff; and marks a bar played as the one before

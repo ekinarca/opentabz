@@ -27,6 +27,7 @@ const DEADLINES: Readonly<Record<EngineMethod, number>> = {
   trackBeats: 10_000,
   barProperties: 5_000,
   staffBarProperties: 5_000,
+  techniques: 5_000,
   trackProperties: 5_000,
   saveDocument: 30_000,
   blankDocument: 10_000,

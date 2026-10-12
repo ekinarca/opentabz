@@ -33,6 +33,8 @@ import {
   TECHNIQUE_VIBRATO,
   type BarProperties,
   type BarState,
+  type BeatState,
+  type NoteState,
   type StaffBarProperties,
   type StaffBarState,
   type NewTrack,
@@ -946,6 +948,58 @@ export interface Marks {
   readonly leftFinger?: Finger;
   readonly rightFinger?: Finger;
   readonly spelling?: Spelling;
+}
+
+/** The techniques of the caret's beat and of its note on the caret's string, as they are. */
+export interface CaretTechniques {
+  readonly beat: BeatState;
+  readonly note: NoteState | null;
+  /** The beat has notes (a rest is no grace note). */
+  readonly notes: boolean;
+}
+
+/** The caret's beat's and note's techniques, from the engine (for the effects dialog). */
+export async function readTechniques(key: string): Promise<CaretTechniques | null> {
+  const found = atCaret(key);
+  const doc = docOf(key);
+  if (found === null || doc === null) return null;
+  const { caret, at, editing } = found;
+  const row = editing.beats === null ? null : rowOf(editing.beats, caret.beatId);
+  const read = await getEngine().call('techniques', { docId: doc.engineId, at, string: caret.string });
+  return { ...read, notes: (row?.notes.length ?? 0) > 0 };
+}
+
+/**
+ * Sets effects, as one edit (EDIT-014, EDIT-114): a beat's on the beats acted on (those selected,
+ * else the caret's), a note's on the caret's note. What is selected stays so.
+ */
+export function applyEffects(key: string, beat: BeatTechniques, note: NoteTechniques): boolean {
+  return act(key, () => {
+    const editing = editingOf(key);
+    const { caret, beats } = editing;
+    if (!editing.on || caret === null || beats === null) return;
+    const rows = actedRows(editing.selection, caret, beats).filter(row => (row.flags & BEAT_EMPTY) === 0);
+    const own = rowOf(beats, caret.beatId);
+    const beatAt = (row: BeatRow): BeatAddress => ({
+      track: caret.track,
+      staff: row.staff,
+      bar: row.bar,
+      voice: row.voice,
+      beat: row.beat,
+    });
+    const commands: EditCommand[] = [];
+    if (Object.keys(beat).length > 0)
+      for (const row of rows) {
+        // A rest is no grace note: the rest of the beat's effects go to it.
+        const { grace, ...rest } = beat;
+        const techniques = grace === undefined || row.notes.length > 0 ? beat : rest;
+        if (Object.keys(techniques).length > 0)
+          commands.push({ kind: 'set-beat', at: beatAt(row), techniques });
+      }
+    if (Object.keys(note).length > 0 && own?.notes.some(each => each.string === caret.string) === true)
+      commands.push({ kind: 'set-note', at: { ...beatAt(own), string: caret.string }, techniques: note });
+    if (commands.length > 0) apply(key, commands, placeOf(editing), true);
+  });
 }
 
 /**

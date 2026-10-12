@@ -49,6 +49,8 @@ function dispatch(message: EngineRequestMessage): unknown {
       return host.trackProperties(message.args as EngineRequestMessage<'trackProperties'>['args']);
     case 'barProperties':
       return host.barProperties(message.args as EngineRequestMessage<'barProperties'>['args']);
+    case 'techniques':
+      return host.techniques(message.args as EngineRequestMessage<'techniques'>['args']);
     case 'staffBarProperties':
       return host.staffBarProperties(message.args as EngineRequestMessage<'staffBarProperties'>['args']);
     case 'trackBeats':

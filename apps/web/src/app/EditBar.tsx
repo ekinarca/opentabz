@@ -85,6 +85,7 @@ import {
 import { strings } from '../strings.ts';
 import { openBarDialog } from './BarDialog.tsx';
 import { openTransposeDialog } from './TransposeDialog.tsx';
+import { openEffectsDialog } from './EffectsDialog.tsx';
 import { openMarksDialog } from './MarksDialog.tsx';
 import { openVoicesDialog } from './VoicesDialog.tsx';
 import { openHarmonizeDialog } from './HarmonizeDialog.tsx';
@@ -500,6 +501,9 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           <MenuSeparator />
           <MenuItem disabled={!ready} onSelect={() => openMarksDialog(key)}>
             {e.marks}
+          </MenuItem>
+          <MenuItem disabled={!ready} onSelect={() => openEffectsDialog(key)}>
+            {strings.effectsDialog.open}
           </MenuItem>
         </MenuContent>
       </Menu>

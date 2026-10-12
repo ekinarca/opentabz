@@ -644,7 +644,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-111 | Bend editor: pitch curve with draggable points and presets       | GP  | M4  | —       | —    | planned |
 | EDIT-112 | Whammy-bar editor: pitch curve with presets in quarter-tone steps | GP  | M4  | —       | —    | planned |
 | EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |
-| EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | —    | planned |
+| EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |

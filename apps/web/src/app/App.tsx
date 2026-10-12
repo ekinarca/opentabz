@@ -9,6 +9,7 @@ import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
 import { BarDialog } from './BarDialog.tsx';
 import { TransposeDialog } from './TransposeDialog.tsx';
+import { EffectsDialog } from './EffectsDialog.tsx';
 import { MarksDialog } from './MarksDialog.tsx';
 import { VoicesDialog } from './VoicesDialog.tsx';
 import { HarmonizeDialog } from './HarmonizeDialog.tsx';
@@ -138,6 +139,7 @@ export function App() {
         <BarDialog />
         <TransposeDialog />
         <MarksDialog />
+        <EffectsDialog />
         <VoicesDialog />
         <HarmonizeDialog />
         <ScoreInfoDialog />

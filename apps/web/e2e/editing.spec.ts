@@ -852,6 +852,53 @@ test('a staff’s clef changes, its notes keeping their pitches; a bar marked si
   await expect.poll(() => firstSystemDraws(page, REPEAT_BAR)).toBe(false);
 });
 
+test('a beat strummed under a fermata, its note trilled with an ornament, from the effects dialog (EDIT-014, EDIT-114)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  // The open A string of the first beat.
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 0');
+  // SMuFL's long fermata and trill.
+  const FERMATA = 0xe4c6;
+  const TRILL = 0xe566;
+  await expect.poll(() => firstSystemDraws(page, FERMATA)).toBe(false);
+  const effects = page.getByRole('dialog', { name: 'Effects' });
+  const open = async () => {
+    await editBar(page).getByRole('button', { name: 'Techniques' }).click();
+    await page.getByRole('menuitem', { name: 'Strums, grace notes, fermatas, trills, ornaments…' }).click();
+    await expect(effects).toBeVisible();
+  };
+  await open();
+  const beat = effects.getByRole('group', { name: 'The beat' });
+  const note = effects.getByRole('group', { name: 'The note on string 5' });
+  await expect(beat.getByLabel('Strum length')).toBeDisabled();
+  await beat.getByLabel('Strum', { exact: true }).selectOption({ label: 'Strum down' });
+  await beat.getByLabel('Strum length').selectOption({ label: 'A thirty-second' });
+  await beat.getByLabel('Fermata').selectOption({ label: 'Long' });
+  await note.getByLabel('Trill', { exact: true }).selectOption({ label: 'With fret 2' });
+  await note.getByLabel('Ornament').selectOption({ label: 'Upper mordent' });
+  await effects.getByRole('button', { name: 'Apply' }).click();
+  await expect(effects).toBeHidden();
+  await expect.poll(() => firstSystemDraws(page, FERMATA)).toBe(true);
+  await expect.poll(() => firstSystemDraws(page, TRILL)).toBe(true);
+
+  // Read back as set, as one edit.
+  await open();
+  await expect(beat.getByLabel('Strum', { exact: true })).toHaveValue('down');
+  await expect(beat.getByLabel('Strum length')).toHaveValue('32');
+  await expect(note.getByLabel('Trill speed')).toHaveValue('32');
+  await expect(note.getByLabel('Ornament')).toHaveValue('upper-mordent');
+  await effects.getByRole('button', { name: 'Cancel' }).first().click();
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => firstSystemDraws(page, FERMATA)).toBe(false);
+  await open();
+  await expect(beat.getByLabel('Fermata')).toHaveValue('none');
+  await expect(note.getByLabel('Trill', { exact: true })).toHaveValue('-1');
+});
+
 test('dynamics, beams, fingering, spelling and text for a note and its beat, directions from the bar dialog (EDIT-012, EDIT-013, EDIT-025, EDIT-043)', async ({
   page,
 }) => {
