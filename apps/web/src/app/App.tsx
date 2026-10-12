@@ -7,7 +7,10 @@ import { reopenLastSession } from '../state/reopen.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
+import { BarDialog } from './BarDialog.tsx';
 import { CloseGuardDialog } from './CloseGuardDialog.tsx';
+import { RecoverDialog } from './RecoverDialog.tsx';
+import { TrackDialog } from './TrackDialog.tsx';
 import { CommandPalette } from './CommandPalette.tsx';
 import { takeReopenOnce } from './pwa.ts';
 import { guardUnload } from './save.ts';
@@ -127,6 +130,9 @@ export function App() {
         <TunerTool />
         <UpdateNotice />
         <CloseGuardDialog />
+        <BarDialog />
+        <TrackDialog />
+        <RecoverDialog />
         <Notices />
       </ToastProvider>
     </TooltipProvider>

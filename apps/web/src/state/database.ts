@@ -1,16 +1,17 @@
 /**
- * The app's one IndexedDB database on this device: music fonts of one's own (REND-241) and the
- * recent scores with their files (LIB-005). Every store is made in its one upgrade, so that each
+ * The app's one IndexedDB database on this device: music fonts of one's own (REND-241), the
+ * recent scores with their files (LIB-005) and the edits not saved (EDIT-124). Every store is made in its one upgrade, so that each
  * part of the app finds the stores of the others, whichever opens the database first.
  */
 
 const DATABASE = 'opentabz';
-/** 1: music fonts. 2: recent scores and their files. */
-const VERSION = 2;
+/** 1: music fonts. 2: recent scores and their files. 3: edits not saved. */
+const VERSION = 3;
 
 export const MUSIC_FONTS_STORE = 'musicFonts';
 export const RECENT_STORE = 'recent';
 export const FILES_STORE = 'files';
+export const DRAFTS_STORE = 'drafts';
 
 let opening: Promise<IDBDatabase> | null = null;
 
@@ -25,6 +26,7 @@ export function openDatabase(unavailable: () => Error): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(RECENT_STORE))
         db.createObjectStore(RECENT_STORE, { keyPath: 'fingerprint' });
       if (!db.objectStoreNames.contains(FILES_STORE)) db.createObjectStore(FILES_STORE);
+      if (!db.objectStoreNames.contains(DRAFTS_STORE)) db.createObjectStore(DRAFTS_STORE, { keyPath: 'id' });
     };
     request.onsuccess = () => {
       const db = request.result;

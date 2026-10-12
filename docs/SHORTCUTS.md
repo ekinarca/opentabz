@@ -123,6 +123,9 @@ its beat.
 | Tremolo picking                                | `"`                                     | `"`                                     |
 | Downstroke                                     | `Shift D`                               | `⇧ D`                                   |
 | Upstroke                                       | `Shift U`                               | `⇧ U`                                   |
+| Triplet feel in the bar, or not                | `Ctrl /`                                | `⌘ /`                                   |
+| Free time in the bar, or not                   | `Alt Shift L`                           | `⌥ ⇧ L`                                 |
+| Add a track                                    | `Ctrl Shift Insert`                     | `⌘ ⌥ N`                                 |
 
 ## View
 

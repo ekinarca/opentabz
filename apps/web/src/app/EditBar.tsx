@@ -13,6 +13,8 @@ import {
   MenuContent,
   MenuItem,
   MenuLabel,
+  MenuRadioGroup,
+  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
   Popover,
@@ -22,12 +24,17 @@ import {
 } from '@opentabz/ui';
 import {
   BetweenVerticalStart,
+  Check,
   Download,
+  Ellipsis,
   Eraser,
   FoldHorizontal,
   Hash,
+  ListPlus,
   Plus,
   Redo2,
+  Settings2,
+  SlidersHorizontal,
   Sparkles,
   Trash2,
   Undo2,
@@ -60,9 +67,11 @@ import {
   writeFretAtCaret,
 } from '../state/editing.ts';
 import { strings } from '../strings.ts';
+import { openBarDialog } from './BarDialog.tsx';
 import { DurationIcon } from './icons.tsx';
 import { focusScore, shortcutHint } from './keymap.ts';
 import { saveDocument } from './save.ts';
+import { openAddTrack, openTrackDialog } from './TrackDialog.tsx';
 import { TrackSelect } from './TrackSelect.tsx';
 
 const e = strings.editing;
@@ -88,8 +97,14 @@ function keepFocus(event: MouseEvent): void {
   event.preventDefault();
 }
 
+/** A menu of the bar, closing, gives the focus back to the score, for the keys to go on writing. */
+function backToScore(event: Event): void {
+  event.preventDefault();
+  focusScore();
+}
+
 function Divider() {
-  return <div className="mx-1 h-6 w-px shrink-0 bg-line" aria-hidden />;
+  return <div className="mx-1 h-6 w-px shrink-0 bg-line max-md:hidden" aria-hidden />;
 }
 
 export function EditBar({ doc }: { readonly doc: OpenDocument }) {
@@ -105,11 +120,32 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
     <div
       role="toolbar"
       aria-label={e.bar}
-      className="flex h-12 shrink-0 items-center gap-1 overflow-x-auto border-b border-line bg-accent-soft/40 px-3 [scrollbar-width:none]"
+      className="flex h-12 shrink-0 items-center gap-1 overflow-x-auto border-b border-line bg-accent-soft/40 px-2 [scrollbar-width:none] md:px-3"
     >
       {/* The track edited: the caret goes to it. */}
       <div className="flex shrink-0 items-center gap-1.5 pr-1">
-        <TrackSelect doc={doc} />
+        <TrackSelect doc={doc} compact />
+        <IconButton
+          onMouseDown={keepFocus}
+          size="sm"
+          className="max-md:hidden"
+          label={strings.trackDialog.open}
+          icon={<Settings2 size={16} aria-hidden />}
+          onClick={() => {
+            openTrackDialog(key);
+          }}
+        />
+        <IconButton
+          onMouseDown={keepFocus}
+          size="sm"
+          className="max-md:hidden"
+          label={strings.trackDialog.add}
+          shortcut={shortcutHint('add-track')}
+          icon={<ListPlus size={16} aria-hidden />}
+          onClick={() => {
+            openAddTrack(key);
+          }}
+        />
       </div>
       <Divider />
       <IconButton
@@ -122,8 +158,10 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           undoEdit(key);
         }}
       />
+      {/* On a narrow screen redo is in the "More editing tools" menu. */}
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.redo}
         shortcut={shortcutHint('redo')}
         icon={<Redo2 size={18} aria-hidden />}
@@ -133,7 +171,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         }}
       />
       <Divider />
-      <div role="group" aria-label={e.duration} className="flex shrink-0 items-center">
+      <div role="group" aria-label={e.duration} className="flex shrink-0 items-center max-md:hidden">
         {DURATION_VALUES.map((value: DurationValue) => (
           <IconButton
             onMouseDown={keepFocus}
@@ -161,6 +199,51 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
           }}
         />
       </div>
+      {/* On a narrow screen the lengths are one menu, showing the caret note's. */}
+      <Menu>
+        <Tooltip label={e.duration}>
+          <MenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={e.duration}
+              disabled={!ready}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink disabled:pointer-events-none disabled:opacity-40 md:hidden"
+            >
+              <DurationIcon
+                value={DURATION_VALUES.find(value => value === row?.duration) ?? 4}
+                dotted={(row?.dots ?? 0) > 0}
+              />
+            </button>
+          </MenuTrigger>
+        </Tooltip>
+        <MenuContent onCloseAutoFocus={backToScore}>
+          <MenuRadioGroup<string>
+            value={String(row?.duration ?? '')}
+            onValueChange={value => {
+              const duration = DURATION_VALUES.find(candidate => String(candidate) === value);
+              if (duration !== undefined) setDurationAtCaret(key, duration);
+            }}
+          >
+            {DURATION_VALUES.map((value: DurationValue) => (
+              <MenuRadioItem key={value} value={String(value)}>
+                <span className="inline-flex items-center gap-2">
+                  <DurationIcon value={value} size={16} />
+                  {e.durations[value]}
+                </span>
+              </MenuRadioItem>
+            ))}
+          </MenuRadioGroup>
+          <MenuSeparator />
+          <MenuCheckboxItem
+            checked={(row?.dots ?? 0) > 0}
+            onCheckedChange={() => {
+              toggleDotAtCaret(key);
+            }}
+          >
+            {e.dotted}
+          </MenuCheckboxItem>
+        </MenuContent>
+      </Menu>
       <Divider />
       <Popover>
         <Tooltip label={e.fretPad}>
@@ -196,6 +279,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       </Popover>
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.insertBeat}
         shortcut={shortcutHint('insert-beat')}
         icon={<Plus size={18} aria-hidden />}
@@ -206,6 +290,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.deleteNote}
         shortcut={shortcutHint('delete-note')}
         icon={<Eraser size={18} aria-hidden />}
@@ -216,6 +301,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.deleteBeat}
         shortcut={shortcutHint('delete-beat')}
         icon={<Trash2 size={18} aria-hidden />}
@@ -226,6 +312,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.insertBar}
         shortcut={shortcutHint('insert-bar')}
         icon={<BetweenVerticalStart size={18} aria-hidden />}
@@ -236,12 +323,23 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
       />
       <IconButton
         onMouseDown={keepFocus}
+        className="max-md:hidden"
         label={e.deleteBar}
         shortcut={shortcutHint('delete-bar')}
         icon={<FoldHorizontal size={18} aria-hidden />}
         disabled={!ready || doc.summary.masterBars.length <= 1}
         onClick={() => {
           deleteBarAtCaret(key);
+        }}
+      />
+      <IconButton
+        onMouseDown={keepFocus}
+        className="max-md:hidden"
+        label={strings.barDialog.open}
+        icon={<SlidersHorizontal size={18} aria-hidden />}
+        disabled={!ready}
+        onClick={() => {
+          openBarDialog(key);
         }}
       />
       <Menu>
@@ -257,13 +355,7 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             </button>
           </MenuTrigger>
         </Tooltip>
-        <MenuContent
-          onCloseAutoFocus={event => {
-            // Back to the score, for the keys to go on writing.
-            event.preventDefault();
-            focusScore();
-          }}
-        >
+        <MenuContent onCloseAutoFocus={backToScore}>
           <MenuLabel>{e.onNote}</MenuLabel>
           {NOTE_TOGGLE_NAMES.map(toggle => (
             <MenuCheckboxItem
@@ -310,7 +402,10 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
         </MenuContent>
       </Menu>
       <Divider />
-      <p aria-live="polite" className="min-w-0 shrink truncate px-1 text-[12px] text-ink-muted">
+      <p
+        aria-live="polite"
+        className="min-w-0 shrink truncate px-1 text-[12px] text-ink-muted max-md:sr-only"
+      >
         {editing.noStrings
           ? e.noStrings
           : caret === null || row === null
@@ -318,11 +413,11 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             : // Strings counted from the highest, as players count them.
               e.caret(row.bar + 1, stringCount(doc, caret) - caret.string + 1, fret)}
       </p>
-      <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2 md:pl-2">
         {dirty && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-muted">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
-            {e.unsaved}
+            <span className="max-md:sr-only">{e.unsaved}</span>
           </span>
         )}
         <Button
@@ -332,18 +427,109 @@ export function EditBar({ doc }: { readonly doc: OpenDocument }) {
             void saveDocument(key);
           }}
           title={e.save}
+          className="max-md:hidden"
         >
           {e.saveShort}
         </Button>
+        {/* On a narrow screen the rest of the bar's tools are one menu. */}
+        <Menu>
+          <Tooltip label={e.more}>
+            <MenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={e.more}
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-ink-muted hover:bg-sunken hover:text-ink md:hidden"
+              >
+                <Ellipsis size={18} aria-hidden />
+              </button>
+            </MenuTrigger>
+          </Tooltip>
+          <MenuContent align="end" onCloseAutoFocus={backToScore}>
+            <MenuItem
+              icon={<Redo2 size={16} aria-hidden />}
+              disabled={!editing.canRedo}
+              onSelect={() => redoEdit(key)}
+            >
+              {e.redo}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              icon={<Plus size={16} aria-hidden />}
+              disabled={!ready}
+              onSelect={() => insertBeatAtCaret(key)}
+            >
+              {e.insertBeat}
+            </MenuItem>
+            <MenuItem
+              icon={<Eraser size={16} aria-hidden />}
+              disabled={fret === null}
+              onSelect={() => deleteNoteAtCaret(key)}
+            >
+              {e.deleteNote}
+            </MenuItem>
+            <MenuItem
+              icon={<Trash2 size={16} aria-hidden />}
+              disabled={!ready}
+              onSelect={() => deleteBeatAtCaret(key)}
+            >
+              {e.deleteBeat}
+            </MenuItem>
+            <MenuItem
+              icon={<BetweenVerticalStart size={16} aria-hidden />}
+              disabled={!ready}
+              onSelect={() => insertBarAtCaret(key)}
+            >
+              {e.insertBar}
+            </MenuItem>
+            <MenuItem
+              icon={<FoldHorizontal size={16} aria-hidden />}
+              disabled={!ready || doc.summary.masterBars.length <= 1}
+              onSelect={() => deleteBarAtCaret(key)}
+            >
+              {e.deleteBar}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              icon={<SlidersHorizontal size={16} aria-hidden />}
+              disabled={!ready}
+              onSelect={() => openBarDialog(key)}
+            >
+              {strings.barDialog.open}
+            </MenuItem>
+            <MenuItem icon={<Settings2 size={16} aria-hidden />} onSelect={() => openTrackDialog(key)}>
+              {strings.trackDialog.open}
+            </MenuItem>
+            <MenuItem icon={<ListPlus size={16} aria-hidden />} onSelect={() => openAddTrack(key)}>
+              {strings.trackDialog.add}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem icon={<Download size={16} aria-hidden />} onSelect={() => void saveDocument(key)}>
+              {e.save}
+            </MenuItem>
+          </MenuContent>
+        </Menu>
         <Button
           size="sm"
           variant="primary"
+          className="max-md:hidden"
           onClick={() => {
             void toggleEditing(key);
           }}
         >
           {e.done}
         </Button>
+        <Tooltip label={e.done}>
+          <button
+            type="button"
+            aria-label={e.done}
+            onClick={() => {
+              void toggleEditing(key);
+            }}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-accent text-on-accent shadow-sm hover:bg-accent-hover md:hidden"
+          >
+            <Check size={18} aria-hidden />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

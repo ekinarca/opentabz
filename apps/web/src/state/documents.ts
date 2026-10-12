@@ -66,7 +66,12 @@ export interface OpenDocument {
   readonly activeTrack: number;
   /** SHA-256 of the file, once known: the mixer is remembered under it. */
   readonly fingerprint: string | null;
-  readonly source: { readonly name: string; readonly bytes: ArrayBuffer };
+  readonly source: {
+    readonly name: string;
+    readonly bytes: ArrayBuffer;
+    /** A new score (COMP-001), not a file opened. */
+    readonly blank?: boolean;
+  };
   /** Performance mark set when the file arrived (drop, pick, paste or download). */
   readonly intakeMark: string;
 }
@@ -103,6 +108,12 @@ interface DocumentsState {
   readonly updateView: (key: string, patch: Partial<DocViewState>) => void;
   /** The document as edited (EDIT-001): its summary as the engine gives it after the edit. */
   readonly setSummary: (key: string, summary: DocSummary) => void;
+  /**
+   * Tracks put in, taken away or moved (EDIT-030): by new track, its index before (−1: put in).
+   * The mixer, the tracks shown, the active and focused tracks follow them; a track put in is
+   * shown and made active.
+   */
+  readonly remapTracks: (key: string, summary: DocSummary, origins: readonly number[]) => void;
   readonly updateMix: (key: string, trackIndex: number, patch: Partial<TrackMix>) => void;
   readonly setFocus: (key: string, trackIndex: number | null) => void;
   /** Makes a track the active one; while one track is shown, the score shows the new one. */
@@ -275,7 +286,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
           focus: null,
           activeTrack: 0,
           fingerprint: null,
-          source: { name: loaded.name, bytes },
+          source: { name: loaded.name, bytes, ...(source.blank === true ? { blank: true } : {}) },
           intakeMark,
         };
         set(state => ({ docs: [...state.docs, doc] }));
@@ -319,6 +330,44 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
 
   setSummary: (key, summary) => {
     set(state => ({ docs: state.docs.map(doc => (doc.key === key ? { ...doc, summary } : doc)) }));
+  },
+
+  remapTracks: (key, summary, origins) => {
+    set(state => ({
+      docs: state.docs.map(doc => {
+        if (doc.key !== key) return doc;
+        const fresh = initialMix(summary);
+        const moved = (from: number | null): number | null => {
+          if (from === null) return null;
+          const to = origins.indexOf(from);
+          return to < 0 ? null : to;
+        };
+        const added = origins.flatMap((from, to) => (from < 0 ? [to] : []));
+        const shown = [
+          ...doc.view.trackIndexes.flatMap(index => {
+            const to = moved(index);
+            return to === null ? [] : [to];
+          }),
+          ...added,
+        ].sort((a, b) => a - b);
+        const staves = doc.view.staves.flatMap(entry => {
+          const to = moved(entry.trackIndex);
+          return to === null ? [] : [{ ...entry, trackIndex: to }];
+        });
+        const active =
+          added[0] ?? moved(doc.activeTrack) ?? Math.min(doc.activeTrack, summary.tracks.length - 1);
+        return {
+          ...doc,
+          summary,
+          mix: origins
+            .map((from, to) => (from >= 0 ? doc.mix[from] : undefined) ?? fresh[to] ?? fresh[0])
+            .filter((mix): mix is TrackMix => mix !== undefined),
+          focus: moved(doc.focus),
+          activeTrack: Math.max(0, active),
+          view: { ...doc.view, trackIndexes: shown.length > 0 ? shown : [Math.max(0, active)], staves },
+        };
+      }),
+    }));
   },
 
   updateView: (key, patch) => {

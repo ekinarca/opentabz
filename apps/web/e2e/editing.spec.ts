@@ -45,6 +45,42 @@ function pressed(page: Page, name: string) {
   return editBar(page).getByRole('button', { name, exact: true });
 }
 
+/**
+ * Runs one of the edit bar's tools: its button, or on a narrow screen its item in the "More editing
+ * tools" menu.
+ */
+async function editTool(page: Page, name: string): Promise<void> {
+  const button = editBar(page).getByRole('button', { name, exact: true });
+  if (await button.isVisible()) {
+    await button.click();
+    return;
+  }
+  await editBar(page).getByRole('button', { name: 'More editing tools' }).click();
+  await page.getByRole('menu').getByRole('menuitem', { name, exact: true }).click();
+}
+
+/** Gives the caret's note a length: its button, or on a narrow screen the Note length menu's item. */
+async function noteLength(page: Page, name: string): Promise<void> {
+  const button = editBar(page).getByRole('button', { name, exact: true });
+  if (await button.isVisible()) {
+    await button.click();
+    return;
+  }
+  await editBar(page).getByRole('button', { name: 'Note length' }).click();
+  await page.getByRole('menu').getByRole('menuitemradio', { name }).click();
+}
+
+/** Whether the caret's note has a length: its button pressed, or its Note length item checked. */
+async function hasLength(page: Page, name: string): Promise<boolean> {
+  const button = editBar(page).getByRole('button', { name, exact: true });
+  if (await button.isVisible()) return (await button.getAttribute('aria-pressed')) === 'true';
+  await editBar(page).getByRole('button', { name: 'Note length' }).click();
+  const item = page.getByRole('menu').getByRole('menuitemradio', { name });
+  const checked = (await item.getAttribute('aria-checked')) === 'true';
+  await page.keyboard.press('Escape');
+  return checked;
+}
+
 test.describe('on a computer', () => {
   test.skip(({ isMobile }) => isMobile, 'Writing with the keys is for computers.');
 
@@ -130,7 +166,7 @@ test.describe('on a computer', () => {
     await page.keyboard.press('ArrowRight');
     await expect(caret(page)).toHaveText('Caret: bar 17, string 1, nothing written');
     // A bar put in before the caret's, and taken away again.
-    await editBar(page).getByRole('button', { name: 'Insert a bar' }).click();
+    await editTool(page, 'Insert a bar');
     await expect(caret(page)).toHaveText('Caret: bar 17, string 1, nothing written');
     await page.keyboard.press(`${mod}+ArrowRight`);
     await expect(caret(page)).toHaveText('Caret: bar 18, string 1, nothing written');
@@ -208,6 +244,9 @@ test('a click puts the caret on a string; the edit bar writes frets and lengths,
   await page.getByRole('button', { name: 'Edit the score' }).click();
   await expect(editBar(page)).toBeVisible();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  // The whole edit bar fits the screen, a phone's too.
+  await expect(editBar(page).getByRole('button', { name: 'Done', exact: true })).toBeInViewport({ ratio: 1 });
+  expect(await editBar(page).evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   // The tablature in sight, the caret on its top line: four lines down is the open A string.
   await page.locator('.ot-scroll:not([hidden])').evaluate(element => {
     element.scrollBy(0, 120);
@@ -224,10 +263,13 @@ test('a click puts the caret on a string; the edit bar writes frets and lengths,
   await page.getByRole('button', { name: 'Fret 5', exact: true }).click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 5, fret 5');
   await page.keyboard.press('Escape');
-  await pressed(page, 'Quarter note').click();
-  await expect(pressed(page, 'Quarter note')).toHaveAttribute('aria-pressed', 'true');
+  await noteLength(page, 'Quarter note');
+  await expect.poll(() => hasLength(page, 'Quarter note')).toBe(true);
   await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(pressed(page, 'Eighth note')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => hasLength(page, 'Eighth note')).toBe(true);
+  // On a phone, redo is in the "More editing tools" menu.
+  await editTool(page, 'Redo');
+  await expect.poll(() => hasLength(page, 'Quarter note')).toBe(true);
 
   // A track without strings has nothing to write frets on.
   await editBar(page).getByRole('combobox', { name: 'Track' }).selectOption({ label: '4. Drums' });
@@ -357,4 +399,142 @@ test('Guitar Pro’s keys and the Techniques menu turn a note’s and a beat’s
   // A rest: the beat's notes taken away.
   await menu.getByRole('menuitem', { name: 'Rest' }).click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 5, nothing written');
+});
+
+test('the bar dialog sets a bar’s meter, key, tempo, repeats and section, as one edit', async ({ page }) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await editTool(page, 'Bar properties');
+  const dialog = page.getByRole('dialog', { name: 'Bar 1' });
+  await expect(dialog.getByLabel('Beats')).toHaveValue('4');
+  await expect(dialog.getByLabel('Key signature', { exact: true })).toHaveValue('3');
+  await expect(dialog.getByLabel('Quarter notes a minute')).toHaveValue('112');
+  await dialog.getByLabel('Beats').selectOption('3');
+  await dialog.getByLabel('Quarter notes a minute').fill('96');
+  await dialog.getByRole('switch', { name: 'A repeat starts here' }).click();
+  // The shuffle's first bar starts its "Twelve bars" section.
+  await expect(dialog.getByRole('switch', { name: 'A section starts here' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(dialog.getByLabel('Name')).toHaveValue('Twelve bars');
+  await dialog.getByLabel('Name').fill('Intro');
+  await dialog.getByRole('button', { name: 'Apply' }).click();
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => firstSystemWrites(page, 'Intro')).toBe(true);
+  await expect(
+    page.getByRole('button', { name: 'Twelve-Bar Shuffle in A, changes not saved' }),
+  ).toBeVisible();
+
+  // Read back as set; one undo takes it all away.
+  await editTool(page, 'Bar properties');
+  await expect(dialog.getByLabel('Beats')).toHaveValue('3');
+  await expect(dialog.getByLabel('Quarter notes a minute')).toHaveValue('96');
+  await expect(dialog.getByRole('switch', { name: 'A repeat starts here' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).first().click();
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => firstSystemWrites(page, 'Intro')).toBe(false);
+  await editTool(page, 'Bar properties');
+  await expect(dialog.getByLabel('Beats')).toHaveValue('4');
+  await expect(dialog.getByLabel('Quarter notes a minute')).toHaveValue('112');
+});
+
+test('changes not saved are offered back after a reload, and forgotten once closed', async ({
+  page,
+  isMobile,
+}) => {
+  // Leaving a page with changes not saved asks first: the test leaves.
+  page.on('dialog', dialog => {
+    void dialog.accept();
+  });
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  if (isMobile) {
+    await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+    await page.getByRole('button', { name: 'Fret 23', exact: true }).click();
+    await page.keyboard.press('Escape');
+  } else {
+    await page.getByRole('region', { name: /^Score: / }).focus();
+    await page.keyboard.press('2');
+    await page.keyboard.press('3');
+  }
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 23');
+  // The draft is written a moment after the last edit.
+  await page.waitForTimeout(800);
+  await page.reload();
+  const offer = page.getByRole('dialog', { name: 'Recover the changes not saved?' });
+  await expect(offer).toBeVisible();
+  await offer.getByRole('button', { name: 'Recover Twelve-Bar Shuffle in A' }).click();
+  await expect(offer).toBeHidden();
+  await expectScore(page);
+  await expect(
+    page.getByRole('button', { name: 'Twelve-Bar Shuffle in A, changes not saved' }),
+  ).toBeVisible();
+  await expect(editBar(page)).toBeVisible();
+  await expect(editBar(page).getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
+  await expect.poll(() => firstSystemWrites(page, '23')).toBe(true);
+
+  // Closed without saving: not offered again.
+  await page.getByRole('button', { name: 'Close Twelve-Bar Shuffle in A' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close without saving' }).click();
+  await page.waitForTimeout(300);
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(offer).toHaveCount(0);
+});
+
+test('tracks are added from an instrument, set, moved and deleted, each an edit to undo', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  const track = editBar(page).getByRole('combobox', { name: 'Track' });
+  await expect(track.locator('option')).toHaveCount(4);
+
+  await editTool(page, 'Add a track');
+  const add = page.getByRole('dialog', { name: 'Add a track' });
+  await add.getByLabel('Instrument').selectOption({ label: '5-string Bass' });
+  await expect(add.getByLabel('Name', { exact: true })).toHaveValue('5-string Bass');
+  await expect(add.getByLabel('Strings')).toHaveValue('5');
+  await add.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(add).toBeHidden();
+  // Shown, active, the caret on it, ready to write.
+  await expect(track.locator('option')).toHaveCount(5);
+  await expect(track).toHaveValue('4');
+  await expect(caret(page)).toHaveText(/^Caret: bar \d+, string 1, nothing written$/);
+
+  await editTool(page, 'Track properties');
+  const set = page.getByRole('dialog', { name: 'Track: 5-string Bass' });
+  await set.getByLabel('Name', { exact: true }).fill('Low end');
+  await set.getByLabel('Capo on fret').selectOption('2');
+  await set.getByRole('button', { name: 'Apply' }).click();
+  await expect(track.locator('option').nth(4)).toHaveText('5. Low end');
+
+  await editTool(page, 'Track properties');
+  await page.getByRole('dialog', { name: 'Track: Low end' }).getByRole('button', { name: 'Move up' }).click();
+  await expect(track.locator('option').nth(3)).toHaveText('4. Low end');
+  await expect(track).toHaveValue('3');
+
+  await editTool(page, 'Track properties');
+  await page
+    .getByRole('dialog', { name: 'Track: Low end' })
+    .getByRole('button', { name: 'Delete the track' })
+    .click();
+  await expect(track.locator('option')).toHaveCount(4);
+  // Undone: back, moved back, named as added, gone.
+  const undo = editBar(page).getByRole('button', { name: 'Undo', exact: true });
+  await undo.click();
+  await expect(track.locator('option')).toHaveCount(5);
+  await undo.click();
+  await expect(track.locator('option').nth(4)).toHaveText('5. Low end');
+  await undo.click();
+  await expect(track.locator('option').nth(4)).toHaveText('5. 5-string Bass');
+  await undo.click();
+  await expect(track.locator('option')).toHaveCount(4);
 });

@@ -29,6 +29,11 @@ import {
   TECHNIQUE_STACCATO,
   TECHNIQUE_TIE,
   TECHNIQUE_VIBRATO,
+  type BarProperties,
+  type BarState,
+  type NewTrack,
+  type TrackProperties,
+  type TrackState,
   type BeatAddress,
   type BeatTechniques,
   type DurationValue,
@@ -57,6 +62,7 @@ import {
   type Caret,
   type TypedFret,
 } from './edit-caret.ts';
+import { deleteDraft, holdDraft, releaseDraft, writeDraft } from './drafts.ts';
 import { regenerateSong, usePlayer } from './player.ts';
 
 export interface DocEditing {
@@ -158,7 +164,7 @@ function historyOf(key: string): History {
  * The editing action being run, if any: the edits it makes are made at once, before the actions
  * that come after it (the keys pressed next).
  */
-let acting: { readonly key: string; readonly edits: Promise<void>[] } | null = null;
+const acting = new Map<string, Promise<void>[]>();
 
 /**
  * Runs an editing action once the actions before it are done, as Guitar Pro takes keys one after
@@ -169,11 +175,11 @@ function act(key: string, action: () => unknown): boolean {
   if (!editingOf(key).on) return false;
   void enqueue(key, async () => {
     const edits: Promise<void>[] = [];
-    acting = { key, edits };
+    acting.set(key, edits);
     try {
-      action();
+      await action();
     } finally {
-      acting = null;
+      acting.delete(key);
     }
     await Promise.all(edits);
   }).catch(fail);
@@ -368,7 +374,15 @@ async function changed(
   to: CaretPlace | null,
 ): Promise<void> {
   let place = to;
-  useDocuments.getState().setSummary(key, outcome.summary);
+  if (outcome.trackOrigins === null) useDocuments.getState().setSummary(key, outcome.summary);
+  else {
+    useDocuments.getState().remapTracks(key, outcome.summary, outcome.trackOrigins);
+    // The caret follows its track, or goes to the active one when its track is gone.
+    const { caret } = editingOf(key);
+    const track = caret === null ? -1 : outcome.trackOrigins.indexOf(caret.track);
+    if (caret !== null && track >= 0) patch(key, { caret: { ...caret, track } });
+    else patch(key, { caret: null, beats: null });
+  }
   const doc = docOf(key);
   const start = editingOf(key).caret;
   let caret = start;
@@ -397,6 +411,75 @@ async function changed(
     changes: editingOf(key).changes + 1,
   });
   void regenerateSong(key).catch(fail);
+  keepDraft(key);
+}
+
+const draftTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+/**
+ * Keeps the document's edits on the device, a moment after the last one (EDIT-124): while it has
+ * changes not saved, its file and its edits; once it has none, nothing.
+ */
+function keepDraft(key: string): void {
+  const timer = draftTimers.get(key);
+  if (timer !== undefined) clearTimeout(timer);
+  draftTimers.set(
+    key,
+    setTimeout(() => {
+      draftTimers.delete(key);
+      const doc = docOf(key);
+      const editing = editingOf(key);
+      if (doc === null) return;
+      if (!isDirty(editing)) {
+        void deleteDraft(key);
+        return;
+      }
+      const history = historyOf(key);
+      holdDraft(key);
+      void writeDraft({
+        id: key,
+        name: doc.source.name,
+        title: doc.summary.title,
+        bytes: doc.source.bytes,
+        blank: doc.source.blank === true,
+        done: history.done.map(step => step.commands),
+        undone: history.undone.map(step => step.commands),
+        writtenAt: Date.now(),
+      });
+    }, DRAFT_DELAY_MS),
+  );
+}
+
+/** How long after an edit its draft is written. */
+const DRAFT_DELAY_MS = 300;
+
+/**
+ * Edits kept from before (a draft) made again on a document just opened from the draft's file:
+ * those made, and those undone (made, then undone), so that undo and redo go on as they were.
+ */
+export function restoreEdits(
+  key: string,
+  done: readonly (readonly EditCommand[])[],
+  undone: readonly (readonly EditCommand[])[],
+): Promise<void> {
+  return enqueue(key, async () => {
+    const doc = docOf(key);
+    if (doc === null || (done.length === 0 && undone.length === 0)) return;
+    const engine = getEngine();
+    let outcome: EditOutcome | null = null;
+    for (const commands of [...done, ...[...undone].reverse()])
+      outcome = await engine.call('edit', { docId: doc.engineId, commands });
+    for (let left = undone.length; left > 0; left -= 1)
+      outcome = await engine.call('undo', { docId: doc.engineId });
+    const history = historyOf(key);
+    const step = (commands: readonly EditCommand[]): Step => {
+      history.serial += 1;
+      return { commands, revision: history.serial, before: null, after: null };
+    };
+    history.done.splice(0, history.done.length, ...done.map(step));
+    history.undone.splice(0, history.undone.length, ...undone.map(step));
+    if (outcome !== null) await changed(key, outcome, history.done.at(-1)?.revision ?? 0, null);
+  });
 }
 
 /** Whether two carets are on the same beat and string. */
@@ -426,8 +509,9 @@ function apply(key: string, commands: readonly EditCommand[], after: CaretPlace 
     await changed(key, outcome, step.revision, moved ? null : step.after);
   };
   // Within an editing action, at once; otherwise after the work under way.
-  if (acting?.key === key) acting.edits.push(work());
-  else void enqueue(key, work).catch(fail);
+  const edits = acting.get(key);
+  if (edits === undefined) void enqueue(key, work).catch(fail);
+  else edits.push(work());
 }
 
 /** The caret's beat and string, when the document is being edited and the caret is on a beat. */
@@ -531,6 +615,79 @@ function setDurationAtCaretNow(key: string, duration: DurationValue): boolean {
   if (row === null || row.duration === duration) return true;
   apply(key, [{ kind: 'set-duration', at, duration, dots: row.dots }]);
   return true;
+}
+
+/** The master bar the caret is in, or null. */
+export function caretBar(editing: DocEditing): number | null {
+  const { caret, beats } = editing;
+  return caret === null || beats === null ? null : (rowOf(beats, caret.beatId)?.bar ?? null);
+}
+
+/** A bar's properties as they are now, from the engine (for the bar dialog). */
+export async function readBar(key: string, bar: number): Promise<BarState | null> {
+  const doc = docOf(key);
+  return doc === null ? null : getEngine().call('barProperties', { docId: doc.engineId, bar });
+}
+
+/** Sets a bar's properties, in every track (EDIT-021 … EDIT-027); the caret stays where it is. */
+export function setBar(key: string, bar: number, properties: BarProperties): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'set-bar', bar, properties }]);
+  });
+}
+
+/** A track's properties as they are now, from the engine (for the track dialog). */
+export async function readTrack(key: string, track: number): Promise<TrackState | null> {
+  const doc = docOf(key);
+  return doc === null ? null : getEngine().call('trackProperties', { docId: doc.engineId, track });
+}
+
+/** Sets a track's properties (EDIT-031 … EDIT-036). */
+export function setTrack(key: string, track: number, properties: TrackProperties): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'set-track', track, properties }]);
+  });
+}
+
+/** Puts a track in after the others (EDIT-030); it is shown and made active. */
+export function addTrack(key: string, track: NewTrack): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'add-track', at: docOf(key)?.summary.tracks.length ?? 0, track }]);
+  });
+}
+
+/** Takes a track away; a score keeps at least one. */
+export function removeTrack(key: string, track: number): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'remove-track', track }]);
+  });
+}
+
+/** Moves a track to another place among the others. */
+export function moveTrack(key: string, track: number, to: number): boolean {
+  return act(key, () => {
+    apply(key, [{ kind: 'move-track', track, to }]);
+  });
+}
+
+/** Turns a property of the caret's bar on or off, from what it is (triplet feel, free time). */
+export function toggleBarAtCaret(key: string, toggle: 'tripletFeel' | 'freeTime'): boolean {
+  return act(key, async () => {
+    const bar = caretBar(editingOf(key));
+    if (bar === null) return;
+    const state = await readBar(key, bar);
+    if (state === null) return;
+    apply(key, [
+      {
+        kind: 'set-bar',
+        bar,
+        properties:
+          toggle === 'freeTime'
+            ? { freeTime: !state.freeTime }
+            : { tripletFeel: state.tripletFeel === 'none' ? 'triplet-8th' : 'none' },
+      },
+    ]);
+  });
 }
 
 /** Note techniques the keys turn on and off (EDIT-014), with their flags and how each is set. */
@@ -721,7 +878,10 @@ export function afterEdits(key: string, task: () => Promise<boolean>): Promise<b
   return enqueue(key, async () => {
     const revision = editingOf(key).revision;
     result = await task();
-    if (result) patch(key, { saved: revision });
+    if (result) {
+      patch(key, { saved: revision });
+      keepDraft(key);
+    }
   }).then(() => result);
 }
 
@@ -755,7 +915,13 @@ useDocuments.subscribe((state, previous) => {
   for (const doc of previous.docs) {
     const now = state.docs.find(candidate => candidate.key === doc.key);
     if (now === undefined) {
+      // Closed, saved or not: its edits are not offered back.
       histories.delete(doc.key);
+      const timer = draftTimers.get(doc.key);
+      if (timer !== undefined) clearTimeout(timer);
+      draftTimers.delete(doc.key);
+      releaseDraft(doc.key);
+      void deleteDraft(doc.key);
       useEditing.setState(editing => {
         const { [doc.key]: _closed, ...rest } = editing.docs;
         return { docs: rest };

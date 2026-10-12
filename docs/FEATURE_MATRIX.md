@@ -562,20 +562,20 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-013 | Enharmonic spelling                                              | GP  | M4  | —       | —    | planned |
 | EDIT-014 | Every effect and articulation editable with a shortcut           | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-020 | Bars: insert / delete / copy / cut / paste                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
-| EDIT-021 | Time and key signatures                                          | GP  | M4  | —       | —    | planned |
-| EDIT-022 | Tempo and tempo ramps                                            | GP  | M4  | —       | —    | planned |
-| EDIT-023 | Repeats and alternate endings                                    | GP  | M4  | —       | —    | planned |
-| EDIT-024 | Markers / sections                                               | GP  | M4  | —       | —    | planned |
+| EDIT-021 | Time and key signatures                                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-022 | Tempo and tempo ramps                                            | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-023 | Repeats and alternate endings                                    | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-024 | Markers / sections                                               | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-025 | Directions                                                       | GP  | M5  | —       | —    | planned |
-| EDIT-026 | Barline types                                                    | GP  | M4  | —       | —    | planned |
-| EDIT-027 | Free time, swing feel, anacrusis                                 | GP  | M4  | —       | —    | planned |
-| EDIT-030 | Tracks: add / remove / reorder / duplicate                       | GP  | M4  | —       | —    | planned |
-| EDIT-031 | Instrument and program                                           | GP  | M4  | —       | —    | planned |
-| EDIT-032 | Tuning editor (any string count, capo, presets, custom)          | GP  | M4  | —       | —    | planned |
+| EDIT-026 | Barline types                                                    | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
+| EDIT-027 | Free time, swing feel, anacrusis                                 | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
+| EDIT-030 | Tracks: add / remove / reorder / duplicate                       | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
+| EDIT-031 | Instrument and program                                           | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
+| EDIT-032 | Tuning editor (any string count, capo, presets, custom)          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-033 | Microtonal tuning offsets                                        | OT  | M4  | —       | —    | planned |
 | EDIT-034 | Percussion tracks with drum-map editing                          | GP  | M4  | —       | —    | planned |
-| EDIT-035 | Track name, short name, colour                                   | GP  | M4  | —       | —    | planned |
-| EDIT-036 | Transposing-instrument settings                                  | GP  | M4  | —       | —    | planned |
+| EDIT-035 | Track name, short name, colour                                   | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-036 | Transposing-instrument settings                                  | GP  | M4  | —       | packages/core/test/edit.test.ts | done |
 | EDIT-040 | Chord library and custom diagram editor                          | GP  | M5  | —       | —    | planned |
 | EDIT-041 | Chord-name recognition from notes                                | GP  | M5  | —       | —    | planned |
 | EDIT-042 | Lyrics editor with syllable alignment and counting               | GP+ | M5  | —       | —    | planned |
@@ -591,13 +591,13 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-058 | Quantize                                                         | OT  | M5  | —       | —    | planned |
 | EDIT-059 | Mirror                                                           | OT  | M5  | —       | —    | planned |
 | EDIT-060 | Unlimited undo / redo                                            | GP+ | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
-| EDIT-061 | Autosave                                                         | GP  | M4  | —       | —    | planned |
+| EDIT-061 | Autosave                                                         | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
 | EDIT-062 | Version history with diffs                                       | OT  | M5  | —       | —    | planned |
 | EDIT-063 | Native save as .otz                                              | OT  | M4  | —       | —    | planned |
 | EDIT-064 | Save as .gp (Guitar Pro 7/8) with round-trip tests               | GP  | M4  | —       | apps/web/e2e/editing.spec.ts, packages/core/test/save-gp.test.ts | done |
 | EDIT-065 | Save as alphaTex                                                 | OT  | M4  | —       | —    | planned |
 | EDIT-066 | Track-creation wizard: family and instrument, name, colour, icon, notations, tuning and sound, each with a preview | GP  | M4  | —       | —    | planned |
-| EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | —    | planned |
+| EDIT-067 | Instrument library: 100+ instruments with family, range, clef, default tuning and sound | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-068 | Track icon                                                       | GP  | M4  | —       | —    | planned |
 | EDIT-069 | Split one staff into two (at a pitch, or everything to the upper or lower staff) | GP  | M4  | —       | —    | planned |
 | EDIT-070 | Merge two staves into one (both, upper only, lower only)         | GP  | M4  | —       | —    | planned |
@@ -654,7 +654,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-121 | Edit lock: a password is needed to edit                          | GP  | M4  | —       | —    | planned |
 | EDIT-122 | Open lock: password-encrypted documents                          | GP+ | M4  | —       | —    | planned |
 | EDIT-123 | Unsaved-changes guard: modified indicator, confirmation on close | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
-| EDIT-124 | Recovery of unsaved documents after a crash, reload or closed tab | GP  | M4  | —       | —    | planned |
+| EDIT-124 | Recovery of unsaved documents after a crash, reload or closed tab | GP  | M4  | —       | apps/web/e2e/editing.spec.ts | done |
 | EDIT-125 | Palm-mute assistant: chosen strings across a range               | GP  | M5  | —       | —    | planned |
 | EDIT-126 | Let-ring assistant: chosen strings across a range                | GP  | M5  | —       | —    | planned |
 | EDIT-127 | Bar arranger: re-bar music to fit time signatures, splitting and tying notes | GP  | M5  | —       | —    | planned |

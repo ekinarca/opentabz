@@ -205,6 +205,25 @@ All notable changes to OpenTabz are recorded here. The format follows
   out, `"` tremolo picking, `Shift D` and `Shift U` down- and upstrokes. `R` makes the beat a
   rest and `Ctrl .` (`⌘ .`) double-dots it. The edit bar's Techniques menu shows which are on
   and turns them on and off by touch.
+- **Bars: meter, key, tempo, repeats, sections.** The edit bar's Bar properties (or the command
+  palette) sets the caret's bar for every track: its time signature and key (each running on to
+  the next bar with one of its own), a tempo change and a gradual one to the next (accel. or
+  rit.), where a repeat starts and how many times it is played where it ends, the passes an
+  alternate ending is played on, a section mark and name, the bar line at its end, free time,
+  triplet feel and a pickup bar; only what is changed is set, as one edit to undo. Guitar Pro's
+  keys turn triplet feel (`Ctrl /`, `⌘ /`) and free time (`Alt Shift L`, `⌥ ⇧ L`) on and off.
+- **Tracks.** The edit bar adds a track from an instrument (electric, distortion, acoustic,
+  classical or 7-string guitar, bass, 5-string bass, ukulele, banjo, piano, voice, drums;
+  `Ctrl Shift Insert`, `⌘ ⌥ N`), on MIDI channels of its own, in the next of the tracks' colours,
+  with an empty bar for every bar; and sets a track's name, short name, colour, sound (any General
+  MIDI program), strings and tuning (presets such as drop D, open G or DADGAD, or string by
+  string), capo and how far above its sound it is written; it moves a track up or down and
+  deletes it. The mixer, the tracks shown and the instrument views follow, and each is an edit
+  to undo.
+- **Nothing lost.** Changes not saved are kept on the device as they are made, the file and its
+  edits; after a crash, a reload or a closed tab OpenTabz offers them back, to open with their
+  edits (undo going on as before) or to discard. A score saved, undone back to as it was, or
+  closed without saving is forgotten; one open in another tab is not offered.
 - **A new score.** "New score", on the home page, in the top bar or in the command palette,
   opens a blank score (a guitar in standard tuning, in standard notation and tablature, sixteen
   empty bars of 4/4 at 120) edited at once, the caret on its first bar: the first note is a key

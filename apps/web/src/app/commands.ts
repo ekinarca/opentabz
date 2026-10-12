@@ -10,6 +10,8 @@ import { ORIENTATIONS, PAGE_ARRANGEMENTS, PAPER_IDS, type PageSetup } from '../s
 import { occurrenceOfMasterBar } from '../score-view/timeline-lookup.ts';
 import { clampZoom, useDocuments, type DocViewState, type OpenDocument } from '../state/documents.ts';
 import { editingOf } from '../state/editing.ts';
+import { openBarDialog } from './BarDialog.tsx';
+import { openTrackDialog } from './TrackDialog.tsx';
 import { newScore } from './new-score.ts';
 import { requestClose } from './save.ts';
 import { MAX_TRANSPOSE } from '../state/mixer-memory.ts';
@@ -243,6 +245,36 @@ export function paletteCommands(mod: string = modKey()): Command[] {
     opens('practice', c.practice, 'practice'),
     opens('about', strings.topBar.about, 'about', () => null),
     opens('open-url', strings.home.openUrl, 'url', () => null),
+    {
+      id: 'track-properties',
+      label: strings.trackDialog.open,
+      aliases: aliasesOf('track-properties'),
+      keys: null,
+      unavailable: () => {
+        const doc = activeDocument();
+        if (doc === null) return p.reasons.noScore;
+        return editingOf(doc.key).on ? null : p.reasons.notEditing;
+      },
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openTrackDialog(doc.key);
+      },
+    },
+    {
+      id: 'bar-properties',
+      label: strings.barDialog.open,
+      aliases: aliasesOf('bar-properties'),
+      keys: null,
+      unavailable: () => {
+        const doc = activeDocument();
+        if (doc === null) return p.reasons.noScore;
+        return editingOf(doc.key).on ? null : p.reasons.notEditing;
+      },
+      run: () => {
+        const doc = activeDocument();
+        if (doc !== null) openBarDialog(doc.key);
+      },
+    },
     {
       id: 'new-score',
       label: strings.home.newScore,

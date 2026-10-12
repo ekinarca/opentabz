@@ -24,6 +24,7 @@ import {
   redoEdit,
   restAtCaret,
   stepDurationAtCaret,
+  toggleBarAtCaret,
   toggleBeatTechnique,
   toggleDotAtCaret,
   toggleDoubleDotAtCaret,
@@ -42,6 +43,7 @@ import { strings } from '../strings.ts';
 import { leaveFullScreen, toggleFullScreen } from './full-screen.ts';
 import { pickFiles } from './open-actions.ts';
 import { saveDocument } from './save.ts';
+import { openAddTrack } from './TrackDialog.tsx';
 import { modKey } from './platform.ts';
 
 export type ShortcutGroup = 'playback' | 'navigation' | 'selection' | 'editing' | 'view' | 'files' | 'help';
@@ -566,6 +568,23 @@ const TECHNIQUES: readonly Shortcut[] = [
   ),
   technique('stroke-up', s.strokeUp, [{ key: 'u', shift: true }], key =>
     toggleBeatTechnique(key, 'strokeUp'),
+  ),
+  // Guitar Pro's keys for a track: Ctrl Shift Ins, ⌥⌘N on a Mac.
+  technique(
+    'add-track',
+    s.addTrack,
+    [
+      { key: 'Insert', mod: true, shift: true, platform: 'pc' },
+      { key: 'n', code: 'KeyN', mod: true, alt: true, platform: 'apple' },
+    ],
+    openAddTrack,
+  ),
+  // Guitar Pro's bar keys: ⌘/ (Ctrl /) triplet feel, ⌥⇧L (Alt Shift L) free time.
+  technique('triplet-feel-bar', s.tripletFeelBar, [{ key: '/', mod: true }], key =>
+    toggleBarAtCaret(key, 'tripletFeel'),
+  ),
+  technique('free-time-bar', s.freeTimeBar, [{ key: 'l', code: 'KeyL', alt: true, shift: true }], key =>
+    toggleBarAtCaret(key, 'freeTime'),
   ),
 ];
 
