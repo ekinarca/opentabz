@@ -5,6 +5,7 @@
  * simply keeps nothing.
  */
 import { create } from 'zustand';
+import { FILES_STORE, openDatabase, RECENT_STORE } from './database.ts';
 
 export interface RecentScore {
   /** SHA-256 of the file: the same file opened again is one entry. */
@@ -55,12 +56,8 @@ export function isRecentScore(value: unknown): value is RecentScore {
   );
 }
 
-const DATABASE = 'opentabz';
-const VERSION = 1;
-/** Each score's record, by fingerprint. */
-const RECENT = 'recent';
-/** Each score's bytes, by fingerprint: read only to open it. */
-const FILES = 'files';
+const RECENT = RECENT_STORE;
+const FILES = FILES_STORE;
 
 function done<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -84,27 +81,8 @@ function finished(transaction: IDBTransaction): Promise<void> {
   });
 }
 
-let opening: Promise<IDBDatabase> | null = null;
-
 function database(): Promise<IDBDatabase> {
-  opening ??= new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, VERSION);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(RECENT)) db.createObjectStore(RECENT, { keyPath: 'fingerprint' });
-      if (!db.objectStoreNames.contains(FILES)) db.createObjectStore(FILES);
-    };
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    request.onerror = () => {
-      reject(request.error ?? new Error('IndexedDB is not available.'));
-    };
-  }).catch((error: unknown) => {
-    opening = null;
-    throw error;
-  });
-  return opening;
+  return openDatabase(() => new Error('IndexedDB is not available.'));
 }
 
 /** The scores kept, the latest first; none when storage is not available. */

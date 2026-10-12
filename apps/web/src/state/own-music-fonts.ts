@@ -6,6 +6,7 @@
 import { isSmuflMetadata, OWN_MUSIC_FONT_PREFIX, type SmuflMetadataJson } from '@opentabz/core/shared';
 import { create } from 'zustand';
 import { strings } from '../strings.ts';
+import { MUSIC_FONTS_STORE, openDatabase } from './database.ts';
 
 export interface OwnMusicFont {
   readonly id: string;
@@ -15,42 +16,27 @@ export interface OwnMusicFont {
   readonly metadata: SmuflMetadataJson;
 }
 
-const DATABASE = 'opentabz';
-const STORE = 'musicFonts';
+const STORE = MUSIC_FONTS_STORE;
 
 function open(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
-    request.onupgradeneeded = () => {
-      request.result.createObjectStore(STORE, { keyPath: 'id' });
-    };
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    request.onerror = () => {
-      reject(request.error ?? new Error('The browser’s storage could not be opened.'));
-    };
-  });
+  return openDatabase(() => new Error('The browser’s storage could not be opened.'));
 }
 
 async function transact<T>(
   mode: IDBTransactionMode,
   work: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
+  // The app's one connection to the database stays open for the other stores (database.ts).
   const database = await open();
-  try {
-    return await new Promise<T>((resolve, reject) => {
-      const request = work(database.transaction(STORE, mode).objectStore(STORE));
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-      request.onerror = () => {
-        reject(request.error ?? new Error('The browser’s storage failed.'));
-      };
-    });
-  } finally {
-    database.close();
-  }
+  return new Promise<T>((resolve, reject) => {
+    const request = work(database.transaction(STORE, mode).objectStore(STORE));
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+    request.onerror = () => {
+      reject(request.error ?? new Error('The browser’s storage failed.'));
+    };
+  });
 }
 
 function isOwnMusicFont(value: unknown): value is OwnMusicFont {

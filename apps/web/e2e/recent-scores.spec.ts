@@ -94,3 +94,37 @@ test('opens the scores from last time at the start when asked, and forgets them 
   await expect(page.getByRole('navigation', { name: 'Open documents' })).toHaveCount(0);
   await expect(recent(page)).toHaveCount(0);
 });
+
+test('keeps recent scores beside the music fonts an earlier version kept', async ({ page }) => {
+  // The database as the version before recent scores left it: music fonts only.
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('earlier-database') !== null) return;
+    sessionStorage.setItem('earlier-database', '1');
+    const request = indexedDB.open('opentabz', 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore('musicFonts', { keyPath: 'id' });
+    };
+    request.onsuccess = () => {
+      request.result.close();
+    };
+  });
+  await openHome(page);
+  await openShuffle(page);
+  await kept(page, 1);
+  await page.getByRole('button', { name: 'OpenTabz home' }).click();
+  await expect(
+    recent(page).getByRole('button', { name: 'Open Twelve-Bar Shuffle in A again' }),
+  ).toBeVisible();
+  // Both kinds of store side by side.
+  const stores = await page.evaluate(
+    () =>
+      new Promise<string[]>(resolve => {
+        const request = indexedDB.open('opentabz');
+        request.onsuccess = () => {
+          resolve([...request.result.objectStoreNames].sort());
+          request.result.close();
+        };
+      }),
+  );
+  expect(stores).toEqual(['files', 'musicFonts', 'recent']);
+});
