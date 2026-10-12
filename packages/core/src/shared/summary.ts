@@ -31,6 +31,8 @@ export interface DocSummary {
   readonly tracks: readonly TrackSummary[];
   /** Whether the file carries its own systems layout (bars per system), e.g. Guitar Pro 6–8. */
   readonly hasModelLayout: boolean;
+  /** Whether the score has repeats, endings or jumps to write out (REND-319). */
+  readonly hasRepeats: boolean;
   readonly hasBackingTrack: boolean;
   /** How the file asks for the score to be engraved (its stylesheet). */
   readonly style: ScoreStyle;

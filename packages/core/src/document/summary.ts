@@ -1,6 +1,7 @@
 import type * as alphaTab from '@coderline/alphatab';
 import type { FormatId } from '../shared/formats.ts';
 import { readScoreStyle } from '../render/style.ts';
+import { hasRepeats } from './unfold.ts';
 import type { DocSummary, MasterBarSummary, StaffSummary, TrackSummary } from '../shared/summary.ts';
 
 export interface SummaryMeta {
@@ -34,6 +35,7 @@ export function summarizeScore(score: alphaTab.model.Score, meta: SummaryMeta): 
     tracks: score.tracks.map(summarizeTrack),
     hasModelLayout:
       score.systemsLayout.length > 0 || score.tracks.some(track => track.systemsLayout.length > 0),
+    hasRepeats: hasRepeats(score),
     hasBackingTrack: score.backingTrack !== undefined && (score.backingTrack.rawAudioFile?.length ?? 0) > 0,
     style: readScoreStyle(score),
   };

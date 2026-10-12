@@ -143,6 +143,10 @@ All notable changes to OpenTabz are recorded here. The format follows
   their part in the chord over them (root, third, fifth, seventh); in standard colours, colour-blind
   safe ones (Okabe and Ito's, Paul Tol's) or string colours of one's own, with what each colour
   stands for. Exports print the same; the choice is remembered.
+- **Repeats written out.** For a score with repeats, endings or jumps (D.C., D.S., codas), the
+  toolbar's Write out repeats opens it again in a tab of its own with every bar as often and in
+  the order it is played, with no repeat signs or jumps left to follow; it plays, prints and
+  exports like any score.
 - **Music fonts.** The stylesheet sets the music in Bravura, as printed music, or Petaluma, as if
   written by hand, or in any SMuFL font of one's own, added from its font file and metadata and
   kept in this browser only. Symbols a font lacks are drawn from Bravura. The score is laid out

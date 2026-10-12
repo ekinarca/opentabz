@@ -393,6 +393,9 @@ export const strings = {
     zoomLevel: (zoom: number) => `${Math.round(zoom * 100)} %`,
     zoomMenu: 'Zoom level',
     songInfo: 'Song info',
+    unfold: 'Write out repeats',
+    unfoldedName: (name: string) => `${name} (written out).gp`,
+    unfoldFailed: 'The repeats could not be written out',
     fullScreen: 'Full screen',
   },
 

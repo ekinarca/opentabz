@@ -26,6 +26,7 @@ import {
   Grid3x3,
   Guitar,
   Info,
+  ListOrdered,
   Maximize,
   MicVocal,
   Piano,
@@ -41,12 +42,14 @@ import {
   type PageArrangement,
   type PaperId,
 } from '../score-view/pagination.ts';
+import { getEngine } from '../engine/instance.ts';
 import { useDocuments, type OpenDocument } from '../state/documents.ts';
 import { usePlayer } from '../state/player.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { CountInOverlay } from './CountInOverlay.tsx';
+import { openFiles } from './open-actions.ts';
 import { enterFullScreen } from './full-screen.ts';
 import { FullScreenBar } from './FullScreenBar.tsx';
 import { FretboardPanel } from './FretboardPanel.tsx';
@@ -389,6 +392,15 @@ function ViewToolbar({
         />
         <NoteColorsControl />
         <PlaybackViewControl />
+        {summary.hasRepeats && (
+          <IconButton
+            label={strings.toolbar.unfold}
+            icon={<ListOrdered size={18} aria-hidden />}
+            onClick={() => {
+              void writeOutRepeats(doc);
+            }}
+          />
+        )}
         <IconButton label={strings.toolbar.songInfo} icon={<Info size={18} aria-hidden />} onClick={onInfo} />
         <IconButton
           label={strings.stylesheet.open}
@@ -423,6 +435,24 @@ function usePlaybackForActiveDocument(active: OpenDocument | null): void {
     }
     void load(doc);
   }, [key, engineId, load, unload]);
+}
+
+/**
+ * Opens the score with its repeats and jumps written out (REND-319), as a document of its own:
+ * every bar as often and in the order it is played.
+ */
+async function writeOutRepeats(doc: OpenDocument): Promise<void> {
+  try {
+    const { bytes } = await getEngine().call('unfoldDocument', { docId: doc.engineId });
+    const base = doc.source.name.replace(/\.[^.]+$/, '');
+    openFiles([new File([bytes], strings.toolbar.unfoldedName(base))]);
+  } catch (error) {
+    useDocuments.getState().notify({
+      title: strings.toolbar.unfoldFailed,
+      description: error instanceof Error ? error.message : String(error),
+      tone: 'error',
+    });
+  }
 }
 
 export function Workspace() {

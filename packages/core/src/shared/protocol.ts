@@ -87,6 +87,11 @@ export interface EngineMethods {
    */
   registerMusicFont(args: { readonly id: string; readonly metadata: SmuflMetadataJson }): null;
   /**
+   * The score with its repeats and jumps written out, every bar as often and in the order it is
+   * played (REND-319), as a Guitar Pro 7 file to open as a document of its own.
+   */
+  unfoldDocument(args: { readonly docId: string }): { readonly bytes: ArrayBuffer };
+  /**
    * The song for an audio export: the MIDI playback would send the synthesizer (with a silent
    * tail for the last notes to die away) and its timeline, returned rather than sent.
    */

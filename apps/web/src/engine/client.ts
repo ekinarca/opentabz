@@ -29,6 +29,7 @@ const DEADLINES: Readonly<Record<EngineMethod, number>> = {
   trackDrums: 10_000,
   scoreOverview: 10_000,
   registerMusicFont: 10_000,
+  unfoldDocument: 30_000,
   exportAudioSong: 30_000,
   exportMidi: 30_000,
 };

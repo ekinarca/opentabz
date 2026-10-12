@@ -11,6 +11,7 @@ import { collectScoreOverview } from '../playback/score-overview.ts';
 import { collectTrackDrums } from '../playback/track-drums.ts';
 import { collectTrackLyrics } from '../playback/track-lyrics.ts';
 import { collectTrackNotes } from '../playback/track-notes.ts';
+import { unfoldScore } from '../document/unfold.ts';
 import { registerMusicFont } from '../render/music-fonts.ts';
 import { RenderSession } from '../render/session.ts';
 import type { OpenError } from '../shared/open-error.ts';
@@ -21,6 +22,7 @@ import type { TrackLyrics } from '../shared/lyrics.ts';
 import type { TrackNotes } from '../shared/notes.ts';
 import {
   EXTRA_CHANNEL_DRUMS,
+  TIMELINE_BAR_STRIDE,
   TIMELINE_EXTRA_CHANNEL_STRIDE,
   type PlaybackTimeline,
   type SynthDelivery,
@@ -230,6 +232,18 @@ export class EngineHost implements EngineMethods {
     const document = this.documents.get(args.docId);
     if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
     return collectTrackDrums(document.score, args.trackIndex);
+  }
+
+  public unfoldDocument(args: EngineArgs<'unfoldDocument'>): EngineResult<'unfoldDocument'> {
+    const document = this.documents.get(args.docId);
+    if (document === undefined) throw new EngineHostError(`Unknown document ${args.docId}.`);
+    // The bars in the order playback visits them.
+    const { bars } = generatePlayback(document.score, 'unfold').timeline;
+    const order: number[] = [];
+    for (let at = 2; at < bars.length; at += TIMELINE_BAR_STRIDE) order.push(bars[at] ?? 0);
+    const unfolded = unfoldScore(document.score, order);
+    const bytes = new alphaTab.exporter.Gp7Exporter().export(unfolded, new alphaTab.Settings());
+    return { bytes: bytes.slice().buffer };
   }
 
   public registerMusicFont(args: EngineArgs<'registerMusicFont'>): null {

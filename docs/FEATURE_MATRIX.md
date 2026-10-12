@@ -263,7 +263,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | REND-316 | Colour-blind-safe palettes and custom string colours                              | OT  | M2  | —                                                           | packages/core/test/note-colors.test.ts, apps/web/e2e/note-colors.spec.ts | done |
 | REND-317 | Beat counts written above notes (1 e & a)                                         | OT  | M2  | —                                                           | packages/core/test/reading-aids.test.ts, apps/web/e2e/reading-aids.spec.ts | done |
 | REND-318 | Percussion legend for drum staves                                                 | OT  | M2  | alphatex/demos/twelve-bar-shuffle.atex | packages/core/test/drum-key.test.ts, apps/web/src/state/preferences.test.ts, apps/web/e2e/reading-aids.spec.ts | done |
-| REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | —                                                           | —    | planned |
+| REND-319 | Unfolded view: repeats and jumps written out in performance order                 | OT  | M2  | alphatex/views/repeats.atex | packages/core/test/unfold.test.ts, apps/web/e2e/unfold.spec.ts | done |
 | REND-320 | Hide staves that rest for a whole system                                          | OT  | M2  | —                                                           | packages/core/test/score-style.test.ts, apps/web/e2e/stylesheet.spec.ts | done |
 
 ## Playback

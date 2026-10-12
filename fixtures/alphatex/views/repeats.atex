@@ -1,0 +1,10 @@
+// Repeats views — original music written for OpenTabz (AGPL-3.0-or-later).
+// A repeated phrase with two endings, a second part, then back to the start until Fine.
+\title "Repeats Views"
+\subtitle "OpenTabz test score"
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (4 4)
+\ro :1 0.5 | \ae 1 \rc 2 2.5 | \ae 2 \jump fine 3.5 | 5.5 | \jump daCapoAlFine 7.5 |

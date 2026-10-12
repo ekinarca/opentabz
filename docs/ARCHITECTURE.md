@@ -95,18 +95,26 @@ for a superseded layout are dropped. Binary payloads (file bytes) are transferre
 Each method has a deadline; a worker that misses one is terminated and replaced (the watchdog),
 and a worker that fails three times while starting is reported as unavailable.
 
-| Method            | Purpose                                                                           |
-| ----------------- | --------------------------------------------------------------------------------- |
-| `init`            | warm the JIT (alphaTex and a `.gp` round trip, layout, paint); report the version |
-| `open`            | sniff + import bytes → `DocSummary`, or a typed `OpenError`                       |
-| `closeDocument`   | release a document and its views                                                  |
-| `layoutView`      | lay out a view (tracks, layout, staff display, width) → partials, bounds, timing  |
-| `paint`           | paint laid-out partials of the current generation to SVG (viewport-driven)        |
-| `closeView`       | dispose a render session                                                          |
-| `connectSynth`    | receive a `MessagePort` to the synth worker                                       |
-| `preparePlayback` | generate MIDI (sent straight to the synth worker) and the playback timeline       |
-| `previewBeats`    | sound the given beats once (audible stepping)                                     |
-| `trackNotes`      | one track's notes per beat (string, fret, pitch, flags) for instrument views      |
+| Method              | Purpose                                                                           |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `init`              | warm the JIT (alphaTex and a `.gp` round trip, layout, paint); report the version |
+| `open`              | sniff + import bytes → `DocSummary`, or a typed `OpenError`                       |
+| `closeDocument`     | release a document and its views                                                  |
+| `layoutView`        | lay out a view (tracks, layout, staff display, width) → partials, bounds, timing  |
+| `paint`             | paint laid-out partials of the current generation to SVG (viewport-driven)        |
+| `closeView`         | dispose a render session                                                          |
+| `connectSynth`      | receive a `MessagePort` to the synth worker                                       |
+| `preparePlayback`   | generate MIDI (sent straight to the synth worker) and the playback timeline       |
+| `previewBeats`      | sound the given beats once (audible stepping)                                     |
+| `trackNotes`        | one track's notes per beat (string, fret, pitch, flags) for instrument views      |
+| `trackChords`       | one track's chords and the beats that carry them, for the chords panel            |
+| `trackLyrics`       | one track's lyrics, syllable by syllable on their beats, for the lyrics pane      |
+| `trackDrums`        | one track's drum kit and notes, for the drum view                                 |
+| `scoreOverview`     | the bars each track plays in, for the song overview                               |
+| `exportAudioSong`   | the MIDI and timeline of the song for an audio export, returned rather than sent  |
+| `exportMidi`        | a Standard MIDI File of the song as it is played                                  |
+| `registerMusicFont` | a music font's SMuFL metadata, for views to engrave with (REND-241)               |
+| `unfoldDocument`    | the score with its repeats and jumps written out, as a Guitar Pro 7 file          |
 
 Layouts also return `ScoreBounds`: compact typed arrays with every system, bar and beat
 rectangle, which the main thread uses for the cursor, hit testing and selections without
