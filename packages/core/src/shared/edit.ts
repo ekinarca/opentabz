@@ -393,6 +393,16 @@ export type EditCommand =
       readonly chords?: boolean;
     }
   /**
+   * A drum sound on a beat of a drum staff (EDIT-034, EDIT-115), or taken off: the sound by its
+   * id ("Snare.38") or, as Guitar Pro 5 has them typed, by its General MIDI key (38).
+   */
+  | {
+      readonly kind: 'set-drum';
+      readonly at: BeatAddress;
+      readonly sound: string | number;
+      readonly on: boolean;
+    }
+  /**
    * The beat before a beat (in its voice, across the bar line) written again over it, as Guitar
    * Pro's C key repeats it (EDIT-094).
    */

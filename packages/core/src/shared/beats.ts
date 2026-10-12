@@ -31,6 +31,10 @@ export interface TrackBeats {
   readonly noteMarks: Int32Array;
   /** The text written above beats: [beatId, text]. */
   readonly texts: readonly (readonly [number, string])[];
+  /** Per note, as `notes` lists them: its drum sound's id ("Snare.38"), or "" for a note that is none. */
+  readonly drumSounds: readonly string[];
+  /** The drum sounds the notes name, by id: their names, as Guitar Pro has them. */
+  readonly drumNames: readonly (readonly [string, string])[];
 }
 
 export const TRACK_BEATS_STRIDE = 12;

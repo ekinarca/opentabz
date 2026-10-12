@@ -444,7 +444,7 @@ function sameArticulation(
  * Where a track finds a drum articulation: among its own, among alphaTab's (Guitar Pro's) that its
  * own leave in place, or added to its own.
  */
-function articulationIn(
+export function articulationIn(
   transaction: Transaction,
   track: alphaTab.model.Track,
   articulation: alphaTab.model.InstrumentArticulation,

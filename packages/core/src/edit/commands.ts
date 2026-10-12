@@ -15,13 +15,15 @@ import type { Journal } from './journal.ts';
 import { firstEngraved, REACH, type Region } from './refinish.ts';
 import { setBarProperties } from './bar-properties.ts';
 import { detach, emptyBeats, ensureVoices, insertBar, removeBar } from './bars.ts';
-import { clearSelection, copyBeat, paste, place, removeSelection, voiceOf } from './clip.ts';
+import { articulationIn, clearSelection, copyBeat, paste, place, removeSelection, voiceOf } from './clip.ts';
 import { moveString, retune, transpose } from './transpose.ts';
 import { harmonize } from './harmonize.ts';
 import { setBeatTechniques, setNoteTechniques } from './techniques.ts';
 import { duplicateTrack, newTrack, reindexTracks, setTrackProperties, trackAt } from './tracks.ts';
 
 export { EditError };
+
+const { PercussionMapper } = alphaTab.model;
 
 /** Where a master bar is, and how it is linked to the others: what a bar put in changes. */
 const MASTER_BAR_PLACE = ['index', 'score', 'previousMasterBar', 'nextMasterBar', 'start', 'repeatGroup'];
@@ -466,6 +468,38 @@ export function runCommand(transaction: Transaction, command: EditCommand): void
         // Moved, the notes keep what joins them; alphaTab joins them anew in their voice.
         if (mode === 'move') source.beats = emptyBeats(source);
       }
+      return;
+    }
+    case 'set-drum': {
+      const beat = beatAt(score, command.at);
+      const staff = beat.voice.bar.staff;
+      if (!staff.isPercussion) throw new EditError('The staff is not a drum staff.');
+      const kit = [
+        ...staff.track.percussionArticulations,
+        ...PercussionMapper.instrumentArticulations.values(),
+      ];
+      const sound = command.sound;
+      const articulation = kit.find(candidate =>
+        typeof sound === 'number' ? candidate.outputMidiNumber === sound : candidate.uniqueId === sound,
+      );
+      if (articulation === undefined) throw new EditError(`No drum sound ${JSON.stringify(sound)}.`);
+      const existing = beat.notes.find(
+        note => PercussionMapper.getArticulation(note)?.uniqueId === articulation.uniqueId,
+      );
+      if (command.on === (existing !== undefined)) return;
+      transaction.touch(staff, command.at.bar);
+      if (existing !== undefined) {
+        detach(existing);
+        beat.removeNote(existing);
+        beat.notes.forEach((other, index) => {
+          other.index = index;
+        });
+        return;
+      }
+      const note = new alphaTab.model.Note();
+      note.percussionArticulation = articulationIn(transaction, staff.track, articulation);
+      beat.isEmpty = false;
+      beat.addNote(note);
       return;
     }
     case 'repeat-beat': {

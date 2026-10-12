@@ -37,6 +37,7 @@ import {
   type TrackBeats,
 } from '../shared/beats.ts';
 import { DYNAMICS, FINGERS, STEMS, TUPLETS } from '../shared/edit.ts';
+import { articulationName } from '../playback/track-drums.ts';
 import {
   BEAMINGS,
   DYNAMIC_VALUES,
@@ -99,6 +100,8 @@ export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: numbe
   const beatMarks: number[] = [];
   const noteMarks: number[] = [];
   const texts: [number, string][] = [];
+  const drumSounds: string[] = [];
+  const drumNames = new Map<string, string>();
   for (const staff of track?.staves ?? []) {
     for (const bar of staff.bars) {
       for (const voice of bar.voices) {
@@ -131,6 +134,12 @@ export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: numbe
           if (beat.text !== null && beat.text.length > 0) texts.push([beat.id, beat.text]);
           for (const note of beat.notes) {
             notes.push(note.isStringed ? note.string : 0, note.fret, noteFlags(note));
+            const articulation = staff.isPercussion
+              ? alphaTab.model.PercussionMapper.getArticulation(note)
+              : null;
+            drumSounds.push(articulation?.uniqueId ?? '');
+            if (articulation !== null && !drumNames.has(articulation.uniqueId))
+              drumNames.set(articulation.uniqueId, articulationName(articulation));
             noteMarks.push(
               Math.max(0, indexIn(FINGERS, FINGER_VALUES, note.leftHandFinger)),
               Math.max(0, indexIn(FINGERS, FINGER_VALUES, note.rightHandFinger)),
@@ -148,5 +157,7 @@ export function collectTrackBeats(score: alphaTab.model.Score, trackIndex: numbe
     beatMarks: Int32Array.from(beatMarks),
     noteMarks: Int32Array.from(noteMarks),
     texts,
+    drumSounds,
+    drumNames: [...drumNames],
   };
 }

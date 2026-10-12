@@ -484,6 +484,41 @@ describe('commands', () => {
     expect(fingerprint(score)).toBe(before);
   });
 
+  it('puts drum sounds on a beat and takes them off, by id or General MIDI key (EDIT-034, EDIT-115)', () => {
+    const score = texScore(
+      '\\track "Drums" {instrument percussion}\n\\articulation defaults\n:4 KickHit r r r\n' +
+        '\\track "Guitar" 3.3.1',
+    );
+    const editor = editorOf(score);
+    const sounds = (index: number) =>
+      (score.tracks[0]?.staves[0]?.bars[0]?.voices[0]?.beats[index]?.notes ?? []).map(
+        note => alphaTab.model.PercussionMapper.getArticulation(note)?.outputMidiNumber,
+      );
+    // GP5's way: the snare's key, 38; then the closed hi-hat by its id.
+    editor.apply([{ kind: 'set-drum', at: AT, sound: 38, on: true }]);
+    // The kick alphaTex writes is GM's 35.
+    expect(sounds(0)).toEqual([35, 38]);
+    const hiHat = [...alphaTab.model.PercussionMapper.instrumentArticulations.values()].find(
+      articulation => articulation.outputMidiNumber === 42,
+    );
+    editor.apply([{ kind: 'set-drum', at: { ...AT, beat: 1 }, sound: hiHat?.uniqueId ?? '', on: true }]);
+    expect(sounds(1)).toEqual([42]);
+    expect(beat(score, 0, 1).isRest).toBe(false);
+    // Taken off; already off, nothing to do.
+    editor.apply([{ kind: 'set-drum', at: AT, sound: 35, on: false }]);
+    expect(sounds(0)).toEqual([38]);
+    expect(editor.apply([{ kind: 'set-drum', at: AT, sound: 35, on: false }])).toBeNull();
+    const listed = collectTrackBeats(score, 0);
+    expect(listed.drumNames.map(([, name]) => name).sort()).toEqual(['Hi-Hat (closed)', 'Snare (hit)']);
+    expect(listed.drumSounds.filter(sound => sound !== '')).toHaveLength(2);
+    expect(() => editor.apply([{ kind: 'set-drum', at: { ...AT, track: 1 }, sound: 38, on: true }])).toThrow(
+      'The staff is not a drum staff.',
+    );
+    expect(() => editor.apply([{ kind: 'set-drum', at: AT, sound: 'Cowbell.999', on: true }])).toThrow(
+      'No drum sound "Cowbell.999".',
+    );
+  });
+
   it('writes directions at bars: Segno, Coda, Fine, D.S. al Coda (EDIT-025)', () => {
     const score = texScore('\\track "Guitar" 3.3.1 | 3.3.1 | 3.3.1 | 3.3.1');
     const editor = editorOf(score);
@@ -1149,7 +1184,22 @@ function randomSelectionCommand(score: alphaTab.model.Score, random: () => numbe
           fromBar: bar.index,
           toBar,
         };
-  switch (pick(11)) {
+  switch (pick(12)) {
+    case 11:
+      return staff.isPercussion
+        ? {
+            kind: 'set-drum',
+            at: {
+              track: staff.track.index,
+              staff: staff.index,
+              bar: bar.index,
+              voice: voice.index,
+              beat: pick(voice.beats.length),
+            },
+            sound: 35 + pick(47),
+            on: random() < 0.7,
+          }
+        : null;
     case 10:
       return {
         kind: 'harmonize',
@@ -1291,9 +1341,15 @@ describe('every edit is undone and redone exactly, in every fixture', () => {
         // strings: refused, the score as it was.
         if (
           !(error instanceof EditError) ||
-          !['paste', 'transpose', 'move-string', 'repeat-beat', 'set-track', 'harmonize'].includes(
-            command.kind,
-          )
+          ![
+            'paste',
+            'transpose',
+            'move-string',
+            'repeat-beat',
+            'set-track',
+            'harmonize',
+            'set-drum',
+          ].includes(command.kind)
         )
           throw error;
         expect(stateOf(score), `refused ${JSON.stringify(command)}`).toEqual(states.at(-1));
