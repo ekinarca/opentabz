@@ -82,6 +82,9 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     arpeggioArrows: true,
     trillNote: true,
     slideLabel: true,
+    // alphaTab reads neither: H and P written, a chord's slurs over its outer notes, as it draws.
+    hopoLetters: true,
+    tabSlursOnOuterNotes: true,
     tiedTabNotes: false,
     harmonicTouch: true,
     octaveHarmonicDot: false,
@@ -278,6 +281,8 @@ export function applyScoreStyle(
       case 'arpeggioArrows':
       case 'trillNote':
       case 'slideLabel':
+      case 'hopoLetters':
+      case 'tabSlursOnOuterNotes':
       case 'tiedTabNotes':
       case 'harmonicTouch':
       case 'octaveHarmonicDot':
@@ -383,6 +388,9 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.showArpeggioArrows = style.arpeggioArrows;
   settings.notation.showTrillNote = style.trillNote;
   elements.set(alphaTab.NotationElement.EffectSlideText, style.slideLabel);
+  // Hammer-ons and pull-offs: their letters, and a chord's slurs in the tablature (REND-251).
+  elements.set(alphaTab.NotationElement.EffectHammerOnPullOffText, style.hopoLetters);
+  settings.notation.tabSlursOnOuterNotes = style.tabSlursOnOuterNotes;
   settings.notation.showTiedTabNotes = style.tiedTabNotes;
   settings.notation.showHarmonicTouch = style.harmonicTouch;
   settings.notation.octaveHarmonicDot = style.octaveHarmonicDot;

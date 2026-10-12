@@ -251,6 +251,33 @@ test('artificial harmonics with where they are touched, without, or octaves as a
     .toEqual(['<12>', '<12>', '<12>']);
 });
 
+test('hammer-ons and pull-offs with or without H and P, a chord’s slurs over its outer notes or each (REND-251)', async ({
+  page,
+}) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/hammer-ons.atex')]);
+  await expectScore(page);
+  const texts = async () => (await scoreTexts(page)).map(text => text.trim());
+  const letters = async () => (await texts()).filter(text => text === 'H' || text === 'P').length;
+  /** The curves of the score: slurs. */
+  const curves = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"] path')
+      .evaluateAll(paths => paths.length);
+  await expect.poll(letters).toBeGreaterThan(0);
+  const slurs = await curves();
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: '"H" and "P" over hammer-ons and pull-offs' }).click();
+  await expect.poll(letters).toBe(0);
+  // The slurs stay, once repainted.
+  await expect.poll(curves).toBe(slurs);
+  // Each of the chords' three notes slurred in the tablature: two more slurs for each chord.
+  await dialog.getByRole('switch', { name: 'One slur over a chord’s outer notes in the tablature' }).click();
+  await expect.poll(curves).toBe(slurs + 4);
+});
+
 test('the rhythm in the tablature under a staff when asked, and each voice’s where asked', async ({
   page,
 }) => {

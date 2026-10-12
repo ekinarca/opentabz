@@ -1,0 +1,10 @@
+// Hammer-ons — original music written for OpenTabz (AGPL-3.0-or-later).
+// View fixture: hammer-ons and pull-offs on one string, and on three strings at once.
+\title "Hammer-ons"
+\subtitle "OpenTabz view fixture"
+\tempo 100
+\track "Guitar" {instrument electricGuitarClean}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+:8 5.3{h} 7.3 7.3{h} 5.3 5.2{h} 8.2 8.2{h} 5.2 |
+:4 (5.1{h} 5.2{h} 5.3{h}) (7.1 7.2 7.3) (7.1{h} 7.2{h} 7.3{h}) (5.1 5.2 5.3) |

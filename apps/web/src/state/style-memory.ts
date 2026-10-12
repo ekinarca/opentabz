@@ -182,6 +182,8 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     'arpeggioArrows',
     'trillNote',
     'slideLabel',
+    'hopoLetters',
+    'tabSlursOnOuterNotes',
     'tiedTabNotes',
     'harmonicTouch',
     'octaveHarmonicDot',

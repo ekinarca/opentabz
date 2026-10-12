@@ -88,6 +88,16 @@ describe('styles remembered per song', () => {
     expect(parseStyle(older, file)).toMatchObject({ detachedCoda: false, codaGap: 12 });
   });
 
+  it('reads how hammer-ons and pull-offs are written (REND-251), as usual for older styles', () => {
+    const stored = JSON.parse(
+      JSON.stringify({ ...DEFAULT_SCORE_STYLE, hopoLetters: false, tabSlursOnOuterNotes: false }),
+    ) as Record<string, unknown>;
+    expect(parseStyle(stored)).toMatchObject({ hopoLetters: false, tabSlursOnOuterNotes: false });
+    expect(parseStyle({ ...stored, hopoLetters: 'no' })).toBeNull();
+    const { hopoLetters: _letters, tabSlursOnOuterNotes: _outer, ...older } = stored;
+    expect(parseStyle(older)).toMatchObject({ hopoLetters: true, tabSlursOnOuterNotes: true });
+  });
+
   it('reads the chord diagrams’ sizes and spacing (REND-227), in range, as usual for older styles', () => {
     const stored = JSON.parse(
       JSON.stringify({

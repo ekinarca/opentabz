@@ -114,6 +114,10 @@ export interface ScoreStyle {
   readonly trillNote: boolean;
   /** "sl." written over slides (REND-249). */
   readonly slideLabel: boolean;
+  /** "H" and "P" written over hammer-ons and pull-offs (REND-251). */
+  readonly hopoLetters: boolean;
+  /** In the tablature, a chord's hammer-ons and pull-offs slurred over its outer notes only (REND-251). */
+  readonly tabSlursOnOuterNotes: boolean;
   /** Every tied note's fret written in the tablature, not only at the start of a bar (REND-250). */
   readonly tiedTabNotes: boolean;
   /** Where an artificial harmonic is touched, after its fret in the tablature (REND-247). */
@@ -263,6 +267,8 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   arpeggioArrows: true,
   trillNote: true,
   slideLabel: true,
+  hopoLetters: true,
+  tabSlursOnOuterNotes: true,
   tiedTabNotes: false,
   harmonicTouch: true,
   octaveHarmonicDot: false,

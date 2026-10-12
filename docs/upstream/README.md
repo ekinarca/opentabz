@@ -65,6 +65,7 @@ available as source: the patch file is that source.
 | [0054](0054-tempo-steps.md)                          | Tempo changes of Guitar Pro 3–5 and Capella files                                  | Their tempo changes are steps, read as ramps                               | not yet  |
 | [0055](0055-tempo-ramp-marks.md)                     | Tempo ramps marked accel. or rit.                                                  | Guitar Pro 8 marks a gradual tempo change                                  | not yet  |
 | [0056](0056-detached-coda.md)                        | Detached coda                                                                      | Guitar Pro draws a coda apart, below a gap                                 | not yet  |
+| [0057](0057-tab-slurs-outer-notes.md)                | A chord's tablature slurs over its outer notes, or each note's                     | Guitar Pro's stylesheet chooses                                            | not yet  |
 
 ## Working on a patch
 

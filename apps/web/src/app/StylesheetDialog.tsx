@@ -408,6 +408,21 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.hopoLetters}
+            checked={style.hopoLetters}
+            onCheckedChange={hopoLetters => {
+              set({ hopoLetters });
+            }}
+          />
+          <Switch
+            label={s.tabSlursOnOuterNotes}
+            hint={s.tabSlursOnOuterNotesHint}
+            checked={style.tabSlursOnOuterNotes}
+            onCheckedChange={tabSlursOnOuterNotes => {
+              set({ tabSlursOnOuterNotes });
+            }}
+          />
+          <Switch
             label={s.linesOverRests}
             hint={s.linesOverRestsHint}
             checked={style.linesOverRests}

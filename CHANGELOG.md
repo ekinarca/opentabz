@@ -203,25 +203,26 @@ All notable changes to OpenTabz are recorded here. The format follows
   (keeping the size of text and chord diagrams if asked), the rhythmic spacing, the staff lines'
   thickness, the space between systems, the first system's indent, brackets (none, a track's
   staves, similar instruments, around single staves too), the clef on every system or the first
-  only, the time signature again on every system or at every section, barlines through all staves,
-  the // separator between systems, multi-bar rests, staves left out while they rest, track names
-  (where, full or short, which way up), the lyrics (under the staff, above or below the staves),
-  fingering (the thumbs' and little fingers' letters, before the notes or above or below the staff
-  and the tablature, its size), dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches,
-  the rests of voices 2 to 4, tuplet brackets, arrowheads on arpeggios, a trill's second note,
-  "sl." over slides, technique lines (P.M., let ring, harmonics) over rests, level beams on the
-  staff and on drums, the tablature's tied frets, dashes for its quarter rests, voices 2 to 4 in
-  colour, its rhythm (with or without a staff above, never; stems from the frets or outside; each
-  voice's below, above or nowhere; beams over rests or not; half and whole notes circled), slash
-  notation's line and barlines and its single notes' frets and strings, where artificial harmonics
-  are touched (or not, or a dot for an octave), the tuning legend (what it says, its strings in
-  columns or on a line, framed) or the strings' names before the tablature instead, capos and
-  tunings in the written notes or guitars written as fingered in their own key, and where chord
-  diagrams go, at what size and how far apart (those above their beats keep apart), and the words
-  printed for let ring, palm mute, slide, hammer-on, pull-off, slap, pop, pick scrape, rasgueado
-  and the whammy bar. It starts as the file asks (Guitar Pro stylesheets are honoured, the tuning
-  legend included), applies as it is changed, prints and exports the same, and is remembered for
-  the file.
+  only, the time signature again on every system or at every section, barlines through all
+  staves, the // separator between systems, multi-bar rests, staves left out while they rest,
+  track names (where, full or short, which way up), the lyrics (under the staff, above or below
+  the staves), fingering (the thumbs' and little fingers' letters, before the notes or above or
+  below the staff and the tablature, its size), dynamics, C and cut C for 4/4 and 2/2, the pitch
+  a bend reaches, the rests of voices 2 to 4, tuplet brackets, arrowheads on arpeggios, a
+  trill's second note, "sl." over slides, "H" and "P" over hammer-ons and pull-offs, technique
+  lines (P.M., let ring, harmonics) over rests, level beams on the staff and on drums, the
+  tablature's tied frets, a chord's slurs in it over its outer notes or each note's, dashes for
+  its quarter rests, voices 2 to 4 in colour, its rhythm (with or without a staff above, never;
+  stems from the frets or outside; each voice's below, above or nowhere; beams over rests or
+  not; half and whole notes circled), slash notation's line and barlines and its single notes'
+  frets and strings, where artificial harmonics are touched (or not, or a dot for an octave),
+  the tuning legend (what it says, its strings in columns or on a line, framed) or the strings'
+  names before the tablature instead, capos and tunings in the written notes or guitars written
+  as fingered in their own key, and where chord diagrams go, at what size and how far apart
+  (those above their beats keep apart), and the words printed for let ring, palm mute, slide,
+  hammer-on, pull-off, slap, pop, pick scrape, rasgueado and the whammy bar. It starts as the
+  file asks (Guitar Pro stylesheets are honoured, the tuning legend included), applies as it is
+  changed, prints and exports the same, and is remembered for the file.
 - **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
   Executive, Statement, Folio, Quarto) or a size of one's own, portrait or landscape, and the
   four margins, from the Paper menu and its Page setup dialog. The page on screen, the PDF and
@@ -295,8 +296,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   sound, string by string (0047), where the lyrics go (0048), the tablature the other way up
   (0049), fingering as asked (0050), tablature that skips notes without a string (0051), drum
   tablature (0052), sound-change labels (0053), the tempo changes of Guitar Pro 3–5 and Capella
-  files as steps (0054), tempo ramps marked accel. or rit. (0055), and detached codas (0056).
-  See [docs/upstream/](docs/upstream/).
+  files as steps (0054), tempo ramps marked accel. or rit. (0055), detached codas (0056), and a
+  chord's tablature slurs over its outer notes or each note's (0057). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.
