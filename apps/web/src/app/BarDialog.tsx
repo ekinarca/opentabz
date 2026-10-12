@@ -1,11 +1,13 @@
 /**
  * The bar dialog (EDIT-021 … EDIT-024, EDIT-026, EDIT-027): the caret's bar's time signature, key,
  * tempo (and a ramp to the next), repeats and alternate endings, section, the bar line at its end,
- * free time, triplet feel and a pickup bar, for every track. Only what is changed is set, as one
- * edit to undo.
+ * free time, triplet feel and a pickup bar, for every track; and the caret's staff's own clef and
+ * simile mark (EDIT-107, EDIT-108). Only what is changed is set, as one edit to undo.
  */
 import {
   BAR_LINES,
+  CLEF_OTTAVAS,
+  CLEFS,
   MAX_ENDINGS,
   MAX_REPEATS,
   MAX_TEMPO,
@@ -16,29 +18,56 @@ import {
   type BarLine,
   type BarProperties,
   type BarState,
+  type Clef,
+  type ClefOttava,
+  type Simile,
+  type StaffBarProperties,
+  type StaffBarState,
   type TripletFeel,
 } from '@opentabz/core/shared';
 import { Button, Dialog, SegmentedControl, Switch } from '@opentabz/ui';
 import { useEffect, useId, useState } from 'react';
 import { create } from 'zustand';
-import { caretBar, editingOf, readBar, setBar } from '../state/editing.ts';
+import { useDocuments } from '../state/documents.ts';
+import { caretBar, editingOf, readBar, readStaffBar, setBar } from '../state/editing.ts';
 import { strings } from '../strings.ts';
 import { Field, SELECT_CLASS } from './MetronomeSettingsForm.tsx';
 
 const s = strings.barDialog;
 
-/** The bar whose dialog is open, and its document. */
-export const useBarDialog = create<{ readonly open: { readonly key: string; readonly bar: number } | null }>(
-  () => ({ open: null }),
-);
+/** The bar whose dialog is open, its document, and the staff the caret is in. */
+interface OpenBar {
+  readonly key: string;
+  readonly bar: number;
+  readonly track: number;
+  readonly staff: number;
+}
+
+export const useBarDialog = create<{ readonly open: OpenBar | null }>(() => ({ open: null }));
 
 /** Opens the dialog of the caret's bar; false when the document is not being edited. */
 export function openBarDialog(key: string): boolean {
   const editing = editingOf(key);
   const bar = caretBar(editing);
-  if (!editing.on || bar === null) return false;
-  useBarDialog.setState({ open: { key, bar } });
+  const { caret } = editing;
+  if (!editing.on || bar === null || caret === null) return false;
+  useBarDialog.setState({ open: { key, bar, track: caret.track, staff: caret.staff } });
   return true;
+}
+
+/** What changed of a staff's own properties at a bar, to set; places kept with a new clef if asked. */
+export function staffBarChanges(
+  was: StaffBarState,
+  now: StaffBarState,
+  keepPlaces: boolean,
+): StaffBarProperties {
+  const changes: { -readonly [K in keyof StaffBarProperties]: StaffBarProperties[K] } = {};
+  if (was.clef !== now.clef) changes.clef = now.clef;
+  if (was.clefOttava !== now.clefOttava) changes.clefOttava = now.clefOttava;
+  if (keepPlaces && (changes.clef !== undefined || changes.clefOttava !== undefined))
+    changes.keepPlaces = true;
+  if (was.simile !== now.simile) changes.simile = now.simile;
+  return changes;
 }
 
 /** The places a jump goes to, written at a bar (EDIT-025). */
@@ -66,6 +95,9 @@ const JUMPS = [
 function isPlace(direction: BarDirection): direction is Place {
   return (PLACES as readonly string[]).includes(direction);
 }
+
+/** Simile marks, offered where they can be (EDIT-108). */
+const SIMILE_CHOICES: readonly Simile[] = ['none', 'one-bar', 'two-bar'];
 
 const NUMERATORS = Array.from({ length: 32 }, (_, index) => index + 1);
 const SIGNATURES = Array.from({ length: 15 }, (_, index) => index - 7);
@@ -111,19 +143,34 @@ export function BarDialog() {
   const id = useId();
   /** The bar as it is, and as the dialog changes it, for the bar it was read for. */
   const [read, setRead] = useState<{
-    readonly open: { readonly key: string; readonly bar: number };
+    readonly open: OpenBar;
     readonly was: BarState;
     readonly now: BarState;
+    readonly staffWas: StaffBarState;
+    readonly staffNow: StaffBarState;
+    /** With a new clef, the notes keep their places rather than their pitches. */
+    readonly keepPlaces: boolean;
   } | null>(null);
   const current = read !== null && open !== null && read.open === open ? read : null;
   const was = current?.was ?? null;
   const now = current?.now ?? null;
+  const staffNow = current?.staffNow ?? null;
+  const bars = useDocuments(
+    state => state.docs.find(doc => doc.key === docKey)?.summary.masterBars.length ?? 0,
+  );
+  const trackName = useDocuments(
+    state => state.docs.find(doc => doc.key === docKey)?.summary.tracks[open?.track ?? 0]?.name ?? '',
+  );
 
   useEffect(() => {
     if (open === null) return undefined;
     let wanted = true;
-    void readBar(open.key, open.bar).then(state => {
-      if (wanted && state !== null) setRead({ open, was: state, now: state });
+    void Promise.all([
+      readBar(open.key, open.bar),
+      readStaffBar(open.key, open.track, open.staff, open.bar),
+    ]).then(([state, staff]) => {
+      if (wanted && state !== null && staff !== null)
+        setRead({ open, was: state, now: state, staffWas: staff, staffNow: staff, keepPlaces: false });
     });
     return () => {
       wanted = false;
@@ -133,6 +180,13 @@ export function BarDialog() {
   const update = (patch: Partial<BarState>) => {
     setRead(state => (state === null ? null : { ...state, now: { ...state.now, ...patch } }));
   };
+  const updateStaff = (patch: Partial<StaffBarState>) => {
+    setRead(state => (state === null ? null : { ...state, staffNow: { ...state.staffNow, ...patch } }));
+  };
+  const clefChanged =
+    current !== null &&
+    (current.staffWas.clef !== current.staffNow.clef ||
+      current.staffWas.clefOttava !== current.staffNow.clefOttava);
   const names = now?.key.minor === true ? s.minorKeys : s.majorKeys;
 
   return (
@@ -153,9 +207,15 @@ export function BarDialog() {
             variant="primary"
             disabled={was === null || now === null}
             onClick={() => {
-              if (was !== null && now !== null && bar !== null) {
-                const changes = barChanges(was, now);
-                if (Object.keys(changes).length > 0) setBar(docKey, bar, changes);
+              if (current !== null && bar !== null) {
+                const changes = barChanges(current.was, current.now);
+                const staff = staffBarChanges(current.staffWas, current.staffNow, current.keepPlaces);
+                if (Object.keys(changes).length > 0 || Object.keys(staff).length > 0)
+                  setBar(docKey, bar, changes, {
+                    track: current.open.track,
+                    staff: current.open.staff,
+                    properties: staff,
+                  });
               }
               onClose();
             }}
@@ -464,6 +524,82 @@ export function BarDialog() {
               </select>
             </Field>
           </fieldset>
+
+          {staffNow !== null && (
+            <fieldset className="flex flex-col gap-3">
+              <legend className="mb-1 text-[13px] font-semibold text-ink">{s.staffSection(trackName)}</legend>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={s.clef} htmlFor={`${id}-clef`}>
+                  <select
+                    id={`${id}-clef`}
+                    value={staffNow.clef}
+                    onChange={event => {
+                      const clef = CLEFS.find(candidate => candidate === event.target.value);
+                      if (clef !== undefined) updateStaff({ clef });
+                    }}
+                    className={INPUT_CLASS}
+                  >
+                    {CLEFS.map((clef: Clef) => (
+                      <option key={clef} value={clef}>
+                        {s.clefs[clef]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label={s.clefOttava} htmlFor={`${id}-ottava`}>
+                  <select
+                    id={`${id}-ottava`}
+                    value={staffNow.clefOttava}
+                    onChange={event => {
+                      const clefOttava = CLEF_OTTAVAS.find(candidate => candidate === event.target.value);
+                      if (clefOttava !== undefined) updateStaff({ clefOttava });
+                    }}
+                    className={INPUT_CLASS}
+                  >
+                    {CLEF_OTTAVAS.map((ottava: ClefOttava) => (
+                      <option key={ottava} value={ottava}>
+                        {s.ottavas[ottava]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+              {clefChanged && (
+                <Switch
+                  label={s.keepPlaces}
+                  hint={current.keepPlaces ? s.keepPlacesHint : s.keepPitchesHint}
+                  checked={current.keepPlaces}
+                  onCheckedChange={keepPlaces => {
+                    setRead(state => (state === null ? null : { ...state, keepPlaces }));
+                  }}
+                />
+              )}
+              <Field label={s.simile} hint={s.simileHint} htmlFor={`${id}-simile`}>
+                <select
+                  id={`${id}-simile`}
+                  value={staffNow.simile}
+                  onChange={event => {
+                    const simile = SIMILE_CHOICES.find(candidate => candidate === event.target.value);
+                    if (simile !== undefined) updateStaff({ simile });
+                  }}
+                  className={INPUT_CLASS}
+                >
+                  {SIMILE_CHOICES.map((simile: Simile) => (
+                    <option
+                      key={simile}
+                      value={simile}
+                      disabled={
+                        (simile === 'one-bar' && (bar ?? 0) < 1) ||
+                        (simile === 'two-bar' && ((bar ?? 0) < 2 || (bar ?? 0) >= bars - 1))
+                      }
+                    >
+                      {s.similes[simile]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </fieldset>
+          )}
         </div>
       )}
     </Dialog>

@@ -259,6 +259,15 @@ All notable changes to OpenTabz are recorded here. The format follows
   pitched percussion, synths, drums), each with its sound, strings and tuning, clef,
   transposition (a B♭ clarinet, a horn, a piccolo) and range; a track with strings is written as
   notation and tablature, notation or tablature alone.
+- **Transposing by interval and by the key's steps.** The transpose dialog moves notes by
+  semitones, by a named interval (a minor third, an augmented fourth, widened by octaves) that
+  spells them — C♯ a major third up is E♯ — or by steps of each bar's scale, keeping the
+  accidentals written. Whole bars (a track, every track, bars selected) can take their key
+  signatures with them: A major a tone down is G major.
+- **Clefs and simile marks.** The bar dialog sets the caret's staff's clef (treble, bass, alto,
+  tenor, neutral) and its octave (8va, 8vb, 15ma, 15mb) up to the next change of clef, the notes
+  keeping their pitches or their places on the staff; and marks a bar played as the one before
+  it, or two bars as the two before them, as Guitar Pro writes and plays them.
 - **Tunings heard, named and kept.** The track dialog plays the tuning from the lowest string up,
   or one string; names the tuning, as the score shows it (a preset names it); and keeps tunings of
   one's own to choose again, rename or forget. A track can be set to no strings (written by

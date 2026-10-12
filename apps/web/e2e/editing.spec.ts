@@ -708,13 +708,13 @@ test('notes are transposed by semitones and octaves, and moved from string to st
   // Nothing selected: the caret's beat, a tone up.
   await editTool(page, 'Transpose…');
   const dialog = page.getByRole('dialog', { name: 'Transpose' });
-  await expect(dialog.getByLabel('Semitones')).toHaveValue('2');
+  await expect(dialog.getByRole('spinbutton', { name: 'Semitones' })).toHaveValue('2');
   await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 5');
   await editTool(page, 'Transpose…');
   await dialog.getByRole('button', { name: 'Octave up' }).click();
-  await expect(dialog.getByLabel('Semitones')).toHaveValue('12');
+  await expect(dialog.getByRole('spinbutton', { name: 'Semitones' })).toHaveValue('12');
   await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 17');
 
@@ -741,6 +741,115 @@ test('notes are transposed by semitones and octaves, and moved from string to st
   await harmonize.getByRole('button', { name: 'Harmonize', exact: true }).click();
   await expect(harmonize).toBeHidden();
   await expect.poll(() => firstSystemWrites(page, '7')).toBe(true);
+});
+
+/**
+ * Whether the first systems of the score shown (two: a phone's first may hold one bar) draw a
+ * music-font glyph, by its SMuFL code point.
+ */
+function firstSystemDraws(page: Page, codePoint: number): Promise<boolean> {
+  return page
+    .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+    .evaluateAll(
+      (elements, wanted) =>
+        elements.slice(0, 2).some(element => element.innerHTML.includes(String.fromCodePoint(wanted))),
+      codePoint,
+    );
+}
+
+test('notes are transposed by steps of the key, or by an interval with their keys (EDIT-116, EDIT-117)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  await editBar(page).getByRole('button', { name: 'Write a fret' }).click();
+  await page.getByRole('button', { name: 'Fret 3', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 3');
+
+  // Two steps of A major up from G natural: B, its natural kept as a flat — B♭, the 6th fret.
+  await editTool(page, 'Transpose…');
+  const dialog = page.getByRole('dialog', { name: 'Transpose' });
+  await dialog.getByRole('radio', { name: 'Scale steps' }).click();
+  await expect(dialog.getByLabel('Steps', { exact: true })).toHaveValue('2');
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 6');
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 3');
+
+  // A perfect fourth up; the beat alone has no key of its own to move.
+  await editTool(page, 'Transpose…');
+  await dialog.getByRole('radio', { name: 'Interval' }).click();
+  await dialog.getByRole('combobox', { name: 'Interval' }).selectOption({ label: 'Perfect fourth' });
+  const keys = dialog.getByRole('switch', { name: 'Key signatures too' });
+  await expect(keys).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 8');
+
+  // Down a tone, the open low E of the turnaround has nowhere to go: refused, as it was.
+  await editTool(page, 'Transpose…');
+  await dialog.getByRole('combobox', { name: 'Interval' }).selectOption({ label: 'Major second' });
+  await dialog.getByRole('radio', { name: 'Down' }).click();
+  await dialog.getByRole('radio', { name: 'This track' }).click();
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(page.getByText('A note would go below the lowest string: transpose less.')).toBeVisible();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 8');
+  // The whole track a major second up, its key with it: A major to B major.
+  await editTool(page, 'Transpose…');
+  await dialog.getByRole('radio', { name: 'Up' }).click();
+  await keys.click();
+  await expect(keys).toHaveAttribute('aria-checked', 'true');
+  await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
+  await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 10');
+  await editTool(page, 'Bar properties');
+  const bar = page.getByRole('dialog', { name: 'Bar 1' });
+  await expect(bar.getByLabel('Key signature')).toHaveValue('5');
+  await bar.getByRole('button', { name: 'Cancel' }).first().click();
+  await expect(bar).toBeHidden();
+});
+
+test('a staff’s clef changes, its notes keeping their pitches; a bar marked simile (EDIT-107, EDIT-108)', async ({
+  page,
+}) => {
+  await openShuffle(page);
+  await page.getByRole('button', { name: 'Edit the score' }).click();
+  // SMuFL's F clef and one-bar repeat.
+  const BASS_CLEF = 0xe062;
+  const REPEAT_BAR = 0xe500;
+  await expect.poll(() => firstSystemDraws(page, BASS_CLEF)).toBe(false);
+  await editTool(page, 'Bar properties');
+  const first = page.getByRole('dialog', { name: 'Bar 1' });
+  const staff = first.getByRole('group', { name: 'This staff: Rhythm Guitar' });
+  await expect(staff.getByLabel('Clef', { exact: true })).toHaveValue('treble');
+  // The first bar repeats none.
+  await expect(staff.getByRole('option', { name: 'One bar: as the bar before' })).toBeDisabled();
+  await staff.getByLabel('Clef', { exact: true }).selectOption({ label: 'Bass' });
+  const places = staff.getByRole('switch', { name: 'Notes keep their places on the staff' });
+  await expect(places).toHaveAttribute('aria-checked', 'false');
+  await first.getByRole('button', { name: 'Apply' }).click();
+  await expect(first).toBeHidden();
+  await expect.poll(() => firstSystemDraws(page, BASS_CLEF)).toBe(true);
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => firstSystemDraws(page, BASS_CLEF)).toBe(false);
+
+  // The second bar played as the first, its notes taken away.
+  await page.getByRole('region', { name: /^Score: / }).focus();
+  for (let step = 0; step < 8; step++) await page.keyboard.press('ArrowRight');
+  await expect(caret(page)).toHaveText(/^Caret: bar 2, /);
+  await expect.poll(() => firstSystemDraws(page, REPEAT_BAR)).toBe(false);
+  await editTool(page, 'Bar properties');
+  const second = page.getByRole('dialog', { name: 'Bar 2' });
+  await second.getByLabel('Simile mark').selectOption({ label: 'One bar: as the bar before' });
+  await second.getByRole('button', { name: 'Apply' }).click();
+  await expect(second).toBeHidden();
+  await expect.poll(() => firstSystemDraws(page, REPEAT_BAR)).toBe(true);
+  await expect(caret(page)).toHaveText('Caret: bar 2, string 1, nothing written');
+  await editTool(page, 'Bar properties');
+  await expect(second.getByLabel('Simile mark')).toHaveValue('one-bar');
+  await second.getByRole('button', { name: 'Cancel' }).first().click();
+  await editBar(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => firstSystemDraws(page, REPEAT_BAR)).toBe(false);
 });
 
 test('dynamics, beams, fingering, spelling and text for a note and its beat, directions from the bar dialog (EDIT-012, EDIT-013, EDIT-025, EDIT-043)', async ({

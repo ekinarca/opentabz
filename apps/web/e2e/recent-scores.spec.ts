@@ -77,10 +77,15 @@ test('opens the scores from last time at the start when asked, and forgets them 
   await page.keyboard.press('Escape');
   await openShuffle(page);
   await kept(page, 1);
+  // Ready to play (its sounds loaded) before the page goes: WebKit names a fetch cut short by a
+  // reload as an error of the page.
+  const play = page.getByRole('button', { name: 'Play', exact: true });
+  await expect(play).toBeEnabled({ timeout: 20_000 });
 
   await page.reload();
   await expectScore(page);
   await expect(page.getByRole('button', { name: 'Twelve-Bar Shuffle in A', exact: true })).toBeVisible();
+  await expect(play).toBeEnabled({ timeout: 20_000 });
 
   // Not remembered any more: nothing opens again, nothing is listed.
   const again = await settings(page, isMobile);

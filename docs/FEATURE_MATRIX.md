@@ -637,8 +637,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-104 | Nested-tuplet entry, inner or outer first                        | GP  | M4  | —       | —    | planned |
 | EDIT-105 | Default beam grouping per time signature                         | GP  | M4  | —       | —    | planned |
 | EDIT-106 | Flip stem direction                                              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
-| EDIT-107 | Clefs and clef changes, optionally keeping pitches               | GP  | M4  | —       | —    | planned |
-| EDIT-108 | One- and two-bar simile marks                                    | GP  | M4  | —       | —    | planned |
+| EDIT-107 | Clefs and clef changes, optionally keeping pitches               | GP  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-108 | One- and two-bar simile marks                                    | GP  | M4  | —       | packages/core/test/edit.test.ts, packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-109 | Force or prevent a system break at a bar                         | GP  | M4  | —       | packages/core/test/engine-host.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-110 | Accidentals: sharp, flat, natural, double, courtesy              | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
 | EDIT-111 | Bend editor: pitch curve with draggable points and presets       | GP  | M4  | —       | —    | planned |
@@ -646,8 +646,8 @@ The single source of truth for what OpenTabz does. One row per feature.
 | EDIT-113 | Harmonic dialog: type, resulting pitch, automatic touch fret     | GP  | M4  | —       | —    | planned |
 | EDIT-114 | Brush and arpeggio settings: duration, spread, start position    | GP  | M4  | —       | —    | planned |
 | EDIT-115 | Drum entry: keys cycle the articulations on a staff line         | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | in progress |
-| EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | —    | planned |
-| EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | —    | planned |
+| EDIT-116 | Transpose by interval (quality, direction, compound), optionally updating the key | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
+| EDIT-117 | Diatonic transposition by scale degrees                          | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-118 | Transpose scope: selection or whole score, one track or all      | GP  | M4  | —       | packages/core/test/edit.test.ts, apps/web/e2e/editing.spec.ts | done |
 | EDIT-119 | MIDI capture settings: chord window, MIDI-guitar channel-to-string mapping, automatic fret choice | GP  | M4  | —       | —    | planned |
 | EDIT-120 | Finalize: document read-only until unlocked                      | GP  | M4  | —       | —    | planned |

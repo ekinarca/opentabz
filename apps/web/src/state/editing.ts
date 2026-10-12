@@ -33,6 +33,8 @@ import {
   TECHNIQUE_VIBRATO,
   type BarProperties,
   type BarState,
+  type StaffBarProperties,
+  type StaffBarState,
   type NewTrack,
   type TrackProperties,
   type TrackState,
@@ -859,10 +861,42 @@ export async function readBar(key: string, bar: number): Promise<BarState | null
   return doc === null ? null : getEngine().call('barProperties', { docId: doc.engineId, bar });
 }
 
-/** Sets a bar's properties, in every track (EDIT-021 … EDIT-027); the caret stays where it is. */
-export function setBar(key: string, bar: number, properties: BarProperties): boolean {
+/** A staff's own properties at a bar as they are now, from the engine (for the bar dialog). */
+export async function readStaffBar(
+  key: string,
+  track: number,
+  staff: number,
+  bar: number,
+): Promise<StaffBarState | null> {
+  const doc = docOf(key);
+  return doc === null
+    ? null
+    : getEngine().call('staffBarProperties', { docId: doc.engineId, track, staff, bar });
+}
+
+/** A staff's own properties to set at a bar: its clef, a simile mark (EDIT-107, EDIT-108). */
+export interface StaffBarChange {
+  readonly track: number;
+  readonly staff: number;
+  readonly properties: StaffBarProperties;
+}
+
+/**
+ * Sets a bar's properties, in every track (EDIT-021 … EDIT-027), and a staff's own, as one edit;
+ * the caret stays where it is.
+ */
+export function setBar(
+  key: string,
+  bar: number,
+  properties: BarProperties,
+  staffBar: StaffBarChange | null = null,
+): boolean {
   return act(key, () => {
-    apply(key, [{ kind: 'set-bar', bar, properties }]);
+    const commands: EditCommand[] = [];
+    if (Object.keys(properties).length > 0) commands.push({ kind: 'set-bar', bar, properties });
+    if (staffBar !== null && Object.keys(staffBar.properties).length > 0)
+      commands.push({ kind: 'set-staff-bar', ...staffBar, bar });
+    if (commands.length > 0) apply(key, commands);
   });
 }
 
@@ -1181,20 +1215,55 @@ function transposed(key: string, scope: TransposeScope): Selection | null {
     : { kind: 'beats', track: at.track, staff: at.staff, voice: at.voice, from: at, to: at };
 }
 
+/** How notes are transposed: by semitones (an interval's letters spelling them), or by scale steps. */
+export interface TransposeHow {
+  readonly semitones: number;
+  /** The interval's letters, signed (a major third up: 2), to spell the notes by (EDIT-116). */
+  readonly letters?: number;
+  /** Steps of each bar's scale instead of semitones (EDIT-117). */
+  readonly degrees?: number;
+  /** The keys of the bars moved too (whole bars only). */
+  readonly keys?: boolean;
+  readonly chords?: boolean;
+}
+
+/** Whether a scope's notes are whole bars, whose keys can move with them. */
+export function wholeBars(key: string, scope: TransposeScope): boolean {
+  return transposed(key, scope)?.kind === 'bars';
+}
+
 /**
- * Moves notes a number of semitones higher or lower (EDIT-050, EDIT-051): what is selected (else
- * the caret's beat), the caret's track, or every track. What is selected stays so, to move again.
+ * Moves notes higher or lower (EDIT-050, EDIT-051, EDIT-116, EDIT-117): by semitones, an interval
+ * or scale steps — what is selected (else the caret's beat), the caret's track, or every track.
+ * What is selected stays so, to move again.
  */
 export function transposeNotes(
   key: string,
-  semitones: number,
+  how: number | TransposeHow,
   scope: TransposeScope = 'selection',
-  chords = true,
 ): boolean {
+  const {
+    semitones,
+    letters,
+    degrees = 0,
+    keys = false,
+    chords = true,
+  } = typeof how === 'number' ? { semitones: how } : how;
   return act(key, () => {
     const selection = transposed(key, scope);
-    if (selection === null || semitones === 0) return;
-    apply(key, [{ kind: 'transpose', selection, semitones, chords }], placeOf(editingOf(key)), true);
+    if (selection === null || (semitones === 0 && degrees === 0)) return;
+    const command: EditCommand =
+      degrees !== 0
+        ? { kind: 'transpose', selection, semitones: 0, degrees }
+        : {
+            kind: 'transpose',
+            selection,
+            semitones,
+            ...(letters === undefined ? {} : { letters }),
+            ...(keys && selection.kind === 'bars' ? { keys } : {}),
+            chords,
+          };
+    apply(key, [command], placeOf(editingOf(key)), true);
   });
 }
 
