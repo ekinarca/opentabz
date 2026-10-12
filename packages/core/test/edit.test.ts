@@ -22,6 +22,7 @@ import { ScoreEditor } from '../src/edit/editor.ts';
 import { openScore } from '../src/open/open.ts';
 import {
   BAR_DIRECTIONS,
+  BEAM_UNITS,
   BRUSHES,
   CLEF_OTTAVAS,
   CLEFS,
@@ -37,6 +38,7 @@ import {
   STEMS,
   TUPLETS,
   type BarProperties,
+  type BeamGroups,
   type BeatAddress,
   type BeatTechniques,
   type Clip,
@@ -557,6 +559,25 @@ describe('commands', () => {
     expect(() => editor.apply([{ kind: 'set-drum', at: AT, sound: 'Cowbell.999', on: true }])).toThrow(
       'No drum sound "Cowbell.999".',
     );
+  });
+
+  it('groups a bar’s beams as asked, from it on, filling the bar (EDIT-105)', () => {
+    const score = texScore(
+      '\\track "Guitar" \\ts (7 8) 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8 | 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8 0.1.8',
+    );
+    const editor = editorOf(score);
+    expect(readBarProperties(score, 0).beamGroups).toBeNull();
+    editor.apply([{ kind: 'set-bar', bar: 0, properties: { beamGroups: { unit: 8, groups: [2, 2, 3] } } }]);
+    expect(readBarProperties(score, 0).beamGroups).toEqual({ unit: 8, groups: [2, 2, 3] });
+    // The next bar groups its beams alike, without rules of its own.
+    expect(readBarProperties(score, 1).beamGroups).toBeNull();
+    expect(() =>
+      editor.apply([{ kind: 'set-bar', bar: 0, properties: { beamGroups: { unit: 8, groups: [2, 2, 2] } } }]),
+    ).toThrow('The beam groups fill the bar: 7/8 is 7 of them.');
+    editor.apply([{ kind: 'set-bar', bar: 0, properties: { beamGroups: null } }]);
+    expect(score.masterBars[0]?.beamingRules).toBeUndefined();
+    editor.undo();
+    expect(readBarProperties(score, 0).beamGroups).toEqual({ unit: 8, groups: [2, 2, 3] });
   });
 
   it('writes directions at bars: Segno, Coda, Fine, D.S. al Coda (EDIT-025)', () => {
@@ -1468,6 +1489,23 @@ function seedOf(text: string): number {
 }
 
 /** A command at a random place of a random string staff, of a random kind. */
+/** Beam groups that fill a bar (twos and threes of its beat's note value), or none at random. */
+function beamGroupsFor(
+  masterBar: alphaTab.model.MasterBar | undefined,
+  random: () => number,
+): BeamGroups | null {
+  const unit = BEAM_UNITS.find(value => value === masterBar?.timeSignatureDenominator);
+  if (masterBar === undefined || unit === undefined || random() < 0.3) return null;
+  const groups: number[] = [];
+  let left = masterBar.timeSignatureNumerator;
+  while (left > 0) {
+    const group = left === 1 ? 1 : left === 4 || random() < 0.5 ? 2 : Math.min(3, left);
+    groups.push(group);
+    left -= group;
+  }
+  return { unit, groups };
+}
+
 function randomCommand(score: alphaTab.model.Score, random: () => number): EditCommand | null {
   const pick = (count: number): number => Math.floor(random() * count);
   const staves = score.tracks.flatMap(track =>
@@ -1580,6 +1618,7 @@ function randomCommand(score: alphaTab.model.Score, random: () => number): EditC
         { tripletFeel: random() < 0.5 ? 'triplet-8th' : 'none' },
         { directions: BAR_DIRECTIONS.filter(() => random() < 0.15) },
         { systemBreak: random() < 0.5 },
+        { beamGroups: beamGroupsFor(score.masterBars[pick(score.masterBars.length)], random) },
       ];
       return {
         kind: 'set-bar',

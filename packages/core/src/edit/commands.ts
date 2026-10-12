@@ -47,6 +47,7 @@ const MASTER_BAR_PROPERTIES = [
   'tripletFeel',
   'isAnacrusis',
   'directions',
+  'beamingRules',
 ];
 
 /** Where a staff's bar is, and how it is linked to the others. */

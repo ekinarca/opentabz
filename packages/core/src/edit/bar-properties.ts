@@ -5,12 +5,15 @@
  */
 import * as alphaTab from '@coderline/alphatab';
 import {
+  BEAM_UNITS,
   MAX_ENDINGS,
   MAX_REPEATS,
   MAX_TEMPO,
   METER_DENOMINATORS,
   MIN_TEMPO,
   type BarDirection,
+  type BeamGroups,
+  type BeamUnit,
   type BarLine,
   type BarProperties,
   type BarState,
@@ -88,6 +91,28 @@ const FEELS: Readonly<Record<TripletFeel, alphaTab.model.TripletFeel>> = {
   'scottish-8th': Feel.Scottish8th,
   'scottish-16th': Feel.Scottish16th,
 };
+
+/** The note values beams are grouped in, as alphaTab's durations. */
+const BEAM_DURATIONS: Readonly<Record<BeamUnit, alphaTab.model.Duration>> = {
+  4: alphaTab.model.Duration.Quarter,
+  8: alphaTab.model.Duration.Eighth,
+  16: alphaTab.model.Duration.Sixteenth,
+  32: alphaTab.model.Duration.ThirtySecond,
+};
+
+/** The most beam groups a bar has. */
+const MAX_BEAM_GROUPS = 32;
+
+/** A bar's own beam groups, as the editor names them; none when it has none of its own. */
+function beamGroupsOf(masterBar: alphaTab.model.MasterBar): BeamGroups | null {
+  const rules = masterBar.beamingRules;
+  if (rules === undefined) return null;
+  for (const [duration, groups] of rules.groups) {
+    const unit = BEAM_UNITS.find(candidate => BEAM_DURATIONS[candidate] === duration);
+    if (unit !== undefined) return { unit, groups: [...groups] };
+  }
+  return null;
+}
 
 /** Guitar Pro's tempo reference for a quarter note. */
 const QUARTER = 2;
@@ -207,6 +232,27 @@ export function setBarProperties(score: alphaTab.model.Score, bar: number, prope
       else track.lineBreaks = breaks;
     }
   }
+  if (properties.beamGroups !== undefined) {
+    const beams = properties.beamGroups;
+    if (beams === null) delete masterBar.beamingRules;
+    else {
+      if (!BEAM_UNITS.includes(beams.unit)) throw new EditError(`No beams in ${String(beams.unit)}ths.`);
+      if (
+        beams.groups.length === 0 ||
+        beams.groups.length > MAX_BEAM_GROUPS ||
+        beams.groups.some(group => !Number.isInteger(group) || group < 1)
+      )
+        throw new EditError('Beam groups are whole numbers of notes.');
+      const filled = beams.groups.reduce((sum, group) => sum + group, 0) * (3840 / beams.unit);
+      if (filled !== masterBar.calculateDuration(false))
+        throw new EditError(
+          `The beam groups fill the bar: ${String(masterBar.timeSignatureNumerator)}/${String(masterBar.timeSignatureDenominator)} is ${String(masterBar.calculateDuration(false) / (3840 / beams.unit))} of them.`,
+        );
+      const rules = new alphaTab.model.BeamingRules();
+      rules.groups.set(BEAM_DURATIONS[beams.unit], [...beams.groups]);
+      masterBar.beamingRules = rules;
+    }
+  }
   if (properties.directions !== undefined) {
     const directions = new Set(
       properties.directions.map(name => {
@@ -246,6 +292,7 @@ export function readBarProperties(score: alphaTab.model.Score, bar: number): Bar
     tripletFeel: feel,
     anacrusis: masterBar.isAnacrusis,
     systemBreak: score.tracks.length > 0 && score.tracks.every(track => track.lineBreaks?.has(bar) === true),
+    beamGroups: beamGroupsOf(masterBar),
     directions: (Object.keys(DIRECTIONS) as BarDirection[]).filter(
       name => masterBar.directions?.has(DIRECTIONS[name]) === true,
     ),

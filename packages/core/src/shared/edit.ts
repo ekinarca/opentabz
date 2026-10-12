@@ -82,6 +82,15 @@ export const MAX_DEGREES = 28;
 export type SlideOut = 'none' | 'legato' | 'shift' | 'out-down' | 'out-up';
 export type Vibrato = 'none' | 'slight' | 'wide';
 export type Harmonic = 'none' | 'natural' | 'artificial' | 'pinch' | 'tap' | 'semi' | 'feedback';
+export const HARMONIC_TYPES: readonly Harmonic[] = [
+  'none',
+  'natural',
+  'artificial',
+  'pinch',
+  'tap',
+  'semi',
+  'feedback',
+];
 export type Accent = 'none' | 'normal' | 'heavy' | 'tenuto';
 /** A bend: none, or a whole tone up (Guitar Pro's default bend). */
 export type Bend = 'none' | 'full';
@@ -300,6 +309,21 @@ export interface BarProperties {
   readonly directions?: readonly BarDirection[];
   /** A new system starts at the bar (EDIT-109). */
   readonly systemBreak?: boolean;
+  /**
+   * How beams group the bar's notes from this bar on (EDIT-105): the groups' lengths in a note
+   * value (7/8 as 2+2+3 eighths), filling the bar; or none, as the meter groups them.
+   */
+  readonly beamGroups?: BeamGroups | null;
+}
+
+/** A note value beams are grouped in. */
+export type BeamUnit = 4 | 8 | 16 | 32;
+export const BEAM_UNITS: readonly BeamUnit[] = [4, 8, 16, 32];
+
+/** Beam groups: how many of a note value each group holds. */
+export interface BeamGroups {
+  readonly unit: BeamUnit;
+  readonly groups: readonly number[];
 }
 
 /** A bar's properties as they are (all of them). */
