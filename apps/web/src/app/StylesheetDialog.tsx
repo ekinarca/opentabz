@@ -372,6 +372,14 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.linesOverRests}
+            hint={s.linesOverRestsHint}
+            checked={style.linesOverRests}
+            onCheckedChange={linesOverRests => {
+              set({ linesOverRests });
+            }}
+          />
+          <Switch
             label={s.flatBeams}
             checked={style.flatBeams}
             onCheckedChange={flatBeams => {

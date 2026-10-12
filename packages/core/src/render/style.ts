@@ -81,6 +81,7 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     clefOnEverySystem: true,
     timeSignatureOnEverySystem: false,
     timeSignatureAtSections: false,
+    linesOverRests: false,
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
@@ -237,6 +238,7 @@ export function applyScoreStyle(
       case 'clefOnEverySystem':
       case 'timeSignatureOnEverySystem':
       case 'timeSignatureAtSections':
+      case 'linesOverRests':
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
@@ -308,6 +310,7 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   settings.notation.clefOnEverySystem = style.clefOnEverySystem;
   settings.notation.timeSignatureOnEverySystem = style.timeSignatureOnEverySystem;
   settings.notation.timeSignatureAtSections = style.timeSignatureAtSections;
+  settings.notation.linesOverRests = style.linesOverRests;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

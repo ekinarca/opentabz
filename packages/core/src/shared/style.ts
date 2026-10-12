@@ -73,6 +73,8 @@ export interface ScoreStyle {
   /** The time signature on every system, and at every section (REND-231). */
   readonly timeSignatureOnEverySystem: boolean;
   readonly timeSignatureAtSections: boolean;
+  /** Palm mute, let ring, harmonics and pick slides carry their lines over rests (REND-243). */
+  readonly linesOverRests: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
   /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
@@ -149,6 +151,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   clefOnEverySystem: true,
   timeSignatureOnEverySystem: false,
   timeSignatureAtSections: false,
+  linesOverRests: false,
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,

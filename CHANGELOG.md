@@ -181,11 +181,12 @@ All notable changes to OpenTabz are recorded here. The format follows
   every system or at every section, barlines through all staves, the // separator between systems,
   multi-bar rests, staves left out while they rest, track names (where, full or short, which way
   up), dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches, the rests of voices 2 to 4,
-  tuplet brackets, arrowheads on arpeggios, a trill's second note, "sl." over slides, level beams on
-  the staff and on drums, the tablature's tied frets, dashes for its quarter rests and voices 2 to 4
-  in colour, the tuning legend and where chord diagrams go. It starts as the file asks (Guitar Pro
-  stylesheets are honoured, the tuning legend included), applies as it is changed, prints and
-  exports the same, and is remembered for the file.
+  tuplet brackets, arrowheads on arpeggios, a trill's second note, "sl." over slides, technique
+  lines (P.M., let ring, harmonics) over rests, level beams on the staff and on drums, the
+  tablature's tied frets, dashes for its quarter rests and voices 2 to 4 in colour, the tuning
+  legend and where chord diagrams go. It starts as the file asks (Guitar Pro stylesheets are
+  honoured, the tuning legend included), applies as it is changed, prints and exports the same, and
+  is remembered for the file.
 - **Page setup.** Twelve paper formats (A3–A5, B4 and B5, US Letter and Legal, Tabloid,
   Executive, Statement, Folio, Quarto) or a size of one's own, portrait or landscape, and the
   four margins, from the Paper menu and its Page setup dialog. The page on screen, the PDF and
@@ -245,8 +246,8 @@ All notable changes to OpenTabz are recorded here. The format follows
   (0028), "let ring throughout" (0029), tempo marks rounded on request (0030), the first
   system indented (0031), tuplets without brackets or bends without the pitch they reach on
   request (0032), tied frets, dashed rests, arpeggio arrowheads and trill notes on request
-  (0033), level beams (0034) and clefs and time signatures at the start of systems and
-  sections as asked (0035). See [docs/upstream/](docs/upstream/).
+  (0033), level beams (0034), clefs and time signatures at the start of systems and sections
+  as asked (0035) and technique lines over rests (0036). See [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

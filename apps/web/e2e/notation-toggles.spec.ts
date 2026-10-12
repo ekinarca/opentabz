@@ -4,7 +4,7 @@
  * the rests of the lower voices and tuplet brackets (REND-248); arpeggio arrowheads, a trill's
  * second note and "sl." (REND-249); tied notes' frets, dashed quarter rests and coloured voices in
  * the tablature (REND-250); level beams (REND-246); clefs and time signatures at the start of
- * systems (REND-231); in the score on screen.
+ * systems (REND-231); technique lines over rests (REND-243); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -210,4 +210,18 @@ test('the clef on every system or the first only, the time signature on every sy
   await expect.poll(clefs).toBe(1);
   await dialog.getByRole('switch', { name: 'Time signature on every system' }).click();
   await expect.poll(fours).toBeGreaterThan(signed);
+});
+
+test('palm mutes either side of a rest drawn as one line on request', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/techniques.atex')]);
+  await expectScore(page);
+  const mutes = async () => (await scoreTexts(page)).filter(text => text === 'P.M.').length;
+  await expect.poll(mutes).toBe(2);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Stylesheet' })
+    .getByRole('switch', { name: 'Technique lines over rests' })
+    .click();
+  await expect.poll(mutes).toBe(1);
 });

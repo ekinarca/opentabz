@@ -242,6 +242,33 @@ describe('clefs and time signatures at the start of systems and sections (REND-2
   });
 });
 
+describe('technique lines over rests (REND-243)', () => {
+  it('carries palm mute on over the rests between muted beats, on request', () => {
+    const tex = ':8 5.6{pm} r 5.6{pm} 5.6{pm} r r 5.6 5.6 | 5.5{lr} r 7.5{lr} r :2 5.5 |';
+    const labels = (view: Engraving, name: string) => view.find('text', name).length;
+    const apart = engraveTex(tex);
+    expect(labels(apart, 'P.M.')).toBe(2);
+    const joined = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, linesOverRests: true } });
+    // One line: the rest between muted beats carries it, those after the last do not.
+    expect(labels(joined, 'P.M.')).toBe(1);
+    const label = joined.find('text', 'P.M.')[0];
+    const dashes = joined.marks.filter(
+      mark =>
+        mark.kind === 'rect' && label !== undefined && Math.abs(mark.y - label.y) < 4 && mark.x > label.x,
+    );
+    const end = Math.max(...dashes.map(mark => mark.x + mark.width));
+    // Past the rest to the muted beat after it, and not over the rests after the last.
+    const [, , third, , , sixth] = joined.beats();
+    expect(third === undefined || sixth === undefined).toBe(false);
+    if (third === undefined || sixth === undefined) return;
+    expect(end).toBeGreaterThan(joined.span(third).left);
+    expect(end).toBeLessThan(joined.span(sixth).left);
+    // Let ring rings on over rests as it is.
+    expect(labels(apart, 'let ring')).toBe(1);
+    expect(labels(joined, 'let ring')).toBe(1);
+  });
+});
+
 describe('transposing instruments (REND-032)', () => {
   // A B♭ clarinet's part is written a whole tone above what sounds: C major sounds, D major reads.
   const clarinet = [

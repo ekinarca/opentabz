@@ -630,6 +630,8 @@ export const strings = {
     arpeggioArrows: 'Arrowheads on arpeggios',
     trillNote: 'A trill’s second note in the tablature',
     slideLabel: '"sl." over slides',
+    linesOverRests: 'Technique lines over rests',
+    linesOverRestsHint: 'P.M., let ring, harmonics and pick slides go on over the rests between them.',
     flatBeams: 'Level beams on the staff',
     flatDrumBeams: 'Level beams on drum staves',
     clefOnEverySystem: 'Clef on every system',
