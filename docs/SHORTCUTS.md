@@ -88,9 +88,10 @@ appears below with the same keys. Press `?` in the app to see the same list.
 
 ## Help
 
-| Action                  | Windows and Linux | macOS |
-| ----------------------- | ----------------- | ----- |
-| Show keyboard shortcuts | `?`               | `?`   |
+| Action                  | Windows and Linux    | macOS          |
+| ----------------------- | -------------------- | -------------- |
+| Show keyboard shortcuts | `?`                  | `?`            |
+| Command palette         | `Ctrl K` or `Ctrl E` | `⌘ K` or `⌘ E` |
 
 ## Pointer and touch gestures
 

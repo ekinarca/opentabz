@@ -14,6 +14,7 @@ import {
 } from '@opentabz/ui';
 import {
   CircleHelp,
+  Command,
   Download,
   Ellipsis,
   FolderOpen,
@@ -177,6 +178,15 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
           className="max-md:hidden"
         />
         <IconButton
+          label={strings.palette.open}
+          shortcut={shortcutHint('command-palette')}
+          icon={<Command size={18} aria-hidden />}
+          onClick={() => {
+            useUi.getState().openPanel('palette');
+          }}
+          className="max-md:hidden"
+        />
+        <IconButton
           label={strings.shortcuts.title}
           shortcut={shortcutHint('shortcuts')}
           icon={<Keyboard size={18} aria-hidden />}
@@ -223,6 +233,14 @@ export function TopBar({ onAbout, home }: { readonly onAbout: () => void; readon
                 {strings.topBar.print}
               </MenuItem>
             )}
+            <MenuItem
+              icon={<Command size={16} aria-hidden />}
+              onSelect={() => {
+                useUi.getState().openPanel('palette');
+              }}
+            >
+              {strings.palette.open}
+            </MenuItem>
             <MenuItem icon={<MetronomeIcon size={16} />} onSelect={openMetronomeTool}>
               {strings.metronomeTool.open}
             </MenuItem>

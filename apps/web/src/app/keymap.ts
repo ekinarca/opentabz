@@ -691,6 +691,24 @@ export const SHORTCUTS: readonly Shortcut[] = [
       return true;
     },
   },
+  {
+    // Guitar Pro 8 opens its palette with ⌘/Ctrl E; ⌘/Ctrl K as most applications do.
+    id: 'command-palette',
+    group: 'help',
+    label: s.commandPalette,
+    bindings: [
+      { key: 'k', mod: true },
+      { key: 'e', mod: true },
+    ],
+    needsScore: false,
+    // Also from the palette's own field, to close it again.
+    inTextFields: true,
+    run: () => {
+      const ui = useUi.getState();
+      ui.setPanelOpen('palette', ui.panel !== 'palette');
+      return true;
+    },
+  },
 ];
 
 /** A printable character typed without ⌘/Ctrl or Alt: a "character key" shortcut. */

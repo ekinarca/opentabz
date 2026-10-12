@@ -890,7 +890,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-011 | Drag, dock and pop out panels                                                                                               | OT  | M3  | —        | —    | planned |
 | UX-012 | Named workspace layouts                                                                                                     | OT  | M3  | —        | —    | planned |
 | UX-013 | Split view: two documents, or two views of one                                                                              | OT  | M3  | —        | —    | planned |
-| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action, with each action's shortcut | OT  | M3  | —        | —    | planned |
+| UX-014 | Command palette (Ctrl/Cmd+K) exposing every action, with each action's shortcut | OT  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | in progress |
 | UX-015 | Every action reachable within one click or one shortcut                                                                     | OT  | M3  | —        | —    | planned |
 | UX-020 | Themes: light, dark, sepia, stage-dark                                                                                      | OT  | M0  | — | apps/web/e2e/app.spec.ts, packages/core/test/score-colors.test.ts | done |
 | UX-021 | Desktop and mobile first-class; no feature removed on mobile                                                                | OT  | M3  | —        | —    | planned |
@@ -904,18 +904,18 @@ The single source of truth for what OpenTabz does. One row per feature.
 | UX-029 | Responsive main toolbar folding into overflow menus                                                                         | GP  | M3  | —        | —    | planned |
 | UX-030 | Context menus (right-click or long-press) on tracks, bars, symbols, document tabs and the waveform                          | GP  | M3  | —        | —    | planned |
 | UX-031 | Shortcut hints in tooltips and menus | GP  | M1  | —        | apps/web/e2e/practice.spec.ts, apps/web/e2e/mobile.spec.ts | done |
-| UX-032 | Command palette lists every command; unavailable ones disabled with the reason                                              | GP  | M3  | —        | —    | planned |
-| UX-033 | Command palette search by prefix, abbreviation, alias and localized name                                                    | GP  | M3  | —        | —    | planned |
+| UX-032 | Command palette lists every command; unavailable ones disabled with the reason                                              | GP  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | done |
+| UX-033 | Command palette search by prefix, abbreviation, alias and localized name                                                    | GP  | M3  | —        | apps/web/src/app/command-search.test.ts, apps/web/e2e/command-palette.spec.ts | done |
 | UX-034 | Command palette quick toggles for effects (run again to remove)                                                             | GP  | M4  | —        | —    | planned |
 | UX-035 | Command palette commands with arguments (e.g. tempo 120, bend 1.5, add 4 bars)                                              | GP  | M4  | —        | —    | planned |
 | UX-036 | Command palette argument completion (Tab cycles options)                                                                    | GP  | M4  | —        | —    | planned |
 | UX-037 | Command palette expression text: type a chord, dynamic, key, clef, ottava or direction to insert it                         | GP  | M5  | —        | —    | planned |
-| UX-038 | Command palette jump prefixes for sections and bar numbers                                                                  | GP  | M3  | —        | —    | planned |
+| UX-038 | Command palette jump prefixes for sections and bar numbers                                                                  | GP  | M3  | —        | apps/web/src/app/command-query.test.ts, apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | done |
 | UX-039 | Command palette shorthand for tuplets (n:m) and time signatures (4/4)                                                       | GP  | M4  | —        | —    | planned |
 | UX-040 | Command palette pattern commands fill a selection (strokes, brush, arpeggio, golpe, fingering, picking, slap/pop, wah)      | GP  | M5  | —        | —    | planned |
 | UX-041 | Command palette command that removes chosen elements or effects from the selection                                          | GP  | M4  | —        | —    | planned |
 | UX-042 | Command palette selection and structure commands (select bars or section, insert or repeat bars, line breaks)               | GP  | M4  | —        | —    | planned |
-| UX-043 | Command palette view and playback commands with values (zoom, speed, transpose, focus, show scale…)                         | GP  | M3  | —        | —    | planned |
+| UX-043 | Command palette view and playback commands with values (zoom, speed, transpose, focus, show scale…)                         | GP  | M3  | —        | apps/web/src/app/palette-entries.test.ts, apps/web/e2e/command-palette.spec.ts | in progress |
 | UX-044 | Command palette stays open for a run of commands (flow mode)                                                                | GP  | M4  | —        | —    | planned |
 
 ## Performance budgets (hard gates)

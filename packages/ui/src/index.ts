@@ -4,6 +4,7 @@ export { IconButton, type IconButtonProps } from './components/IconButton.tsx';
 export { Tooltip, TooltipProvider, type TooltipProps } from './components/Tooltip.tsx';
 export { Kbd } from './components/Kbd.tsx';
 export { Dialog, type DialogProps } from './components/Dialog.tsx';
+export { CommandDialog, type CommandDialogProps } from './components/CommandDialog.tsx';
 export {
   Menu,
   MenuTrigger,

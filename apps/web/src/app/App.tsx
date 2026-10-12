@@ -5,6 +5,7 @@ import { useDocuments } from '../state/documents.ts';
 import { useUi } from '../state/ui.ts';
 import { strings } from '../strings.ts';
 import { AboutDialog } from './AboutDialog.tsx';
+import { CommandPalette } from './CommandPalette.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { leaveFullScreen, useFullScreenSync } from './full-screen.ts';
 import { MetronomeTool } from './MetronomeTool.tsx';
@@ -86,6 +87,7 @@ export function App() {
         <UrlDialog open={urlOpen} onOpenChange={setUrlOpen} />
         <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
         <ShortcutSheet />
+        <CommandPalette />
         <SettingsDialog />
         <ExportDialog />
         <MetronomeTool />
