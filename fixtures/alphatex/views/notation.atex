@@ -1,0 +1,15 @@
+// Notation switches — original music written for OpenTabz (AGPL-3.0-or-later).
+// Cut time, a triplet with a rest, a bend, and a second voice resting between its notes.
+\title "Notation Switches"
+\subtitle "OpenTabz test score"
+
+\track ("Guitar" "Gt.") {instrument acousticguitarsteel}
+\staff {score tabs}
+\tuning (E4 B3 G3 D3 A2 E2)
+\ts (2 2)
+\voice
+:8 0.3{tu 3} r{tu 3} 2.3{tu 3} :4 5.2 :2 7.3{b (0 4)} |
+:2 0.2 3.2 |
+\voice
+:4 r r :4 0.6 r |
+:4 r 3.6 :2 r |

@@ -302,6 +302,34 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
             }}
           />
           <Switch
+            label={s.commonTime}
+            checked={style.commonTime}
+            onCheckedChange={commonTime => {
+              set({ commonTime });
+            }}
+          />
+          <Switch
+            label={s.bentPitch}
+            checked={style.bentPitch}
+            onCheckedChange={bentPitch => {
+              set({ bentPitch });
+            }}
+          />
+          <Switch
+            label={s.extraRests}
+            checked={!style.hideExtraRests}
+            onCheckedChange={shown => {
+              set({ hideExtraRests: !shown });
+            }}
+          />
+          <Switch
+            label={s.tupletBrackets}
+            checked={style.tupletBrackets}
+            onCheckedChange={tupletBrackets => {
+              set({ tupletBrackets });
+            }}
+          />
+          <Switch
             label={s.tempoMarks}
             checked={style.tempoMarks}
             onCheckedChange={tempoMarks => {

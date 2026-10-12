@@ -135,7 +135,15 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
   ] as const;
   if (flags.some(flag => typeof raw[flag] !== 'boolean')) return null;
   // Switches added later: what an older version did not keep comes from the file's style.
-  const laterFlags = ['tempoMarks', 'tempoDecimals', 'lyrics'] as const;
+  const laterFlags = [
+    'tempoMarks',
+    'tempoDecimals',
+    'lyrics',
+    'commonTime',
+    'bentPitch',
+    'hideExtraRests',
+    'tupletBrackets',
+  ] as const;
   if (laterFlags.some(flag => raw[flag] !== undefined && typeof raw[flag] !== 'boolean')) return null;
   // Measures added later, likewise.
   const laterMeasures = {

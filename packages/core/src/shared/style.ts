@@ -45,6 +45,14 @@ export interface ScoreStyle {
   /** How far the first system is indented, in millimetres (REND-228). */
   readonly firstSystemIndent: number;
   readonly hideDynamics: boolean;
+  /** 4/4 and 2/2 written as C and cut C (REND-248). */
+  readonly commonTime: boolean;
+  /** Standard notation writes the pitch a bend reaches (REND-248). */
+  readonly bentPitch: boolean;
+  /** The rests of voices 2 to 4 left out of the notation (REND-248). */
+  readonly hideExtraRests: boolean;
+  /** Tuplets bracketed, besides their numbers (REND-248). */
+  readonly tupletBrackets: boolean;
   /** Tempo marks where the tempo is set or changes (REND-210). */
   readonly tempoMarks: boolean;
   /** Tempo marks with their decimals (120.5), or rounded to whole beats per minute (REND-240). */
@@ -106,6 +114,10 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   systemSpacing: 1,
   firstSystemIndent: 0,
   hideDynamics: false,
+  commonTime: false,
+  bentPitch: true,
+  hideExtraRests: false,
+  tupletBrackets: true,
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,

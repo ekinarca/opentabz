@@ -3,6 +3,7 @@
  * written at concert pitch or as their parts read (REND-032).
  */
 import { describe, expect, it } from 'vitest';
+import { readScoreStyle } from '../src/render/style.ts';
 import { DEFAULT_SCORE_STYLE } from '../src/shared/style.ts';
 import { engraveFixture, engraveTex, glyphs, GUITAR, texts, type Engraving } from './engraving.ts';
 
@@ -40,6 +41,66 @@ describe('notation shown or left out', () => {
       style: { ...DEFAULT_SCORE_STYLE, lyrics: false },
     });
     expect(texts(hidden.marks)).not.toContain('Morn-');
+  });
+});
+
+describe('the stylesheet’s notation switches (REND-248)', () => {
+  const PIANO = '\\track "Piano"\n\\staff {score}';
+
+  it('writes 4/4 and 2/2 as C and cut C, or in numbers, as asked', () => {
+    const tex = `${PIANO}\n\\ts (4 4)\n:4 C4 C4 C4 C4 | \\ts (2 2) :2 C4 C4 | \\ts (3 4) :4 C4 C4 C4 |`;
+    const signs = (view: Engraving) => glyphs(view.marks).filter(name => name.startsWith('TimeSig'));
+    expect(signs(engraveTex(tex))).toEqual([
+      'TimeSig4',
+      'TimeSig4',
+      'TimeSig2',
+      'TimeSig2',
+      'TimeSig3',
+      'TimeSig4',
+    ]);
+    const symbols = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, commonTime: true } });
+    expect(signs(symbols)).toEqual(['TimeSigCommon', 'TimeSigCutCommon', 'TimeSig3', 'TimeSig4']);
+    // The score keeps what it was given.
+    expect(symbols.score.masterBars.map(bar => bar.timeSignatureCommon)).toEqual([false, false, false]);
+    // A file that writes C keeps it, unless the stylesheet says numbers.
+    const written = `${PIANO}\n\\ts common\n:4 C4 C4 C4 C4 |`;
+    expect(signs(engraveTex(written))).toEqual(['TimeSigCommon']);
+    const numbers = engraveTex(written, { style: { ...DEFAULT_SCORE_STYLE, commonTime: false } });
+    expect(readScoreStyle(numbers.score).commonTime).toBe(true);
+    expect(signs(numbers)).toEqual(['TimeSig4', 'TimeSig4']);
+  });
+
+  it('writes the pitch a bend reaches, or only the note played', () => {
+    const tex = ':4 7.3{b (0 4)} 7.3 7.3 7.3 |';
+    const heads = (view: Engraving) => glyphs(view.marks).filter(name => name === 'NoteheadBlack').length;
+    const reached = engraveTex(tex);
+    const played = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, bentPitch: false } });
+    // The bent note's target, a small note after it, is left out.
+    expect(heads(played)).toBe(4);
+    expect(heads(reached)).toBeGreaterThan(4);
+  });
+
+  it('leaves out the rests of voices 2 to 4 on request, and keeps the first voice’s', () => {
+    const tex = `${PIANO}\n\\voice\n:4 C5 D5 r F5 |\n\\voice\n:4 r r C4 r |`;
+    const rests = (view: Engraving) => glyphs(view.marks).filter(name => name.startsWith('Rest')).length;
+    expect(rests(engraveTex(tex))).toBe(4);
+    const hidden = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, hideExtraRests: true } });
+    expect(rests(hidden)).toBe(1);
+    expect(hidden.score.tracks[0]?.staves[0]?.bars[0]?.voices[1]?.beats.some(beat => beat.isEmpty)).toBe(
+      false,
+    );
+  });
+
+  it('brackets tuplets, or writes their numbers alone', () => {
+    const tex = `${PIANO}\n:8 C5{tu 3} r{tu 3} E5{tu 3} :4 C5 C5 C5 |`;
+    const brackets = (view: Engraving) =>
+      view.marks.filter(mark => mark.kind === 'path' && mark.name === 'stroke' && mark.commands === 'MLLMLL')
+        .length;
+    const bracketed = engraveTex(tex);
+    const bare = engraveTex(tex, { style: { ...DEFAULT_SCORE_STYLE, tupletBrackets: false } });
+    expect(brackets(bracketed)).toBe(1);
+    expect(brackets(bare)).toBe(0);
+    expect(glyphs(bare.marks)).toContain('Tuplet3');
   });
 });
 

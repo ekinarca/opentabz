@@ -9,6 +9,7 @@ import { DEFAULT_PAGE_FURNITURE, DEFAULT_TEXT_BLOCKS } from '../shared/page-text
 import { DEFAULT_TEXT_FONTS } from '../shared/text-fonts.ts';
 import { DEFAULT_MUSIC_FONT } from '../shared/music-font.ts';
 import { engravingFor } from './music-fonts.ts';
+import { applyCommonTime, applyExtraRests } from './notation-toggles.ts';
 import { applyTextFonts } from './text-fonts.ts';
 import {
   styleChanges,
@@ -64,6 +65,11 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     systemSpacing: 1,
     firstSystemIndent: 0,
     hideDynamics: sheet.hideDynamics,
+    // C and cut C as the file writes any; the others as alphaTab draws.
+    commonTime: score.masterBars.some(bar => bar.timeSignatureCommon),
+    bentPitch: true,
+    hideExtraRests: false,
+    tupletBrackets: true,
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
@@ -190,9 +196,9 @@ export function applyScoreStyle(
       case 'hideEmptyStavesInFirstSystem':
         sheet.hideEmptyStavesInFirstSystem = style.hideEmptyStavesInFirstSystem;
         break;
-      // Settings of the renderer rather than the score (see applyStyleSettings), the title block
-      // (applied whole below), the text blocks (written by the session) and the pages' lines
-      // (drawn by the paged view, not the engine).
+      // Settings of the renderer rather than the score (see applyStyleSettings), the title block,
+      // C and cut C and the rests of the lower voices (applied whole below), the text blocks
+      // (written by the session) and the pages' lines (drawn by the paged view, not the engine).
       case 'scale':
       case 'keepTextSize':
       case 'spacing':
@@ -205,17 +211,29 @@ export function applyScoreStyle(
       case 'chordSpelling':
       case 'tempoMarks':
       case 'tempoDecimals':
+      case 'bentPitch':
+      case 'tupletBrackets':
+      case 'commonTime':
+      case 'hideExtraRests':
       case 'lyrics':
       case 'fonts':
       case 'musicFont':
         break;
     }
   }
+  const changes = styleChanges(style, original);
+  // The time signatures as the file writes them, unless C and cut C were switched.
+  const restoreCommonTime = changes.includes('commonTime')
+    ? applyCommonTime(score, style.commonTime)
+    : () => undefined;
+  const restoreRests = applyExtraRests(score, style.hideExtraRests);
   const restoreTitleBlock = applyTitleBlock(score, style.titleBlock);
   const restoreChords = respellChords(score, style.chordSpelling);
   return () => {
     restoreChords();
     restoreTitleBlock();
+    restoreRests();
+    restoreCommonTime();
     Object.assign(sheet, saved);
   };
 }
@@ -256,6 +274,8 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
   elements.set(alphaTab.NotationElement.GuitarTuning, style.tuning);
   elements.set(alphaTab.NotationElement.EffectTempo, style.tempoMarks);
   settings.notation.showTempoDecimals = style.tempoDecimals;
+  settings.notation.showBentPitch = style.bentPitch;
+  settings.notation.showTupletBrackets = style.tupletBrackets;
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);

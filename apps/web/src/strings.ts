@@ -622,6 +622,10 @@ export const strings = {
     texts: { full: 'Full name', short: 'Short name' } satisfies Record<TrackNameText, string>,
     orientations: { horizontal: 'Across', vertical: 'Upright' } satisfies Record<TextOrientation, string>,
     dynamics: 'Dynamics',
+    commonTime: 'C and cut C for 4/4 and 2/2',
+    bentPitch: 'Pitch a bend reaches',
+    extraRests: 'Rests of voices 2 to 4',
+    tupletBrackets: 'Tuplet brackets',
     musicFont: 'Music font',
     musicFonts: {
       bravura: 'Engraved (Bravura)',

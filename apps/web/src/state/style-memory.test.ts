@@ -88,6 +88,23 @@ describe('styles remembered per song', () => {
     expect(parseStyle(older)?.musicFont).toBe('bravura');
   });
 
+  it('reads the notation switches (REND-248), older styles taking the file’s', () => {
+    const switches = { commonTime: true, bentPitch: false, hideExtraRests: true, tupletBrackets: false };
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, ...switches })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)).toMatchObject(switches);
+    expect(parseStyle({ ...stored, tupletBrackets: 'no' })).toBeNull();
+    const { commonTime: _c, bentPitch: _b, hideExtraRests: _h, tupletBrackets: _t, ...older } = stored;
+    expect(parseStyle(older, { ...DEFAULT_SCORE_STYLE, commonTime: true })).toMatchObject({
+      commonTime: true,
+      bentPitch: true,
+      hideExtraRests: false,
+      tupletBrackets: true,
+    });
+  });
+
   it('reads tempo decimals shown or not (REND-240), older styles taking the file’s', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, tempoDecimals: false })) as Record<
       string,

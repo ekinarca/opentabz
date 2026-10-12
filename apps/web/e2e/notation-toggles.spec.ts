@@ -1,6 +1,7 @@
 /**
  * Transposing instruments at concert pitch (REND-032), and tempo marks shown or hidden
- * (REND-210), with their decimals or rounded (REND-240), in the score on screen.
+ * (REND-210), with their decimals or rounded (REND-240); C and cut C, the pitch a bend reaches,
+ * the rests of the lower voices and tuplet brackets (REND-248); in the score on screen.
  */
 import type { Page } from '@playwright/test';
 import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
@@ -24,8 +25,16 @@ test('a transposing instrument reads as its part, or at concert pitch', async ({
   await page.getByRole('button', { name: /^Tracks: / }).click();
   await page.getByRole('menuitem', { name: 'All tracks' }).click();
   await page.keyboard.press('Escape');
-  await expect.poll(() => sharps(page)).toBeGreaterThan(0);
-  const written = await sharps(page);
+  // Read once the score has settled (on phones it is laid out again as the zoom fits the width).
+  let written = 0;
+  await expect
+    .poll(async () => {
+      const now = await sharps(page);
+      const settled = now > 0 && now === written;
+      written = now;
+      return settled;
+    })
+    .toBe(true);
 
   await page.getByRole('button', { name: /^Staves: / }).click();
   const concert = page.getByRole('menuitemcheckbox', { name: 'Concert pitch' });
@@ -63,4 +72,41 @@ test('tempo marks with their decimals, or rounded', async ({ page }) => {
   // Without tempo marks, their decimals cannot be chosen.
   await dialog.getByRole('switch', { name: 'Tempo marks' }).click();
   await expect(dialog.getByRole('switch', { name: 'Tempo decimals (120.5)' })).toBeDisabled();
+});
+
+test('cut C, the pitch a bend reaches, the lower voices’ rests and tuplet brackets', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/notation.atex')]);
+  await expectScore(page);
+  /** How often a SMuFL symbol is written in the score. */
+  const count = async (codePoint: number) =>
+    (await scoreTexts(page)).join('').split(String.fromCodePoint(codePoint)).length - 1;
+  const brackets = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial path')
+      .evaluateAll(
+        paths =>
+          paths.filter(path =>
+            /^M[^M]*L[^M]*L[^M]*M[^M]*L[^M]*L[^M]*$/.test((path.getAttribute('d') ?? '').trim()),
+          ).length,
+      );
+  const CUT_COMMON = 0xe08b;
+  const BLACK_HEAD = 0xe0a4;
+  const QUARTER_REST = 0xe4e5;
+  await expect.poll(() => count(BLACK_HEAD)).toBeGreaterThan(0);
+  const heads = await count(BLACK_HEAD);
+  const rests = await count(QUARTER_REST);
+  expect(await count(CUT_COMMON)).toBe(0);
+  expect(await brackets()).toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Stylesheet' });
+  await dialog.getByRole('switch', { name: 'C and cut C for 4/4 and 2/2' }).click();
+  await expect.poll(() => count(CUT_COMMON)).toBe(1);
+  await dialog.getByRole('switch', { name: 'Pitch a bend reaches' }).click();
+  await expect.poll(() => count(BLACK_HEAD)).toBeLessThan(heads);
+  await dialog.getByRole('switch', { name: 'Rests of voices 2 to 4' }).click();
+  await expect.poll(() => count(QUARTER_REST)).toBeLessThan(rests);
+  await dialog.getByRole('switch', { name: 'Tuplet brackets' }).click();
+  await expect.poll(brackets).toBe(0);
 });
