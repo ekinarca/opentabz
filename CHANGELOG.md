@@ -189,7 +189,7 @@ All notable changes to OpenTabz are recorded here. The format follows
   around single staves too), the clef on every system or the first only, the time signature again on
   every system or at every section, barlines through all staves, the // separator between systems,
   multi-bar rests, staves left out while they rest, track names (where, full or short, which way
-  up), dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches, the rests of voices 2 to 4,
+  up), the lyrics (under the staff, above or below the staves), dynamics, C and cut C for 4/4 and 2/2, the pitch a bend reaches, the rests of voices 2 to 4,
   tuplet brackets, arrowheads on arpeggios, a trill's second note, "sl." over slides, technique
   lines (P.M., let ring, harmonics) over rests, level beams on the staff and on drums, the
   tablature's tied frets, dashes for its quarter rests, voices 2 to 4 in colour, its rhythm (with
@@ -273,8 +273,9 @@ All notable changes to OpenTabz are recorded here. The format follows
   spacing (0039), technique labels as asked (0040), the tuning legend as asked (0041), the stems
   and rests of four voices (0042), artificial harmonics in the tablature as asked (0043) and the
   rhythm in the tablature per voice and outside the staff (0044), its beams over rests and
-  circled long notes (0045), slash notation as asked (0046), and notes written apart from where
-  they sound, string by string (0047). See [docs/upstream/](docs/upstream/).
+  circled long notes (0045), slash notation as asked (0046), notes written apart from where they
+  sound, string by string (0047), and where the lyrics go (0048). See
+  [docs/upstream/](docs/upstream/).
 - Large Guitar Pro 7 and 8 files open faster and in far less memory: a 20-track, 500-bar score
   paints in about 0.7 s instead of 1.25 s, and no longer holds about 900 MB of XML while it
   opens. Every fixture's imported score is fingerprinted, so changes to importing are caught.

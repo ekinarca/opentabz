@@ -704,6 +704,8 @@ export const strings = {
     tempoDecimals: 'Tempo decimals (120.5)',
     lyrics: 'Lyrics',
     tuning: 'Tuning legend',
+    lyricsPlace: 'Where the lyrics go',
+    lyricsPlaces: { between: 'Under the staff', above: 'Above the staves', below: 'Below the staves' },
     capoAndTuningInNotation: 'Capos and tunings change the written notes',
     capoAndTuningInNotationHint:
       'Off: guitars are written as if in standard tuning without a capo, in their own key.',

@@ -1,6 +1,7 @@
 import {
   BRACKET_MODES,
   CHORD_SPELLINGS,
+  LYRICS_PLACES,
   sameScoreStyle,
   STYLE_DIAGRAM_SIZE,
   STYLE_DIAGRAM_SPACING,
@@ -423,6 +424,18 @@ export function StylesheetDialog({ doc }: { readonly doc: OpenDocument }) {
               set({ lyrics });
             }}
           />
+          {style.lyrics && (
+            <Field label={s.lyricsPlace}>
+              <SegmentedControl
+                label={s.lyricsPlace}
+                value={style.lyricsPlace}
+                segments={LYRICS_PLACES.map(value => ({ value, label: s.lyricsPlaces[value] }))}
+                onValueChange={lyricsPlace => {
+                  set({ lyricsPlace });
+                }}
+              />
+            </Field>
+          )}
           <Switch
             label={s.tuning}
             checked={style.tuning}

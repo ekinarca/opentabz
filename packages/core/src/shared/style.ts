@@ -43,6 +43,13 @@ export type TabRhythm = (typeof TAB_RHYTHMS)[number];
 export const TAB_RHYTHM_PLACES = ['below', 'above', 'none'] as const;
 export type TabRhythmPlace = (typeof TAB_RHYTHM_PLACES)[number];
 
+/**
+ * Where the lyrics go (REND-239): between a track's staff and its tablature (as alphaTab places
+ * them), above all its staves, or below all of them.
+ */
+export const LYRICS_PLACES = ['between', 'above', 'below'] as const;
+export type LyricsPlace = (typeof LYRICS_PLACES)[number];
+
 /** Where the tuning is written: in a legend above the music, or before each track's tablature. */
 export const TUNING_PLACES = ['top', 'tab'] as const;
 export type TuningPlace = (typeof TUNING_PLACES)[number];
@@ -129,6 +136,8 @@ export interface ScoreStyle {
   readonly tempoDecimals: boolean;
   /** Lyrics under the staves. */
   readonly lyrics: boolean;
+  /** Where the lyrics go (REND-239). */
+  readonly lyricsPlace: LyricsPlace;
   readonly brackets: BracketMode;
   /** Brackets and braces even around a single staff. */
   readonly singleStaffBrackets: boolean;
@@ -241,6 +250,7 @@ export const DEFAULT_SCORE_STYLE: ScoreStyle = {
   tempoMarks: true,
   tempoDecimals: true,
   lyrics: true,
+  lyricsPlace: 'between',
   brackets: 'staves',
   singleStaffBrackets: false,
   extendBarLines: false,

@@ -205,6 +205,17 @@ describe('styles remembered per song', () => {
     });
   });
 
+  it('reads where the lyrics go (REND-239), between the staves for older styles', () => {
+    const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, lyricsPlace: 'above' })) as Record<
+      string,
+      unknown
+    >;
+    expect(parseStyle(stored)?.lyricsPlace).toBe('above');
+    expect(parseStyle({ ...stored, lyricsPlace: 'sideways' })).toBeNull();
+    const { lyricsPlace: _place, ...older } = stored;
+    expect(parseStyle(older)?.lyricsPlace).toBe('between');
+  });
+
   it('reads the music font (REND-241): built in or one’s own, Bravura for older styles', () => {
     const stored = JSON.parse(JSON.stringify({ ...DEFAULT_SCORE_STYLE, musicFont: 'petaluma' })) as Record<
       string,

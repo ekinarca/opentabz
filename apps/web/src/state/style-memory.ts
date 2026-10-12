@@ -9,6 +9,7 @@ import {
   DEFAULT_SCORE_STYLE,
   FONT_SIZE,
   isMusicFontId,
+  LYRICS_PLACES,
   PAGE_LINES,
   STYLE_DIAGRAM_SIZE,
   STYLE_DIAGRAM_SPACING,
@@ -243,6 +244,9 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
       raw.tuningLayout === undefined ? fallback.tuningLayout : oneOf(raw.tuningLayout, TUNING_LAYOUTS),
   };
   if (Object.values(tuning).some(entry => entry === null)) return null;
+  const lyricsPlace =
+    raw.lyricsPlace === undefined ? fallback.lyricsPlace : oneOf(raw.lyricsPlace, LYRICS_PLACES);
+  if (lyricsPlace === null) return null;
   const tabRhythm = raw.tabRhythm === undefined ? fallback.tabRhythm : oneOf(raw.tabRhythm, TAB_RHYTHMS);
   const tabRhythmVoices =
     raw.tabRhythmVoices === undefined ? fallback.tabRhythmVoices : parseRhythmVoices(raw.tabRhythmVoices);
@@ -272,6 +276,7 @@ export function parseStyle(value: unknown, fallback: ScoreStyle = DEFAULT_SCORE_
     ...(tuning as { [K in keyof typeof tuning]: NonNullable<(typeof tuning)[K]> }),
     tabRhythm,
     tabRhythmVoices,
+    lyricsPlace,
     titleBlock,
     textBlocks,
     pages,

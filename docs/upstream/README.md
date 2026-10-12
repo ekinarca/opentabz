@@ -56,6 +56,7 @@ available as source: the patch file is that source.
 | [0045](0045-tab-beams-and-circles.md)                | Beams over rests and circled long notes in the tablature                           | Guitar Pro chooses both                                                    | not yet  |
 | [0046](0046-slash-notation.md)                       | Slash notation as asked                                                            | Guitar Pro hides its line and barlines, and writes single notes’ frets     | not yet  |
 | [0047](0047-written-pitch.md)                        | Notes written apart from where they sound, string by string                        | Guitar Pro writes guitars as if in standard tuning without a capo          | not yet  |
+| [0048](0048-lyrics-place.md)                         | Where the lyrics go                                                                | Guitar Pro puts them above or below the staves                             | not yet  |
 
 ## Working on a patch
 

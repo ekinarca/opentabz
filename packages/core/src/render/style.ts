@@ -102,6 +102,8 @@ export function readScoreStyle(score: alphaTab.model.Score): ScoreStyle {
     tempoMarks: true,
     tempoDecimals: true,
     lyrics: true,
+    // Where alphaTab places them: between the staff and the tablature.
+    lyricsPlace: 'between',
     brackets: keyOf(BRACKETS, sheet.bracketExtendMode, 'staves'),
     singleStaffBrackets: sheet.showSingleStaffBrackets,
     extendBarLines: sheet.extendBarLines,
@@ -285,6 +287,7 @@ export function applyScoreStyle(
       case 'timeSignatureAtSections':
       case 'linesOverRests':
       case 'lyrics':
+      case 'lyricsPlace':
       case 'fonts':
       case 'musicFont':
       case 'techniqueLabels':
@@ -395,6 +398,7 @@ export function applyStyleSettings(settings: alphaTab.Settings, style: ScoreStyl
     if (label.length > 0) settings.notation.techniqueLabels.set(key, label);
   }
   elements.set(alphaTab.NotationElement.EffectLyrics, style.lyrics);
+  settings.notation.lyricsPlace = style.lyricsPlace;
   applyTitleBlockSettings(settings, style.titleBlock);
   applyTextFonts(display.resources, style.fonts);
   if (style.keepTextSize && style.scale !== 1) {

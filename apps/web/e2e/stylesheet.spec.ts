@@ -5,7 +5,7 @@
  * music engraved or handwritten, on screen and in exported pages (REND-241). The chord diagrams'
  * size and spacing (REND-227), kept with the text as the score is scaled (REND-223). The words
  * printed for techniques (REND-242). The tuning legend, or the strings before the tablature
- * (REND-225).
+ * (REND-225). Where the lyrics go (REND-239).
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -297,6 +297,34 @@ test('the tuning above the music, saying as much as asked, or before the tablatu
   // The strings' names at the start of the tablature, from the highest.
   await expect(written(/^B$/)).toHaveCount(1);
   await expect(written(/^E$/)).toHaveCount(2);
+});
+
+test('the lyrics under the staff, or above the staves (REND-239)', async ({ page }) => {
+  await openHome(page);
+  await dropFiles(page, [fixture('alphatex/views/lyrics.atex')]);
+  await expectScore(page);
+  /** The first syllable's height against the first system's staff: negative above it, positive below. */
+  const side = () =>
+    page
+      .locator('.ot-scroll:not([hidden]) .ot-partial[data-kind="system"]')
+      .first()
+      .evaluate(element => {
+        const lines = [...element.querySelectorAll('rect')]
+          .filter(rect => Number(rect.getAttribute('height')) < 2 && Number(rect.getAttribute('width')) > 60)
+          .map(rect => Number(rect.getAttribute('y')));
+        const syllable = [...element.querySelectorAll('text')].find(text => text.textContent === 'Morn-');
+        if (syllable === undefined || lines.length === 0) return 0;
+        const y = Number(syllable.getAttribute('y'));
+        return y < Math.min(...lines) ? -1 : y > Math.max(...lines) ? 1 : 0;
+      });
+  await expect.poll(side).toBe(1);
+  await page.getByRole('button', { name: 'Stylesheet', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Stylesheet' })
+    .getByRole('radiogroup', { name: 'Where the lyrics go' })
+    .getByRole('radio', { name: 'Above the staves' })
+    .click();
+  await expect.poll(side).toBe(-1);
 });
 
 const petaluma = dirname(createRequire(import.meta.url).resolve('@vexflow-fonts/petaluma/package.json'));
