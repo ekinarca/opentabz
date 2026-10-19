@@ -101,5 +101,6 @@ test('the cursor follows the music to a page further along, sideways', async ({ 
   const start = await scroller.evaluate(element => element.scrollLeft);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect.poll(() => scroller.evaluate(element => element.scrollLeft)).toBeGreaterThan(start + 500);
-  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  // Stop, not pause: on a slow machine the music may have reached its end by now.
+  await page.getByRole('button', { name: 'Stop and go to the start', exact: true }).click();
 });

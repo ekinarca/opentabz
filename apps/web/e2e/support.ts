@@ -17,6 +17,14 @@ interface ConsoleProblem {
 const HARNESS_SERVICE_WORKER_NOTE = 'Service Worker registration blocked by Playwright';
 
 /**
+ * Firefox's word on a font download that the page's own navigation cut short (a test reloading
+ * while the score's fonts arrive): NS_BINDING_ABORTED, not a font that failed.
+ */
+function isAbortedFontDownload(text: string): boolean {
+  return text.includes('downloadable font: download failed') && text.includes('status=2152398850');
+}
+
+/**
  * Every test fails on a console error or warning, or an uncaught exception, in the page or its
  * workers (budget: zero console messages of either kind in production).
  */
@@ -51,7 +59,7 @@ export const test = base.extend<{ consoleProblems: ConsoleProblem[]; silence: un
       const problems: ConsoleProblem[] = [];
       page.on('console', message => {
         // Playwright's own word on the service worker it holds back (playwright.config.ts).
-        if (message.text() === HARNESS_SERVICE_WORKER_NOTE) return;
+        if (message.text() === HARNESS_SERVICE_WORKER_NOTE || isAbortedFontDownload(message.text())) return;
         if (message.type() === 'error' || message.type() === 'warning') {
           problems.push({ type: message.type(), text: message.text() });
         }
@@ -59,6 +67,7 @@ export const test = base.extend<{ consoleProblems: ConsoleProblem[]; silence: un
       page.on('pageerror', error => problems.push({ type: 'pageerror', text: String(error) }));
       page.on('worker', worker => {
         worker.on('console', message => {
+          if (isAbortedFontDownload(message.text())) return;
           if (message.type() === 'error' || message.type() === 'warning') {
             problems.push({ type: `worker ${message.type()}`, text: message.text() });
           }
