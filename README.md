@@ -1,124 +1,319 @@
 <p align="center">
-  <img src="apps/web/public/icons/icon-192.png" width="96" height="96" alt="The OpenTabz logo: a tablature string with an orange 0 on it">
+  <a href="https://opentabz.com">
+    <img src="apps/web/public/icons/icon-192.png" width="96" height="96" alt="The OpenTabz logo: a tablature string with an orange 0 on it">
+  </a>
 </p>
 
 <h1 align="center">OpenTabz</h1>
 
-<p align="center"><strong>Guitar tabs, beautifully engraved — free, open source, in your browser.</strong></p>
+<p align="center">
+  <strong>Guitar tabs, beautifully engraved — free, open source, in your browser.</strong><br>
+  Open, play, practise and write Guitar Pro files without installing anything.
+</p>
 
-<p align="center"><a href="https://opentabz.com">opentabz.com</a></p>
+<p align="center">
+  <a href="https://opentabz.com"><img src="https://img.shields.io/badge/try_it-opentabz.com-e8590c?style=flat-square" alt="Try it at opentabz.com"></a>
+  <a href="https://github.com/ekinarca/opentabz/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/ekinarca/opentabz/ci.yml?branch=main&style=flat-square&label=CI" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-AGPL--3.0-blue?style=flat-square" alt="Licence: AGPL-3.0-or-later"></a>
+  <a href="#faq"><img src="https://img.shields.io/badge/privacy-no_uploads%2C_no_tracking-2f9e44?style=flat-square" alt="Privacy: no uploads, no tracking"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="Pull requests welcome"></a>
+  <a href="https://github.com/ekinarca/opentabz/stargazers"><img src="https://img.shields.io/github/stars/ekinarca/opentabz?style=flat-square" alt="GitHub stars"></a>
+</p>
+
+<p align="center">
+  <a href="https://opentabz.com"><b>Open the app</b></a> ·
+  <a href="#how-to-use-it">How to use it</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#run-it-yourself">Run it yourself</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
 
 ![The OpenTabz landing page](docs/screenshots/landing.png)
 
-OpenTabz opens Guitar Pro, MusicXML, Capella and alphaTex files right in the browser, engraves
-them as notation and tablature, plays them back and helps you practise them. Nothing to install,
-no account, and your files never leave your device: there is no server to upload them to.
+OpenTabz opens **Guitar Pro, MusicXML, Capella and alphaTex** files right in the browser, engraves
+them as notation and tablature, plays them back, helps you practise them and lets you write your
+own. There is nothing to install and no account to make, and **your files never leave your
+device**: there is no server to upload them to. It works on phones, installs as an app and keeps
+working offline.
 
-The goal is simple and large: everything Guitar Pro 8 does, then more, as free software.
-[docs/PARITY.md](docs/PARITY.md) maps every Guitar Pro 8 capability (701 of them) to the work
-that delivers it, and [docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md) tracks what is done.
+The goal is simple and large: **everything Guitar Pro 8 does, then more, as free software.**
+[docs/PARITY.md](docs/PARITY.md) maps all 701 Guitar Pro 8 capabilities to the work that delivers
+them, and [docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md) tracks what is done, with the test
+that proves each one.
 
-## What it does today
+> [!TIP]
+> No file at hand? Open [opentabz.com](https://opentabz.com) and pick one of the demo songs at the
+> bottom of the page: a blues shuffle, Greensleeves or an arpeggio study.
 
-**Open anything you have.** Guitar Pro 3, 4, 5, 6 (`.gpx`) and 7/8 (`.gp`), MusicXML
-(`.xml`, `.musicxml`, compressed `.mxl`), Capella (`.capx`) and alphaTex. Drop files anywhere on
-the page, use the file picker, paste a file or score text, or open a link
-(`https://opentabz.com/?url=…`). Formats are recognised by their content, not their extension,
-and a file that cannot be opened says exactly why: truncated, damaged, or a format OpenTabz
-recognises but does not open yet (MIDI, PowerTab, TuxGuitar, PDF…).
+## Why OpenTabz
 
-**Read it beautifully.** Notation and tablature, either one alone, or as the file asks; pages on
-A4 or US Letter, a vertical scroll, or one endless horizontal line; any selection of tracks; zoom
-from 25 % to 400 %; four themes (light, dark, sepia, high-contrast stage) that never re-render
-the music.
+- **Free, for good.** No trial, no paywall, no ads. The code is AGPL, so it stays free.
+- **Private by design.** Files are read in your browser. No uploads, analytics, cookies or tracking.
+- **Everywhere.** Any current browser on Windows, macOS, Linux, ChromeOS, iOS or Android.
+- **Familiar.** Keyboard shortcuts follow Guitar Pro 8, so switching costs you nothing.
+- **Fast.** Interactive in well under a second; a 150-bar score is on screen about 150 ms after you
+  drop it, and playback starts within 100 ms. These budgets are tested on every change.
+
+## How to use it
+
+### 1. Open a score
+
+Go to **[opentabz.com](https://opentabz.com)**, then do any of these:
+
+| Do this                                      | Result                                       |
+| -------------------------------------------- | -------------------------------------------- |
+| Drag files onto the page                     | Each opens in its own tab                    |
+| Click **Open a file** (`Ctrl O` / `⌘ O`)     | Pick files from your computer or phone       |
+| Paste a file, or paste alphaTex text         | It opens straight away                       |
+| Click **Open from a link**                   | Opens a score from the web (CORS permitting) |
+| Share a link like `opentabz.com/?url=<file>` | The score opens for whoever follows it       |
+| Click **New score**                          | Starts a blank score to write in             |
+
+Supported: Guitar Pro 3, 4, 5 (`.gp3`, `.gp4`, `.gp5`), 6 (`.gpx`), 7 and 8 (`.gp`), MusicXML
+(`.xml`, `.musicxml`, `.mxl`), Capella (`.capx`) and alphaTex (`.atex`). Files are recognised by
+their content, so a wrong extension does not matter. If a file cannot be opened, OpenTabz tells
+you exactly why: truncated, damaged, or a format it recognises but does not open yet.
+
+### 2. Read it your way
 
 ![A score in page layout](docs/screenshots/score.png)
 
-**Play and practise.** Playback with a SoundFont synthesizer running off the main thread that
-plays what is written: repeats, endings and D.C. / D.S. / Coda / Fine in Guitar Pro's order,
-fermatas, hairpins, tempo ramps, the sustain pedal and the guitar's techniques. A
-cursor that follows the music the way you like it (scrolling continuously at the line you choose,
-page by page or not at all; gliding, stepping note by note or beat by beat, in your colour, with
-the notes being played lit up), a fretboard that shows them on the neck of any instrument with
-strings (with the next notes or the whole bar, note names, a capo, left-handed), a song map to
-jump anywhere, click-to-seek, and speed from 10 % to 300 % without changing the pitch (or tap the
-tempo you want). A metronome with six sounds, one to
-four clicks per beat, swing, half time, accents you set beat by beat, polyrhythms and silent bars
-to practise keeping time; a count-in of one or two bars, shown large on screen, fitted to where
-you start and, if you like, before every pass of a loop; and a standalone metronome with tap
-tempo for practising without a song. A mixer with mute, solo, level, pan, instrument (or drum
-kit), transposition and fine tuning per track, a playing style per track (let ring, strummed
-chords, palm-mute damping, accents), plus a practice mode that mutes the parts you are playing
-yourself. Drag across the music (or
-long-press a bar on a phone, or type bar numbers) to select a range, then loop it seamlessly, a
-set number of times or endlessly, with rests between passes if you like and a speed trainer
-that brings it up to tempo step by step; or play the whole song at one fixed tempo.
+The toolbar above the score chooses what you see:
+
+- **Tracks** — any selection of the song's instruments.
+- **Staves** — notation and tab, either one alone, or as the file asks.
+- **Layout** — pages (A4, US Letter or your own size), one vertical scroll, or one endless line.
+- **Zoom** — 25 % to 400 %, or pinch on a touch screen.
+- **Theme** — light, dark, sepia or a high-contrast stage theme (the palette icon, top right).
+
+### 3. Play it
+
+Press **Space** (or the play button) to play. Click any note to start from there. OpenTabz plays
+what is written: repeats and alternate endings, D.C. / D.S. / Coda / Fine in Guitar Pro's order,
+fermatas, hairpins, tempo ramps, bends, slides, palm mutes and the rest.
+
+- **Speed** — 10 % to 300 % without changing the pitch: `-` and `=` step it by 5 %, or tap a tempo.
+- **Mixer** — mute, solo, volume, pan, instrument or drum kit, transposition and fine tuning per
+  track; it is remembered for each file.
+- **Song map** — the strip above the play bar shows every bar and section; click to jump there.
+- **Following** — choose how the cursor and the page follow the music, and colour the notes.
+
+### 4. Practise it
 
 ![Looping two bars with the mixer open](docs/screenshots/practice.png)
 
-**On your phone, too.** Every screen is designed for phones first: the score, the playback bar
-and the selection handles all work with touch.
+1. **Select the hard part**: drag across the music, long-press a bar on a phone, or type the bar
+   numbers.
+2. **Loop it** with the loop button (`F9`): endlessly or a set number of times, with rest bars
+   between passes if you like.
+3. **Slow it down**, then turn on the **speed trainer** in the practice settings: it brings the loop
+   up to tempo step by step after the passes you choose.
+4. Turn on the **metronome** (`Alt M` / `⌥ M`) and a **count-in** (`Alt C` / `⌥ C`). The metronome
+   has six sounds, subdivisions, swing, accents beat by beat, polyrhythms and silent bars.
+5. **Mute your own part** in the mixer and play along with the band.
+
+There is also a **tuner** (it listens through your microphone and follows the track's tuning) and
+a **standalone metronome** with tap tempo for practising without a song. Both are in the top bar.
+
+### 5. See it on the instrument
+
+![The fretboard following the music](docs/screenshots/fretboard.png)
+
+Open the **fretboard**, **keyboard** or **drums** view from the toolbar to see the notes on the
+instrument as they play: the next notes or the whole bar, note names, a capo, left-handed.
+**Chords** shows the song's chord diagrams with the next chord coming up, and **Lyrics** gives you
+karaoke-style lyrics you can click to jump.
+
+### 6. Write and edit
+
+![Writing in the score](docs/screenshots/editor.png)
+
+Press **`F2`** (or the pencil icon) to edit the score, or start a **New score**. The keys are
+Guitar Pro's:
+
+| Keys                        | What they do                                   |
+| --------------------------- | ---------------------------------------------- |
+| `←` `→` `↑` `↓`             | Move the caret between beats and strings       |
+| `0` – `9`                   | Write a fret (type two digits for 10 to 99)    |
+| `-` and `+`                 | Make the note longer or shorter                |
+| `.` · `R` · `/` · `L`       | Dotted · rest · triplet · tie                  |
+| `H` · `S` · `B` · `V` · `P` | Hammer-on · slide · bend · vibrato · palm mute |
+| `Ctrl C` / `Ctrl V`         | Copy and paste (`⌘` on a Mac)                  |
+| `Ctrl Z` / `Ctrl Shift Z`   | Undo and redo, as far back as you like         |
+| `Insert` · `Ctrl Delete`    | Insert or delete a bar                         |
+
+The edit bar also sets bars (time and key signatures, tempo, repeats, sections), tracks
+(instrument, tuning, capo, colour), up to four voices, chords with a chord builder, transposition
+and more. Your work is saved as you go and comes back after a crash or a closed tab. **Save**
+writes a Guitar Pro `.gp` file you can open anywhere.
+
+### 7. Export, print and share
+
+The download icon exports **PDF, PNG, SVG, MIDI and WAV** (the whole song or just the selection),
+the printer icon prints, and **Save** writes Guitar Pro. Nothing is uploaded: every file is made
+on your device.
+
+### 8. Install it and use it offline
+
+In Chrome or Edge, use **Install** in the address bar; on an iPhone or iPad, **Share → Add to
+Home Screen**. Installed, OpenTabz works with no connection; in Chrome and Edge it also opens score files from
+your file manager, and on Android it appears in the share menu.
 
 <p align="center"><img src="docs/screenshots/phone.png" width="300" alt="A score on a phone"></p>
 
-Keyboard shortcuts and gestures are listed in [docs/SHORTCUTS.md](docs/SHORTCUTS.md).
+> [!NOTE]
+> Every action is also in the **command palette** (the ⌘ icon in the top bar), and `?` shows every
+> keyboard shortcut. Any shortcut can be changed in the shortcut sheet. The full list is in
+> [docs/SHORTCUTS.md](docs/SHORTCUTS.md).
+
+## Features
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**Open**
+
+- Guitar Pro 3–8, MusicXML, Capella, alphaTex
+- Drag and drop, paste, links and `?url=` deep links
+- Several scores at once, in tabs
+- Recent scores and your last session
+
+**Read**
+
+- Notation, tab, slash and numbered notation
+- Page, vertical and horizontal layouts
+- Four themes, zoom 25–400 %, full screen
+- Song info, song overview, section navigator
+
+**Play**
+
+- SoundFont synthesis off the main thread
+- Repeats, jumps, fermatas, hairpins, tempo ramps
+- Mixer with per-track instrument, pan, transpose
+- Playing styles: let ring, strum, palm-mute damping
+
+</td>
+<td valign="top" width="50%">
+
+**Practise**
+
+- Loops, A/B points, counted loops, rest bars
+- Speed trainer, fixed-tempo practice, tap tempo
+- Metronome with sounds, swing, accents, polyrhythms
+- Count-in, tuner, standalone metronome
+
+**See**
+
+- Fretboard, keyboard and drum views
+- Chord diagrams with next-chord preview
+- Karaoke lyrics, note names
+
+**Write**
+
+- Guitar Pro's keys, up to four voices, unlimited undo
+- Bars, tracks, tunings, chords, techniques
+- Transpose, harmonize, retune, palm-mute assistants
+- Autosave, crash recovery, save as `.gp`
+
+</td>
+</tr>
+</table>
 
 ## OpenTabz and Guitar Pro 8
 
-|                                                     | Guitar Pro 8                | OpenTabz today                                                   |
-| --------------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
-| Price and licence                                   | Paid, proprietary           | Free, open source (AGPL-3.0-or-later)                            |
-| Runs on                                             | Windows and macOS (desktop) | Any current browser on any device, phones included; no install   |
-| Opens Guitar Pro 3–8 and MusicXML                   | Yes                         | Yes                                                              |
-| Opens Capella and alphaTex                          | No                          | Yes                                                              |
-| Opens PowerTab, TablEdit, MIDI                      | Yes                         | Planned (MIDI M5, PowerTab and TablEdit M8)                      |
-| Notation and tab; page, scroll and horizontal views | Yes                         | Yes                                                              |
-| Playback, mixer, speed, metronome, count-in, loops  | Yes                         | Yes                                                              |
-| Metronome sounds, subdivisions, accents, polyrhythm | Not documented              | Yes, plus swing, silent bars and a standalone metronome          |
-| Speed trainer                                       | Yes                         | Yes                                                              |
-| Fretboard and keyboard views                        | Yes                         | Planned (M1–M2)                                                  |
-| Writing and editing scores                          | Yes                         | Planned (M4–M5)                                                  |
-| Realistic instrument sound engine                   | Yes (RSE)                   | SoundFont playback now; a full sound engine is planned (M7)      |
-| Export to PDF, MIDI, MusicXML, audio                | Yes                         | PDF, PNG, SVG, MIDI, WAV and printing; MusicXML and more (M4–M7) |
-| Works offline                                       | Yes                         | Planned (M3)                                                     |
-| Your files stay on your device                      | Yes                         | Yes: nothing is ever uploaded; no analytics, cookies or tracking |
+|                                                     | Guitar Pro 8                | OpenTabz today                                                  |
+| --------------------------------------------------- | --------------------------- | --------------------------------------------------------------- |
+| Price and licence                                   | Paid, proprietary           | Free, open source (AGPL-3.0-or-later)                           |
+| Runs on                                             | Windows and macOS (desktop) | Any current browser on any device, phones included; no install  |
+| Opens Guitar Pro 3–8 and MusicXML                   | Yes                         | Yes                                                             |
+| Opens Capella and alphaTex                          | No                          | Yes                                                             |
+| Opens PowerTab, TablEdit, MIDI                      | Yes                         | Planned (MIDI M5, PowerTab and TablEdit M8)                     |
+| Notation and tab; page, scroll and horizontal views | Yes                         | Yes                                                             |
+| Playback, mixer, speed, metronome, count-in, loops  | Yes                         | Yes                                                             |
+| Metronome sounds, subdivisions, accents, polyrhythm | Not documented              | Yes, plus swing, silent bars and a standalone metronome         |
+| Speed trainer and tuner                             | Yes                         | Yes                                                             |
+| Fretboard, keyboard and drum views                  | Yes                         | Yes                                                             |
+| Writing and editing scores                          | Yes                         | Yes, and growing towards full parity (M4–M5)                    |
+| Realistic instrument sound engine                   | Yes (RSE)                   | SoundFont playback now; a full sound engine is planned (M7)     |
+| Export                                              | PDF, MIDI, MusicXML, audio  | PDF, PNG, SVG, MIDI, WAV, Guitar Pro; MusicXML and more planned |
+| Works offline                                       | Yes                         | Yes, as an installed app                                        |
+| Your files stay on your device                      | Yes                         | Yes: nothing is ever uploaded; no analytics, cookies, tracking  |
 
 The milestones are described in [docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md).
+
+## FAQ
+
+**Is it really free?** Yes. No paid tier, no ads, no account. The AGPL licence keeps it that way.
+
+**Where do my files go?** Nowhere. They are read and played in your browser; there is no server
+that could receive them. Scores you edit are kept in your browser's own storage on your device.
+
+**Which browser should I use?** Any current Chrome, Edge, Firefox or Safari, on desktop or phone.
+
+**Can I edit Guitar Pro files and open them in Guitar Pro again?** Yes: **Save** writes a `.gp`
+file that Guitar Pro 7 and 8 open.
+
+**Something does not open or sounds wrong.** Please
+[open an issue](https://github.com/ekinarca/opentabz/issues/new/choose) and attach the file if you
+may share it. The error dialog has a button that copies the technical details.
 
 ## How it is built
 
 A React interface on the main thread, and an engine in a Web Worker that reads files, lays out
 and paints the music as SVG and generates MIDI with [alphaTab](https://github.com/CoderLine/alphaTab).
 Sound is synthesized in a second worker and streamed to an AudioWorklet through shared memory,
-so neither a busy interface nor a large score can make the audio stutter. Performance budgets are
-tested on every change: the app is interactive in well under a second, a 150-bar score renders
-about 150 ms after you drop it, and playback starts within 100 ms.
+so neither a busy interface nor a large score can make the audio stutter.
+
+```text
+apps/web          the app: React interface, score view, playback, editing (Vite)
+packages/core     the engine: reading, layout, rendering, editing commands, export
+packages/audio    the synthesizer worker and the AudioWorklet
+packages/ui       shared interface components
+docs/             architecture, decisions, research, feature matrix, shortcuts
+fixtures/         public test scores (alphaTex, MusicXML test suite, alphaTab's files)
+```
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the pieces fit together
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture decision records
 - [docs/RESEARCH.md](docs/RESEARCH.md) — measurements and research behind the decisions
 - [docs/upstream/](docs/upstream/) — OpenTabz's changes to alphaTab, written up for upstream
 
-## Development
+## Run it yourself
 
 Requirements: Node.js 24 and pnpm 10 (`corepack enable pnpm`).
 
 ```bash
+git clone https://github.com/ekinarca/opentabz.git
+cd opentabz
 pnpm install
 pnpm dev                 # http://localhost:5173
-pnpm check               # typecheck, lint, format check and unit tests
-pnpm build               # production build in apps/web/dist
-node scripts/check-budgets.ts   # bundle budgets for the build
-pnpm test:e2e            # end-to-end tests and performance budgets (Playwright)
-pnpm fixtures            # regenerate fixtures/generated/
 ```
+
+| Command                         | What it does                                          |
+| ------------------------------- | ----------------------------------------------------- |
+| `pnpm check`                    | Typecheck, lint, format check and unit tests          |
+| `pnpm build`                    | Production build in `apps/web/dist`                   |
+| `pnpm preview`                  | Serve the production build                            |
+| `node scripts/check-budgets.ts` | Bundle size budgets for the build                     |
+| `pnpm test:e2e`                 | End-to-end tests and performance budgets (Playwright) |
+| `pnpm fixtures`                 | Regenerate `fixtures/generated/`                      |
 
 The end-to-end tests run against the production build with the production security headers, in
 Chromium, Firefox and WebKit, on desktop and phone viewports. Install the browsers once with
 `pnpm --filter @opentabz/web exec playwright install`.
 
-Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[code of conduct](CODE_OF_CONDUCT.md). Security issues: [SECURITY.md](SECURITY.md).
+`apps/web/dist` is a static site: host it anywhere that can send the headers in
+`apps/web/public/_headers` (cross-origin isolation is needed for the audio).
+
+## Contributing
+
+Contributions of every size are welcome: bug reports with a file that misbehaves, fixes, features
+from the [feature matrix](docs/FEATURE_MATRIX.md), or better docs. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md). Security issues go to [SECURITY.md](SECURITY.md), never to
+a public issue.
+
+If OpenTabz is useful to you, **a star helps other guitarists find it** ⭐
 
 ## Licence and credits
 
@@ -132,4 +327,4 @@ It stands on [alphaTab](https://github.com/CoderLine/alphaTab) by Daniel Kuschny
 Guitar Pro is a registered trademark of Arobas Music. OpenTabz is not affiliated with, endorsed
 by or sponsored by Arobas Music; the name is used only to describe which files OpenTabz opens.
 
-OpenTabz is a Whale Development Studios product.
+<p align="center">OpenTabz is a <b>Whale Development Studios</b> product.</p>

@@ -52,6 +52,27 @@ test.describe('README screenshots', () => {
     await page.waitForTimeout(300);
     await page.screenshot({ path: join(OUT, 'practice.png') });
   });
+
+  test('the fretboard following the music', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await openDemo(page, 'a blues shuffle');
+    await page.getByRole('button', { name: 'Fretboard', exact: true }).click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await page.waitForTimeout(2600);
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: join(OUT, 'fretboard.png') });
+  });
+
+  test('writing in the score', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await openDemo(page, 'Greensleeves');
+    await page.getByRole('button', { name: 'Edit the score' }).click();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: join(OUT, 'editor.png') });
+  });
 });
 
 test.describe('README screenshots on a phone', () => {
