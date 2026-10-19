@@ -103,7 +103,15 @@ const alphaTabCore = join(
   'alphaTab.core.mjs',
 );
 
+/** The version people see (About), from package.json. */
+const version = (
+  JSON.parse(readFileSync(join(import.meta.dirname, 'package.json'), 'utf8')) as { version: string }
+).version;
+
 export default defineConfig({
+  define: {
+    __OPENTABZ_VERSION__: JSON.stringify(version),
+  },
   plugins: [react(), tailwindcss(), productionHeaders(), restartOnPatchChange(), serviceWorker()],
   resolve: {
     alias: [{ find: /^@coderline\/alphatab$/, replacement: alphaTabCore }],

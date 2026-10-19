@@ -1,5 +1,17 @@
 /** The shell around the score: themes, zoom, page furniture, privacy and legal notices. */
-import { dropFiles, expect, expectScore, fixture, openFiles, openHome, openThemes, test } from './support.ts';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  dropFiles,
+  expect,
+  expectScore,
+  fixture,
+  openFiles,
+  openHome,
+  openThemes,
+  test,
+  topBarTool,
+} from './support.ts';
 
 test.describe('the app', () => {
   test('themes apply instantly and are remembered', async ({ page }) => {
@@ -72,6 +84,15 @@ test.describe('the app', () => {
     await openFiles(page, [fixture('alphatab/guitarpro5/effects.gp5')]);
     await expectScore(page);
     expect(foreign).toEqual([]);
+  });
+
+  test('About names the version', async ({ page }) => {
+    await openHome(page);
+    await topBarTool(page, 'About OpenTabz');
+    const { version } = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as {
+      version: string;
+    };
+    await expect(page.getByRole('dialog', { name: 'About OpenTabz' })).toContainText(`Version ${version}`);
   });
 
   test('the landing page carries the trademark notice and the studio name', async ({ page }) => {
