@@ -73,6 +73,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install browser
         run: pnpm --filter @opentabz/web exec playwright install --with-deps ${{ matrix.browser }}
+      # Runners have no sound card. Chromium plays into a fake device of its own; Firefox needs a
+      # sound server to play into, or its audio clock never moves.
+      - name: Virtual sound card
+        if: matrix.browser == 'firefox'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl info
       - name: Build
         run: pnpm build
       - name: Fixtures
