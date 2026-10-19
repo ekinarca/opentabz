@@ -114,6 +114,29 @@ function nextMove(): number {
 /** Performance mark set when play is pressed; `ot:play-start` measures until the synth plays. */
 const PLAY_REQUEST = 'ot:play-request';
 
+/** How long a new output may take to start playing (Bluetooth headphones are the slowest). */
+const OUTPUT_START_MS = 5000;
+let outputWatch: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Playback that started while the output's clock stands still (no sound device, or one another
+ * program holds) is paused, saying why, rather than showing a playhead that never moves.
+ */
+function watchOutput(engine: AudioEngine): void {
+  if (outputWatch !== null) clearTimeout(outputWatch);
+  const started = engine.outputTime;
+  outputWatch = setTimeout(() => {
+    outputWatch = null;
+    if (usePlayer.getState().transport.status !== 'playing' || engine.outputTime !== started) return;
+    engine.send({ type: 'pause' });
+    useDocuments.getState().notify({
+      title: strings.transport.noOutput,
+      description: strings.transport.noOutputDetail,
+      tone: 'error',
+    });
+  }, OUTPUT_START_MS);
+}
+
 /** Commands the UI sends the synthesizer once it runs. */
 export type ChannelCommand = Exclude<SynthCommand, { type: 'init' } | { type: 'connectWorklet' }>;
 
@@ -569,6 +592,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       engine.ensureOutput().then(
         () => {
           engine.send({ type: 'play' });
+          watchOutput(engine);
         },
         (error: unknown) => {
           dispatch({ type: 'fail', message: error instanceof Error ? error.message : String(error) });
