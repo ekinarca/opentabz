@@ -2495,6 +2495,7 @@ export const strings = {
   about: {
     title: 'About OpenTabz',
     description: 'A free, open-source notation and tablature workstation that runs entirely in your browser.',
+    version: (version: string) => `Version ${version}`,
     license: 'OpenTabz is free software under the GNU Affero General Public License v3.0 or later.',
     source: 'Source code',
     engine: 'Notation engine',

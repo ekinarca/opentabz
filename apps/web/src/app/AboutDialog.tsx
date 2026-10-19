@@ -33,7 +33,10 @@ export function AboutDialog({
       <div className="flex flex-col gap-4 text-[14px] leading-relaxed text-ink-muted">
         <div className="flex items-center gap-3">
           <LogoMark size={40} />
-          <p className="text-ink">{strings.about.license}</p>
+          <div>
+            <p className="text-ink">{strings.about.license}</p>
+            <p className="text-[13px]">{strings.about.version(__OPENTABZ_VERSION__)}</p>
+          </div>
         </div>
         <p>{strings.about.privacy}</p>
         <div>
