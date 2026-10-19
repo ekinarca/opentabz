@@ -1,6 +1,6 @@
 /** The metronome and the count-in: settings, the visual count-in, and the metronome on its own. */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test, topBarTool } from './support.ts';
+import { expect, expectScore, openHome, primaryModifier, test, topBarTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -94,12 +94,10 @@ test.describe('metronome and count-in', () => {
 test.describe('loops and the speed trainer', () => {
   test.skip(({ isMobile }) => isMobile, 'Selects a bar with the keyboard; phones select by touch.');
 
-  const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
-
   async function loopFirstBar(page: Page): Promise<void> {
     await openShuffle(page);
     await page.locator('.ot-scroll:not([hidden])').focus();
-    await page.keyboard.press(`${MOD}+Shift+ArrowRight`);
+    await page.keyboard.press(`${await primaryModifier(page)}+Shift+ArrowRight`);
     await expect(page.getByRole('toolbar', { name: 'Playback' })).toContainText('Bar 1 selected');
   }
 

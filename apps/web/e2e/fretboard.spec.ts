@@ -3,7 +3,17 @@
  * whole bar), any number of strings, a capo, note names, left-handed, switching tracks, phones.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test, viewTool, viewToolOn } from './support.ts';
+import {
+  dropFiles,
+  expect,
+  expectScore,
+  fixture,
+  openHome,
+  primaryModifier,
+  test,
+  viewTool,
+  viewToolOn,
+} from './support.ts';
 
 async function ready(page: Page): Promise<void> {
   await expectScore(page);
@@ -42,15 +52,6 @@ async function focusScore(page: Page): Promise<void> {
   await page.getByRole('region', { name: /^Score: / }).focus();
 }
 
-/** ⌘ on Apple platforms, Ctrl elsewhere, as the app decides. */
-function mod(page: Page): Promise<string> {
-  return page.evaluate(() =>
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform) || navigator.userAgent.includes('Mac OS X')
-      ? 'Meta'
-      : 'Control',
-  );
-}
-
 test.describe('fretboard', () => {
   test('shows where the music is: now, now and next, or the whole bar', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Stepping by beat is a keyboard feature.');
@@ -82,10 +83,10 @@ test.describe('fretboard', () => {
     await expect.poll(() => marks(page)).toEqual(['current 4:4', 'current 5:0']);
 
     // Bar 5 is a D7 bar: the open D string and A on the G string.
-    await page.keyboard.press(`${await mod(page)}+ArrowRight`);
-    await page.keyboard.press(`${await mod(page)}+ArrowRight`);
-    await page.keyboard.press(`${await mod(page)}+ArrowRight`);
-    await page.keyboard.press(`${await mod(page)}+ArrowRight`);
+    await page.keyboard.press(`${await primaryModifier(page)}+ArrowRight`);
+    await page.keyboard.press(`${await primaryModifier(page)}+ArrowRight`);
+    await page.keyboard.press(`${await primaryModifier(page)}+ArrowRight`);
+    await page.keyboard.press(`${await primaryModifier(page)}+ArrowRight`);
     await expect(neck).toHaveAccessibleName(
       'Fretboard of Rhythm Guitar. Playing D3 (string 4, open), A3 (string 3, fret 2).',
     );
@@ -196,7 +197,7 @@ test.describe('fretboard', () => {
       await track.selectOption('1');
     } else {
       await focusScore(page);
-      await page.keyboard.press(`${await mod(page)}+ArrowDown`);
+      await page.keyboard.press(`${await primaryModifier(page)}+ArrowDown`);
     }
     await expect(track).toHaveValue('1');
     await expect(neck).toHaveAttribute('data-strings', '4');
@@ -219,13 +220,13 @@ test.describe('fretboard', () => {
       await track.selectOption('2');
     } else {
       await focusScore(page);
-      await page.keyboard.press(`${await mod(page)}+ArrowDown`);
+      await page.keyboard.press(`${await primaryModifier(page)}+ArrowDown`);
     }
     await expect(panel.getByText('Drums has no strings to show on a fretboard.')).toBeVisible();
     await expect(panel.getByRole('img', { name: /^Fretboard of / })).toHaveCount(0);
 
     if (isMobile) await track.selectOption('1');
-    else await page.keyboard.press(`${await mod(page)}+ArrowUp`);
+    else await page.keyboard.press(`${await primaryModifier(page)}+ArrowUp`);
     await expect(neck).toHaveAttribute('data-strings', '4');
     await track.selectOption('0');
     await expect(neck).toHaveAttribute('data-strings', '7');
