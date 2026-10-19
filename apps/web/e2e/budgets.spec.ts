@@ -103,9 +103,10 @@ test.describe('budgets', () => {
       () =>
         new Promise<number[]>(resolve => {
           const times: number[] = [];
+          // 300 frames, or as many as come in 15 seconds where frames are slow (WebKit on CI).
           const frame = (time: number) => {
             times.push(time);
-            if (times.length < 300) requestAnimationFrame(frame);
+            if (times.length < 300 && time - (times[0] ?? time) < 15_000) requestAnimationFrame(frame);
             else resolve(times.slice(1).map((value, index) => value - (times[index] ?? value)));
           };
           requestAnimationFrame(frame);
