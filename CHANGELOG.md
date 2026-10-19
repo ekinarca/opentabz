@@ -6,8 +6,13 @@ All notable changes to OpenTabz are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-19
+
+The first numbered release: everything OpenTabz does today, as opentabz.com serves it.
+
 ### Added
 
+- **The version in About**, so a bug report can say which OpenTabz it is about.
 - **Opening files.** Guitar Pro 3, 4, 5, 6 (`.gpx`) and 7/8 (`.gp`, including files with audio
   tracks), MusicXML (`.xml`, `.musicxml`, compressed `.mxl`, partwise and timewise), Capella
   (`.capx`) and alphaTex. Drag and drop anywhere, the file picker (⌘/Ctrl+O), pasting files or
@@ -477,6 +482,16 @@ All notable changes to OpenTabz are recorded here. The format follows
 
 ### Fixed
 
+- On devices without Georgia or Arial (Linux, Android, ChromeOS) the score's titles, sections
+  and other texts were drawn in whatever font stood in for them, wider or narrower than the
+  layout assumed: centred titles moved, texts could run into each other and PDFs put their text
+  elsewhere than the screen. The score is now measured and drawn in Gelasio and Arimo there, the
+  metric-compatible faces PDFs embed.
+- A click on the first or last notes of a selection landed on the selection's handle and did
+  nothing; double and triple clicks there neither selected the bar nor everything. A handle
+  pressed without being dragged now passes the click to the music.
+- Playback that cannot be heard (no sound device, or one another program holds) no longer shows
+  a playhead stuck at the start: it pauses and says why.
 - The engine's watchdog times a request from when the engine starts on it: quick requests waiting
   behind a long one (opening a large file while the score is painted) no longer restart it.
 - Tempo changes in Guitar Pro 3–5 and Capella files hold until the next one, as they do in Guitar
@@ -511,3 +526,6 @@ All notable changes to OpenTabz are recorded here. The format follows
   of showing "Loading sounds…" forever.
 - A font subset inlined as a `data:` URL was blocked by the Content Security Policy.
 - Opening the mixer no longer covers its first row with a tooltip.
+
+[Unreleased]: https://github.com/ekinarca/opentabz/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ekinarca/opentabz/releases/tag/v0.2.0
