@@ -71,11 +71,18 @@ function cornerPixel(page: Page, bytes: Buffer): Promise<number[]> {
 
 interface Placed {
   readonly text: string;
+  /** Where the text is anchored: its start, middle or end, on its baseline. */
   readonly x: number;
   readonly y: number;
+  /** 0 for texts placed by their start, 0.5 by their middle, 1 by their end. */
+  readonly anchor: number;
 }
 
-/** Where the browser draws the texts of the first page on screen: each one's origin on its baseline. */
+/**
+ * Where the browser draws the texts of the first page on screen: each one's anchor on its
+ * baseline. A centred text is compared by its centre: engines that place glyphs on whole pixels
+ * (Chromium on Linux) draw it a pixel or two narrower or wider than its true width.
+ */
 function textsOnScreen(page: Page): Promise<Placed[]> {
   return page.evaluate(() => {
     const sheet = document.querySelector<HTMLElement>('.ot-page');
@@ -83,7 +90,7 @@ function textsOnScreen(page: Page): Promise<Placed[]> {
     const pageLeft = Number.parseFloat(sheet.style.left);
     const pageTop = Number.parseFloat(sheet.style.top);
     const pageHeight = Number.parseFloat(sheet.style.height);
-    const placed: { text: string; x: number; y: number }[] = [];
+    const placed: { text: string; x: number; y: number; anchor: number }[] = [];
     for (const partial of document.querySelectorAll<HTMLElement>('.ot-partial')) {
       const left = Number.parseFloat(partial.style.left) - pageLeft;
       const top = Number.parseFloat(partial.style.top) - pageTop;
@@ -97,11 +104,14 @@ function textsOnScreen(page: Page): Promise<Placed[]> {
         // Georgia's and Arial's ascents are 0.807 and 0.810 of their height.
         const start = text.getStartPositionOfChar(0);
         const box = text.getExtentOfChar(0);
-        const ascent = getComputedStyle(text).fontFamily.includes('Georgia') ? 1878 / 2327 : 1854 / 2288;
+        const style = getComputedStyle(text);
+        const ascent = style.fontFamily.includes('Georgia') ? 1878 / 2327 : 1854 / 2288;
+        const anchor = style.textAnchor === 'middle' ? 0.5 : style.textAnchor === 'end' ? 1 : 0;
         placed.push({
           text: content,
-          x: left + matrix.e + start.x,
+          x: left + matrix.e + start.x + text.getComputedTextLength() * anchor,
           y: top + matrix.f + box.y + box.height * ascent,
+          anchor,
         });
       }
     }
@@ -141,6 +151,7 @@ test('exports the pages as a PDF document: vector, its text where the screen sho
           {
             text: item.str,
             x: (item.transform[4] as number) * (96 / 72),
+            width: item.width * (96 / 72),
             y: ((first.view[3] ?? 0) - (item.transform[5] as number)) * (96 / 72),
           },
         ]
@@ -161,6 +172,7 @@ test('exports the pages as a PDF document: vector, its text where the screen sho
     if (screen === undefined) throw new Error(`"${text}" expected on screen.`);
     const nearest = items
       .filter(item => item.text === text)
+      .map(item => ({ ...item, x: item.x + item.width * screen.anchor }))
       .sort(
         (a, b) => Math.hypot(a.x - screen.x, a.y - screen.y) - Math.hypot(b.x - screen.x, b.y - screen.y),
       )[0];
