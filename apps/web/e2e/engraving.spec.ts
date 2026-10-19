@@ -19,16 +19,24 @@ test('section names, tempo marks and effect texts do not overlap', async ({ page
   await dropFiles(page, [fixture('alphatex/rendering/text-collisions.atex')]);
   await expectScore(page);
   const boxes: Box[] = await page.evaluate(() =>
-    [...document.querySelectorAll('.ot-scroll:not([hidden]) svg text')]
+    [...document.querySelectorAll<SVGTextElement>('.ot-scroll:not([hidden]) svg text')]
       .map(element => {
         const rect = element.getBoundingClientRect();
-        return {
-          text: element.textContent,
-          left: rect.left,
-          right: rect.right,
-          top: rect.top,
-          bottom: rect.bottom,
-        };
+        // From the first glyph to the last: Firefox's box takes in the spaces around a text
+        // ("Moderate " before its tempo note), Chromium's does not.
+        const content = element.textContent;
+        const first = content.length - content.trimStart().length;
+        const last = content.trimEnd().length - 1;
+        const matrix = element.getScreenCTM();
+        let { left, right } = rect;
+        if (matrix !== null && matrix.b === 0 && matrix.c === 0 && last < element.getNumberOfChars()) {
+          if (first > 0 && first <= last) left = matrix.a * element.getExtentOfChar(first).x + matrix.e;
+          if (last >= 0 && last < content.length - 1) {
+            const extent = element.getExtentOfChar(last);
+            right = matrix.a * (extent.x + extent.width) + matrix.e;
+          }
+        }
+        return { text: content, left, right, top: rect.top, bottom: rect.bottom };
       })
       .filter(box => box.text.trim().length > 0 && box.right > box.left),
   );
