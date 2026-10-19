@@ -127,6 +127,23 @@ test.describe('playback cursor, seeking and selection gestures', () => {
     await expect(page.getByRole('toolbar', { name: 'Playback' })).toContainText('Bars 1–2 selected');
   });
 
+  test('a click on a selection handle, not dragged, reaches the music under it', async ({ page }) => {
+    const system = page.locator('.ot-partial[data-kind="system"]').first();
+    await system.scrollIntoViewIfNeeded();
+    const box = await system.boundingBox();
+    if (box === null) throw new Error('no system');
+    await page.mouse.dblclick(box.x + box.width * 0.8, box.y + box.height * 0.45);
+    await expect(page.getByRole('toolbar', { name: 'Playback' })).toContainText('Bar 2 selected');
+    const handleBox = await page.locator('.ot-selection-handle[data-end="start"]').boundingBox();
+    if (handleBox === null) throw new Error('no handle');
+    // Inside the bar, still on the handle: a triple click there selects everything.
+    await page.waitForTimeout(600);
+    await page.mouse.click(handleBox.x + handleBox.width * 0.75, box.y + box.height * 0.45, {
+      clickCount: 3,
+    });
+    await expect(page.getByRole('toolbar', { name: 'Playback' })).toContainText('Bars 1–13 selected');
+  });
+
   test('F9 toggles the loop and ⌥M / Alt+M the metronome', async ({ page }) => {
     await page.locator('.ot-scroll:not([hidden])').focus();
     const loop = page.getByRole('button', { name: 'Loop', exact: true });

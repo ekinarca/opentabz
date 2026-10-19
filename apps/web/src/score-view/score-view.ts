@@ -513,21 +513,34 @@ export class ScoreView {
     gesture.clientX = event.clientX;
     gesture.clientY = event.clientY;
     if (gesture.state === 'pending') {
-      const point = this.clientToEngine(event.clientX, event.clientY);
       this.endGesture();
-      if (point !== null) {
-        this.events.onGesture?.({
-          type: 'tap',
-          x: point.x,
-          y: point.y,
-          extend: gesture.shift || event.shiftKey,
-          count: this.countTap(event.clientX, event.clientY),
-        });
-      }
+      this.tap(event.clientX, event.clientY, gesture.shift || event.shiftKey);
       return;
     }
     this.endGesture();
   };
+
+  /**
+   * A click or tap on the music at a point of the viewport, counted with the ones just before it
+   * (double and triple clicks). Elements over the music that were clicked without being dragged
+   * (the selection's handles) pass their clicks on here.
+   */
+  public tap(clientX: number, clientY: number, extend: boolean): void {
+    const point = this.clientToEngine(clientX, clientY);
+    if (point === null) return;
+    this.events.onGesture?.({
+      type: 'tap',
+      x: point.x,
+      y: point.y,
+      extend,
+      count: this.countTap(clientX, clientY),
+    });
+  }
+
+  /** How far a pointer may move (in CSS pixels) before a press becomes a drag. */
+  public static slop(pointerType: string): number {
+    return pointerType === 'mouse' ? MOUSE_SLOP : TOUCH_SLOP;
+  }
 
   private readonly onPointerCancel = (event: PointerEvent): void => {
     this.releaseTouch(event.pointerId);
