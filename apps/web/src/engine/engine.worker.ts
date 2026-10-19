@@ -9,6 +9,7 @@ import {
   type EngineRequestMessage,
   type EngineResponseMessage,
 } from '@opentabz/core';
+import { loadScoreFontsInWorker } from '../score-view/score-fonts.ts';
 
 interface WorkerScope {
   postMessage(message: EngineResponseMessage): void;
@@ -17,6 +18,8 @@ interface WorkerScope {
 
 const scope = self as unknown as WorkerScope;
 const host = new EngineHost();
+/** The score's text fonts, as the page draws them: nothing is laid out before they are in. */
+const fontsReady = loadScoreFontsInWorker(self);
 
 function isRequest(data: unknown): data is EngineRequestMessage {
   return typeof data === 'object' && data !== null && (data as { kind?: unknown }).kind === 'request';
@@ -89,6 +92,13 @@ function dispatch(message: EngineRequestMessage): unknown {
 }
 
 scope.addEventListener('message', event => {
+  // Requests keep their order: each waits for the same promise.
+  void fontsReady.then(() => {
+    handle(event);
+  });
+});
+
+function handle(event: MessageEvent<unknown>): void {
   const data = event.data;
   if (!isRequest(data)) return;
   try {
@@ -96,4 +106,4 @@ scope.addEventListener('message', event => {
   } catch (error) {
     scope.postMessage({ kind: 'response', id: data.id, ok: false, error: serializeError(error) });
   }
-});
+}
