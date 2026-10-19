@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # pnpm comes from Corepack in the next step, after setup-node: no automatic pnpm cache.
+          package-manager-cache: false
       - run: corepack enable pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -65,6 +67,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # pnpm comes from Corepack in the next step, after setup-node: no automatic pnpm cache.
+          package-manager-cache: false
       - run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browser
@@ -92,6 +96,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # pnpm comes from Corepack in the next step, after setup-node: no automatic pnpm cache.
+          package-manager-cache: false
       - run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
