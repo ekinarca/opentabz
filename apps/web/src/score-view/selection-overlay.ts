@@ -8,7 +8,7 @@
  */
 import type { PlaybackTimeline, TickRange } from '@opentabz/core/shared';
 import { engineToSheet } from './pagination.ts';
-import type { ScoreView } from './score-view.ts';
+import { ScoreView } from './score-view.ts';
 import {
   barRange,
   beatEndTick,
@@ -35,6 +35,10 @@ interface HandleDrag {
   readonly end: End;
   readonly pointerId: number;
   readonly element: HTMLDivElement;
+  readonly startX: number;
+  readonly startY: number;
+  /** Moved further than a click may: a drag, not a click passed on to the music. */
+  dragged: boolean;
   clientX: number;
   clientY: number;
   range: TickRange;
@@ -218,6 +222,9 @@ export class SelectionOverlay {
       end,
       pointerId: event.pointerId,
       element,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragged: false,
       clientX: event.clientX,
       clientY: event.clientY,
       range,
@@ -231,6 +238,14 @@ export class SelectionOverlay {
     if (drag?.pointerId !== event.pointerId) return;
     drag.clientX = event.clientX;
     drag.clientY = event.clientY;
+    if (
+      !drag.dragged &&
+      Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) <=
+        ScoreView.slop(event.pointerType)
+    ) {
+      return;
+    }
+    drag.dragged = true;
     this.view.autoScroll(event.clientX, event.clientY, this.moveHandle);
     this.moveHandle();
   };
@@ -239,6 +254,12 @@ export class SelectionOverlay {
     const drag = this.handleDrag;
     if (drag?.pointerId !== event.pointerId) return;
     this.endHandleDrag();
+    // A handle clicked, not dragged: the click was meant for the music under it (its first or
+    // last notes, or a double or triple click there).
+    if (!drag.dragged && event.type === 'pointerup') {
+      this.view.tap(event.clientX, event.clientY, event.shiftKey);
+      return;
+    }
     this.options.onChange(drag.range, true);
   };
 
