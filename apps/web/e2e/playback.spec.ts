@@ -182,6 +182,24 @@ test.describe('when the sound engine cannot start', () => {
     );
     consoleProblems.splice(0, consoleProblems.length, ...unexpected);
   });
+
+  test('an output that never plays pauses playback and says why', async ({ page }) => {
+    // As without a sound device: the output's clock stands still.
+    await page.addInitScript(() => {
+      Object.defineProperty(BaseAudioContext.prototype, 'currentTime', { get: () => 0 });
+    });
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    const play = page.getByRole('button', { name: 'Play', exact: true });
+    await expect(play).toBeEnabled({ timeout: 20_000 });
+    await play.click();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Notifications' })).toContainText('No sound comes out', {
+      timeout: 10_000,
+    });
+    await expect(play).toBeVisible();
+  });
 });
 
 test.describe('leaving the page while the sounds load', () => {

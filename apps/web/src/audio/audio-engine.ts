@@ -123,6 +123,14 @@ export class AudioEngine {
     return { latencyMs: latency, missedMs: (missed / SYNTH_SAMPLE_RATE) * 1000 };
   }
 
+  /**
+   * The output's clock in seconds, or null before there is an output. It stands still while the
+   * output does not play: no sound device, or one that another program holds.
+   */
+  public get outputTime(): number | null {
+    return this.context === null ? null : this.context.currentTime;
+  }
+
   /** Master balance (pan of the whole mix), -1 (left) to 1 (right). */
   public setBalance(value: number): void {
     this.balance = Math.min(1, Math.max(-1, value));

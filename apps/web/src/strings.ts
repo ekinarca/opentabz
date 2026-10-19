@@ -861,6 +861,9 @@ export const strings = {
     loading: 'Loading sounds…',
     unavailable: 'Playback unavailable',
     retry: 'Try again',
+    noOutput: 'No sound comes out',
+    noOutputDetail:
+      'The browser could not start playing sound. Check that speakers or headphones are connected and that no other app holds the sound device, then press play again.',
     speed: 'Playback speed',
     speedValue: (speed: number) => `${Math.round(speed * 100)} %`,
     loop: 'Loop',
