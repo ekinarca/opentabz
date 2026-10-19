@@ -113,6 +113,15 @@ export async function expectScore(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
+/** The primary modifier, as the app reads it (⌘ on Apple platforms, Ctrl elsewhere). */
+export function primaryModifier(page: Page): Promise<'Meta' | 'Control'> {
+  return page.evaluate(() =>
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform) || navigator.userAgent.includes('Mac OS X')
+      ? 'Meta'
+      : 'Control',
+  );
+}
+
 /** The latest performance measure with this name, in milliseconds (waits until it exists). */
 export async function measure(page: Page, name: string): Promise<number> {
   const handle = await page.waitForFunction(

@@ -7,7 +7,7 @@
  * saved as a Guitar Pro file that opens again with the changes.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, openHome, test, viewTool } from './support.ts';
+import { dropFiles, expect, expectScore, openHome, primaryModifier, test, viewTool } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -22,15 +22,6 @@ function editBar(page: Page) {
 /** Where the caret is, as the edit bar says it. */
 function caret(page: Page) {
   return editBar(page).locator('p[aria-live]');
-}
-
-/** The primary modifier, as the app reads it (⌘ on Apple platforms, Ctrl elsewhere). */
-function primary(page: Page): Promise<'Meta' | 'Control'> {
-  return page.evaluate(() =>
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform) || navigator.userAgent.includes('Mac OS X')
-      ? 'Meta'
-      : 'Control',
-  );
 }
 
 /** Whether the first system of the score shown writes `text` as a fret (a whole SVG text). */
@@ -88,7 +79,7 @@ test.describe('on a computer', () => {
     page,
   }) => {
     await openShuffle(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('region', { name: /^Score: / }).focus();
     await page.keyboard.press('F2');
     await expect(editBar(page)).toBeVisible();
@@ -144,7 +135,7 @@ test.describe('on a computer', () => {
     page,
   }) => {
     await openShuffle(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     const score = page.getByRole('region', { name: /^Score: / });
     await score.focus();
     await page.keyboard.press('F2');
@@ -179,7 +170,7 @@ test.describe('on a computer', () => {
 
   test('C repeats the beat before; ⌘/Ctrl Shift C copies whole bars of every track', async ({ page }) => {
     await openShuffle(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('region', { name: /^Score: / }).focus();
     await page.keyboard.press('F2');
     for (let step = 0; step < 4; step++) await page.keyboard.press('ArrowDown');
@@ -199,7 +190,7 @@ test.describe('on a computer', () => {
 
   test('the bar dialog starts a new system at the caret’s bar (EDIT-109)', async ({ page }) => {
     await openShuffle(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('region', { name: /^Score: / }).focus();
     await page.keyboard.press('F2');
     await page.keyboard.press(`${mod}+ArrowRight`);
@@ -256,7 +247,7 @@ test.describe('on a computer', () => {
     page,
   }) => {
     await openHome(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('button', { name: 'New score', exact: true }).click();
     await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
     await page.keyboard.press('3');
@@ -296,7 +287,7 @@ test.describe('on a computer', () => {
     page,
   }) => {
     await openShuffle(page);
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('region', { name: /^Score: / }).focus();
     await page.keyboard.press('F2');
     await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
@@ -720,7 +711,7 @@ test('notes are transposed by semitones and octaves, and moved from string to st
 
   if (!isMobile) {
     // Guitar Pro's Ctrl Alt ↓ and ↑: a string down at its pitch, the caret with it, and back.
-    const mod = await primary(page);
+    const mod = await primaryModifier(page);
     await page.getByRole('region', { name: /^Score: / }).focus();
     await page.keyboard.press(`${mod}+Alt+ArrowDown`);
     await expect(caret(page)).toHaveText('Caret: bar 1, string 2, fret 22');
@@ -1094,7 +1085,7 @@ test('the caret writes in voices 2 to 4, put in the staff as needed (EDIT-011)',
   // The first voice is as it was; undone, the voice put in goes too, the caret back in the first.
   if (!isMobile) {
     await page.getByRole('region', { name: /^Score: / }).focus();
-    await page.keyboard.press(`${await primary(page)}+1`);
+    await page.keyboard.press(`${await primaryModifier(page)}+1`);
     await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
   }
   const undo = editBar(page).getByRole('button', { name: 'Undo', exact: true });

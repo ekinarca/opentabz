@@ -4,7 +4,7 @@
  * remembered, and followed by the playback cursor sideways too.
  */
 import type { Page } from '@playwright/test';
-import { dropFiles, expect, expectScore, fixture, openHome, test } from './support.ts';
+import { dropFiles, expect, expectScore, fixture, openHome, primaryModifier, test } from './support.ts';
 
 test.skip(({ isMobile }) => isMobile, 'Pages side by side are for desktops.');
 
@@ -97,7 +97,7 @@ test('the cursor follows the music to a page further along, sideways', async ({ 
   const scroller = page.locator('.ot-scroll:not([hidden])');
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
   await scroller.focus();
-  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.press(`${await primaryModifier(page)}+End`);
   const start = await scroller.evaluate(element => element.scrollLeft);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect.poll(() => scroller.evaluate(element => element.scrollLeft)).toBeGreaterThan(start + 500);

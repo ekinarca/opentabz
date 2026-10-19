@@ -7,21 +7,12 @@
  * it opens from the top bar's menu.
  */
 import type { Page } from '@playwright/test';
-import { expect, expectScore, openHome, test } from './support.ts';
+import { expect, expectScore, openHome, primaryModifier, test } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
   await page.getByRole('button', { name: 'a blues shuffle' }).click();
   await expectScore(page);
-}
-
-/** ⌘ on Apple platforms, Ctrl elsewhere, as the app decides. */
-function mod(page: Page): Promise<string> {
-  return page.evaluate(() =>
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform) || navigator.userAgent.includes('Mac OS X')
-      ? 'Meta'
-      : 'Control',
-  );
 }
 
 function palette(page: Page) {
@@ -45,7 +36,7 @@ test('finds and runs commands, past ones first, with values and jumps', async ({
   test.skip(isMobile, 'Keyboard shortcuts open it on a computer; phones use the menu (below).');
   await openShuffle(page);
   await page.getByRole('region', { name: /^Score: / }).focus();
-  const key = await mod(page);
+  const key = await primaryModifier(page);
   const { dialog, field, options } = palette(page);
 
   await page.keyboard.press(`${key}+k`);

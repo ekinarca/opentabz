@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import type { Download, Locator, Page } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { expect, expectScore, openHome, test, transportText } from './support.ts';
+import { expect, expectScore, openHome, primaryModifier, test, transportText } from './support.ts';
 
 async function openShuffle(page: Page): Promise<void> {
   await openHome(page);
@@ -30,6 +30,14 @@ async function openExport(page: Page): Promise<Locator> {
   const dialog = page.getByRole('dialog', { name: 'Export' });
   await expect(dialog).toBeVisible();
   return dialog;
+}
+
+/** The name the app gave a download: WebKit's Linux ports save it with underscores for spaces. */
+function nameOf(file: Download): string {
+  const name = file.suggestedFilename();
+  return file.page().context().browser()?.browserType().name() === 'webkit'
+    ? name.replaceAll('_', ' ')
+    : name;
 }
 
 async function downloadFrom(page: Page, button: Locator): Promise<{ file: Download; bytes: Buffer }> {
@@ -113,7 +121,7 @@ test('exports the pages as a PDF document: vector, its text where the screen sho
   const dialog = await openExport(page);
   await expect(dialog.getByRole('radio', { name: 'PDF' })).toHaveAttribute('aria-checked', 'true');
   const { file, bytes } = await downloadFrom(page, dialog.getByRole('button', { name: 'Export PDF' }));
-  expect(file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A.pdf');
+  expect(nameOf(file)).toBe('Twelve-Bar Shuffle in A.pdf');
   const pdf = await getDocument({
     data: new Uint8Array(bytes),
     useSystemFonts: false,
@@ -196,7 +204,7 @@ test('names exported files after a template, remembered', async ({ page }) => {
   await name.fill('%T - %t (%n of %N)');
   await expect(dialog.getByText('Saved as “Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4)”')).toBeVisible();
   const midi = await downloadFrom(page, dialog.getByRole('button', { name: 'Export MIDI' }));
-  expect(midi.file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4).mid');
+  expect(nameOf(midi.file)).toBe('Twelve-Bar Shuffle in A - Rhythm Guitar (1 of 4).mid');
   await page.keyboard.press('Escape');
 
   // A fresh page (opening the home page again: a reload just before would race its engine).
@@ -205,7 +213,7 @@ test('names exported files after a template, remembered', async ({ page }) => {
   await expect(dialog.getByLabel('File name')).toHaveValue('%T - %t (%n of %N)');
   await dialog.getByLabel('File name').fill('%d %T');
   const pdf = await downloadFrom(page, dialog.getByRole('button', { name: 'Export PDF' }));
-  expect(pdf.file.suggestedFilename()).toMatch(/^\d{4}-\d{2}-\d{2} Twelve-Bar Shuffle in A\.pdf$/);
+  expect(nameOf(pdf.file)).toMatch(/^\d{4}-\d{2}-\d{2} Twelve-Bar Shuffle in A\.pdf$/);
 });
 
 test('exports the pages as SVG files, vector and with their music symbols as outlines', async ({ page }) => {
@@ -215,7 +223,7 @@ test('exports the pages as SVG files, vector and with their music symbols as out
   await dialog.getByRole('radio', { name: 'SVG' }).click();
   const { file, bytes } = await downloadFrom(page, dialog.getByRole('button', { name: 'Export SVG' }));
   // Every page of the score, one file each, numbered.
-  expect(file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A.zip');
+  expect(nameOf(file)).toBe('Twelve-Bar Shuffle in A.zip');
   const files = unzipSync(new Uint8Array(bytes));
   const names = Object.keys(files);
   expect(names.length).toBeGreaterThan(1);
@@ -251,7 +259,7 @@ test('exports a range of pages as PNG at a chosen resolution, with or without ba
   await dialog.getByRole('radio', { name: '300 dpi' }).click();
   const opaque = await downloadFrom(page, dialog.getByRole('button', { name: 'Export PNG' }));
   // One page: one image, A4 at 300 dpi.
-  expect(opaque.file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A-1.png');
+  expect(nameOf(opaque.file)).toBe('Twelve-Bar Shuffle in A-1.png');
   expect(pngSize(opaque.bytes)).toEqual({ width: 2480, height: 3508 });
   expect(await cornerPixel(page, opaque.bytes)).toEqual([255, 255, 255, 255]);
 
@@ -304,7 +312,7 @@ test('prints every page on its own sheet of paper, from the dialog or with the s
 
   // ⌘P / Ctrl+P prints, and the dialog it opens closes after.
   await page.locator('.ot-scroll').first().focus();
-  await page.keyboard.press('ControlOrMeta+p');
+  await page.keyboard.press(`${await primaryModifier(page)}+p`);
   await expect.poll(printed).toBe(2);
   await expect(pages).toHaveCount(count);
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
@@ -338,7 +346,7 @@ function trackNames(bytes: Buffer): string[] {
 test('exports the score as a MIDI file named after it, leaving out muted tracks', async ({ page }) => {
   await openShuffle(page);
   const { file, bytes } = await exportMidi(page);
-  expect(file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A.mid');
+  expect(nameOf(file)).toBe('Twelve-Bar Shuffle in A.mid');
   expect(bytes.subarray(0, 4).toString('latin1')).toBe('MThd');
   // The song's title on the conductor track, then each instrument.
   expect(trackNames(bytes)).toEqual([
@@ -403,7 +411,7 @@ async function exportWav(page: Page): Promise<{ file: Download; wav: Wav }> {
 test('exports the audio as WAV: the whole song, or the selected bars', async ({ page }) => {
   await openShuffle(page);
   const whole = await exportWav(page);
-  expect(whole.file.suggestedFilename()).toBe('Twelve-Bar Shuffle in A.wav');
+  expect(nameOf(whole.file)).toBe('Twelve-Bar Shuffle in A.wav');
   expect([whole.wav.sampleRate, whole.wav.channels, whole.wav.bits]).toEqual([44100, 2, 16]);
   // The song plays for half a minute, then its last notes ring out.
   expect(whole.wav.seconds).toBeGreaterThan(30);
