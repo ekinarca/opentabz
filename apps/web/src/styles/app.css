@@ -5,7 +5,6 @@
 @import '@fontsource-variable/jetbrains-mono/wght.css';
 @import '../score-view/score-view.css';
 @import './landing.css';
-@import './score-fonts.css';
 
 @source '../../../../packages/ui/src';
 

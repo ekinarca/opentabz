@@ -4,10 +4,12 @@ import { App } from './app/App.tsx';
 import { registerServiceWorker } from './app/pwa.ts';
 import { getEngine } from './engine/instance.ts';
 import { printRoot } from './export/print.ts';
+import { installScoreFonts } from './score-view/score-fonts.ts';
 import { installScoreTheme, loadMusicFont } from './score-view/score-theme.ts';
 import './styles/app.css';
 
 installScoreTheme();
+installScoreFonts();
 printRoot();
 
 const root = document.getElementById('root');
