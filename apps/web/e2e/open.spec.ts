@@ -1,5 +1,15 @@
 import { readFileSync } from 'node:fs';
-import { dropFiles, expect, expectScore, fixture, measure, openFiles, openHome, test } from './support.ts';
+import {
+  dropFiles,
+  expect,
+  expectScore,
+  fixture,
+  measure,
+  openFiles,
+  openHome,
+  primaryModifier,
+  test,
+} from './support.ts';
 
 test.describe('opening files', () => {
   test('home page is cross-origin isolated and served with the production headers', async ({ page }) => {
@@ -61,17 +71,26 @@ test.describe('opening files', () => {
     await expect(dialog).toContainText('truncated-half.gp');
   });
 
-  test('pasting a file or score text opens it', async ({ page }) => {
+  test('pasting a file or score text opens it', async ({ page, browserName }) => {
     await openHome(page);
     const text = readFileSync(fixture('alphatex/demos/arpeggio-study.atex'), 'utf8');
-    await page.evaluate(source => {
-      const data = new DataTransfer();
-      data.setData('text/plain', source);
-      document.dispatchEvent(
-        new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
-      );
-    }, text);
+    // Firefox empties the data of paste events a page makes itself: there the text is pasted
+    // for real, through the clipboard.
+    if (browserName === 'firefox') {
+      await page.evaluate(source => navigator.clipboard.writeText(source), text);
+      await page.keyboard.press(`${await primaryModifier(page)}+v`);
+    } else {
+      await page.evaluate(source => {
+        const data = new DataTransfer();
+        data.setData('text/plain', source);
+        document.dispatchEvent(
+          new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
+        );
+      }, text);
+    }
     await expectScore(page);
+    // A test cannot put a file on the clipboard, and Firefox empties made-up paste events.
+    if (browserName === 'firefox') return;
     const base64 = readFileSync(fixture('alphatab/guitarpro5/effects.gp5')).toString('base64');
     await page.evaluate(encoded => {
       const binary = atob(encoded);
