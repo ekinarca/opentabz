@@ -793,7 +793,9 @@ test('notes are transposed by steps of the key, or by an interval with their key
   await dialog.getByRole('radio', { name: 'Down' }).click();
   await dialog.getByRole('radio', { name: 'This track' }).click();
   await dialog.getByRole('button', { name: 'Transpose', exact: true }).click();
-  await expect(page.getByText('A note would go below the lowest string: transpose less.')).toBeVisible();
+  await expect(
+    page.getByText('A note would go below the lowest string: transpose less.', { exact: true }),
+  ).toBeVisible();
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, fret 8');
   // The whole track a major second up, its key with it: A major to B major.
   await editTool(page, 'Transpose…');
