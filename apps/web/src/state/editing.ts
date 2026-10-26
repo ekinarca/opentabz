@@ -581,6 +581,8 @@ async function changed(
   to: CaretPlace | null,
   keepSelection = false,
 ): Promise<void> {
+  // Closed meanwhile: nothing follows a score no longer open.
+  if (docOf(key) === null) return;
   let place = to;
   if (outcome.trackOrigins === null) useDocuments.getState().setSummary(key, outcome.summary);
   else {
@@ -611,6 +613,7 @@ async function changed(
       const first = voiceRows(beats, caret.staff, caret.voice)[0] ?? voiceRows(beats, caret.staff, 0)[0];
       caret = first === undefined ? null : { ...caret, voice: first.voice, beatId: first.beatId };
     }
+    if (docOf(key) === null) return;
   }
   patch(key, {
     revision,
@@ -717,7 +720,7 @@ function apply(
     const doc = docOf(key);
     if (doc === null) return;
     const outcome = await getEngine().call('edit', { docId: doc.engineId, commands });
-    if (!outcome.changed) return;
+    if (!outcome.changed || docOf(key) === null) return;
     const history = historyOf(key);
     history.serial += 1;
     const step: Step = { commands, revision: history.serial, before, after: after ?? before };

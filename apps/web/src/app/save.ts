@@ -47,10 +47,16 @@ interface CloseGuardState {
 
 export const useCloseGuard = create<CloseGuardState>(() => ({ pending: null }));
 
-/** Closes a document, or first asks when it has changes not saved. */
+/**
+ * Closes a document, or first asks when it has changes not saved: once the edits under way are
+ * made, so that one being made as it closes is asked about too.
+ */
 export function requestClose(key: string): void {
-  if (isDirty(editingOf(key))) useCloseGuard.setState({ pending: key });
-  else useDocuments.getState().close(key);
+  void afterEdits(key, () => Promise.resolve(false)).then(() => {
+    if (!useDocuments.getState().docs.some(doc => doc.key === key)) return;
+    if (isDirty(editingOf(key))) useCloseGuard.setState({ pending: key });
+    else useDocuments.getState().close(key);
+  });
 }
 
 /** Leaving the page with changes not saved: the browser asks first. */

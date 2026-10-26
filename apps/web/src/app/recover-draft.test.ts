@@ -1,58 +1,13 @@
 import type { EditCommand } from '@opentabz/core/shared';
 import { describe, expect, it, vi } from 'vitest';
 
-/** The documents the engine was asked to edit. */
-const edited: string[] = [];
-
-vi.mock('../engine/instance.ts', () => {
-  let opened = 0;
-  let queue: Promise<unknown> = Promise.resolve();
-  const summaryOf = (id: string, name: string) => ({
-    id,
-    title: name,
-    artist: '',
-    subtitle: '',
-    tracks: [],
-    masterBars: [],
-    hasModelLayout: false,
-    truncated: false,
-    extensionMismatch: false,
-    format: 'gp',
-    formatVersion: null,
-    tempo: 120,
-  });
-  // As the engine worker: one request after another, each taking a moment.
-  const call = (method: string, args: { readonly name?: string; readonly docId?: string }) => {
-    const answer = queue
-      .then(() => new Promise(resolve => setTimeout(resolve, 20)))
-      .then(() => {
-        if (method === 'open') {
-          opened += 1;
-          return { ok: true, summary: summaryOf(`doc-${opened}`, args.name ?? '') };
-        }
-        if (method === 'edit') {
-          edited.push(args.docId ?? '');
-          const docId = args.docId ?? '';
-          return {
-            changed: true,
-            summary: summaryOf(docId, docId),
-            trackOrigins: null,
-            canUndo: true,
-            canRedo: false,
-          };
-        }
-        return {};
-      });
-    queue = answer.catch(() => undefined);
-    return answer;
-  };
-  return { getEngine: () => ({ call }), onEngineRestart: () => undefined };
-});
+vi.mock('../engine/instance.ts', async () => (await import('../test/fake-engine.ts')).fakeEngineModule);
 
 describe('recovering a draft', () => {
   it('makes its edits again on the score it opened, not on one opened meanwhile', async () => {
     const { useDocuments } = await import('../state/documents.ts');
     const { recoverDraft } = await import('./RecoverDialog.tsx');
+    const { edited } = await import('../test/fake-engine.ts');
     const bytes = new Uint8Array([1, 2, 3]).buffer;
     // The last session's score is opening (at the start) when Recover is clicked.
     const session = useDocuments
