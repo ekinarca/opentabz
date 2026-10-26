@@ -66,6 +66,11 @@ export interface OpenDocument {
   readonly activeTrack: number;
   /** SHA-256 of the file, once known: the mixer is remembered under it. */
   readonly fingerprint: string | null;
+  /**
+   * Tracks were put in, taken away or moved: the mixer is no longer the file's, track for track,
+   * and is not remembered for it.
+   */
+  readonly tracksEdited?: boolean;
   readonly source: {
     readonly name: string;
     readonly bytes: ArrayBuffer;
@@ -146,7 +151,7 @@ export function initialMix(summary: DocSummary): TrackMix[] {
 /** Keeps the document's mixer for the next time the same file is opened. */
 function remembered(doc: OpenDocument | undefined): void {
   const hash = doc?.fingerprint ?? null;
-  if (doc === undefined || hash === null) return;
+  if (doc === undefined || hash === null || doc.tracksEdited === true) return;
   rememberMix(hash, { tracks: doc.mix, focus: doc.focus });
 }
 
@@ -167,7 +172,9 @@ async function restoreMix(key: string, bytes: ArrayBuffer, trackCount: number): 
         ? {
             ...doc,
             fingerprint: hash,
-            ...(stored === null ? {} : { mix: stored.tracks, focus: stored.focus }),
+            ...(stored === null || doc.tracksEdited === true
+              ? {}
+              : { mix: stored.tracks, focus: stored.focus }),
             ...(style === null ? {} : { view: { ...doc.view, style } }),
           }
         : doc,
@@ -363,6 +370,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
         return {
           ...doc,
           summary,
+          tracksEdited: doc.tracksEdited === true || origins.some((from, to) => from !== to),
           mix: origins
             .map((from, to) => (from >= 0 ? doc.mix[from] : undefined) ?? fresh[to] ?? fresh[0])
             .filter((mix): mix is TrackMix => mix !== undefined),
