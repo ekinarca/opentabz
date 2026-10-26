@@ -217,6 +217,9 @@ function parseBinding(value: unknown): KeyBinding | null {
   if (code !== undefined && typeof code !== 'string') return null;
   const flags = ['mod', 'shift', 'alt', 'ctrl'] as const;
   if (flags.some(flag => record[flag] !== undefined && typeof record[flag] !== 'boolean')) return null;
+  // A binding kept from another action's keys may be for one platform only (Insert on a PC).
+  const platform = record['platform'];
+  if (platform !== undefined && platform !== 'apple' && platform !== 'pc') return null;
   return {
     key,
     ...(typeof code === 'string' ? { code } : {}),
@@ -224,6 +227,7 @@ function parseBinding(value: unknown): KeyBinding | null {
     ...(record['shift'] === true ? { shift: true } : {}),
     ...(record['alt'] === true ? { alt: true } : {}),
     ...(record['ctrl'] === true ? { ctrl: true } : {}),
+    ...(platform === undefined ? {} : { platform }),
   };
 }
 
