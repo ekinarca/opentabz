@@ -22,7 +22,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | OPEN-005 | Open from URL (CORS permitting), including `?url=` deep links                                   | OT  | M0  | — | apps/web/e2e/open.spec.ts, apps/web/src/features/open/intake.test.ts | done |
 | OPEN-006 | OS file-handler registration via the PWA manifest                                               | OT  | M3  | —                   | apps/web/src/app/manifest.test.ts, apps/web/src/app/pwa.test.ts | done |
 | OPEN-007 | Web Share Target on mobile                                                                      | OT  | M3  | —                   | apps/web/src/app/manifest.test.ts, apps/web/e2e/pwa.spec.ts | done |
-| OPEN-008 | Open a whole folder                                                                             | OT  | M3  | —                   | —    | planned |
+| OPEN-008 | Open a whole folder                                                                             | OT  | M3  | —                   | apps/web/src/features/open/folder.test.ts, apps/web/e2e/open.spec.ts | done |
 | OPEN-009 | Multiple documents in tabs                                                                      | GP  | M0  | — | apps/web/e2e/open.spec.ts | done |
 | OPEN-010 | Guitar Pro 3 (.gp3)                                                                             | GP  | M0  | alphatab/guitarpro3 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |
 | OPEN-011 | Guitar Pro 4 (.gp4)                                                                             | GP  | M0  | alphatab/guitarpro4 | packages/core/test/open.test.ts, apps/web/e2e/open.spec.ts | done |

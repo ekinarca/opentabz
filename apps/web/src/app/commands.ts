@@ -30,6 +30,7 @@ import type { CommandValue } from './command-query.ts';
 import type { Searchable } from './command-search.ts';
 import { formatBinding, platformBindings, SHORTCUTS } from './keymap.ts';
 import { openMetronomeTool } from './MetronomeTool.tsx';
+import { canPickFolder, pickFolder } from './open-actions.ts';
 import { modKey } from './platform.ts';
 import { openTuner } from './TunerTool.tsx';
 import { writeOutRepeats } from './unfold.ts';
@@ -417,6 +418,14 @@ export function paletteCommands(mod: string = modKey()): Command[] {
       keys: null,
       unavailable: () => null,
       run: openMetronomeTool,
+    },
+    {
+      id: 'open-folder',
+      label: c.openFolder,
+      aliases: aliasesOf('open-folder'),
+      keys: null,
+      unavailable: () => (canPickFolder() ? null : p.reasons.noFolderPicker),
+      run: pickFolder,
     },
     ...THEME_PREFERENCES.map((theme): Command => ({
       id: `theme-${theme}`,

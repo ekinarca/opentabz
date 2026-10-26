@@ -63,6 +63,7 @@ Go to **[opentabz.com](https://opentabz.com)**, then do any of these:
 | Do this                                      | Result                                       |
 | -------------------------------------------- | -------------------------------------------- |
 | Drag files onto the page                     | Each opens in its own tab                    |
+| Drag a folder onto the page                  | The scores in it open, in order              |
 | Click **Open a file** (`Ctrl O` / `⌘ O`)     | Pick files from your computer or phone       |
 | Paste a file, or paste alphaTex text         | It opens straight away                       |
 | Click **Open from a link**                   | Opens a score from the web (CORS permitting) |
@@ -176,7 +177,7 @@ your file manager, and on Android it appears in the share menu.
 
 - Guitar Pro 3–8, MusicXML, Capella, alphaTex
 - Drag and drop, paste, links and `?url=` deep links
-- Several scores at once, in tabs
+- Several scores at once, in tabs, or a whole folder
 - Recent scores and your last session
 
 **Read**
