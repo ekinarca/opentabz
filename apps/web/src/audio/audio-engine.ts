@@ -225,23 +225,43 @@ export class AudioEngine {
       throw new AudioUnavailableError(`The sound bank could not be read: ${result.message}`);
   }
 
+  /**
+   * Connects the synthesizer to a new output. An output that fails to connect is let go, so the
+   * next start (a user gesture) makes another; one closed meanwhile (a new audio delay) is left
+   * alone, and the port meant for its successor too.
+   */
   private async connectOutput(context: AudioContext): Promise<void> {
-    await this.prepare();
-    const ring = this.ring;
-    const port = this.workletPort;
-    if (ring === null || port === null) throw new AudioUnavailableError('The synthesizer is not ready.');
-    await context.audioWorklet.addModule(workletUrl);
-    const node = new AudioWorkletNode(context, 'opentabz-ring-player', {
-      numberOfInputs: 0,
-      numberOfOutputs: 1,
-      outputChannelCount: [2],
-      processorOptions: { ring },
-    });
-    node.port.postMessage({ port }, [port]);
-    const panner = new StereoPannerNode(context, { pan: this.balance });
-    this.panner = panner;
-    node.connect(panner).connect(context.destination);
-    this.workletPort = null;
+    const superseded = () => {
+      if (this.context !== context) throw new AudioUnavailableError('The audio output was closed meanwhile.');
+    };
+    try {
+      await this.prepare();
+      superseded();
+      const ring = this.ring;
+      const port = this.workletPort;
+      if (ring === null || port === null) throw new AudioUnavailableError('The synthesizer is not ready.');
+      await context.audioWorklet.addModule(workletUrl);
+      superseded();
+      const node = new AudioWorkletNode(context, 'opentabz-ring-player', {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [2],
+        processorOptions: { ring },
+      });
+      node.port.postMessage({ port }, [port]);
+      this.workletPort = null;
+      const panner = new StereoPannerNode(context, { pan: this.balance });
+      this.panner = panner;
+      node.connect(panner).connect(context.destination);
+    } catch (error) {
+      if (this.context === context) {
+        this.context = null;
+        this.outputPromise = null;
+        this.panner = null;
+        void context.close().catch(() => undefined);
+      }
+      throw error;
+    }
   }
 
   /** Resolves with the first synth event matching `predicate`. */
