@@ -456,23 +456,41 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
 
   reopenAll: async () => {
     const engine = getEngine();
-    const reopened: OpenDocument[] = [];
+    // Each score open when the engine restarted, opened again in the new one. Those opened since,
+    // already in it, and changes made meanwhile stay as they are.
+    const reopened = new Map<string, Pick<OpenDocument, 'engineId' | 'summary'>>();
+    const lost = new Set<string>();
     for (const doc of get().docs) {
       const copy = doc.source.bytes.slice(0);
       try {
         const result = await engine.call('open', { name: doc.source.name, bytes: copy }, [copy]);
-        if (result.ok) reopened.push({ ...doc, engineId: result.summary.id, summary: result.summary });
-        else get().reportFailure(result.error);
+        if (result.ok) reopened.set(doc.key, { engineId: result.summary.id, summary: result.summary });
+        else {
+          lost.add(doc.key);
+          get().reportFailure(result.error);
+        }
       } catch (error) {
+        lost.add(doc.key);
         get().reportFailure(internalError(doc.source.name, doc.source.bytes.byteLength, error));
       }
     }
-    set(state => ({
-      docs: reopened,
-      activeKey: reopened.some(doc => doc.key === state.activeKey)
-        ? state.activeKey
-        : (reopened[0]?.key ?? null),
-    }));
+    // Closed while it was opened again: the engine lets its copy go.
+    const open = new Set(get().docs.map(doc => doc.key));
+    for (const [key, { engineId }] of reopened) {
+      if (!open.has(key)) void engine.call('closeDocument', { docId: engineId }).catch(() => undefined);
+    }
+    set(state => {
+      const docs = state.docs
+        .filter(doc => !lost.has(doc.key))
+        .map(doc => {
+          const again = reopened.get(doc.key);
+          return again === undefined ? doc : { ...doc, ...again };
+        });
+      return {
+        docs,
+        activeKey: docs.some(doc => doc.key === state.activeKey) ? state.activeKey : (docs[0]?.key ?? null),
+      };
+    });
     get().notify({ ...strings.notices.engineRestarted, tone: 'warning' });
   },
 }));
