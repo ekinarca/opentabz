@@ -1,11 +1,13 @@
 /**
  * What instrument views ask the engine about a track (its notes, chords, lyrics and drums) or the
- * whole song (the bars each track plays in), asked once per document and track and kept for the
- * next time they are shown.
+ * whole song (the bars each track plays in), asked once per document, track and version of the
+ * score and kept for the next time they are shown: an edit, an undo or a redo asks again.
  */
 import type { ScoreOverview, TrackChords, TrackDrums, TrackLyrics, TrackNotes } from '@opentabz/core/shared';
 import { useEffect, useState } from 'react';
 import { getEngine } from '../engine/instance.ts';
+import { useDocuments } from '../state/documents.ts';
+import { useEditing } from '../state/editing.ts';
 
 interface TrackData {
   readonly trackNotes: TrackNotes;
@@ -21,8 +23,13 @@ type Method = keyof TrackData;
 const KEPT = 48;
 const requests = new Map<string, Promise<TrackData[Method]>>();
 
-function request<M extends Method>(method: M, engineId: string, trackIndex: number): Promise<TrackData[M]> {
-  const key = `${method}:${engineId}:${trackIndex}`;
+function request<M extends Method>(
+  method: M,
+  engineId: string,
+  trackIndex: number,
+  changes: number,
+): Promise<TrackData[M]> {
+  const key = `${method}:${engineId}:${trackIndex}:${changes}`;
   const known = requests.get(key) as Promise<TrackData[M]> | undefined;
   if (known !== undefined) {
     requests.delete(key);
@@ -48,16 +55,23 @@ function request<M extends Method>(method: M, engineId: string, trackIndex: numb
   return asked;
 }
 
+/** How many times the document's score has changed (edits, undos, redos) since it was opened. */
+function useChanges(engineId: string): number {
+  const docKey = useDocuments(state => state.docs.find(doc => doc.engineId === engineId)?.key ?? null);
+  return useEditing(state => (docKey === null ? 0 : (state.docs[docKey]?.changes ?? 0)));
+}
+
 function useTrackData<M extends Method>(
   method: M,
   engineId: string,
   trackIndex: number,
 ): TrackData[M] | null {
-  const key = `${method}:${engineId}:${trackIndex}`;
+  const changes = useChanges(engineId);
+  const key = `${method}:${engineId}:${trackIndex}:${changes}`;
   const [loaded, setLoaded] = useState<{ readonly key: string; readonly data: TrackData[M] } | null>(null);
   useEffect(() => {
     let current = true;
-    request(method, engineId, trackIndex).then(
+    request(method, engineId, trackIndex, changes).then(
       data => {
         if (current) setLoaded({ key, data });
       },
@@ -66,8 +80,11 @@ function useTrackData<M extends Method>(
     return () => {
       current = false;
     };
-  }, [method, engineId, trackIndex, key]);
-  return loaded?.key === key ? loaded.data : null;
+  }, [method, engineId, trackIndex, changes, key]);
+  // While a changed score is asked about, the panel keeps showing what it showed.
+  return loaded?.key === key || loaded?.key.startsWith(`${method}:${engineId}:${trackIndex}:`) === true
+    ? loaded.data
+    : null;
 }
 
 /** The track's notes, or null until the engine has answered. */

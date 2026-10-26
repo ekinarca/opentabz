@@ -1158,10 +1158,21 @@ test('a note clicked on the fretboard is written at the caret, and taken away cl
   const box = await neck.boundingBox();
   if (box === null) throw new Error('No fretboard.');
   const point = { x: Math.min(box.width * 0.3, 260), y: 16 };
+  // The neck shows the notes of the score as edited, not as it was opened.
+  const marks = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll<SVGGElement>('.ot-fret-note')]
+        .map(mark => `${mark.dataset['string'] ?? ''}:${mark.dataset['fret'] ?? ''}`)
+        .sort(),
+    );
+  const before = await marks();
   await neck.click({ position: point });
   await expect(caret(page)).toHaveText(/^Caret: bar 1, string 1, fret \d+$/);
+  const fret = /fret (\d+)$/.exec((await caret(page).textContent()) ?? '')?.[1] ?? '';
+  await expect.poll(marks).toEqual([...before, `1:${fret}`].sort());
   await neck.click({ position: point });
   await expect(caret(page)).toHaveText('Caret: bar 1, string 1, nothing written');
+  await expect.poll(marks).toEqual(before);
 });
 
 test('a key clicked on the keyboard view is written at the caret, on a string that plays it (EDIT-097)', async ({
