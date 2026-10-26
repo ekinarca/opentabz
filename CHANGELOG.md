@@ -6,6 +6,40 @@ All notable changes to OpenTabz are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-26
+
+Whole folders open at once, and a round of fixes for editing, playback and the instrument views.
+
+### Added
+
+- **Opening a whole folder.** Drop a folder on the window, or choose one with "Open a folder…" in
+  the command palette: the Guitar Pro, MusicXML, Capella and alphaTex files in it and in the
+  folders inside it open as tabs, in the order of their names with numbers counted as numbers
+  ("2 Verse" before "10 Outro"). Other files are passed over; up to 50 scores open at once, and a
+  folder without scores says so.
+
+### Fixed
+
+- The fretboard, keyboard, chords, lyrics, drums and overview panels showed the score as it was
+  opened: after an edit, an undo or a redo they now show it as it is.
+- Once the audio output had failed to start, Play kept failing until the page was reloaded, even
+  after "Try again" had loaded the sounds. The next Play now starts a new output.
+- Recovering changes not saved while another score was opening (the last session, at the start)
+  could make the recovered edits on that other score.
+- A tab closed while its first edit was being made closed without asking, and afterwards leaving
+  the page always warned of changes not saved. Closing now waits for the edit and asks.
+- When the engine restarted, a score opened meanwhile disappeared, and changes made meanwhile to
+  the others were undone.
+- The mixer of a score whose tracks had been moved was remembered for its file in the new order:
+  opened again, tracks played each other's instruments and the wrong one was muted.
+- Keys given to an action in the shortcut sheet, taken from another action, could make that other
+  action's Mac keys work on a PC after a reload (Ctrl − deleted a beat instead of zooming out).
+- The beat-by-beat cursor kept the bars' meters from when the score was opened: after a time
+  signature was changed it stepped in the old beat unit.
+- ⌘/Ctrl Z pressed right after an edit, before it was made, was ignored; redo likewise.
+- Closing the tuner just as the microphone was allowed left it analysing silence in the
+  background.
+
 ## [0.2.0] — 2026-10-19
 
 The first numbered release: everything OpenTabz does today, as opentabz.com serves it.
@@ -527,5 +561,6 @@ The first numbered release: everything OpenTabz does today, as opentabz.com serv
 - A font subset inlined as a `data:` URL was blocked by the Content Security Policy.
 - Opening the mixer no longer covers its first row with a tooltip.
 
-[Unreleased]: https://github.com/ekinarca/opentabz/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ekinarca/opentabz/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ekinarca/opentabz/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ekinarca/opentabz/releases/tag/v0.2.0
