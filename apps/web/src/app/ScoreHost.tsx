@@ -211,9 +211,17 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
     cursor = new PlaybackCursor(view, setFollowPaused);
     cursorRef.current = cursor;
     const playbackCursor = cursor;
-    playbackCursor.setMeters(
-      useDocuments.getState().docs.find(candidate => candidate.key === key)?.summary.masterBars ?? [],
-    );
+    // The bars' meters, as edits change them: the beat-by-beat cursor steps in their beat units.
+    const metersOf = (state: ReturnType<typeof useDocuments.getState>) =>
+      state.docs.find(candidate => candidate.key === key)?.summary.masterBars ?? [];
+    let meters = metersOf(useDocuments.getState());
+    playbackCursor.setMeters(meters);
+    const unsubscribeMeters = useDocuments.subscribe(state => {
+      const next = metersOf(state);
+      if (next === meters) return;
+      meters = next;
+      playbackCursor.setMeters(next);
+    });
     playbackCursor.setOptions(cursorOptions(usePreferences.getState()));
     const unsubscribePreferences = usePreferences.subscribe((state, previous) => {
       playbackCursor.setOptions(cursorOptions(state));
@@ -252,6 +260,7 @@ export function ScoreHost({ doc, hidden }: { readonly doc: OpenDocument; readonl
       unsubscribe();
       unsubscribePreferences();
       unsubscribeEditing();
+      unsubscribeMeters();
       caretLayer.dispose();
       selectionOverlay.dispose();
       playbackCursor.dispose();
