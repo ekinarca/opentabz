@@ -38,6 +38,16 @@ function call(method: string, args: { readonly name?: string; readonly docId?: s
         opened += 1;
         return { ok: true, summary: summaryOf(`doc-${opened}`, args.name ?? '') };
       }
+      if (method === 'undo' || method === 'redo') {
+        const docId = args.docId ?? '';
+        return {
+          changed: true,
+          summary: summaryOf(docId, docId),
+          trackOrigins: null,
+          canUndo: method === 'redo',
+          canRedo: method === 'undo',
+        };
+      }
       if (method === 'edit') {
         const docId = args.docId ?? '';
         edited.push(docId);
