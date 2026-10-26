@@ -47,6 +47,8 @@ export class MicrophoneListener {
     }
     this.stream = stream;
     await context.resume().catch(() => undefined);
+    // Closed while the output started: stop() has let the microphone go; nothing is analysed.
+    if (this.closed()) return 'failed';
     const source = context.createMediaStreamSource(stream);
     const analyser = context.createAnalyser();
     analyser.fftSize = FRAME;
@@ -62,6 +64,11 @@ export class MicrophoneListener {
       this.onReading(detectPitch(samples, context.sampleRate, { minFrequency }), performance.now());
     }, INTERVAL_MS);
     return 'listening';
+  }
+
+  /** Whether stop() has been called (read again after each wait). */
+  private closed(): boolean {
+    return this.stopped;
   }
 
   public stop(): void {
