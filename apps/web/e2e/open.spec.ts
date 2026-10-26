@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   dropFiles,
   expect,
@@ -129,6 +131,40 @@ test.describe('opening files', () => {
     await page.getByLabel('File address').fill(url);
     await page.getByRole('dialog').getByRole('button', { name: 'Open', exact: true }).click();
     await expectScore(page);
+  });
+
+  test('opens the scores of a folder and the folders inside it, in order (OPEN-008)', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Phones have no folder picker.');
+    const songs = mkdtempSync(join(tmpdir(), 'opentabz-folder-'));
+    mkdirSync(join(songs, 'Album'));
+    copyFileSync(fixture('alphatex/demos/arpeggio-study.atex'), join(songs, 'Album', '10 Study.atex'));
+    copyFileSync(fixture('alphatex/demos/greensleeves.atex'), join(songs, 'Album', '2 Greensleeves.atex'));
+    writeFileSync(join(songs, 'cover.txt'), 'not a score');
+    const empty = mkdtempSync(join(tmpdir(), 'opentabz-empty-'));
+    writeFileSync(join(empty, 'notes.txt'), 'not a score');
+
+    await openHome(page);
+    const key = await primaryModifier(page);
+    const palette = page.getByRole('dialog', { name: 'Command palette' });
+    const pick = async (folder: string) => {
+      await page.keyboard.press(`${key}+k`);
+      await palette.getByRole('combobox', { name: 'Command' }).fill('open a folder');
+      const chooser = page.waitForEvent('filechooser');
+      await palette.getByRole('combobox', { name: 'Command' }).press('Enter');
+      await (await chooser).setFiles(folder);
+    };
+
+    await pick(empty);
+    await expect(page.getByRole('region', { name: 'Notifications' })).toContainText('No scores in');
+
+    await pick(songs);
+    await expectScore(page);
+    const tabs = page.getByRole('navigation', { name: 'Open documents' }).getByRole('listitem');
+    await expect(tabs).toHaveCount(2);
+    await expect(tabs.first()).toContainText('Greensleeves');
   });
 
   test('paints only the systems near the viewport', async ({ page }) => {

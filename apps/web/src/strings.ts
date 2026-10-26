@@ -227,7 +227,7 @@ export const strings = {
     openFileShortcut: (mod: string) => `${mod} O`,
     openUrl: 'Open from a link',
     newScore: 'New score',
-    dropHint: 'or drop files anywhere on this page',
+    dropHint: 'or drop files or a folder anywhere on this page',
     /** Shown while files are dragged over the window ("let ring" is the tab marking for sustain). */
     release: 'Let it ring.',
     releaseDetail: 'Release to open — Guitar Pro, MusicXML, Capella or alphaTex',
@@ -244,9 +244,16 @@ export const strings = {
   drop: {
     overlay: 'Drop to open',
     overlayDetail: 'Guitar Pro, MusicXML, Capella or alphaTex',
-    folder: (name: string) => ({
-      title: `${quoted(name)} is a folder`,
-      explanation: 'Drop the score files inside the folder instead of the folder itself.',
+    /** A folder dropped or picked that holds no score (OPEN-008). */
+    folderEmpty: (name: string) => ({
+      title: name.length > 0 ? `No scores in ${quoted(name)}` : 'No scores in this folder',
+      explanation:
+        'Neither it nor the folders inside it hold Guitar Pro, MusicXML, Capella or alphaTex files.',
+    }),
+    /** A folder with more scores than open at once. */
+    folderTooMany: (name: string, opened: number, skipped: number) => ({
+      title: `${opened} scores opened${name.length > 0 ? ` from ${quoted(name)}` : ''}`,
+      explanation: `${skipped} more ${skipped === 1 ? 'was' : 'were'} left closed: open fewer at a time to see them.`,
     }),
   },
 
@@ -2131,6 +2138,7 @@ export const strings = {
       noModelLayout: 'this score brings no layout of its own',
       notHorizontal: 'the horizontal layout has one system',
       noRecent: 'no scores are kept',
+      noFolderPicker: 'this browser cannot choose folders; drop one on the window instead',
     },
     goToBar: (bar: number) => `Go to bar ${bar}`,
     goToBarField: 'Go to bar…',
@@ -2158,6 +2166,7 @@ export const strings = {
       practice: 'Practice settings…',
       tuner: 'Tuner',
       metronomeTool: 'Standalone metronome',
+      openFolder: 'Open a folder…',
       theme: (name: string) => `Theme: ${name}`,
       layout: (name: string) => `Layout: ${name}`,
       staves: (name: string) => `Staves: ${name}`,
@@ -2209,6 +2218,7 @@ export const strings = {
       export: ['pdf', 'midi', 'wav', 'png', 'svg', 'musicxml', 'xml', 'gp', 'save', 'download'],
       tuner: ['tune', 'tuning fork', 'pitch'],
       'metronome-tool': ['click', 'tempo', 'bpm'],
+      'open-folder': ['directory', 'album', 'songbook', 'files', 'load'],
       keyboard: ['piano', 'keys'],
       drums: ['kit', 'percussion'],
       chords: ['diagrams', 'chord diagrams'],

@@ -1,11 +1,11 @@
 /**
- * Window-wide intake: drag-and-drop anywhere, paste of files or text, and `?url=` deep links.
+ * Window-wide intake: drag-and-drop of files and folders anywhere, paste of files or text, and
+ * `?url=` deep links.
  */
 import { useEffect, useState } from 'react';
+import { readDroppedFolder, type DirectoryEntryLike } from '../features/open/folder.ts';
 import { parseHttpUrl } from '../features/open/intake.ts';
-import { useDocuments } from '../state/documents.ts';
-import { strings } from '../strings.ts';
-import { openFiles, openPastedText, openUrl } from './open-actions.ts';
+import { openFiles, openFolder, openPastedText, openUrl } from './open-actions.ts';
 import { consumeLaunchedFiles, takeSharedFiles, type LaunchQueue } from './pwa.ts';
 
 function hasFiles(event: DragEvent): boolean {
@@ -22,15 +22,18 @@ function isEditable(target: EventTarget | null): boolean {
   );
 }
 
-/** Splits dropped items into files and folders (folders cannot be opened as scores). */
-function droppedFiles(transfer: DataTransfer): { files: File[]; folders: string[] } {
+/**
+ * Splits dropped items into files and folders. Entries must be taken while the drop event is
+ * dispatched; the folders are read afterwards.
+ */
+function droppedItems(transfer: DataTransfer): { files: File[]; folders: DirectoryEntryLike[] } {
   const files: File[] = [];
-  const folders: string[] = [];
+  const folders: DirectoryEntryLike[] = [];
   for (const item of [...transfer.items]) {
     if (item.kind !== 'file') continue;
     const entry = typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null;
     if (entry?.isDirectory === true) {
-      folders.push(entry.name);
+      folders.push(entry as FileSystemDirectoryEntry);
       continue;
     }
     const file = item.getAsFile();
@@ -66,12 +69,11 @@ export function useGlobalIntake(): boolean {
       event.preventDefault();
       depth = 0;
       setDragging(false);
-      const { files, folders } = droppedFiles(event.dataTransfer);
-      for (const folder of folders) {
-        const text = strings.drop.folder(folder);
-        useDocuments.getState().notify({ title: text.title, description: text.explanation, tone: 'warning' });
-      }
+      const { files, folders } = droppedItems(event.dataTransfer);
       openFiles(files);
+      void (async () => {
+        for (const folder of folders) openFolder(folder.name, await readDroppedFolder(folder));
+      })();
     };
     const onPaste = (event: ClipboardEvent) => {
       if (isEditable(event.target) || event.clipboardData === null) return;

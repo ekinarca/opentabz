@@ -194,7 +194,7 @@ its beat.
 | ⌘/Ctrl with the wheel over the score                         | Zoom in or out around the pointer, from 10 % to 800 %.                                                                          |
 | Pinch the score (trackpad, or two fingers on a touch screen) | Zoom around the fingers; the page around the score keeps its size.                                                              |
 | Click a square of the song overview                          | Go to that bar and make its track the active one. Drag across squares (mouse or pen) to select bars.                            |
-| Drop files anywhere                                          | Open them. A dropped folder is explained instead.                                                                               |
+| Drop files anywhere                                          | Open them. A dropped folder opens the scores in it and in the folders inside it.                                                |
 
 ## What the selection does
 
