@@ -184,6 +184,8 @@ interface History {
   serial: number;
   /** The engine work under way: edits, undos and redos go one after another. */
   queue: Promise<void>;
+  /** Pieces of that work not yet done. */
+  waiting: number;
 }
 
 const histories = new Map<string, History>();
@@ -191,7 +193,7 @@ const histories = new Map<string, History>();
 function historyOf(key: string): History {
   let history = histories.get(key);
   if (history === undefined) {
-    history = { done: [], undone: [], serial: 0, queue: Promise.resolve() };
+    history = { done: [], undone: [], serial: 0, queue: Promise.resolve(), waiting: 0 };
     histories.set(key, history);
   }
   return history;
@@ -226,7 +228,10 @@ function act(key: string, action: () => unknown): boolean {
 /** Runs one piece of engine work after the ones before it. */
 function enqueue(key: string, task: () => Promise<void>): Promise<void> {
   const history = historyOf(key);
-  const next = history.queue.then(task, task);
+  history.waiting += 1;
+  const next = history.queue.then(task, task).finally(() => {
+    history.waiting -= 1;
+  });
   history.queue = next.catch(() => undefined);
   return next;
 }
@@ -1578,7 +1583,9 @@ function toggleDotAtCaretNow(key: string): boolean {
 
 /** Undoes the document's last edit (EDIT-060). */
 export function undoEdit(key: string): boolean {
-  if (historyOf(key).done.length === 0) return false;
+  // With work under way (an edit being made), there may be something to undo once it is done.
+  const known = historyOf(key);
+  if (known.done.length === 0 && known.waiting === 0) return false;
   void enqueue(key, async () => {
     const history = historyOf(key);
     const step = history.done.at(-1);
@@ -1595,7 +1602,8 @@ export function undoEdit(key: string): boolean {
 
 /** Makes the document's last edit undone again. */
 export function redoEdit(key: string): boolean {
-  if (historyOf(key).undone.length === 0) return false;
+  const known = historyOf(key);
+  if (known.undone.length === 0 && known.waiting === 0) return false;
   void enqueue(key, async () => {
     const history = historyOf(key);
     const step = history.undone.at(-1);
