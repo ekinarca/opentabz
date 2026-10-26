@@ -183,6 +183,34 @@ test.describe('when the sound engine cannot start', () => {
     consoleProblems.splice(0, consoleProblems.length, ...unexpected);
   });
 
+  test('an output that fails to start is made anew at the next play', async ({ page, consoleProblems }) => {
+    // The first output cannot load its player, as after a dropped connection.
+    await page.addInitScript(() => {
+      type AddModule = (this: AudioWorklet, ...args: Parameters<AudioWorklet['addModule']>) => Promise<void>;
+      const addModule = Object.getOwnPropertyDescriptor(Worklet.prototype, 'addModule')?.value as AddModule;
+      let failed = false;
+      AudioWorklet.prototype.addModule = function (this: AudioWorklet, ...args) {
+        if (failed) return addModule.apply(this, args);
+        failed = true;
+        return Promise.reject(new DOMException('The module could not be loaded.', 'AbortError'));
+      };
+    });
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    const play = page.getByRole('button', { name: 'Play', exact: true });
+    await expect(play).toBeEnabled({ timeout: 20_000 });
+    await play.click();
+    await expect(page.getByRole('img', { name: 'Playback unavailable' })).toBeVisible();
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(play).toBeEnabled({ timeout: 20_000 });
+    await play.click();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    // The module that failed to load was the point of the test.
+    const unexpected = consoleProblems.filter(problem => !/could not be loaded/i.test(problem.text));
+    consoleProblems.splice(0, consoleProblems.length, ...unexpected);
+  });
+
   test('an output that never plays pauses playback and says why', async ({ page }) => {
     // As without a sound device: the output's clock stands still.
     await page.addInitScript(() => {
