@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPaper, defaultPreferences, parsePreferences, resolveTheme } from './preferences.ts';
+import {
+  defaultPaper,
+  defaultPreferences,
+  parseKeyBindings,
+  parsePreferences,
+  resolveTheme,
+} from './preferences.ts';
 
 const FALLBACK = defaultPreferences('en-GB');
 
@@ -159,6 +165,13 @@ describe('preferences', () => {
     expect(parse('')).toBe('');
     expect(parse('x'.repeat(201))).toBe('%T');
     expect(parse(42)).toBe('%T');
+  });
+
+  it('read back keys taken from another action with the platform they are for', () => {
+    // "Delete beat" after Shift+Delete was given to another action: its Mac keys only.
+    const stored = { 'delete-beat': [{ key: '-', mod: true, platform: 'apple' }] };
+    expect(parseKeyBindings(JSON.parse(JSON.stringify(stored)))).toEqual(stored);
+    expect(parseKeyBindings({ save: [{ key: 's', mod: true, platform: 'linux' }] })).toEqual({});
   });
 
   it('resolve the system theme from the colour scheme', () => {
