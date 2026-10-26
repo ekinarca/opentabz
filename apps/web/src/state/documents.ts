@@ -101,7 +101,8 @@ interface DocumentsState {
   readonly failures: readonly FailedOpen[];
   readonly notices: readonly Notice[];
   readonly pending: readonly PendingOpen[];
-  readonly open: (sources: readonly IntakeSource[]) => Promise<void>;
+  /** Opens the sources in order; resolves with the keys of the documents they became, in order. */
+  readonly open: (sources: readonly IntakeSource[]) => Promise<readonly string[]>;
   readonly close: (key: string) => void;
   /** Shows a document, or the home page when `key` is null. */
   readonly activate: (key: string | null) => void;
@@ -249,6 +250,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
 
   open: async sources => {
     const engine = getEngine();
+    const opened: string[] = [];
     let lastOpened: string | null = null;
     for (const source of sources) {
       const pendingId = nextId('pending');
@@ -292,6 +294,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
         set(state => ({ docs: [...state.docs, doc] }));
         if (source.blank !== true) void restoreMix(key, bytes, summary.tracks.length);
         lastOpened = key;
+        opened.push(key);
         if (summary.truncated) get().notify({ ...strings.notices.truncated(loaded.name), tone: 'warning' });
         else if (summary.extensionMismatch) {
           get().notify({
@@ -307,6 +310,7 @@ export const useDocuments = create<DocumentsState>((set, get) => ({
       }
     }
     if (lastOpened !== null) set({ activeKey: lastOpened });
+    return opened;
   },
 
   close: key => {

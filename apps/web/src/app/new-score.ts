@@ -21,11 +21,11 @@ export async function newScore(): Promise<void> {
     const title = nextTitle();
     const { bytes } = await getEngine().call('blankDocument', { title });
     const name = `${title}.gp`;
-    const documents = useDocuments.getState();
-    await documents.open([{ name, blank: true, load: () => Promise.resolve({ ok: true, name, bytes }) }]);
-    const doc = useDocuments.getState().docs.find(candidate => candidate.source.name === name);
-    if (doc === undefined) return;
-    await toggleEditing(doc.key);
+    const [key] = await useDocuments
+      .getState()
+      .open([{ name, blank: true, load: () => Promise.resolve({ ok: true, name, bytes }) }]);
+    if (key === undefined) return;
+    await toggleEditing(key);
     requestAnimationFrame(focusScore);
   } catch (error) {
     useDocuments.getState().notify({

@@ -13,19 +13,17 @@ const s = strings.recover;
 
 /** Opens a draft's file and makes its edits again; the draft is then the new document's. */
 export async function recoverDraft(draft: Draft): Promise<void> {
-  const documents = useDocuments.getState();
-  const before = new Set(documents.docs.map(doc => doc.key));
-  await documents.open([
+  // The document this draft became, not one opened meanwhile (the last session, a file dropped).
+  const [key] = await useDocuments.getState().open([
     {
       name: draft.name,
       ...(draft.blank ? { blank: true } : {}),
       load: () => Promise.resolve({ ok: true, name: draft.name, bytes: draft.bytes.slice(0) }),
     },
   ]);
-  const doc = useDocuments.getState().docs.find(candidate => !before.has(candidate.key));
-  if (doc === undefined) return;
-  await restoreEdits(doc.key, draft.done, draft.undone);
-  await toggleEditing(doc.key);
+  if (key === undefined) return;
+  await restoreEdits(key, draft.done, draft.undone);
+  await toggleEditing(key);
   await deleteDraft(draft.id);
 }
 

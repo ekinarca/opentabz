@@ -19,10 +19,8 @@ export async function reopenLastSession(always = false): Promise<void> {
     return score === undefined ? [] : [recentSource(score)];
   });
   if (sources.length === 0) return;
-  const before = useDocuments.getState().docs.length;
-  await useDocuments.getState().open(sources);
-  const opened = useDocuments.getState().docs.slice(before);
+  const opened = await useDocuments.getState().open(sources);
   // The one in front, when every score came back.
   const front = opened.length === session.fingerprints.length ? opened[session.active] : undefined;
-  if (front !== undefined) useDocuments.getState().activate(front.key);
+  if (front !== undefined) useDocuments.getState().activate(front);
 }
