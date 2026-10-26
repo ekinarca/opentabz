@@ -7,13 +7,16 @@
 /** The documents the engine was asked to edit, in order. */
 export const edited: string[] = [];
 
+/** The tracks of every score the engine opens (none unless a test sets them). */
+export const opening: { tracks: readonly unknown[] } = { tracks: [] };
+
 function summaryOf(id: string, name: string) {
   return {
     id,
     title: name,
     artist: '',
     subtitle: '',
-    tracks: [],
+    tracks: opening.tracks,
     masterBars: [],
     hasModelLayout: false,
     truncated: false,
