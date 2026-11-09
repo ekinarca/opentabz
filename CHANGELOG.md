@@ -6,6 +6,10 @@ All notable changes to OpenTabz are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **The screen stays on while a score plays.** Playback holds a Screen Wake Lock, lets it go when paused or stopped, and takes it again when the page comes back to the foreground while still playing. Browsers without the API keep their usual screen timeout.
+
 ## [0.3.0] — 2026-10-26
 
 Whole folders open at once, and a round of fixes for editing, playback and the instrument views.

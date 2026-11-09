@@ -25,6 +25,7 @@ import { guardUnload } from './save.ts';
 import { UpdateNotice } from './UpdateNotice.tsx';
 import { DropOverlay } from './DropOverlay.tsx';
 import { leaveFullScreen, useFullScreenSync } from './full-screen.ts';
+import { useScreenWakeLock } from './screen-wake-lock.ts';
 import { MetronomeTool } from './MetronomeTool.tsx';
 import { TunerTool } from './TunerTool.tsx';
 import { SettingsDialog } from './SettingsDialog.tsx';
@@ -56,6 +57,8 @@ export function App() {
   // Full screen puts the app's bars away while a score is open (VIEW-013).
   const fullScreen = useUi(state => state.fullScreen) && active !== null;
   useFullScreenSync();
+  // Play-along: the screen stays on while a score plays.
+  useScreenWakeLock();
 
   useEffect(() => {
     if (active === null && useUi.getState().fullScreen) leaveFullScreen();

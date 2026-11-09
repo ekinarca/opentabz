@@ -161,6 +161,55 @@ test.describe('playback cursor, seeking and selection gestures', () => {
   });
 });
 
+test.describe('the screen stays awake while playing', () => {
+  test.beforeEach(async ({ page }) => {
+    // Record the Screen Wake Lock requests instead of asking the real device.
+    await page.addInitScript(() => {
+      const log = { requests: 0, releases: 0 };
+      Object.assign(window, { wakeLockLog: log });
+      Object.defineProperty(navigator, 'wakeLock', {
+        configurable: true,
+        value: {
+          request: () => {
+            log.requests += 1;
+            return Promise.resolve({
+              type: 'screen',
+              released: false,
+              release: () => {
+                log.releases += 1;
+                return Promise.resolve();
+              },
+              addEventListener: () => undefined,
+              removeEventListener: () => undefined,
+              dispatchEvent: () => true,
+            });
+          },
+        },
+      });
+    });
+    await openHome(page);
+    await page.getByRole('button', { name: 'a blues shuffle' }).click();
+    await expectScore(page);
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 20_000 });
+  });
+
+  test('is held while playback plays and given back when it pauses', async ({ page }) => {
+    const log = () =>
+      page.evaluate(
+        () => (window as unknown as { wakeLockLog: { requests: number; releases: number } }).wakeLockLog,
+      );
+    expect(await log()).toEqual({ requests: 0, releases: 0 });
+
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    await expect.poll(async () => (await log()).requests).toBe(1);
+
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+    await expect.poll(async () => (await log()).releases).toBe(1);
+  });
+});
+
 test.describe('when the sound engine cannot start', () => {
   test('playback says so instead of loading forever, and can be retried', async ({
     page,

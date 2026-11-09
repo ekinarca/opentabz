@@ -392,6 +392,7 @@ The single source of truth for what OpenTabz does. One row per feature.
 | PLAY-135 | Wah open/closed marks drive an auto-wah sweep         | OT  | M7  | —                                                     | —    | planned |
 | PLAY-136 | Choice of colour and style for the cursor and bar highlight | OT  | M1  | —                                                     | apps/web/src/state/preferences.test.ts, apps/web/e2e/follow.spec.ts | done |
 | PLAY-137 | Track autoswitch: the view follows another part while yours rests | OT  | M6  | —                                                     | —    | planned |
+| PLAY-138 | Screen stays on while a score plays (Screen Wake Lock) | OT  | M1  | —                                                     | apps/web/src/app/screen-wake-lock.test.ts, apps/web/e2e/playback.spec.ts | done |
 
 ## Practice and performance
 
